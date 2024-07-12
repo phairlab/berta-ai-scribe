@@ -180,9 +180,9 @@ In your Snowflake SQL worksheet:
             port: 8000
             path: /healthcheck
           secrets:
-            - snowflakeSecret: <db_name>.<schema_name>.openai_api_key
-              secretKeyRef: secret_string
-              envVarName: OPENAI_API_KEY
+          - snowflakeSecret: <db_name>.<schema_name>.openai_api_key
+            secretKeyRef: secret_string
+            envVarName: OPENAI_API_KEY
         - name: frontend
           image: <repository_url>/frontend:latest
         endpoints:
