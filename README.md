@@ -172,26 +172,26 @@ In your Snowflake SQL worksheet:
     IN COMPUTE POOL CPU_X64_XS
     EXTERNAL_ACCESS_INTEGRATIONS = (OPENAI_API_EXT_INT)
     FROM SPECIFICATION $$
-        spec:
+      spec:
         containers:
         - name: backend
-            image: <repository_url>/backend:latest
-            readinessProbe:
+          image: <repository_url>/backend:latest
+          readinessProbe:
             port: 8000
             path: /healthcheck
-            secrets:
+          secrets:
             - snowflakeSecret: <db_name>.<schema_name>.openai_api_key
-            secretKeyRef: secret_string
-            envVarName: OPENAI_API_KEY
+              secretKeyRef: secret_string
+              envVarName: OPENAI_API_KEY
         - name: frontend
-            image: <repository_url>/frontend:latest
+          image: <repository_url>/frontend:latest
         endpoints:
         - name: api
-            port: 8000
-            public: true
+          port: 8000
+          public: true
         - name: app
-            port: 3000
-            public: true
+          port: 3000
+          public: true
     $$;
     ```
 
