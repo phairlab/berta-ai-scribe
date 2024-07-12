@@ -1,0 +1,8 @@
+# Dev pooled pycache folder, based on PYTHONPYCACHEPREFIX environment variable.
+.dev-pycache/
+
+# Virtual environment
+.venv/
+
+# Environment
+.env

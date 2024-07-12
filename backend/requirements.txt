@@ -1,0 +1,7 @@
+fastapi==0.111.0
+openai==1.35.10
+pydantic==2.8.2
+pydantic-settings==2.3.4
+pydub==0.25.1
+python-dotenv==1.0.1
+uvicorn==0.30.1
