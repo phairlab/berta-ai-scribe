@@ -16,7 +16,7 @@ The following steps assume you are using [Visual Studio Code](https://code.visua
 
 1. Clone the repository:
 
-    Using VS Code, <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>P</kbd> and select **Git: Clone**.
+    Using VS Code, <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> and select **Git: Clone**.
 
 2. Copy the `env.example` file to `.env` and fill in the required environment variables.
 
@@ -28,11 +28,11 @@ The following steps assume you are using [Visual Studio Code](https://code.visua
 
 3. Create a Python virtual environment:
 
-    Using VS Code, <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>P</kbd> and select **Python: Select Interpreter** and then **Create Virtual Environment...** and follow the directions, ensuring you select Python 3.11 if more than one version is installed in your environment.
+    Using VS Code, <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> and select **Python: Select Interpreter** and then **Create Virtual Environment...** and follow the directions, ensuring you select Python 3.11 if more than one version is installed in your environment.
 
 4. Install Python packages:
 
-    Press <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>\`</kbd> to open a new terminal. The prompt should now be prefixed with `(.venv)` indicating it is using the virtual environment created in Step 3.
+    Press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>\`</kbd> to open a new terminal. The prompt should now be prefixed with `(.venv)` indicating it is using the virtual environment created in Step 3.
 
     Install the required packages using the following command:
 
@@ -94,7 +94,7 @@ docker compose up --build
 
 ### Option 2: Run the App in a Local Development Environment
 
-1. Open a terminal with <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>\`</kbd>.
+1. Open a terminal with <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>\`</kbd>.
 
 2. Start the backend.
 
@@ -103,7 +103,7 @@ docker compose up --build
     uvicorn app.main:app --reload
     ```
 
-3. Open a second terminal with <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>5</kbd>.
+3. Open a second terminal with <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>5</kbd>.
 
 4. Start the frontend.
 
