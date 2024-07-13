@@ -46,7 +46,12 @@ export default function RootLayout({
             <main className="container mx-auto max-w-7xl pt-16 px-6 flex-grow">
               {children}
             </main>
-            <footer className="w-full flex items-center justify-center py-3" />
+            <footer className="w-full flex items-center justify-center py-3">
+              <p className="text-sm text-center text-default-400">
+                &copy; {new Date().getFullYear()} University of Alberta |
+                Alberta Health Services | Canadian Medical Association
+              </p>
+            </footer>
           </div>
         </Providers>
       </body>
