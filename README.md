@@ -185,6 +185,9 @@ In your Snowflake SQL worksheet:
             envVarName: OPENAI_API_KEY
         - name: frontend
           image: <repository_url>/frontend:latest
+          readinessProbe:
+            port: 3000
+            path: /healthcheck
         endpoints:
         - name: api
           port: 8000

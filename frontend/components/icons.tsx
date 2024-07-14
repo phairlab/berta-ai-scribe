@@ -2,6 +2,8 @@ import * as React from "react";
 
 import { IconSvgProps } from "@/types";
 
+// TODO: Add attribution (https://www.flaticon.com/free-icon/sound-wave_9380416?term=sound-wave&related_id=9380416#).
+// <a href="https://www.flaticon.com/free-icons/sound-wave" title="sound wave icons">Sound wave icons created by alfanz - Flaticon</a>
 export const Logo: React.FC<IconSvgProps> = ({
   size = 20,
   width,
@@ -107,6 +109,8 @@ export const SunFilledIcon = ({
   </svg>
 );
 
+// TODO: Add attribution (https://help.thenounproject.com/hc/en-us/articles/200509948-Medium-Specific-Credit-Requirements-Examples).
+// mic by Kholila wale from <a href="https://thenounproject.com/browse/icons/term/mic/" target="_blank" title="mic Icons">Noun Project</a> (CC BY 3.0)
 export const MicrophoneIcon: React.FC<IconSvgProps> = ({
   size = 24,
   width,
@@ -115,9 +119,12 @@ export const MicrophoneIcon: React.FC<IconSvgProps> = ({
 }: IconSvgProps) => (
   <svg
     aria-hidden="true"
+    fill="black"
     focusable="false"
     height={size || height}
     role="presentation"
+    stroke="black"
+    strokeWidth="0"
     viewBox="-5 -10 110 120"
     width={size || width}
     {...props}
@@ -129,6 +136,8 @@ export const MicrophoneIcon: React.FC<IconSvgProps> = ({
   </svg>
 );
 
+// TODO: Add attribution (https://help.thenounproject.com/hc/en-us/articles/200509948-Medium-Specific-Credit-Requirements-Examples).
+// Cloud Upload by creative_visionary from <a href="https://thenounproject.com/browse/icons/term/cloud-upload/" target="_blank" title="Cloud Upload Icons">Noun Project</a> (CC BY 3.0)
 export const FileUploadIcon: React.FC<IconSvgProps> = ({
   size = 24,
   width,
@@ -137,23 +146,25 @@ export const FileUploadIcon: React.FC<IconSvgProps> = ({
 }: IconSvgProps) => (
   <svg
     aria-hidden="true"
+    fill="black"
     focusable="false"
     height={size || height}
     role="presentation"
-    viewBox="-5 -5 110 120"
+    stroke="black"
+    strokeWidth="1"
+    viewBox="0 0 100 100"
     width={size || width}
     {...props}
   >
     <g>
-      <path d="m65.637 27.453c-1.7188 0.007813-3.1094 1.3984-3.1133 3.1172-0.003907 0.82813 0.32031 1.625 0.90625 2.2148 0.58203 0.58594 1.3789 0.91797 2.207 0.92188 8.6211 0 15.617 7.082 15.617 15.965s-6.9805 15.965-15.617 15.965v-0.003907c-0.82812-0.003906-1.625 0.32422-2.2148 0.90625-0.58984 0.58594-0.92188 1.3789-0.92188 2.207-0.003906 0.83594 0.32422 1.6328 0.91406 2.2227 0.58984 0.58984 1.3906 0.91797 2.2227 0.91797 12.074 0 21.867-10.016 21.867-22.215s-9.8047-22.215-21.867-22.215z" />
-      <path d="m47.551 15.621c-12.695 0-23.023 10.535-23.023 23.367 0 1.6758 0.19922 3.3438 0.55469 4.9844 0.17578 0.80859 0.66406 1.5195 1.3594 1.9688 0.69922 0.44922 1.543 0.60547 2.3555 0.42969 1.6797-0.37109 2.7422-2.0312 2.375-3.7148-0.26172-1.1953-0.39062-2.4297-0.39062-3.668 0-9.5156 7.5117-17.117 16.77-17.117 6.543 0 12.492 3.875 15.246 9.9883h0.003906c0.70703 1.5742 2.5586 2.2773 4.1289 1.5703 1.5742-0.70703 2.2773-2.5547 1.5703-4.1289-3.7422-8.2969-11.926-13.68-20.945-13.68z" />
-      <path d="m28.129 40.188c-8.625-0.007812-15.617 7.1602-15.617 15.848s6.9961 15.848 15.617 15.848h6.25v0.003907c0.82812-0.003907 1.6211-0.33594 2.207-0.92578 0.58203-0.58984 0.91016-1.3828 0.90625-2.2148-0.007813-1.7148-1.3945-3.1055-3.1133-3.1133h-6.25c-5.1836 0-9.3672-4.2305-9.3672-9.5977 0-5.3672 4.1836-9.6016 9.3672-9.5977v0.003906c0.82812-0.003906 1.6211-0.33594 2.207-0.92578 0.58203-0.58594 0.91016-1.3828 0.90625-2.2109-0.007813-1.7188-1.3984-3.1094-3.1133-3.1172z" />
-      <path d="m47.781 44.664-9.3633 9.3672h-0.003907c-0.58594 0.58594-0.91797 1.3828-0.91797 2.2148 0 0.82812 0.33203 1.625 0.91797 2.2148 0.58984 0.58594 1.3867 0.91797 2.2148 0.91797 0.83203 0 1.6289-0.33203 2.2148-0.91797l7.1523-7.1523 7.1758 7.1523c1.2188 1.2109 3.1836 1.2109 4.4023 0 1.2148-1.2227 1.2148-3.1875 0-4.4062l-9.3672-9.3906h0.003907c-0.58594-0.58984-1.3828-0.92187-2.2148-0.92187-0.83203 0-1.6289 0.33203-2.2148 0.92187z" />
-      <path d="m49.996 43.742c-0.82812 0.003906-1.625 0.33594-2.207 0.92187-0.58594 0.58984-0.91016 1.3867-0.90625 2.2148v34.371c0.003907 1.7188 1.3945 3.1094 3.1133 3.1133 0.82812 0.003907 1.625-0.32031 2.2148-0.90625 0.58594-0.58203 0.91797-1.3789 0.92187-2.207v-34.371c0.003907-0.83203-0.32422-1.6328-0.91406-2.2227s-1.3906-0.91797-2.2227-0.91406z" />
+      <path d="M67.83,33c-0.68-9.04-8.25-16.18-17.45-16.18c-9.16,0-16.69,7.07-17.44,16.11C23.78,33.48,16.5,41.11,16.5,50.4  c0,9.65,7.85,17.5,17.5,17.5c0.83,0,1.5-0.67,1.5-1.5s-0.67-1.5-1.5-1.5c-8,0-14.5-6.5-14.5-14.5S26,35.9,34,35.9  c0.08,0,0.16,0,0.24,0.01c0.42,0.04,0.84-0.14,1.15-0.43c0.31-0.28,0.49-0.73,0.49-1.16c0-8,6.5-14.5,14.5-14.5s14.5,6.5,14.5,14.59  c0,0.82,0.65,1.48,1.47,1.5c7.8,0.17,14.15,6.67,14.15,14.49c0,8-6.5,14.5-14.5,14.5c-0.83,0-1.5,0.67-1.5,1.5s0.67,1.5,1.5,1.5  c9.65,0,17.5-7.85,17.5-17.5C83.5,41.45,76.59,33.92,67.83,33z" />
+      <path d="M50.7,83.17c0.83,0,1.5-0.67,1.5-1.5V52.29l5.21,5.21c0.59,0.59,1.54,0.59,2.12,0c0.59-0.59,0.59-1.54,0-2.12l-7.77-7.77  c-0.14-0.14-0.31-0.25-0.49-0.33c-0.01,0-0.02-0.01-0.03-0.01c-0.16-0.06-0.34-0.1-0.53-0.1c-0.01,0-0.02,0-0.03,0  c-0.18,0-0.35,0.04-0.51,0.1c-0.02,0.01-0.03,0.01-0.05,0.01c-0.18,0.07-0.34,0.18-0.47,0.32c0,0-0.01,0-0.01,0.01l-8.1,8.09  c-0.59,0.59-0.59,1.54,0,2.12c0.29,0.29,0.68,0.44,1.06,0.44c0.38,0,0.77-0.15,1.06-0.44l5.55-5.54v29.39  C49.2,82.5,49.87,83.17,50.7,83.17z" />
     </g>
   </svg>
 );
 
+// TODO: Add atribution (https://help.thenounproject.com/hc/en-us/articles/200509948-Medium-Specific-Credit-Requirements-Examples).
+// audio-files by Sentya Irma from <a href="https://thenounproject.com/browse/icons/term/audio-files/" target="_blank" title="audio-files Icons">Noun Project</a> (CC BY 3.0)
 export const AudioFilesIcon: React.FC<IconSvgProps> = ({
   size = 24,
   width,
@@ -162,10 +173,13 @@ export const AudioFilesIcon: React.FC<IconSvgProps> = ({
 }: IconSvgProps) => (
   <svg
     aria-hidden="true"
+    fill="black"
     focusable="false"
     height={size || height}
     role="presentation"
-    viewBox="-5 0 80 70"
+    stroke="black"
+    strokeWidth="0"
+    viewBox="-8 -3 80 70"
     width={size || width}
     {...props}
   >

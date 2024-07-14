@@ -1,6 +1,5 @@
 import { AudioSelector } from "@/components/audio-selector";
 import { title, subtitle } from "@/components/primitives";
-import { isMobileDevice } from "@/utilities/is-mobile-device";
 
 export default function Home() {
   return (
@@ -12,7 +11,7 @@ export default function Home() {
           following options.
         </h2>
       </div>
-      <AudioSelector mobileDevice={isMobileDevice()} />
+      <AudioSelector />
     </section>
   );
 }
