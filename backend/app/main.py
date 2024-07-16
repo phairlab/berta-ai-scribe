@@ -6,7 +6,7 @@ from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html, get_swagge
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
-from app.api import patient_conversations
+from app.api import audio, audio_samples, transcripts, summaries
 
 # ----------------------------------
 # LOGGING CONFIG
@@ -81,7 +81,10 @@ async def redoc_html():
     )
 
 # Include API routers
-app.include_router(patient_conversations.router, prefix="/api/audio", tags=["Audio"])
+app.include_router(audio.router, prefix="/api/audio", tags=["Audio"])
+app.include_router(audio_samples.router, prefix="/api/audio-samples", tags=["Audio Samples"])
+app.include_router(transcripts.router, prefix="/api/transcripts", tags=["Transcripts"])
+app.include_router(summaries.router, prefix="/api/summaries", tags=["Summaries"])
 
 # ----------------------------------
 # FALLBACK

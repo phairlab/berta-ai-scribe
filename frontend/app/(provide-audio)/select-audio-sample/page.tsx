@@ -1,19 +1,11 @@
-import { readdir } from "fs/promises";
-
 import Link from "next/link";
 import { Button } from "@nextui-org/button";
 
 import { title } from "@/components/primitives";
 
-async function getSampleNames() {
-  const samplesPath = ".audio-samples";
-  const sampleNames: string[] = [];
-
-  const samples = await readdir(samplesPath);
-
-  samples.forEach(function (sample) {
-    sampleNames.push(sample.substring(0, sample.indexOf(".")));
-  });
+async function getSampleNames(): Promise<string[]> {
+  const request = await fetch(`${process.env.APP_API_URL}/audio-samples/list`);
+  const sampleNames = await request.json();
 
   return sampleNames;
 }
