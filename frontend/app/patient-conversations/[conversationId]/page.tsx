@@ -1,6 +1,7 @@
 import { Divider } from "@nextui-org/divider";
 
 import { AudioPlayer } from "@/components/audio-player";
+import { AIScribe } from "@/components/ai-scribe";
 
 export default function PatientConversationPage({
   params,
@@ -16,6 +17,7 @@ export default function PatientConversationPage({
         <AudioPlayer audioUrl={audioUrl} />
       </div>
       <Divider />
+      <AIScribe conversationId={params.conversationId} />
     </div>
   );
 }

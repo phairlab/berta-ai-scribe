@@ -188,6 +188,8 @@ In your Snowflake SQL worksheet:
           readinessProbe:
             port: 3000
             path: /healthcheck
+          env:
+            APP_API_URL: http://localhost:8000/api
         endpoints:
         - name: api
           port: 8000

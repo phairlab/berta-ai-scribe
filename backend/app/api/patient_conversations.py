@@ -54,7 +54,7 @@ async def generate_note(recording: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail="Transcript summarization failed.")
 
     return PatientConversation(
-        audio=AudioInfo(duration=audio_duration, file_size=audio_size),
-        transcript=Transcript(generation_time=transcription_ms, method='OpenAI Whisper', text=transcript),
-        generated_note=GeneratedNote(generation_time=summarization_ms, model='gpt-4o', text=summary)
+        audio=AudioInfo(duration=audio_duration, fileSize=audio_size),
+        transcript=Transcript(generationTime=transcription_ms, method='OpenAI Whisper', text=transcript),
+        generatedNote=GeneratedNote(generationTime=summarization_ms, model='gpt-4o', text=summary)
     )

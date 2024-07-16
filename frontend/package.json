@@ -18,6 +18,8 @@
 		"@nextui-org/link": "2.0.32",
 		"@nextui-org/listbox": "^2.1.22",
 		"@nextui-org/navbar": "2.0.33",
+		"@nextui-org/scroll-shadow": "^2.1.17",
+		"@nextui-org/select": "^2.2.2",
 		"@nextui-org/skeleton": "^2.0.29",
 		"@nextui-org/snippet": "2.0.38",
 		"@nextui-org/switch": "2.0.31",
@@ -33,6 +35,7 @@
 		"next-themes": "^0.2.1",
 		"react": "18.3.1",
 		"react-dom": "18.3.1",
+		"react-markdown": "^9.0.1",
 		"wavesurfer.js": "^7.8.2"
 	},
 	"devDependencies": {
