@@ -22,6 +22,6 @@ async def create(recording: UploadFile = File(...)):
         logger.info(f"Transcript generated in {transcription_ms / 1000:.2f}s")
     except Exception as e:
         logger.error(f"Transcription failed: {str(e)}")
-        raise HTTPException(status_code=500, detail="Transcription failed.")
+        raise HTTPException(status_code=500, detail=f"Transcription failed: {str(e)}")
     
     return Transcript(generationTime=transcription_ms, method='OpenAI Whisper', text=transcript)

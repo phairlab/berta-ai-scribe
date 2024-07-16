@@ -1,11 +1,37 @@
 import logging
+import os
 import time
+import uuid
 from fastapi import APIRouter, File, Response, UploadFile, HTTPException
 from fastapi.responses import FileResponse, StreamingResponse
-from app.services.audio_processing import standardize_audio
+from app.services.audio_processing import load_file, standardize_audio
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+USER_FILES_FOLDER = ".user-files"
+
+@router.get("/")
+async def get_audio_sample(id: str):
+    filename = f"{id}.webm"
+    path = os.path.join(USER_FILES_FOLDER, filename)
+
+    if not os.path.isfile(path):
+        raise HTTPException(status_code=400, detail=f"The file '{id}' does not exist.")
+    
+    return FileResponse(path)
+
+@router.post("/create")
+async def create(recording: UploadFile = File(...)):
+    id = uuid.uuid4()
+
+    # audio_buffer = standardize_audio(await recording.read(), recording.filename)
+    audio_buffer = load_file(await recording.read(), recording.filename)
+
+    with open(os.path.join(USER_FILES_FOLDER, f"{id}.webm"), "wb") as f:
+        f.write(audio_buffer.getbuffer())
+    
+    return {"id": id}
 
 @router.post("/standardize")
 async def standardize(recording: UploadFile = File(...)):
