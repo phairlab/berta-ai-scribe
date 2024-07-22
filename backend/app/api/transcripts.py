@@ -1,7 +1,7 @@
 import logging
 import time
 from fastapi import APIRouter, File, UploadFile, HTTPException
-from app.services.audio_processing import load_file
+from app.services.audio_processing import standardize_audio
 from app.services.transcription import transcribe_audio
 from app.schemas import Transcript
 
@@ -13,7 +13,7 @@ async def create(recording: UploadFile = File(...)):
     try:
         start_time = time.time()
 
-        audio_buffer = load_file(await recording.read(), recording.filename)
+        audio_buffer = standardize_audio(await recording.read(), recording.filename)
         transcript = await transcribe_audio(audio_buffer)
 
         end_time = time.time()

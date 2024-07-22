@@ -1,71 +1,218 @@
 "use client";
 
-import { usePathname } from "next/navigation";
-import Link from "next/link";
-import { Card, CardBody } from "@nextui-org/card";
+import { useEffect, useRef, useState } from "react";
+import { Button } from "@nextui-org/button";
+import { Select, SelectItem } from "@nextui-org/select";
 
-import { MicrophoneIcon, FileUploadIcon, AudioFilesIcon } from "./icons";
+import { AudioPlayer, AudioPlayerControls } from "./audio-player";
+import { AudioTrackInfo } from "./audio-track-info";
+import { MicrophoneIcon, PauseIcon, PlayIcon } from "./icons";
 
-export const AudioSelector = () => {
-  const pathname = usePathname();
+import { useData } from "@/hooks/useData";
 
-  const audioOptions = [
-    {
-      title: "Record",
-      description: "Record a conversation using your device's microphone.",
-      icon: (className: string, size: number) => (
-        <MicrophoneIcon className={className} size={size} />
-      ),
-      href: "/record-audio",
-    },
-    {
-      title: "Upload",
-      description: "Browse for an existing audio file on your device.",
-      icon: (className: string, size: number) => (
-        <FileUploadIcon className={className} size={size} />
-      ),
-      href: "/upload-audio-file",
-    },
-    {
-      title: "Samples",
-      description: "Test using a selection of sample audio files.",
-      icon: (className: string, size: number) => (
-        <AudioFilesIcon className={className} size={size} />
-      ),
-      href: "/select-audio-sample",
-    },
-  ];
+type AudioSample = {
+  name: string;
+  path: string;
+};
+
+type AudioSelectorProps = {
+  onAudioDataChanged?: (audioUrl: Blob | null) => void;
+};
+
+export const AudioSelector = ({ onAudioDataChanged }: AudioSelectorProps) => {
+  const audioControls = useRef<AudioPlayerControls | null>(null);
+  const inputFile = useRef<HTMLInputElement>(null);
+
+  const [audioData, setAudioData] = useState<Blob | null>(null);
+  const [audioTitle, setAudioTitle] = useState<string | null>(null);
+  const [isPlayerInitialized, setIsPlayerInitialized] = useState(false);
+  const [isPlayerLoading, setIsPlayerLoading] = useState(true);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isRecordingPaused, setIsRecordingPaused] = useState(false);
+  const [duration, setDuration] = useState<number | null>(null);
+
+  const { data: audioSamples, loading: isLoadingAudioSamples } = useData<
+    AudioSample[]
+  >("audio-samples", []);
+
+  useEffect(() => {
+    onAudioDataChanged?.(audioData);
+  }, [audioData]);
+
+  const handleAudioPlayerInit = (controls: AudioPlayerControls) => {
+    audioControls.current = controls;
+    setIsPlayerInitialized(true);
+  };
+
+  const handleRecordingFinished = (recordingData: Blob) => {
+    setIsRecording(false);
+    setIsRecordingPaused(false);
+    setAudioData(recordingData);
+    setAudioTitle("RECORDED AUDIO");
+  };
+
+  const handleFileSelected = (e: React.FormEvent<HTMLInputElement>) => {
+    if (e.currentTarget.files) {
+      const file = e.currentTarget.files[0];
+
+      var reader = new FileReader();
+
+      reader.onload = (ev) => {
+        const filename = file.name;
+        var data = new Blob([new Uint8Array(ev.target?.result as ArrayBuffer)]);
+
+        setAudioData(data);
+        setAudioTitle(filename);
+      };
+
+      reader.onerror = (_ev) => {
+        // TODO: Handle file read error.
+      };
+
+      reader.readAsArrayBuffer(file);
+    }
+  };
+
+  const handleSampleAudioSelected = async (samples: any) => {
+    const sampleUrl = (samples as Set<string>).values().next().value;
+    const data = await fetch(sampleUrl).then((r) => r.blob());
+
+    setAudioData(data);
+    setAudioTitle(sampleUrl);
+  };
+
+  const toggleRecording = async () => {
+    if (isRecording) {
+      audioControls.current?.togglePauseRecording();
+    } else {
+      audioControls.current?.startRecording();
+    }
+  };
+
+  const finishRecording = () => {
+    if (isRecording) {
+      audioControls.current?.endRecording();
+    }
+  };
+
+  const reset = () => {
+    setIsRecording(false);
+    setIsRecordingPaused(false);
+    setIsPlaying(false);
+    setAudioData(null);
+  };
 
   return (
-    <div className="flex flex-row gap-3 md:gap-8 w-full justify-evenly md:justify-center">
-      {audioOptions.map((option) => (
-        <Link key={option.title} href={option.href ?? ""}>
-          <Card
-            isHoverable
-            isPressable
-            className={`w-24 md:w-auto min-w-24 md:max-w-72 basis-1/${audioOptions.length} ${pathname === option.href ? "border border-blue-400" : ""}`}
+    <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-4 max-w-full">
+      <div className="flex flex-row gap-2 sm:gap-4 justify-center w-full">
+        {audioData ? (
+          <Button
+            isIconOnly
+            className={`h-[40px] w-[64px] mt-[6px] mb-auto ${!isPlayerInitialized ? "invisible" : ""}`}
+            isDisabled={isPlayerLoading}
+            onClick={() => audioControls.current?.playPause()}
           >
-            <CardBody>
-              <div className="flex flex-col-reverse md:flex-row h-full md:gap-2">
-                <div className="my-auto mx-auto">
-                  {option.icon(
-                    "dark:fill-zinc-300 dark:stroke-zinc-300 m-auto",
-                    60,
-                  )}
-                </div>
-                <div className="flex flex-col gap-2">
-                  <h4 className="text-medium md:text-large text-center md:text-left md:font-semibold">
-                    {option.title}
-                  </h4>
-                  <p className="hidden md:flex text-left text-small text-default-600 h-full">
-                    {option.description}
-                  </p>
+            {isPlaying ? <PauseIcon /> : <PlayIcon />}
+          </Button>
+        ) : (
+          <Button
+            isIconOnly
+            className="h-[64px] w-[64px] my-[3px] flex-none "
+            isDisabled={!isPlayerInitialized}
+            radius="full"
+            size="lg"
+            variant="shadow"
+            onClick={toggleRecording}
+          >
+            <MicrophoneIcon size={40} />
+          </Button>
+        )}
+        <div className="w-full relative flex flex-col gap-2">
+          {!audioData && !isRecording && (
+            <div className="absolute inset-0 z-20 bg-white dark:bg-black">
+              <div className="w-full h-[70px] flex justify-center items-center border rounded-lg border-zinc-100 dark:border-zinc-900">
+                <div className="text-center text-zinc-500 sm:mb-2">
+                  Start Recording or <br className="sm:hidden" /> Select a File
                 </div>
               </div>
-            </CardBody>
-          </Card>
-        </Link>
-      ))}
+            </div>
+          )}
+          <div className={`w-full ${isPlayerLoading ? "invisible" : ""}`}>
+            <AudioPlayer
+              audioData={audioData}
+              height={50}
+              onDurationChanged={(seconds) => setDuration(seconds)}
+              onInit={handleAudioPlayerInit}
+              onLoading={() => setIsPlayerLoading(true)}
+              onPause={() => setIsPlaying(false)}
+              onPlay={() => setIsPlaying(true)}
+              onReady={() => setIsPlayerLoading(false)}
+              onRecordingEnded={handleRecordingFinished}
+              onRecordingPaused={() => setIsRecordingPaused(true)}
+              onRecordingResumed={() => setIsRecordingPaused(false)}
+              onRecordingStarted={() => setIsRecording(true)}
+            />
+          </div>
+          <div className={`mx-2 ${isPlayerLoading ? "invisible" : ""}`}>
+            <AudioTrackInfo
+              audioTitle={audioTitle}
+              duration={duration}
+              isRecording={isRecording}
+              isRecordingPaused={isRecordingPaused}
+            />
+          </div>
+        </div>
+      </div>
+      {isRecording ? (
+        <div className="flex justify-end">
+          <Button
+            className="sm:mt-[9px] sm:mb-auto"
+            size="sm"
+            onClick={finishRecording}
+          >
+            Finish Recording
+          </Button>
+        </div>
+      ) : audioData ? (
+        <div className="flex justify-end">
+          <Button className="sm:mt-[9px] sm:mb-auto" size="sm" onClick={reset}>
+            Reset
+          </Button>
+        </div>
+      ) : (
+        <div className="flex flex-row sm:flex-col gap-2 sm:gap-1 sm:h-[70px] justify-end items-center sm:items-start">
+          <Button
+            className="w-fit text-sm text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800"
+            size="sm"
+            onClick={() => inputFile.current?.click()}
+          >
+            Browse ...
+          </Button>
+          <input
+            ref={inputFile}
+            aria-hidden="true"
+            aria-label="audio-input-file"
+            className="hidden"
+            type="file"
+            onChange={handleFileSelected}
+          />
+          <Select
+            className="w-36"
+            isLoading={isLoadingAudioSamples}
+            items={audioSamples}
+            placeholder="Use a Sample"
+            selectedKeys={[]}
+            selectionMode="single"
+            size="sm"
+            onSelectionChange={handleSampleAudioSelected}
+          >
+            {(audioSample) => (
+              <SelectItem key={audioSample.path}>{audioSample.name}</SelectItem>
+            )}
+          </Select>
+        </div>
+      )}
     </div>
   );
 };
