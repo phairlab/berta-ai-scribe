@@ -37,7 +37,13 @@ export const AIScribe = () => {
   ];
 
   useEffect(() => {
+    // Reset values.
     setTranscript(null);
+    setGeneratedNote(null);
+    setIsNoteGenerating(false);
+    setSummaryType("Full Visit");
+
+    // Transcribe new audio.
     transcribeAudio();
   }, [audioUrl]);
 

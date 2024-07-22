@@ -4,7 +4,7 @@ async def summarize_transcript(transcript: str, prompt: str) -> str:
     openai = AsyncOpenAI()
     
     messages = [
-        {"role": "system", "content": "Format your responses plain text only, do not include any markdown syntax."},
+        {"role": "system", "content": "Format your responses plain text only, do not include any markdown syntax. Use asterisks before and after header text to indicate headers."},
         {"role": "system", "content": prompt},
         {"role": "user", "content": transcript}
     ]
