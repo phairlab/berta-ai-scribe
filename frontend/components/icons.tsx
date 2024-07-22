@@ -1,6 +1,9 @@
 import * as React from "react";
+import { SVGProps } from "react";
 
-import { IconSvgProps } from "@/types";
+type IconSvgProps = SVGProps<SVGSVGElement> & {
+  size?: number;
+};
 
 // TODO: Add attribution (https://www.flaticon.com/free-icon/sound-wave_9380416?term=sound-wave&related_id=9380416#).
 // <a href="https://www.flaticon.com/free-icons/sound-wave" title="sound wave icons">Sound wave icons created by alfanz - Flaticon</a>
@@ -189,6 +192,86 @@ export const AudioFilesIcon: React.FC<IconSvgProps> = ({
       <path d="M42.003,32.47684a1.47406,1.47406,0,0,0,1.47368,1.47368,3.34889,3.34889,0,0,1,0,6.69778,1.47384,1.47384,0,0,0,.00006,2.94736,6.29626,6.29626,0,0,0-.00006-12.59251A1.47406,1.47406,0,0,0,42.003,32.47684Z" />
       <path d="M23.9547,12.23862h4.66907a1.47368,1.47368,0,0,0,0-2.94736H23.9547A1.47383,1.47383,0,0,0,23.9547,12.23862Z" />
       <path d="M34.5185,16.90817a1.47384,1.47384,0,0,0-.00006-2.94737H23.9547a1.47384,1.47384,0,0,0,.00007,2.94737Z" />
+    </g>
+  </svg>
+);
+
+// TODO: Add atribution (https://help.thenounproject.com/hc/en-us/articles/200509948-Medium-Specific-Credit-Requirements-Examples).
+// play by Perametade Games from <a href="https://thenounproject.com/browse/icons/term/play/" target="_blank" title="play Icons">Noun Project</a> (CC BY 3.0)
+export const PlayIcon: React.FC<IconSvgProps> = ({
+  size = 24,
+  width,
+  height,
+  ...props
+}: IconSvgProps) => (
+  <svg
+    aria-hidden="true"
+    fill="black"
+    focusable="false"
+    height={size || height}
+    role="presentation"
+    stroke="black"
+    strokeWidth="0"
+    viewBox="-5 -10 110 120"
+    width={size || width}
+    {...props}
+  >
+    <g>
+      <path d="M78.627,47.203L24.873,16.167c-1.082-0.625-2.227-0.625-3.311,0C20.478,16.793,20,17.948,20,19.199V81.27  c0,1.25,0.478,2.406,1.561,3.031c0.542,0.313,1.051,0.469,1.656,0.469c0.604,0,1.161-0.156,1.703-0.469l53.731-31.035  c1.083-0.625,1.738-1.781,1.738-3.031C80.389,48.984,79.71,47.829,78.627,47.203z M27,75.207V25.261l43.255,24.974L27,75.207z" />
+    </g>
+  </svg>
+);
+
+// TODO: Add atribution (https://help.thenounproject.com/hc/en-us/articles/200509948-Medium-Specific-Credit-Requirements-Examples).
+// pause by Perametade Games from <a href="https://thenounproject.com/browse/icons/term/pause/" target="_blank" title="pause Icons">Noun Project</a> (CC BY 3.0)
+export const PauseIcon: React.FC<IconSvgProps> = ({
+  size = 24,
+  width,
+  height,
+  ...props
+}: IconSvgProps) => (
+  <svg
+    aria-hidden="true"
+    fill="black"
+    focusable="false"
+    height={size || height}
+    role="presentation"
+    stroke="black"
+    strokeWidth="0"
+    viewBox="-5 -10 110 120"
+    width={size || width}
+    {...props}
+  >
+    <g>
+      <path d="M35.5,15.5c-1.933,0-3.5,1.567-3.5,3.5v62c0,1.933,1.567,3.5,3.5,3.5S39,82.933,39,81V19C39,17.067,37.433,15.5,35.5,15.5z   " />
+      <path d="M63.5,15.5c-1.933,0-3.5,1.567-3.5,3.5v62c0,1.933,1.567,3.5,3.5,3.5S67,82.933,67,81V19C67,17.067,65.433,15.5,63.5,15.5z   " />
+    </g>
+  </svg>
+);
+
+// TODO: Add atribution (https://help.thenounproject.com/hc/en-us/articles/200509948-Medium-Specific-Credit-Requirements-Examples).
+// arrow download by Perametade Games from <a href="https://thenounproject.com/browse/icons/term/arrow-download/" target="_blank" title="arrow download Icons">Noun Project</a> (CC BY 3.0)
+export const DownloadIcon: React.FC<IconSvgProps> = ({
+  size = 24,
+  width,
+  height,
+  ...props
+}: IconSvgProps) => (
+  <svg
+    aria-hidden="true"
+    fill="black"
+    focusable="false"
+    height={size || height}
+    role="presentation"
+    stroke="black"
+    strokeWidth="0"
+    viewBox="-5 -10 110 120"
+    width={size || width}
+    {...props}
+  >
+    <g>
+      <path d="M47.206,72.855c1.563,1.563,4.11,1.563,5.671,0l22.14-22.125c0.781-0.78,1.201-1.805,1.201-2.828s-0.333-2.048-1.114-2.828   c-1.562-1.563-3.978-1.563-5.54,0L54,60.87V20.027c0-2.209-1.791-4-4-4s-4,1.791-4,4V59.87L30.846,44.949   c-1.563-1.563-4.327-1.563-5.89,0c-1.562,1.561-1.562,4.096,0,5.656L47.206,72.855z" />
+      <path d="M76,76H24c-2.209,0-4,1.791-4,4s1.791,4,4,4h52c2.209,0,4-1.791,4-4S78.209,76,76,76z" />
     </g>
   </svg>
 );
