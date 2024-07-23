@@ -63,7 +63,7 @@ export const AudioSelector = ({ onAudioDataChanged }: AudioSelectorProps) => {
         var data = new Blob([new Uint8Array(ev.target?.result as ArrayBuffer)]);
 
         setAudioData(data);
-        setAudioTitle(`/device/${filename}`);
+        setAudioTitle(filename);
       };
 
       reader.onerror = (_ev) => {
