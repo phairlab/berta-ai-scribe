@@ -113,7 +113,11 @@ export const AudioSelector = ({ onAudioDataChanged }: AudioSelectorProps) => {
             isDisabled={isPlayerLoading}
             onClick={() => audioControls.current?.playPause()}
           >
-            {isPlaying ? <PauseIcon /> : <PlayIcon />}
+            {isPlaying ? (
+              <PauseIcon className="dark:fill-white" />
+            ) : (
+              <PlayIcon className="dark:fill-white" />
+            )}
           </Button>
         ) : (
           <Button
@@ -125,7 +129,7 @@ export const AudioSelector = ({ onAudioDataChanged }: AudioSelectorProps) => {
             variant="shadow"
             onClick={toggleRecording}
           >
-            <MicrophoneIcon size={40} />
+            <MicrophoneIcon className="dark:fill-white" size={40} />
           </Button>
         )}
         <div className="w-full relative flex flex-col gap-2">
