@@ -6,10 +6,20 @@ services:
     env_file: ".env"
     ports:
       - "8000:8000"
+    networks:
+      - app-network
   
   frontend:
     build: ./frontend
+    environment:
+      APP_API_URL: http://backend:8000/api
     ports:
       - "3000:3000"
     depends_on:
       - backend
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

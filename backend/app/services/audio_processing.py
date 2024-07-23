@@ -3,6 +3,12 @@ from pathlib import Path
 from pydub import AudioSegment
 from app.config import settings
 
+def load_file(data: bytes, filename: str) -> io.BytesIO:
+    buffer = io.BytesIO(data)
+    buffer.name = filename
+
+    return buffer
+
 def standardize_audio(data: bytes, filename: str) -> io.BytesIO:
     original = io.BytesIO(data)
 
