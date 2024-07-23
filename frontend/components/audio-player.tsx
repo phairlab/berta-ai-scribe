@@ -14,23 +14,7 @@ import RecordPlugin, {
 
 import { AnimatePulse } from "./animate-pulse";
 
-import { EMPTY_AUDIO_URL } from "@/utility/audio-helpers";
 import { tailwindColors } from "@/utility/color-helpers";
-
-type AudioPlayerProps = {
-  audioUrl?: string | null;
-  height?: number;
-  onInit?: (controls: AudioPlayerControls) => void;
-  onDurationChanged?: (seconds: number | null) => void;
-  onLoading?: () => void;
-  onReady?: () => void;
-  onPlay?: () => void;
-  onPause?: () => void;
-  onRecordingStarted?: () => void;
-  onRecordingPaused?: () => void;
-  onRecordingResumed?: () => void;
-  onRecordingEnded?: (recordingUrl: string) => void;
-};
 
 /** Set of controls for audio playback and recording. */
 export interface AudioPlayerControls {
@@ -47,8 +31,23 @@ export interface AudioPlayerControls {
   endRecording: () => void;
 }
 
+type AudioPlayerProps = {
+  audioData?: Blob | null;
+  height?: number;
+  onInit?: (controls: AudioPlayerControls) => void;
+  onDurationChanged?: (seconds: number | null) => void;
+  onLoading?: () => void;
+  onReady?: () => void;
+  onPlay?: () => void;
+  onPause?: () => void;
+  onRecordingStarted?: () => void;
+  onRecordingPaused?: () => void;
+  onRecordingResumed?: () => void;
+  onRecordingEnded?: (recordingData: Blob) => void;
+};
+
 export const AudioPlayer = ({
-  audioUrl = null,
+  audioData = null,
   height = 70,
   onInit,
   onDurationChanged,
@@ -64,7 +63,7 @@ export const AudioPlayer = ({
   const { theme } = useTheme();
   const wavesurfer = useRef<Wavesurfer | null>(null);
   const recorder = useRef<RecordPlugin | null>(null);
-  const [recordedAudioUrl, setRecordedAudioUrl] = useState<string | null>(null);
+  const loadedAudioData = useRef<Blob | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isReady, setIsReady] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
@@ -145,7 +144,12 @@ export const AudioPlayer = ({
     recorder.current = configureRecorder();
 
     ws.setOptions(options);
-    await ws.load(audioUrl ?? EMPTY_AUDIO_URL);
+
+    if (audioData) {
+      await ws.loadBlob(audioData);
+    }
+
+    loadedAudioData.current = audioData;
 
     ws.registerPlugin(HoverPlugin.create());
     ws.registerPlugin(TimelinePlugin.create(timelineOptions));
@@ -171,18 +175,21 @@ export const AudioPlayer = ({
 
   // Handle changes to audio source.
   useEffect(() => {
-    const url = audioUrl ?? EMPTY_AUDIO_URL;
-
-    if (url !== wavesurfer.current?.options.url) {
+    if (isInitialized && audioData !== loadedAudioData.current) {
       setIsRecording(false);
       setIsRecordingPaused(false);
       setIsReady(false);
       setDuration(null);
 
       wavesurfer.current?.stop();
-      wavesurfer.current?.load(url);
+
+      if (audioData) {
+        wavesurfer.current?.loadBlob(audioData);
+      }
+
+      loadedAudioData.current = audioData;
     }
-  }, [audioUrl]);
+  }, [audioData]);
 
   // Handle changes to Wavesurfer options.
   useEffect(() => {
@@ -193,7 +200,7 @@ export const AudioPlayer = ({
   useEffect(() => {
     setOptions({
       ...options,
-      interact: isReady && wavesurfer.current?.options.url !== EMPTY_AUDIO_URL,
+      interact: isReady && loadedAudioData.current != null,
     });
   }, [isReady, isRecording]);
 
@@ -245,18 +252,10 @@ export const AudioPlayer = ({
     });
 
     recordPlugin.on("record-end", (blob) => {
-      const previousUrl = recordedAudioUrl;
-      const newUrl = URL.createObjectURL(blob);
-
-      setRecordedAudioUrl(newUrl);
       setIsRecording(false);
       setIsRecordingPaused(false);
 
-      if (previousUrl) {
-        URL.revokeObjectURL(previousUrl);
-      }
-
-      onRecordingEnded?.(newUrl);
+      onRecordingEnded?.(blob);
     });
 
     recordPlugin.on("record-progress", (milliseconds) => {
@@ -269,10 +268,11 @@ export const AudioPlayer = ({
   return (
     <AnimatePulse isActive={isRecording && isRecordingPaused}>
       <div
-        className={`w-full flex flex-col h-[${height}px] ${audioUrl === EMPTY_AUDIO_URL ? "pointer-events-none" : ""}`}
+        className={`w-full flex flex-col h-[${height}px] ${!loadedAudioData.current || !isReady ? "pointer-events-none" : ""}`}
       >
         <WavesurferPlayer
           height={height - 20}
+          url={"no-audio.mp3"}
           onDestroy={handleDestroy}
           onInit={handleInit}
           onLoad={() => onLoading?.()}

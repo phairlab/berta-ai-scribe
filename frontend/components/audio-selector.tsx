@@ -16,15 +16,14 @@ type AudioSample = {
 };
 
 type AudioSelectorProps = {
-  onAudioUrlChanged?: (audioUrl: string | null) => void;
+  onAudioDataChanged?: (audioUrl: Blob | null) => void;
 };
 
-export const AudioSelector = ({ onAudioUrlChanged }: AudioSelectorProps) => {
+export const AudioSelector = ({ onAudioDataChanged }: AudioSelectorProps) => {
   const audioControls = useRef<AudioPlayerControls | null>(null);
   const inputFile = useRef<HTMLInputElement>(null);
-  const inputFileUrls = useRef<Set<string>>(new Set<string>());
 
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [audioData, setAudioData] = useState<Blob | null>(null);
   const [audioTitle, setAudioTitle] = useState<string | null>(null);
   const [isPlayerInitialized, setIsPlayerInitialized] = useState(false);
   const [isPlayerLoading, setIsPlayerLoading] = useState(true);
@@ -33,34 +32,27 @@ export const AudioSelector = ({ onAudioUrlChanged }: AudioSelectorProps) => {
   const [isRecordingPaused, setIsRecordingPaused] = useState(false);
   const [duration, setDuration] = useState<number | null>(null);
 
-  const { data: audioSamples } = useData<AudioSample[]>("audio-samples", []);
+  const { data: audioSamples, loading: isLoadingAudioSamples } = useData<
+    AudioSample[]
+  >("audio-samples", []);
 
   useEffect(() => {
-    // Deallocate blobs for browsed files.
-    inputFileUrls.current.forEach((url) => {
-      if (!audioUrl || url !== audioUrl) {
-        URL.revokeObjectURL(url);
-        inputFileUrls.current.delete(url);
-      }
-    });
-
-    // Report new audio url.
-    onAudioUrlChanged?.(audioUrl);
-  }, [audioUrl]);
+    onAudioDataChanged?.(audioData);
+  }, [audioData]);
 
   const handleAudioPlayerInit = (controls: AudioPlayerControls) => {
     audioControls.current = controls;
     setIsPlayerInitialized(true);
   };
 
-  const handleRecordingFinished = (recordingUrl: string) => {
+  const handleRecordingFinished = (recordingData: Blob) => {
     setIsRecording(false);
     setIsRecordingPaused(false);
-    setAudioUrl(recordingUrl);
+    setAudioData(recordingData);
     setAudioTitle("RECORDED AUDIO");
   };
 
-  const handleFileBrowse = (e: React.FormEvent<HTMLInputElement>) => {
+  const handleFileSelected = (e: React.FormEvent<HTMLInputElement>) => {
     if (e.currentTarget.files) {
       const file = e.currentTarget.files[0];
 
@@ -68,12 +60,9 @@ export const AudioSelector = ({ onAudioUrlChanged }: AudioSelectorProps) => {
 
       reader.onload = (ev) => {
         const filename = file.name;
-        var blob = new Blob([new Uint8Array(ev.target?.result as ArrayBuffer)]);
-        var url = URL.createObjectURL(blob);
+        var data = new Blob([new Uint8Array(ev.target?.result as ArrayBuffer)]);
 
-        inputFileUrls.current.add(url);
-
-        setAudioUrl(url);
+        setAudioData(data);
         setAudioTitle(`/device/${filename}`);
       };
 
@@ -85,11 +74,12 @@ export const AudioSelector = ({ onAudioUrlChanged }: AudioSelectorProps) => {
     }
   };
 
-  const handleSampleAudioSelected = (samples: any) => {
-    const sample = (samples as Set<string>).values().next().value;
+  const handleSampleAudioSelected = async (samples: any) => {
+    const sampleUrl = (samples as Set<string>).values().next().value;
+    const data = await fetch(sampleUrl).then((r) => r.blob());
 
-    setAudioUrl(sample);
-    setAudioTitle(sample);
+    setAudioData(data);
+    setAudioTitle(sampleUrl);
   };
 
   const toggleRecording = async () => {
@@ -110,13 +100,13 @@ export const AudioSelector = ({ onAudioUrlChanged }: AudioSelectorProps) => {
     setIsRecording(false);
     setIsRecordingPaused(false);
     setIsPlaying(false);
-    setAudioUrl(null);
+    setAudioData(null);
   };
 
   return (
     <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-4 max-w-full">
       <div className="flex flex-row gap-2 sm:gap-4 justify-center w-full">
-        {audioUrl ? (
+        {audioData ? (
           <Button
             isIconOnly
             className={`h-[40px] w-[64px] mt-[6px] mb-auto ${!isPlayerInitialized ? "invisible" : ""}`}
@@ -139,7 +129,7 @@ export const AudioSelector = ({ onAudioUrlChanged }: AudioSelectorProps) => {
           </Button>
         )}
         <div className="w-full relative flex flex-col gap-2">
-          {!audioUrl && !isRecording && (
+          {!audioData && !isRecording && (
             <div className="absolute inset-0 z-20 bg-white dark:bg-black">
               <div className="w-full h-[70px] flex justify-center items-center border rounded-lg border-zinc-100 dark:border-zinc-900">
                 <div className="text-center text-zinc-500 sm:mb-2">
@@ -150,7 +140,7 @@ export const AudioSelector = ({ onAudioUrlChanged }: AudioSelectorProps) => {
           )}
           <div className={`w-full ${isPlayerLoading ? "invisible" : ""}`}>
             <AudioPlayer
-              audioUrl={audioUrl}
+              audioData={audioData}
               height={50}
               onDurationChanged={(seconds) => setDuration(seconds)}
               onInit={handleAudioPlayerInit}
@@ -184,7 +174,7 @@ export const AudioSelector = ({ onAudioUrlChanged }: AudioSelectorProps) => {
             Finish Recording
           </Button>
         </div>
-      ) : audioUrl ? (
+      ) : audioData ? (
         <div className="flex justify-end">
           <Button className="sm:mt-[9px] sm:mb-auto" size="sm" onClick={reset}>
             Reset
@@ -205,19 +195,15 @@ export const AudioSelector = ({ onAudioUrlChanged }: AudioSelectorProps) => {
             aria-label="audio-input-file"
             className="hidden"
             type="file"
-            onChange={handleFileBrowse}
+            onChange={handleFileSelected}
           />
           <Select
             className="w-36"
-            isMultiline={false}
+            isLoading={isLoadingAudioSamples}
             items={audioSamples}
             placeholder="Use a Sample"
-            selectedKeys={
-              audioUrl &&
-              audioSamples.map((sample) => sample.path).includes(audioUrl)
-                ? [audioUrl]
-                : []
-            }
+            selectedKeys={[]}
+            selectionMode="single"
             size="sm"
             onSelectionChange={handleSampleAudioSelected}
           >

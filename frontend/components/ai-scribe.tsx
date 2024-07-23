@@ -17,7 +17,7 @@ type GeneratedNote = {
 };
 
 export const AIScribe = () => {
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [audioData, setAudioData] = useState<Blob | null>(null);
   const [transcript, setTranscript] = useState<string | null>(null);
   const [summaryType, setSummaryType] = useState<string>("Full Visit");
   const [generatedNote, setGeneratedNote] = useState<GeneratedNote | null>(
@@ -45,21 +45,18 @@ export const AIScribe = () => {
 
     // Transcribe new audio.
     transcribeAudio();
-  }, [audioUrl]);
+  }, [audioData]);
 
   const transcribeAudio = async () => {
-    if (audioUrl) {
-      const audioData = await fetch(audioUrl).then((r) => r.blob());
-
-      const fileExtension =
-        audioData.type.split(";")[0].split("/")[1] || "webm";
-      const filename = `recording.${fileExtension}`;
+    if (audioData) {
+      const extension = audioData.type.split(";")[0].split("/")[1] || "webm";
+      const filename = `recording.${extension}`;
       const formData = new FormData();
 
       formData.append("recording", audioData, filename);
-      const data = await actions.transcribeAudio(formData);
+      const transcript = await actions.transcribeAudio(formData);
 
-      setTranscript(data.text);
+      setTranscript(transcript.text);
     }
   };
 
@@ -67,9 +64,9 @@ export const AIScribe = () => {
     setGeneratedNote(null);
     if (transcript) {
       setIsNoteGenerating(true);
-      const data = await actions.generateNote(transcript, summaryType);
+      const note = await actions.generateNote(transcript, summaryType);
 
-      setGeneratedNote({ text: data.text, type: summaryType });
+      setGeneratedNote({ text: note.text, type: summaryType });
       setIsNoteGenerating(false);
     }
   };
@@ -82,8 +79,8 @@ export const AIScribe = () => {
 
   return (
     <div className="flex flex-col gap-4">
-      <AudioSelector onAudioUrlChanged={setAudioUrl} />
-      {audioUrl && (
+      <AudioSelector onAudioDataChanged={setAudioData} />
+      {audioData && (
         <div className="flex flex-col gap-6">
           <Divider />
           <div className="flex flex-row items-center justify-center gap-4">
@@ -124,7 +121,7 @@ export const AIScribe = () => {
           {generatedNote && (
             <div className="flex flex-col justify-center gap-6">
               <Divider />
-              <Card>
+              <Card radius="sm" shadow="sm">
                 <CardHeader className="flex flex-row gap-4 justify-between items-center">
                   <p className="text-lg font-semibold">{generatedNote.type}</p>
                   <Button color="default" size="sm" onClick={copyNote}>
