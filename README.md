@@ -215,3 +215,25 @@ In your Snowflake SQL worksheet:
     ```sql
     SHOW ENDPOINTS IN SERVICE jenkins_app;
     ```
+
+## Testing
+### Dr. Weldon minimally viable test script
+
+1. Recording 
+   - 10sec recording
+   - Pause, stop, reset functions
+   - Active recording notification
+2. Basic Transcription/Summarization
+   - 1-2min recording
+   - Latency in transcription 
+   - Latency in note generation (from pushing "submit" <10s ideal, <30sec good, <1min tolerable)
+3. Full Summarization
+   - 5+ minute recording, confirm latency numbers at AHS facility
+   - Check all note types for continuity and quality
+   - Format of notes is useable in copy/paste with no editing
+   - Copy button working
+4. Live Testing
+   - Try on shift (when approved)
+5. Other
+   - Authentication
+   - Multiple concurrent users
