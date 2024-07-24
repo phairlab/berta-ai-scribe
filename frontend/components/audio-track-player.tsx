@@ -31,9 +31,51 @@ export interface AudioPlayerControls {
   endRecording: () => void;
 }
 
-type AudioPlayerProps = {
-  audioData?: Blob | null;
-  height?: number;
+class Controls implements AudioPlayerControls {
+  public constructor(
+    private wavesurfer: Wavesurfer,
+    private recorder: RecordPlugin,
+  ) {}
+
+  public playPause = () => {
+    this.wavesurfer.playPause();
+  };
+
+  public startRecording = async () => {
+    if (this.recorder && !this.recorder.isRecording()) {
+      const devices = await RecordPlugin.getAvailableAudioDevices();
+
+      if (devices.length == 0) {
+        // TODO: Handle no mic.
+        return;
+      }
+
+      await this.recorder.startMic({ deviceId: devices[0].deviceId });
+      await this.recorder.startRecording({
+        deviceId: devices[0].deviceId,
+      });
+    }
+  };
+
+  public togglePauseRecording = () => {
+    if (this.recorder.isRecording()) {
+      this.recorder.pauseRecording();
+    } else if (this.recorder.isPaused()) {
+      this.recorder.resumeRecording();
+    }
+  };
+
+  public endRecording = () => {
+    if (this.recorder.isRecording() || this.recorder.isPaused()) {
+      this.recorder.stopRecording();
+      this.recorder.stopMic();
+    }
+  };
+}
+
+type AudioTrackPlayerProps = {
+  audioData: Blob | null;
+  height: number;
   onInit?: (controls: AudioPlayerControls) => void;
   onDurationChanged?: (seconds: number | null) => void;
   onLoading?: () => void;
@@ -46,20 +88,9 @@ type AudioPlayerProps = {
   onRecordingEnded?: (recordingData: Blob) => void;
 };
 
-export const AudioPlayer = ({
-  audioData = null,
-  height = 70,
-  onInit,
-  onDurationChanged,
-  onLoading,
-  onReady,
-  onPlay,
-  onPause,
-  onRecordingStarted,
-  onRecordingPaused,
-  onRecordingResumed,
-  onRecordingEnded,
-}: AudioPlayerProps) => {
+export const AudioTrackPlayer = (props: AudioTrackPlayerProps) => {
+  const NO_AUDIO_URL = "no-audio.mp3";
+
   const { theme } = useTheme();
   const wavesurfer = useRef<Wavesurfer | null>(null);
   const recorder = useRef<RecordPlugin | null>(null);
@@ -71,7 +102,7 @@ export const AudioPlayer = ({
   const [duration, setDuration] = useState<number | null>(null);
 
   const [options, setOptions] = useState<Partial<WaveSurferOptions>>({
-    height: height - 20,
+    height: props.height - 20,
     barRadius: 100,
     barWidth: 2,
     progressColor:
@@ -97,59 +128,17 @@ export const AudioPlayer = ({
     renderRecordedAudio: false,
   };
 
-  class Controls implements AudioPlayerControls {
-    public constructor(
-      private wavesurfer: Wavesurfer,
-      private recorder: RecordPlugin,
-    ) {}
-
-    public playPause() {
-      this.wavesurfer.playPause();
-    }
-
-    public async startRecording() {
-      if (this.recorder && !this.recorder.isRecording()) {
-        const devices = await RecordPlugin.getAvailableAudioDevices();
-
-        if (devices.length == 0) {
-          // TODO: Handle no mic.
-          return;
-        }
-
-        await this.recorder.startMic({ deviceId: devices[0].deviceId });
-        await this.recorder.startRecording({
-          deviceId: devices[0].deviceId,
-        });
-      }
-    }
-
-    public togglePauseRecording() {
-      if (this.recorder.isRecording()) {
-        this.recorder.pauseRecording();
-      } else if (this.recorder.isPaused()) {
-        this.recorder.resumeRecording();
-      }
-    }
-
-    public endRecording() {
-      if (this.recorder.isRecording() || this.recorder.isPaused()) {
-        this.recorder.stopRecording();
-        this.recorder.stopMic();
-      }
-    }
-  }
-
   const handleInit = async (ws: Wavesurfer) => {
     wavesurfer.current = ws;
     recorder.current = configureRecorder();
 
     ws.setOptions(options);
 
-    if (audioData) {
-      await ws.loadBlob(audioData);
+    if (props.audioData) {
+      await ws.loadBlob(props.audioData);
     }
 
-    loadedAudioData.current = audioData;
+    loadedAudioData.current = props.audioData;
 
     ws.registerPlugin(HoverPlugin.create());
     ws.registerPlugin(TimelinePlugin.create(timelineOptions));
@@ -160,12 +149,12 @@ export const AudioPlayer = ({
     // Report initialized the first time the player is ready.
     if (!isInitialized) {
       setIsInitialized(true);
-      onInit?.(new Controls(wavesurfer.current!, recorder.current!));
+      props.onInit?.(new Controls(wavesurfer.current!, recorder.current!));
     }
 
     setDuration(seconds);
     setIsReady(true);
-    onReady?.();
+    props.onReady?.();
   };
 
   const handleDestroy = () => {
@@ -175,7 +164,7 @@ export const AudioPlayer = ({
 
   // Handle changes to audio source.
   useEffect(() => {
-    if (isInitialized && audioData !== loadedAudioData.current) {
+    if (isInitialized && props.audioData !== loadedAudioData.current) {
       setIsRecording(false);
       setIsRecordingPaused(false);
       setIsReady(false);
@@ -183,13 +172,13 @@ export const AudioPlayer = ({
 
       wavesurfer.current?.stop();
 
-      if (audioData) {
-        wavesurfer.current?.loadBlob(audioData);
+      if (props.audioData) {
+        wavesurfer.current?.loadBlob(props.audioData);
       }
 
-      loadedAudioData.current = audioData;
+      loadedAudioData.current = props.audioData;
     }
-  }, [audioData]);
+  }, [props.audioData]);
 
   // Handle changes to Wavesurfer options.
   useEffect(() => {
@@ -222,14 +211,14 @@ export const AudioPlayer = ({
   useEffect(() => {
     setOptions({
       ...options,
-      height: height,
+      height: props.height,
     });
-  }, [height]);
+  }, [props.height]);
 
   // Handle changes to duration.
   // Doing this here will ensure the event only fires on actual changes.
   useEffect(() => {
-    onDurationChanged?.(duration);
+    props.onDurationChanged?.(duration);
   }, [duration]);
 
   /** Activate and configure recording functionality for the player. */
@@ -238,24 +227,24 @@ export const AudioPlayer = ({
 
     recordPlugin.on("record-start", () => {
       setIsRecording(true);
-      onRecordingStarted?.();
+      props.onRecordingStarted?.();
     });
 
     recordPlugin.on("record-pause", (_blob) => {
       setIsRecordingPaused(true);
-      onRecordingPaused?.();
+      props.onRecordingPaused?.();
     });
 
     recordPlugin.on("record-resume", () => {
       setIsRecordingPaused(false);
-      onRecordingResumed?.();
+      props.onRecordingResumed?.();
     });
 
     recordPlugin.on("record-end", (blob) => {
       setIsRecording(false);
       setIsRecordingPaused(false);
 
-      onRecordingEnded?.(blob);
+      props.onRecordingEnded?.(blob);
     });
 
     recordPlugin.on("record-progress", (milliseconds) => {
@@ -268,16 +257,16 @@ export const AudioPlayer = ({
   return (
     <AnimatePulse isActive={isRecording && isRecordingPaused}>
       <div
-        className={`w-full flex flex-col h-[${height}px] ${!loadedAudioData.current || !isReady ? "pointer-events-none" : ""}`}
+        className={`w-full flex flex-col h-[${props.height}px] ${!loadedAudioData.current || !isReady ? "pointer-events-none" : ""}`}
       >
         <WavesurferPlayer
-          height={height - 20}
-          url={"no-audio.mp3"}
+          height={props.height - 20}
+          url={NO_AUDIO_URL}
           onDestroy={handleDestroy}
           onInit={handleInit}
-          onLoad={() => onLoading?.()}
-          onPause={() => onPause?.()}
-          onPlay={() => onPlay?.()}
+          onLoad={() => props.onLoading?.()}
+          onPause={() => props.onPause?.()}
+          onPlay={() => props.onPlay?.()}
           onReady={handleReady}
         />
       </div>
