@@ -11,3 +11,8 @@ export type GeneratedNote = {
   modelUsed: string;
   timeToGenerate: number;
 };
+
+export type AudioSample = {
+  name: string;
+  path: string;
+};
