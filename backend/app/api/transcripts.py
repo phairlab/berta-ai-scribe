@@ -24,4 +24,8 @@ async def create(recording: UploadFile = File(...)):
         logger.error(f"Transcription failed: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Transcription failed: {str(e)}")
     
-    return Transcript(generationTime=transcription_ms, method='OpenAI Whisper', text=transcript)
+    return Transcript(
+        text=transcript,
+        timeToGenerate=transcription_ms,
+        serviceUsed='OpenAI Whisper API',
+    )

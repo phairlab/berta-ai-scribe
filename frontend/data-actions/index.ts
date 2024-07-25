@@ -1,14 +1,10 @@
 "use server";
 
-type TranscriptData = {
-  generationTime: number;
-  method: string;
-  text: string;
-};
+import * as Data from "@/data-models";
 
 export const transcribeAudio = async (
   formData: FormData,
-): Promise<TranscriptData> => {
+): Promise<Data.Transcript> => {
   const response = await fetch(
     `${process.env.APP_API_URL}/transcripts/create`,
     {
@@ -20,16 +16,10 @@ export const transcribeAudio = async (
   return response.json();
 };
 
-type GeneratedNoteData = {
-  generationTime: number;
-  model: string;
-  text: string;
-};
-
 export const generateNote = async (
   transcript: string,
   summaryType: string,
-): Promise<GeneratedNoteData> => {
+): Promise<Data.GeneratedNote> => {
   const response = await fetch(`${process.env.APP_API_URL}/summaries/create`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

@@ -13,12 +13,12 @@ const summaryTypes = [
   "Psych",
 ];
 
-type NoteGenerationControlsProps = {
+type AIScribeControlsProps = {
   canSubmit: boolean;
   onSubmit: (summaryType: string) => void;
 };
 
-export const NoteGenerationControls = (props: NoteGenerationControlsProps) => {
+export const AIScribeControls = (props: AIScribeControlsProps) => {
   const [summaryType, setSummaryType] = useState<string>("Full Visit");
 
   return (
