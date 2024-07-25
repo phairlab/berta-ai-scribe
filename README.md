@@ -7,8 +7,11 @@ TODO: Project description.
 - Docker and Docker Compose (both are available as part of [Docker Desktop](https://www.docker.com/products/docker-desktop/))
 - [Node.js](https://nodejs.org/en) 20+ (for local development)
 - [Python 3.11](https://www.python.org/downloads/) (for local development)
+- [FFmpeg](https://www.ffmpeg.org/download.html) (for local development)
 - Snowflake account
 - OpenAI API Key
+
+**Note:** FFmpeg is used for certain audio processing features, such as normalizing file sizes before transcribing audio tracks. It is installed automatically as part of the Docker build, but must be set up and configured independently when running the app in a local development environment.  On certain platforms (such as Windows), the install process is not as simple as with other software.  Please reach out for assistance if needed.
 
 ## Setup
 
@@ -26,21 +29,7 @@ The following steps assume you are using [Visual Studio Code](https://code.visua
 
 #### Python Setup
 
-3. Create a Python virtual environment:
-
-    Using VS Code, <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> and select **Python: Select Interpreter** and then **Create Virtual Environment...** and follow the directions, ensuring you select Python 3.11 if more than one version is installed in your environment.
-
-4. Install Python packages:
-
-    Press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>\`</kbd> to open a new terminal. The prompt should now be prefixed with `(.venv)` indicating it is using the virtual environment created in Step 3.
-
-    Install the required packages using the following command:
-
-    ```console
-    pip install -r requirements.txt
-    ```
-
-5. (Optional) Configure pycache directory for local development.
+3. (Optional) Configure pycache directory for local development.
 
     This only needs to be done once in an environment and applies to all Python projects.
     
@@ -53,6 +42,20 @@ The following steps assume you are using [Visual Studio Code](https://code.visua
     ```
 
     Note that you must restart the VS Code process for it to pick up the new environment variable.  This means closing *all* VS Code windows before reopening.
+
+4. Create a Python virtual environment:
+
+    Using VS Code, <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> and select **Python: Select Interpreter** and then **Create Virtual Environment...** and follow the directions, ensuring you select Python 3.11 if more than one version is installed in your environment.
+
+5. Install Python packages:
+
+    Press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>\`</kbd> to open a new terminal. The prompt should now be prefixed with `(.venv)` indicating it is using the virtual environment created in Step 3.
+
+    Install the required packages using the following command:
+
+    ```console
+    pip install -r requirements.txt
+    ```
 
 #### Node & NextUI Setup
 
