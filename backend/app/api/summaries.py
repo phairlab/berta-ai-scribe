@@ -40,4 +40,10 @@ async def create(data: RequestData):
         logger.error(f"Transcript summarization failed: {str(e)}")
         raise HTTPException(status_code=500, detail="Transcript summarization failed.")
 
-    return GeneratedNote(generationTime=summarization_ms, model='gpt-4o', text=summary)
+    return GeneratedNote(
+        text=summary,
+        noteType=data.summaryType,
+        serviceUsed="OpenAI API",
+        modelUsed='gpt-4o',
+        timeToGenerate=summarization_ms,
+    )

@@ -1,11 +1,13 @@
 from pydantic import BaseModel
 
 class Transcript(BaseModel):
-    generationTime: int
-    method: str
     text: str
+    serviceUsed: str
+    timeToGenerate: int
 
 class GeneratedNote(BaseModel):
-    generationTime: int
-    model: str
     text: str
+    noteType: str
+    serviceUsed: str
+    modelUsed: str
+    timeToGenerate: int

@@ -3,70 +3,68 @@
 import { useEffect, useState } from "react";
 import { Divider } from "@nextui-org/divider";
 
-import { AudioSource } from "./audio-source";
-import { NoteGenerationControls } from "./note-generation-controls";
+import { AIScribeAudioSource } from "./ai-scribe-audio-source";
+import { AIScribeControls } from "./ai-scribe-controls";
 import { SimpleLoadingMessage } from "./simple-loading-message";
-import { GeneratedNote } from "./generated-note";
+import { AIScribeOutput } from "./ai-scribe-output";
 
-import * as actions from "@/app/actions";
-
-type GeneratedNoteData = {
-  text: string;
-  type: string;
-};
+import * as Actions from "@/data-actions";
+import * as Models from "@/data-models";
 
 export const AIScribe = () => {
   const [audioData, setAudioData] = useState<Blob | null>(null);
-  const [transcript, setTranscript] = useState<string | null>(null);
-  const [generatedNote, setGeneratedNote] = useState<GeneratedNoteData | null>(
-    null,
-  );
+  const [transcript, setTranscript] = useState<Models.Transcript | null>(null);
+  const [generatedNote, setGeneratedNote] =
+    useState<Models.GeneratedNote | null>(null);
   const [isNoteGenerating, setIsNoteGenerating] = useState(false);
 
+  // Immediately transcribe new audio.
   useEffect(() => {
-    // Reset values.
+    if (audioData) {
+      transcribeAudio(audioData);
+    }
+  }, [audioData]);
+
+  const handleAudioDataChanged = async (data: Blob | null) => {
+    // Reset state.
     setTranscript(null);
     setGeneratedNote(null);
     setIsNoteGenerating(false);
 
-    // Transcribe new audio.
-    transcribeAudio();
-  }, [audioData]);
+    // Save new audio data.
+    setAudioData(data);
+  };
 
-  const transcribeAudio = async () => {
-    if (audioData) {
-      const extension = audioData.type.split(";")[0].split("/")[1] || "webm";
-      const filename = `recording.${extension}`;
-      const formData = new FormData();
+  const transcribeAudio = async (data: Blob) => {
+    const mimeType = data.type;
+    const extension = mimeType.split(";")[0].split("/")[1] || "webm";
+    const filename = `recording.${extension}`;
+    const formData = new FormData();
 
-      formData.append("recording", audioData, filename);
-      const transcript = await actions.transcribeAudio(formData);
+    formData.append("recording", data, filename);
+    const transcript = await Actions.transcribeAudio(formData);
 
-      setTranscript(transcript.text);
-    }
+    setTranscript(transcript);
   };
 
   const generateNote = async (summaryType: string) => {
     setGeneratedNote(null);
     if (transcript) {
       setIsNoteGenerating(true);
-      const note = await actions.generateNote(transcript, summaryType);
+      const note = await Actions.generateNote(transcript.text, summaryType);
 
-      setGeneratedNote({ text: note.text, type: summaryType });
+      setGeneratedNote(note);
       setIsNoteGenerating(false);
     }
   };
 
   return (
     <div className="flex flex-col gap-4">
-      <AudioSource onAudioDataChanged={setAudioData} />
+      <AIScribeAudioSource onAudioDataChanged={handleAudioDataChanged} />
       {audioData && (
         <div className="flex flex-col gap-6">
           <Divider />
-          <NoteGenerationControls
-            canSubmit={!!transcript}
-            onSubmit={generateNote}
-          />
+          <AIScribeControls canSubmit={!!transcript} onSubmit={generateNote} />
           {!transcript && (
             <SimpleLoadingMessage>Transcribing Audio</SimpleLoadingMessage>
           )}
@@ -76,10 +74,7 @@ export const AIScribe = () => {
           {generatedNote && (
             <div className="flex flex-col justify-center gap-6">
               <Divider />
-              <GeneratedNote
-                text={generatedNote.text}
-                type={generatedNote.type}
-              />
+              <AIScribeOutput note={generatedNote} />
             </div>
           )}
         </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@nextui-org/button";
 
 import { AudioTrackPlayer, AudioPlayerControls } from "./audio-track-player";
@@ -9,11 +9,11 @@ import { PlayPauseButton } from "./play-pause-button";
 import { RecordButton } from "./record-button";
 import { AudioFileSelect } from "./audio-file-select";
 
-type AudioSourceProps = {
+type AIScribeAudioSourceProps = {
   onAudioDataChanged?: (audioUrl: Blob | null) => void;
 };
 
-export const AudioSource = ({ onAudioDataChanged }: AudioSourceProps) => {
+export const AIScribeAudioSource = (props: AIScribeAudioSourceProps) => {
   const audioControls = useRef<AudioPlayerControls | null>(null);
 
   const [audioData, setAudioData] = useState<Blob | null>(null);
@@ -25,9 +25,11 @@ export const AudioSource = ({ onAudioDataChanged }: AudioSourceProps) => {
   const [isRecordingPaused, setIsRecordingPaused] = useState(false);
   const [duration, setDuration] = useState<number | null>(null);
 
-  useEffect(() => {
-    onAudioDataChanged?.(audioData);
-  }, [audioData]);
+  const setAudioTrack = (data: Blob | null, title: string | null) => {
+    setAudioTitle(title);
+    setAudioData(data);
+    props.onAudioDataChanged?.(data);
+  };
 
   const handleAudioPlayerInit = (controls: AudioPlayerControls) => {
     audioControls.current = controls;
@@ -35,15 +37,14 @@ export const AudioSource = ({ onAudioDataChanged }: AudioSourceProps) => {
   };
 
   const handleFileSelected = (audioData: Blob, audioTitle: string) => {
-    setAudioData(audioData);
-    setAudioTitle(audioTitle);
+    setAudioTrack(audioData, audioTitle);
   };
 
   const handleRecordingFinished = (recordingData: Blob) => {
     setIsRecording(false);
     setIsRecordingPaused(false);
-    setAudioData(recordingData);
-    setAudioTitle("RECORDED AUDIO");
+
+    setAudioTrack(recordingData, "RECORDED AUDIO");
   };
 
   const toggleRecording = async () => {
@@ -59,8 +60,8 @@ export const AudioSource = ({ onAudioDataChanged }: AudioSourceProps) => {
     setIsRecordingPaused(false);
     setIsPlaying(false);
     setDuration(null);
-    setAudioTitle(null);
-    setAudioData(null);
+
+    setAudioTrack(null, null);
   };
 
   return (

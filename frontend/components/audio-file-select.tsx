@@ -5,11 +5,9 @@ import { Button } from "@nextui-org/button";
 import { Select, SelectItem } from "@nextui-org/select";
 
 import { useData } from "@/hooks/useData";
+import * as Models from "@/data-models";
 
-type AudioSample = {
-  name: string;
-  path: string;
-};
+const ACCEPT_FILE_TYPES = ["m4a", "mp3", "webm", "mp4", "mpga", "wav", "mpeg"];
 
 type AudioFileSelectProps = {
   onFileSelected: (audioData: Blob, audioTitle: string) => void;
@@ -19,7 +17,7 @@ export const AudioFileSelect = (props: AudioFileSelectProps) => {
   const inputFile = useRef<HTMLInputElement>(null);
 
   const { data: audioSamples, loading: isLoadingAudioSamples } = useData<
-    AudioSample[]
+    Models.AudioSample[]
   >("audio-samples", []);
 
   const handleFileSelected = (e: React.FormEvent<HTMLInputElement>) => {
@@ -61,6 +59,7 @@ export const AudioFileSelect = (props: AudioFileSelectProps) => {
       </Button>
       <input
         ref={inputFile}
+        accept={ACCEPT_FILE_TYPES.map((type) => `audio/${type}`).join(", ")}
         aria-hidden="true"
         aria-label="audio-input-file"
         className="hidden"
