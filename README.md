@@ -21,7 +21,7 @@ The following steps assume you are using [Visual Studio Code](https://code.visua
 
     Using VS Code, <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> and select **Git: Clone**.
 
-2. Copy the `env.example` file to `.env` and fill in the required environment variables.
+2. In the `backend` folder, copy the `env.example` file to `.env` and fill in the required environment variables.
 
 ### Configure Local Development Environment
 
