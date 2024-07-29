@@ -1,11 +1,17 @@
-# Application Settings
+from dotenv import load_dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file='.env', case_sensitive=True)
+# Load the .env settings into environment variables
+load_dotenv()
 
+class Settings(BaseSettings):
     APP_NAME: str = "Jenkins AI Scribe"
     APP_VERSION: str = "0.1.1"
-    AUDIO_BITRATE: str = "32k"    
+    AUDIO_BITRATE: str = "32k"
+    TRANSCRIPTION_TIMEOUT: int = 60
+    SUMMARIZATION_TIMEOUT: int = 60
+    OPENAI_API_KEY: str
+
+    model_config = SettingsConfigDict(env_file='.env', case_sensitive=True)    
 
 settings = Settings()

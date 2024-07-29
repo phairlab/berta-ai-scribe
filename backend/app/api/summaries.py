@@ -1,9 +1,10 @@
 import os
 import logging
-import time
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from app.services.summarization import summarize_transcript
+from app.services.measurement import Stopwatch
+from app.services.error_handling import AIServiceTimeout, UnrecoverableAIServiceError, TransientAIServiceError
 from app.schemas import GeneratedNote
 
 logger = logging.getLogger(__name__)
@@ -28,22 +29,39 @@ async def create(data: RequestData):
         prompt = f.read()
 
     try:
-        start_time = time.time()
+        with Stopwatch() as summarization_timer:
+            summary = await summarize_transcript(data.transcript, prompt)
 
-        summary = await summarize_transcript(data.transcript, prompt)
-
-        end_time = time.time()
-        summarization_ms = int((end_time - start_time) * 1000)
-
-        logger.info(f"Summary generated in {summarization_ms / 1000:.2f}s")
+        logger.info(f"Summary generated in {summarization_timer.elapsed_ms / 1000:.2f}s")
+    except AIServiceTimeout as e:
+        logger.error(f"AI Service timed out: {str(e)}")
+        raise HTTPException(status_code=504, detail={
+            "message": "Request timed out. Please wait and try again.",
+            "errorDetails": str(e),
+        })
+    except TransientAIServiceError as e:
+        logger.error(f"Request failed due to a temporary problem with the AI Service: {str(e)}")
+        raise HTTPException(status_code=503, detail={
+            "message": "The AI Service is temporarily unavailable. Please wait and try again.",
+            "errorDetails": str(e),
+        })
+    except UnrecoverableAIServiceError as e:
+        logger.error(f"Request failed due to an error in the AI Service: {str(e)}")
+        raise HTTPException(status_code=502, detail={
+            "message": "An error occurred when communicating with the AI Service. Please report this error so it can be resolved.",
+            "errorDetails": str(e),
+        })
     except Exception as e:
-        logger.error(f"Transcript summarization failed: {str(e)}")
-        raise HTTPException(status_code=500, detail="Transcript summarization failed.")
+        logger.error(f"A server error occurred during request: {str(e)}")
+        raise HTTPException(status_code=500, detail={
+            "message": "A server error occurred. Please report the issue so it can be resolved.",
+            "errorDetails": str(e),
+        })
 
     return GeneratedNote(
         text=summary,
         noteType=data.summaryType,
         serviceUsed="OpenAI API",
         modelUsed='gpt-4o',
-        timeToGenerate=summarization_ms,
+        timeToGenerate=summarization_timer.elapsed_ms,
     )
