@@ -76,6 +76,8 @@ export const AIScribeAudioSource = (props: AIScribeAudioSourceProps) => {
         ) : (
           <RecordButton
             isDisabled={!isPlayerInitialized}
+            isRecording={isRecording}
+            isRecordingPaused={isRecordingPaused}
             onClick={toggleRecording}
           />
         )}

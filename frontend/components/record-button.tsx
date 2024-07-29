@@ -1,9 +1,11 @@
 import { Button } from "@nextui-org/button";
 
-import { MicrophoneIcon } from "./icons";
+import { MicrophoneIcon, PauseIcon } from "./icons";
 
 type RecordButtonProps = {
   isDisabled: boolean;
+  isRecording: boolean;
+  isRecordingPaused: boolean;
   onClick?: () => void;
 };
 
@@ -18,7 +20,11 @@ export const RecordButton = (props: RecordButtonProps) => {
       variant="shadow"
       onClick={props.onClick}
     >
-      <MicrophoneIcon className="dark:fill-white" size={40} />
+      {props.isRecording && !props.isRecordingPaused ? (
+        <PauseIcon className="dark:fill-white" size={30} />
+      ) : (
+        <MicrophoneIcon className="dark:fill-white" size={40} />
+      )}
     </Button>
   );
 };
