@@ -2,24 +2,15 @@ import { useState } from "react";
 import { Select, SelectItem } from "@nextui-org/select";
 import { Button } from "@nextui-org/button";
 
-const summaryTypes = [
-  "Dx and DDx",
-  "Feedback",
-  "Full Visit",
-  "Hallway Consult",
-  "Handover Note",
-  "Impression Note",
-  "Medications",
-  "Psych",
-];
-
 type AIScribeControlsProps = {
+  noteTypes: string[];
+  selectedNoteType: string;
   canSubmit: boolean;
-  onSubmit: (summaryType: string) => void;
+  onNoteTypeChanged: (noteType: string) => void;
+  onSubmit: () => void;
 };
 
 export const AIScribeControls = (props: AIScribeControlsProps) => {
-  const [summaryType, setSummaryType] = useState<string>("Full Visit");
   const [isSelectOpen, setIsSelectOpen] = useState(false);
   const [canCloseSelect, setCanCloseSelect] = useState(false);
 
@@ -31,11 +22,11 @@ export const AIScribeControls = (props: AIScribeControlsProps) => {
         disallowEmptySelection={true}
         isOpen={isSelectOpen}
         placeholder="Make a Selection"
-        selectedKeys={[summaryType]}
+        selectedKeys={[props.selectedNoteType]}
         selectionMode="single"
         size="md"
         onChange={(e) => {
-          setSummaryType(e.target.value);
+          props.onNoteTypeChanged(e.target.value);
           setIsSelectOpen(false);
           setCanCloseSelect(false);
         }}
@@ -49,7 +40,7 @@ export const AIScribeControls = (props: AIScribeControlsProps) => {
           }
         }}
       >
-        {summaryTypes.map((type) => (
+        {props.noteTypes.map((type) => (
           <SelectItem key={type}>{type}</SelectItem>
         ))}
       </Select>
@@ -58,7 +49,7 @@ export const AIScribeControls = (props: AIScribeControlsProps) => {
         color="primary"
         isDisabled={!props.canSubmit}
         size="md"
-        onClick={() => props.onSubmit(summaryType)}
+        onClick={() => props.onSubmit()}
       >
         Generate Note
       </Button>

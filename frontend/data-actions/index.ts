@@ -13,6 +13,10 @@ export const transcribeAudio = async (
     },
   );
 
+  if (!response.ok) {
+    throw new Error(await response.text());
+  }
+
   return response.json();
 };
 
@@ -28,6 +32,10 @@ export const generateNote = async (
       summaryType: summaryType,
     }),
   });
+
+  if (!response.ok) {
+    throw new Error(await response.text());
+  }
 
   return response.json();
 };
