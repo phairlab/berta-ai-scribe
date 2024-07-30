@@ -2,7 +2,7 @@ import logging
 import asyncio
 import openai
 from openai import AsyncOpenAI
-from app.services.error_handling import AIServiceTimeout, UnrecoverableAIServiceError, TransientAIServiceError
+from app.services.error_handling import AIServiceTimeout, AIServiceError, TransientAIServiceError
 from app.config import settings
 
 logger = logging.getLogger(__name__)
@@ -21,19 +21,19 @@ async def summarize_transcript(transcript: str, prompt: str) -> str:
             ]
             response = await openai_client.chat.completions.create(model="gpt-4o", temperature=0, messages=messages)
             summary = response.choices[0].message.content
-        except (AIServiceTimeout, UnrecoverableAIServiceError, TransientAIServiceError) as e:
+        except (AIServiceTimeout, AIServiceError, TransientAIServiceError) as e:
             # Propagate service errors that have already been identified in a recursive step.
             raise e
         except openai.APITimeoutError as e:
             # Report normal timeouts and defer downstream for handling strategy.
             raise AIServiceTimeout({
-                "message": f"The OpenAI API service timed out after {settings.SUMMARIZATION_TIMEOUT} seconds. Please wait and try again.",
+                "message": f"The OpenAI API service timed out after {settings.SUMMARIZATION_TIMEOUT} seconds.",
             })
         except (openai.ConflictError, openai.InternalServerError) as e:
             # Attempt simple recovery from transient errors.
             if retries < 1:
-                TransientAIServiceError({
-                    "message": "The OpenAI API service reported a temporary issue with their service. Please wait and try again.",
+                raise TransientAIServiceError({
+                    "message": "The OpenAI API service reported a temporary issue with their service.",
                     "errorDetails": str(e),
                 })
             else:
@@ -48,8 +48,8 @@ async def summarize_transcript(transcript: str, prompt: str) -> str:
                 transcript = await summarize_transcript_with_retry(transcript, prompt, retries=(retries - 1))
         except Exception as e:
             # Handle all other service errors.
-            raise UnrecoverableAIServiceError({
-                "message": "The OpenAI API service reported an issue that prevented it from fulfilling the request. Please report the issue so it can be resolved.",
+            raise AIServiceError({
+                "message": "The OpenAI API service reported an issue that prevented it from fulfilling the request.",
                 "errorDetails": str(e),
             })
 

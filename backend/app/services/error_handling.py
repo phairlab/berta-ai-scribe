@@ -1,8 +1,8 @@
-class AIServiceTimeout(Exception):
+class AIServiceError(Exception):
     pass
 
 class TransientAIServiceError(Exception):
     pass
 
-class UnrecoverableAIServiceError(Exception):
+class AIServiceTimeout(Exception):
     pass

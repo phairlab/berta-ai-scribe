@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from app.services.summarization import summarize_transcript
 from app.services.measurement import Stopwatch
-from app.services.error_handling import AIServiceTimeout, UnrecoverableAIServiceError, TransientAIServiceError
+from app.services.error_handling import AIServiceTimeout, AIServiceError, TransientAIServiceError
 from app.schemas import GeneratedNote
 
 logger = logging.getLogger(__name__)
@@ -16,7 +16,12 @@ class RequestData(BaseModel):
     transcript: str
     summaryType: str = "Full Visit"
 
-@router.post("/create")
+@router.post("/create", response_model=GeneratedNote, responses={
+    500: {"description": "Internal Server Error"},
+    502: {"description": "Bad Gateway: Error reported by AI Service"},
+    503: {"description": "Service Unavailable: AI Service temporarily unavailable"},
+    504: {"description": "Gateway Timeout: AI Service timeout"},
+})
 async def create(data: RequestData):
     summary_file = f"{data.summaryType}.txt"
     summary_path = os.path.join(PROMPTS_FOLDER, summary_file)
@@ -36,25 +41,25 @@ async def create(data: RequestData):
     except AIServiceTimeout as e:
         logger.error(f"AI Service timed out: {str(e)}")
         raise HTTPException(status_code=504, detail={
-            "message": "Request timed out. Please wait and try again.",
+            "message": "Request timed out.",
             "errorDetails": str(e),
         })
     except TransientAIServiceError as e:
         logger.error(f"Request failed due to a temporary problem with the AI Service: {str(e)}")
         raise HTTPException(status_code=503, detail={
-            "message": "The AI Service is temporarily unavailable. Please wait and try again.",
+            "message": "The AI Service is temporarily unavailable.",
             "errorDetails": str(e),
         })
-    except UnrecoverableAIServiceError as e:
+    except AIServiceError as e:
         logger.error(f"Request failed due to an error in the AI Service: {str(e)}")
         raise HTTPException(status_code=502, detail={
-            "message": "An error occurred when communicating with the AI Service. Please report this error so it can be resolved.",
+            "message": "An error occurred when communicating with the AI Service.",
             "errorDetails": str(e),
         })
     except Exception as e:
         logger.error(f"A server error occurred during request: {str(e)}")
         raise HTTPException(status_code=500, detail={
-            "message": "A server error occurred. Please report the issue so it can be resolved.",
+            "message": "A server error occurred.",
             "errorDetails": str(e),
         })
 

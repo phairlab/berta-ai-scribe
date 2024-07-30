@@ -1,8 +1,7 @@
 import time
-from typing import Optional
 
 class Stopwatch():
-    elapsed_ms: Optional[int] = None
+    elapsed_ms: int | None = None
 
     def __enter__(self):
         self._start_time = time.time()
