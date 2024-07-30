@@ -54,16 +54,19 @@ export const AIScribe = () => {
     }
   }, [transcript]);
 
-  const handleAudioDataChanged = async (data: Blob | null) => {
-    // Reset state.
+  const handleAudioDataChanged = (data: Blob | null) => {
+    // Reset dependent state.
     setTranscript(null);
-    setNoteType(DEFAULT_NOTE_TYPE);
     setGeneratedNote(null);
     setIsNoteGenerating(false);
     setError(null);
 
     // Save new audio data.
     setAudioData(data);
+  };
+
+  const handleAudioSourceReset = () => {
+    setNoteType(DEFAULT_NOTE_TYPE);
   };
 
   const transcribeAudio = async (data: Blob) => {
@@ -150,7 +153,10 @@ export const AIScribe = () => {
 
   return (
     <div className="flex flex-col gap-4">
-      <AIScribeAudioSource onAudioDataChanged={handleAudioDataChanged} />
+      <AIScribeAudioSource
+        onAudioDataChanged={handleAudioDataChanged}
+        onReset={handleAudioSourceReset}
+      />
       <div className="flex flex-col gap-6">
         <Divider />
         <AIScribeControls

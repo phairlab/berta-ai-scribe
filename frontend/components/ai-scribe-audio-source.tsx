@@ -11,6 +11,7 @@ import { AudioFileSelect } from "./audio-file-select";
 
 type AIScribeAudioSourceProps = {
   onAudioDataChanged?: (audioUrl: Blob | null) => void;
+  onReset?: () => void;
 };
 
 export const AIScribeAudioSource = (props: AIScribeAudioSourceProps) => {
@@ -62,6 +63,8 @@ export const AIScribeAudioSource = (props: AIScribeAudioSourceProps) => {
     setDuration(null);
 
     setAudioTrack(null, null);
+
+    props.onReset?.();
   };
 
   return (
