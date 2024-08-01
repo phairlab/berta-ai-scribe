@@ -1,11 +1,13 @@
 import os
 import logging
-from fastapi import APIRouter, HTTPException
+
+from fastapi import APIRouter
 from pydantic import BaseModel
+
 from app.services.summarization import summarize_transcript
 from app.services.measurement import Stopwatch
-from app.services.error_handling import AIServiceTimeout, AIServiceError, TransientAIServiceError
-from app.schemas import GeneratedNote
+from app.services.error_handling import AIServiceTimeout, AIServiceError, APIError, BadRequest, TransientAIServiceError
+from app.schemas import ErrorReport, GeneratedNote
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -16,52 +18,36 @@ class RequestData(BaseModel):
     transcript: str
     summaryType: str = "Full Visit"
 
-@router.post("/create", response_model=GeneratedNote, responses={
-    500: {"description": "Internal Server Error"},
-    502: {"description": "Bad Gateway: Error reported by AI Service"},
-    503: {"description": "Service Unavailable: AI Service temporarily unavailable"},
-    504: {"description": "Gateway Timeout: AI Service timeout"},
+@router.post("/", response_model=GeneratedNote, responses={
+    400: {"description": "Bad Request", "model": ErrorReport},
+    500: {"description": "Internal Server Error", "model": ErrorReport},
+    502: {"description": "AI Service Error", "model": ErrorReport},
+    503: {"description": "AI Service Unavailable", "model": ErrorReport},
+    504: {"description": "AI Service Timeout", "model": ErrorReport},
 })
-async def create(data: RequestData):
+async def create_summary(data: RequestData):
     summary_file = f"{data.summaryType}.txt"
     summary_path = os.path.join(PROMPTS_FOLDER, summary_file)
     
     if not os.path.exists(summary_path):
-        logger.error(f"The requested summary type '{data.summaryType}' is not valid.")
-        raise HTTPException(status_code=400, detail="Invalid Summary Type.")
-    
-    with open(summary_path, "r", errors="ignore") as f:
-        prompt = f.read()
+        error_message = f"{data.summaryType} is not a valid note type."
+        logger.error(error_message)
+        raise BadRequest(error_message).to_http()
 
-    try:
+    try:        
+        with open(summary_path, "r", errors="ignore") as f:
+            prompt = f.read()
+
         with Stopwatch() as summarization_timer:
             summary = await summarize_transcript(data.transcript, prompt)
 
         logger.info(f"Summary generated in {summarization_timer.elapsed_ms / 1000:.2f}s")
-    except AIServiceTimeout as e:
-        logger.error(f"AI Service timed out: {str(e)}")
-        raise HTTPException(status_code=504, detail={
-            "message": "Request timed out.",
-            "errorDetails": str(e),
-        })
-    except TransientAIServiceError as e:
-        logger.error(f"Request failed due to a temporary problem with the AI Service: {str(e)}")
-        raise HTTPException(status_code=503, detail={
-            "message": "The AI Service is temporarily unavailable.",
-            "errorDetails": str(e),
-        })
-    except AIServiceError as e:
-        logger.error(f"Request failed due to an error in the AI Service: {str(e)}")
-        raise HTTPException(status_code=502, detail={
-            "message": "An error occurred when communicating with the AI Service.",
-            "errorDetails": str(e),
-        })
+    except (AIServiceError, AIServiceTimeout, TransientAIServiceError) as e:
+        logger.error(e)
+        raise e.to_http()
     except Exception as e:
-        logger.error(f"A server error occurred during request: {str(e)}")
-        raise HTTPException(status_code=500, detail={
-            "message": "A server error occurred.",
-            "errorDetails": str(e),
-        })
+        logger.error(e)
+        raise APIError(str(e)).to_http()
 
     return GeneratedNote(
         text=summary,
