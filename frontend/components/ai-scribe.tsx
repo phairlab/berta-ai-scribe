@@ -9,14 +9,8 @@ import { SimpleLoadingMessage } from "./simple-loading-message";
 import { AIScribeOutput } from "./ai-scribe-output";
 import { ErrorReport } from "./error-report";
 
-import * as Actions from "@/data-actions";
 import * as Models from "@/data-models";
-import { DataError, UnknownError } from "@/errors";
-
-type ErrorDetails = {
-  errorInfo: DataError;
-  retryAction?: () => void;
-};
+import { useDataAction } from "@/hooks/use-data-action";
 
 const NOTE_TYPES = [
   "Dx and DDx",
@@ -30,125 +24,48 @@ const NOTE_TYPES = [
 ];
 
 const DEFAULT_NOTE_TYPE = "Full Visit";
+const TRANSCRIPTION_TIMEOUT = 60;
+const NOTE_GENERATION_TIMEOUT = 60;
 
 export const AIScribe = () => {
-  const [audioData, setAudioData] = useState<Blob | null>(null);
-  const [transcript, setTranscript] = useState<Models.Transcript | null>(null);
+  const [audioData, setAudioData] = useState<File | null>(null);
   const [noteType, setNoteType] = useState<string>(DEFAULT_NOTE_TYPE);
-  const [generatedNote, setGeneratedNote] =
-    useState<Models.GeneratedNote | null>(null);
-  const [isTranscribing, setIsTranscribing] = useState(false);
-  const [isNoteGenerating, setIsNoteGenerating] = useState(false);
-  const [error, setError] = useState<ErrorDetails | null>(null);
+
+  const { action: transcribeAudio, result: transcript } =
+    useDataAction<Models.Transcript>("transcripts", "POST", {
+      recording: audioData,
+    });
+
+  const { action: generateNote, result: generatedNote } =
+    useDataAction<Models.GeneratedNote>("generated-notes", "POST", {
+      transcript: transcript?.text ?? null,
+      summaryType: noteType,
+    });
 
   // Immediately transcribe new audio.
   useEffect(() => {
+    transcribeAudio.executing && transcribeAudio.abort();
+    generateNote.executing && generateNote.abort();
+
     if (audioData) {
-      transcribeAudio(audioData);
+      transcribeAudio.execute(TRANSCRIPTION_TIMEOUT);
     }
   }, [audioData]);
 
+  // Immediately generate note on transcription.
   useEffect(() => {
-    if (transcript) {
-      generateNote(transcript, noteType);
+    if (transcript && !generateNote.executing) {
+      generateNote.execute(NOTE_GENERATION_TIMEOUT);
     }
   }, [transcript]);
 
-  const handleAudioDataChanged = (data: Blob | null) => {
-    // Reset dependent state.
-    setTranscript(null);
-    setGeneratedNote(null);
-    setIsNoteGenerating(false);
-    setError(null);
-
+  const handleAudioDataChanged = (data: File | null) => {
     // Save new audio data.
     setAudioData(data);
   };
 
   const handleAudioSourceReset = () => {
     setNoteType(DEFAULT_NOTE_TYPE);
-  };
-
-  const transcribeAudio = async (data: Blob) => {
-    setTranscript(null);
-    setIsTranscribing(true);
-
-    const mimeType = data.type;
-    const extension = mimeType.split(";")[0].split("/")[1] || "webm";
-    const filename = `recording.${extension}`;
-    const formData = new FormData();
-
-    formData.append("recording", data, filename);
-
-    try {
-      const transcript = await Actions.transcribeAudio(formData);
-
-      setTranscript(transcript);
-    } catch (e: unknown) {
-      const retry = async () => {
-        setError(null);
-        await transcribeAudio(data);
-      };
-
-      if ((e as DataError).isDataError) {
-        const error = e as DataError;
-        const errorDetails: ErrorDetails = {
-          errorInfo: error,
-          retryAction: retry,
-        };
-
-        setError(errorDetails);
-      } else {
-        // Handle unknown/unexpected errors.
-        const errorDetails: ErrorDetails = {
-          errorInfo: new UnknownError((e as Error).message),
-          retryAction: retry,
-        };
-
-        setError(errorDetails);
-      }
-    } finally {
-      setIsTranscribing(false);
-    }
-  };
-
-  const generateNote = async (
-    transcript: Models.Transcript,
-    noteType: string,
-  ) => {
-    setGeneratedNote(null);
-    setIsNoteGenerating(true);
-
-    try {
-      const note = await Actions.generateNote(transcript.text, noteType);
-
-      setGeneratedNote(note);
-    } catch (e: unknown) {
-      const retry = async () => {
-        setError(null);
-        await generateNote(transcript, noteType);
-      };
-
-      if ((e as DataError).isDataError) {
-        const error = e as DataError;
-        const errorDetails: ErrorDetails = {
-          errorInfo: error,
-          retryAction: retry,
-        };
-
-        setError(errorDetails);
-      } else {
-        // Handle unknown/unexpected errors.
-        const errorDetails: ErrorDetails = {
-          errorInfo: new UnknownError((e as Error).message),
-          retryAction: retry,
-        };
-
-        setError(errorDetails);
-      }
-    } finally {
-      setIsNoteGenerating(false);
-    }
   };
 
   return (
@@ -160,22 +77,30 @@ export const AIScribe = () => {
       <div className="flex flex-col gap-6">
         <Divider />
         <AIScribeControls
-          canSubmit={!!audioData && !isTranscribing && !isNoteGenerating}
+          canSubmit={
+            !!audioData && !transcribeAudio.executing && !generateNote.executing
+          }
           noteTypes={NOTE_TYPES}
           selectedNoteType={noteType}
           onNoteTypeChanged={(noteType) => setNoteType(noteType)}
-          onSubmit={() => transcript && generateNote(transcript, noteType)}
+          onSubmit={() => transcript && generateNote.execute()}
         />
-        {isTranscribing && (
+        {transcribeAudio.executing && (
           <SimpleLoadingMessage>Transcribing Audio</SimpleLoadingMessage>
         )}
-        {isNoteGenerating && (
+        {generateNote.executing && (
           <SimpleLoadingMessage>Generating: {noteType}</SimpleLoadingMessage>
         )}
-        {error && (
+        {transcribeAudio.error && (
           <ErrorReport
-            errorInfo={error.errorInfo}
-            retryAction={error.retryAction}
+            errorInfo={transcribeAudio.error}
+            retryAction={transcribeAudio.execute}
+          />
+        )}
+        {generateNote.error && (
+          <ErrorReport
+            errorInfo={generateNote.error}
+            retryAction={generateNote.execute}
           />
         )}
         {generatedNote && (

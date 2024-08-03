@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { formatDuration } from "@/utility/audio-helpers";
+import { formatDuration } from "@/utility/display";
 
 type AudioTrackInfoProps = {
   duration: number | null;

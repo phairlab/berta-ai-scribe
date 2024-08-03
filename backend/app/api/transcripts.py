@@ -1,31 +1,31 @@
 import logging
 from pathlib import Path
 
-from fastapi import APIRouter, UploadFile
+from fastapi import APIRouter, File, UploadFile
 
 from app.config import settings
 from app.services.audio_processing import standardize_audio, split_audio
 from app.services.transcription import transcribe_audio
 from app.services.measurement import Stopwatch
 from app.services.error_handling import APIError, AIServiceTimeout, AudioProcessingError, TransientAIServiceError, AIServiceError, UnsupportedMediaFormat
-from app.schemas import Transcript, ErrorReport
+from app.schemas import Transcript, APIErrorReport
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-@router.post("/", response_model=Transcript, responses={
-    415: {"description": "Unsupported Media Type", "model": ErrorReport},
-    500: {"description": "Internal Server Error", "model": ErrorReport},
-    502: {"description": "AI Service Error", "model": ErrorReport},
-    503: {"description": "AI Service Unavailable", "model": ErrorReport},
-    504: {"description": "AI Service Timeout", "model": ErrorReport},
+@router.post("", response_model=Transcript, responses={
+    415: {"description": "Unsupported Media Type", "model": APIErrorReport},
+    500: {"description": "Internal Server Error", "model": APIErrorReport},
+    502: {"description": "AI Service Error", "model": APIErrorReport},
+    503: {"description": "AI Service Unavailable", "model": APIErrorReport},
+    504: {"description": "AI Service Timeout", "model": APIErrorReport},
 })
 async def create_transcript(recording: UploadFile):
     # Check that the file is of a supported type.
     if recording.content_type not in [f"audio/{t}" for t in settings.SUPPORTED_AUDIO_TYPES]:
         error_message = f"{recording.content_type} is not a supported content type for this operation. Only audio files of the following type are supported: [{", ".join(settings.SUPPORTED_AUDIO_TYPES)}]."
         logger.error(error_message)
-        raise UnsupportedMediaFormat(error_message).to_http()
+        raise UnsupportedMediaFormat(error_message).to_http_exception()
     
     try:
         with Stopwatch() as audio_processing_timer:
@@ -64,10 +64,10 @@ async def create_transcript(recording: UploadFile):
         logger.info(f"Transcript generated ({transcription_timer.elapsed_ms / 1000:.2f}s)")
     except (AudioProcessingError, AIServiceError, AIServiceTimeout, TransientAIServiceError) as e:
         logger.error(e)
-        raise e.to_http()
+        raise e.to_http_exception()
     except Exception as e:
         logger.error(e)
-        raise APIError(str(e)).to_http()
+        raise APIError(str(e)).to_http_exception()
     finally:
         # Release temporary files created.
         full_audio.close()

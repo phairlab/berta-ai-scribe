@@ -1,12 +1,12 @@
 from pydantic import BaseModel
 
-class ErrorDetail(BaseModel):
+class APIErrorDetail(BaseModel):
+    name: str
     message: str
     shouldRetry: bool
-    details: str
 
-class ErrorReport(BaseModel):
-    detail: ErrorDetail
+class APIErrorReport(BaseModel):
+    detail: APIErrorDetail
 
 class Message(BaseModel):
     message: str

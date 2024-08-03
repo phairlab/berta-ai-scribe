@@ -14,7 +14,7 @@ import RecordPlugin, {
 
 import { AnimatePulse } from "./animate-pulse";
 
-import { tailwindColors } from "@/utility/color-helpers";
+import { tailwindColors } from "@/utility/display";
 
 /** Set of controls for audio playback and recording. */
 export interface AudioPlayerControls {
@@ -85,7 +85,7 @@ type AudioTrackPlayerProps = {
   onRecordingStarted?: () => void;
   onRecordingPaused?: () => void;
   onRecordingResumed?: () => void;
-  onRecordingEnded?: (recordingData: Blob) => void;
+  onRecordingEnded?: (recording: File) => void;
 };
 
 export const AudioTrackPlayer = (props: AudioTrackPlayerProps) => {
@@ -126,6 +126,7 @@ export const AudioTrackPlayer = (props: AudioTrackPlayerProps) => {
     scrollingWaveform: true,
     scrollingWaveformWindow: 15,
     renderRecordedAudio: false,
+    mimeType: "audio/webm",
   };
 
   const handleInit = async (ws: Wavesurfer) => {
@@ -244,7 +245,9 @@ export const AudioTrackPlayer = (props: AudioTrackPlayerProps) => {
       setIsRecording(false);
       setIsRecordingPaused(false);
 
-      props.onRecordingEnded?.(blob);
+      const file = new File([blob], "recording.webm");
+
+      props.onRecordingEnded?.(file);
     });
 
     recordPlugin.on("record-progress", (milliseconds) => {

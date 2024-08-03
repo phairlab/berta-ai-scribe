@@ -1,4 +1,13 @@
-// For cases when these colors need to be used in code instead of css.
+export function formatDuration(seconds: number) {
+  return [
+    Math.floor((seconds % 3600) / 60), // minutes
+    Math.floor(seconds % 60), // seconds
+  ]
+    .map((v) => (v < 10 ? `0${v}` : v))
+    .join(":");
+}
+
+// For cases when these colors need to be used in code instead of css classes.
 // https://tailwindcss.com/docs/customizing-colors
 export const tailwindColors = {
   "zinc-400": "#a1a1aa",

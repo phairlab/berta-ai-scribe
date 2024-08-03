@@ -1,8 +1,6 @@
 import logging
 from pathlib import Path
 
-from uvicorn.config import LOGGING_CONFIG
-from uvicorn.logging import ColourizedFormatter, AccessFormatter, DefaultFormatter
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html, get_swagger_ui_oauth2_redirect_html
@@ -53,7 +51,7 @@ app.add_middleware(
 # ENDPOINTS
 
 # Root
-@app.get("/", response_model=Message, tags=["Miscellaneous"])
+@app.get("", response_model=Message, tags=["Miscellaneous"])
 async def root():
     return {"message": f"Welcome to the {settings.APP_NAME} API"}
 

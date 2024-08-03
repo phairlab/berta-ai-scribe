@@ -10,14 +10,14 @@ import { RecordButton } from "./record-button";
 import { AudioFileSelect } from "./audio-file-select";
 
 type AIScribeAudioSourceProps = {
-  onAudioDataChanged?: (audioUrl: Blob | null) => void;
+  onAudioDataChanged?: (audioUrl: File | null) => void;
   onReset?: () => void;
 };
 
 export const AIScribeAudioSource = (props: AIScribeAudioSourceProps) => {
   const audioControls = useRef<AudioPlayerControls | null>(null);
 
-  const [audioData, setAudioData] = useState<Blob | null>(null);
+  const [audioData, setAudioData] = useState<File | null>(null);
   const [audioTitle, setAudioTitle] = useState<string | null>(null);
   const [isPlayerInitialized, setIsPlayerInitialized] = useState(false);
   const [isPlayerLoading, setIsPlayerLoading] = useState(true);
@@ -26,7 +26,7 @@ export const AIScribeAudioSource = (props: AIScribeAudioSourceProps) => {
   const [isRecordingPaused, setIsRecordingPaused] = useState(false);
   const [duration, setDuration] = useState<number | null>(null);
 
-  const setAudioTrack = (data: Blob | null, title: string | null) => {
+  const setAudioTrack = (data: File | null, title: string | null) => {
     setAudioTitle(title);
     setAudioData(data);
     props.onAudioDataChanged?.(data);
@@ -37,15 +37,15 @@ export const AIScribeAudioSource = (props: AIScribeAudioSourceProps) => {
     setIsPlayerInitialized(true);
   };
 
-  const handleFileSelected = (audioData: Blob, audioTitle: string) => {
+  const handleFileSelected = (audioData: File, audioTitle: string) => {
     setAudioTrack(audioData, audioTitle);
   };
 
-  const handleRecordingFinished = (recordingData: Blob) => {
+  const handleRecordingFinished = (recording: File) => {
     setIsRecording(false);
     setIsRecordingPaused(false);
 
-    setAudioTrack(recordingData, "RECORDED AUDIO");
+    setAudioTrack(recording, "RECORDED AUDIO");
   };
 
   const toggleRecording = async () => {
