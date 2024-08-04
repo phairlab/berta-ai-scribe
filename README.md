@@ -23,6 +23,8 @@ The following steps assume you are using [Visual Studio Code](https://code.visua
 
 2. In the `backend` folder, copy the `env.example` file to `.env` and fill in the required environment variables.
 
+3. In the `frontend` folder, copy the `env.local.example` file to `.env.local` and fill in the required environment variables.
+
 ### Configure Local Development Environment
 
 **Note:** These steps are not required to run the app locally using Docker.

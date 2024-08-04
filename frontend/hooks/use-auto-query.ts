@@ -4,16 +4,28 @@ import { useEffect, useRef } from "react";
 
 import { useDataAction } from "./use-data-action";
 
+import { logger } from "@/utility/logging";
+
+const log = logger.child({ module: "hooks/use-auto-query" });
+
 export const useAutoQuery = <T>(path: string) => {
   const { action, result } = useDataAction<T>(path, "GET");
-  const { execute, abort, executing, error } = action;
+  const { execute, abort, executing, error, id } = action;
   const retryTimer = useRef<NodeJS.Timeout | null>(null);
 
   // On initial mount, execute the query.
   useEffect(() => {
+    log.trace(
+      { correlationId: id.current },
+      `Executing Auto-Query GET ${path}`,
+    );
     execute();
 
     return () => {
+      log.trace(
+        { correlationId: id.current },
+        `Disposing Auto-Query GET ${path}`,
+      );
       if (retryTimer.current) {
         clearTimeout(retryTimer.current);
         retryTimer.current = null;
@@ -27,6 +39,10 @@ export const useAutoQuery = <T>(path: string) => {
   useEffect(() => {
     if (error?.detail.shouldRetry) {
       retryTimer.current = setTimeout(() => {
+        log.trace(
+          { correlationId: id.current },
+          `Retrying Auto-Query GET ${path}`,
+        );
         execute();
         retryTimer.current = null;
       }, 3000);

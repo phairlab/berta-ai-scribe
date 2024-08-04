@@ -1,8 +1,24 @@
+import suuid from "short-uuid";
+
+import { logger } from "./logging";
+
 import { DataError, ValidationError, isValidationError } from "@/data-models";
+
+const log = logger.child({ module: "utility/network" });
+
+export const CORRELATION_ID_HEADER = "Jenkins-Correlation-Id";
 
 export const UnexpectedError = (error_message: string): DataError => ({
   detail: {
     name: "Unexpected Error",
+    message: error_message,
+    shouldRetry: false,
+  },
+});
+
+export const EnvironmentError = (error_message: string): DataError => ({
+  detail: {
+    name: "Environment Error",
     message: error_message,
     shouldRetry: false,
   },
@@ -32,13 +48,13 @@ const ServerUnresponsiveError: DataError = {
   },
 };
 
-const NetworkInterruptedError: DataError = {
+const BadResponse = (error_message: string): DataError => ({
   detail: {
-    name: "Network Interrupted",
-    message: "The network was interrupted while waiting for a response.",
+    name: "Bad Response",
+    message: error_message,
     shouldRetry: true,
   },
-};
+});
 
 const TimeoutError: DataError = {
   detail: {
@@ -56,7 +72,29 @@ const RequestAborted: DataError = {
   },
 };
 
-async function controlledFetch(path: string, init?: RequestInit) {
+function logFetchError(
+  method: string,
+  path: string,
+  correlationId: string,
+  error: Error,
+) {
+  const errorMessage = `Fetch Failure ${method} ${path}: [${error.name}] ${error.message}`;
+
+  log.error({ correlationId: correlationId }, errorMessage);
+}
+
+async function performFetch(
+  path: string,
+  correlationId: string,
+  init?: RequestInit,
+) {
+  const method = init?.method || "GET";
+
+  log.trace(
+    { correlationId: correlationId },
+    `Performing Fetch ${method} ${path}`,
+  );
+
   try {
     const response = await fetch(path, init);
 
@@ -69,10 +107,17 @@ async function controlledFetch(path: string, init?: RequestInit) {
         data = APIValidationFailed(data);
       }
 
+      log.trace(
+        { correlationId: correlationId },
+        `Fetch Success ${method} ${path}`,
+      );
+
       return Response.json(data, { status: status_code });
-    } catch {
+    } catch (e: unknown) {
       // Failed to read response successfully.
-      return Response.json(NetworkInterruptedError, { status: 503 });
+      logFetchError(method, path, correlationId, e as Error);
+
+      return Response.json(BadResponse((e as Error).message), { status: 500 });
     }
   } catch (e: unknown) {
     if (e instanceof DOMException && e.name === "TimeoutError") {
@@ -81,36 +126,121 @@ async function controlledFetch(path: string, init?: RequestInit) {
       return Response.json(RequestAborted, { status: 400 });
     } else if (e instanceof TypeError) {
       // Failed to fetch (i.e. server did not respond).
+      logFetchError(method, path, correlationId, e);
+
       return Response.json(ServerUnresponsiveError, { status: 503 });
     } else {
       // Report any unexpected server errors.
+      logFetchError(method, path, correlationId, e as Error);
+
       return Response.json(ServerError((e as Error).message), { status: 500 });
     }
   }
 }
 
-export async function apiFetch(path: string, init?: RequestInit) {
+export async function APIFetch(
+  path: string,
+  correlationId: string,
+  init?: RequestInit,
+) {
   const apiUrlBase = process.env.APP_API_URL;
+  const fullPath = `${apiUrlBase}/${path}`;
 
   if (!apiUrlBase) {
-    throw new Error(
-      "The apiFetch utility function can only be used within a server component.",
-    );
+    const error_message =
+      "Either the environment was not set correctly, or an API fetch was attempted from a client component.";
+
+    log.error(error_message);
+
+    return Response.json(EnvironmentError(error_message), { status: 400 });
   }
 
-  return controlledFetch(`${apiUrlBase}/${path}`, init);
+  const method = init?.method || "GET";
+
+  log.trace(
+    { correlationId: correlationId },
+    `API ${method} ${fullPath} Request`,
+  );
+
+  const start = performance.now();
+  const response = await performFetch(fullPath, correlationId, init);
+  const duration = Math.floor(performance.now() - start);
+
+  log.info(
+    { correlationId: correlationId },
+    `API ${method} ${fullPath} ${response.status} in ${duration}ms`,
+  );
+
+  return response;
 }
 
-export function clientFetch(path: string, init?: RequestInit) {
+export async function clientFetch(
+  path: string,
+  correlationId: string,
+  init?: RequestInit,
+) {
   "use client";
+  const fullPath = `/data/${path}`;
+  const method = init?.method || "GET";
 
-  return controlledFetch(`data/${path}`, init);
+  log.trace(
+    { correlationId: correlationId },
+    `CLIENT ${method} ${fullPath} Request`,
+  );
+
+  const start = performance.now();
+  const response = await performFetch(fullPath, correlationId, init);
+  const duration = Math.floor(performance.now() - start);
+
+  log.info(
+    { correlationId: correlationId },
+    `CLIENT ${method} ${fullPath} ${response.status} in ${duration}ms`,
+  );
+
+  return response;
 }
 
 export async function downloadFile(path: string, filename: string) {
-  const response = await fetch(path);
-  const data = await response.blob();
-  const file = new File([data], filename, { type: data.type });
+  "use client";
 
-  return file;
+  const correlationId = suuid.generate();
+
+  log.trace({ correlationId: correlationId }, `CLIENT DOWNLOAD ${path}`);
+
+  try {
+    const start = performance.now();
+    const response = await fetch(path);
+
+    if (response.ok) {
+      const data = await response.blob();
+      const duration = Math.floor(performance.now() - start);
+
+      const file = new File([data], filename, { type: data.type });
+
+      log.info(
+        { correlationId: correlationId, mimeType: data?.type },
+        `CLIENT DOWNLOAD ${path} ${response.status} in ${duration}ms`,
+      );
+
+      return file;
+    } else {
+      const duration = Math.floor(performance.now() - start);
+
+      log.info(
+        { correlationId: correlationId },
+        `CLIENT DOWNLOAD ${path} ${response.status} in ${duration}ms`,
+      );
+
+      const errorMessage = await response.text();
+
+      throw new Error(errorMessage);
+    }
+  } catch (e: unknown) {
+    log.error(
+      { correlationId: correlationId },
+      `CLIENT DOWNLOAD FAILED: [${(e as Error).name}] ${(e as Error).message}`,
+    );
+
+    throw e;
+  }
 }

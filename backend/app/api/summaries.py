@@ -43,7 +43,6 @@ async def create_summary(data: RequestData):
 
         logger.info(f"Summary generated in {summarization_timer.elapsed_ms / 1000:.2f}s")
     except (AIServiceError, AIServiceTimeout, TransientAIServiceError) as e:
-        logger.error(e)
         raise e.to_http_exception()
     except Exception as e:
         logger.error(e)

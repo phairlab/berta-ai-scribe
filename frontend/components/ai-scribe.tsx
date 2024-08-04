@@ -11,6 +11,9 @@ import { ErrorReport } from "./error-report";
 
 import * as Models from "@/data-models";
 import { useDataAction } from "@/hooks/use-data-action";
+import { logger } from "@/utility/logging";
+
+const log = logger.child({ module: "components/ai-scribe" });
 
 const NOTE_TYPES = [
   "Dx and DDx",
@@ -48,6 +51,7 @@ export const AIScribe = () => {
     generateNote.executing && generateNote.abort();
 
     if (audioData) {
+      log.debug("Transcribing Audio");
       transcribeAudio.execute(TRANSCRIPTION_TIMEOUT);
     }
   }, [audioData]);
@@ -55,6 +59,7 @@ export const AIScribe = () => {
   // Immediately generate note on transcription.
   useEffect(() => {
     if (transcript && !generateNote.executing) {
+      log.debug(`Generating Note -> ${noteType}`);
       generateNote.execute(NOTE_GENERATION_TIMEOUT);
     }
   }, [transcript]);

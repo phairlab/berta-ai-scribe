@@ -17,7 +17,7 @@ export const AudioTrackInfo = (props: AudioTrackInfoProps) => {
       ? props.isRecordingPaused
         ? "RECORDING PAUSED"
         : "RECORDING"
-      : props.audioTitle ?? undefined;
+      : (props.audioTitle ?? undefined);
 
     setTitle(newTitle);
   });

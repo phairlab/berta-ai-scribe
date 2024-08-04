@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 
-from fastapi import APIRouter, File, UploadFile
+from fastapi import APIRouter, UploadFile
 
 from app.config import settings
 from app.services.audio_processing import standardize_audio, split_audio
@@ -63,7 +63,6 @@ async def create_transcript(recording: UploadFile):
 
         logger.info(f"Transcript generated ({transcription_timer.elapsed_ms / 1000:.2f}s)")
     except (AudioProcessingError, AIServiceError, AIServiceTimeout, TransientAIServiceError) as e:
-        logger.error(e)
         raise e.to_http_exception()
     except Exception as e:
         logger.error(e)

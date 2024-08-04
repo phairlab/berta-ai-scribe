@@ -1,3 +1,4 @@
+import logging
 import tempfile
 from typing import BinaryIO, Iterator
 from functools import reduce
@@ -9,6 +10,8 @@ from app.services.error_handling import AudioProcessingError
 from app.services.measurement import get_file_size
 from app.config import settings
 
+logger = logging.getLogger(__name__)
+
 def standardize_audio(original: BinaryIO, format: str = settings.AUDIO_FORMAT, bitrate: str = settings.AUDIO_BITRATE) -> BinaryIO:
     converted = tempfile.SpooledTemporaryFile()
 
@@ -18,6 +21,7 @@ def standardize_audio(original: BinaryIO, format: str = settings.AUDIO_FORMAT, b
 
         return converted
     except Exception as e:
+        logger.error(e)
         raise AudioProcessingError(str(e))
 
 def split_audio(audio_file: BinaryIO, max_size: int) -> list[BinaryIO]:
@@ -87,4 +91,5 @@ def split_audio(audio_file: BinaryIO, max_size: int) -> list[BinaryIO]:
 
         return split_audio_files
     except Exception as e:
+        logger.error(e)
         raise AudioProcessingError(str(e))

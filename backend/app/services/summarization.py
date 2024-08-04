@@ -20,12 +20,15 @@ async def summarize_transcript(transcript: str, prompt: str, timeout: int | None
         summary = response.choices[0].message.content
     except openai.APITimeoutError as e:
         # Timeout errors.
+        logger.error(e)
         raise AIServiceTimeout(f"OpenAI: {str(e)}")
     except (openai.ConflictError, openai.InternalServerError, openai.RateLimitError, openai.UnprocessableEntityError) as e:
         # Errors that should be retried.
+        logger.error(e)
         raise TransientAIServiceError(f"OpenAI: {str(e)}")
     except Exception as e:
         # All other errors.
+        logger.error(e)
         raise AIServiceError(f"OpenAI: {str(e)}")
 
     return summary
