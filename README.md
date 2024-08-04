@@ -74,6 +74,8 @@ The following steps assume you are using [Visual Studio Code](https://code.visua
     npm install
     ```
 
+8. If opening the entire project as a monorepo in VSCode (rather than opening only the frontend or backend folders in separate workspaces), refer to the advice here for configuring ESLint settings in VSCode: https://www.codalas.com/en/2311/configuring-vscode-for-subfolder-projects-to-ensure-correct-eslint-operation.
+
 ## Local Development
 
 With either of the following options, the app can be accessed at the following addresses:

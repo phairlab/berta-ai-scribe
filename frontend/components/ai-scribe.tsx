@@ -3,15 +3,15 @@
 import { useEffect, useState } from "react";
 import { Divider } from "@nextui-org/divider";
 
+import * as Models from "@/data-models";
+import { useDataAction } from "@/hooks/use-data-action";
+import { logger } from "@/utility/logging";
+
 import { AIScribeAudioSource } from "./ai-scribe-audio-source";
 import { AIScribeControls } from "./ai-scribe-controls";
 import { SimpleLoadingMessage } from "./simple-loading-message";
 import { AIScribeOutput } from "./ai-scribe-output";
 import { ErrorReport } from "./error-report";
-
-import * as Models from "@/data-models";
-import { useDataAction } from "@/hooks/use-data-action";
-import { logger } from "@/utility/logging";
 
 const log = logger.child({ module: "components/ai-scribe" });
 
