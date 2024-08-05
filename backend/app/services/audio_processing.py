@@ -22,6 +22,7 @@ def reformat_audio(original: BinaryIO, format: str = settings.AUDIO_FORMAT, bitr
         return (converted, format)
     except Exception as e:
         logger.error(e)
+        converted.close()
         raise AudioProcessingError(str(e))
 
 def split_audio(audio_file: BinaryIO, max_duration_ms: int = minutes_to_ms(2), format: str = settings.AUDIO_FORMAT, bitrate: str = settings.AUDIO_BITRATE) -> Iterator[tuple[BinaryIO, str]]:
@@ -74,12 +75,14 @@ def split_audio(audio_file: BinaryIO, max_duration_ms: int = minutes_to_ms(2), f
         # Generate the audio segment files.
         for segment in _cluster(audio_chunks, max_duration_ms):            
             if len(segment) <= max_duration_ms:
-                with segment.export(tempfile.SpooledTemporaryFile(), bitrate=bitrate, format=format) as file:
+                with tempfile.SpooledTemporaryFile() as file:
+                    segment.export(file, bitrate=bitrate, format=format)
                     yield (file, format)
             else:
                 # If the audio segment is still too long, hard-split it.
                 for sub_segment in _hard_split(segment, max_duration_ms):
-                    with sub_segment.export(tempfile.SpooledTemporaryFile(), bitrate=bitrate, format=format) as file:
+                    with tempfile.SpooledTemporaryFile() as file:
+                        sub_segment.export(file, bitrate=bitrate, format=format)
                         yield (file, format)
     except Exception as e:
         logger.error(e)

@@ -24,7 +24,7 @@ async def create_transcript(recording: UploadFile):
 
     try:
         # Transcription cannot be performed on files > 25 MB.        
-        if recording.size <= MB_to_bytes(25):
+        if recording.size <= MB_to_bytes(1):
             # Process the file directly.
             with ExecutionTimer() as transcription_timer:
                 transcript = await transcribe_audio(recording.file, recording.filename, recording.content_type, timeout=settings.TRANSCRIPTION_TIMEOUT)
