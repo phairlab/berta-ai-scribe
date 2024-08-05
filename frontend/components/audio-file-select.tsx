@@ -55,7 +55,7 @@ export const AudioFileSelect = (props: AudioFileSelectProps) => {
         onChange={handleFileSelected}
       />
       <Select
-        aria-label="Use an Audio Sample"
+        aria-label="Select an Audio Sample"
         className="w-36"
         isLoading={samplesLoading}
         items={samples ?? []}

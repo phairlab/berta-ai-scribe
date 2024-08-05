@@ -3,7 +3,7 @@ import pino, { Logger, LoggerOptions } from "pino";
 import { postClientLog } from "./logging.server";
 
 let loggingConfig: LoggerOptions<never> = {
-  level: process.env.NEXT_LOGGING_LEVEL,
+  level: process.env.NEXT_LOGGING_LEVEL ?? "info",
   browser: {
     write: () => {},
     transmit: {
@@ -11,21 +11,19 @@ let loggingConfig: LoggerOptions<never> = {
         postClientLog("browser", level, logEvent.bindings, logEvent.messages),
     },
   },
+  transport: {
+    target: "pino-pretty",
+    options: {
+      colorize: process.env.NODE_ENV === "development",
+      ignore: "pid,hostname",
+      messageFormat:
+        "[{module}] {msg}{if correlationId} [{correlationId}]{end} ({runtime})",
+      hideObject: true,
+    },
+  },
   mixin: (_context, _level, logger) =>
     "runtime" in logger.bindings() ? {} : { runtime: process.env.NEXT_RUNTIME },
 };
 
-if (process.env.NODE_ENV === "development") {
-  loggingConfig = {
-    ...loggingConfig,
-    transport: {
-      target: "pino-pretty",
-      options: {
-        colorize: true,
-      },
-    },
-  };
-}
-
-export const config = loggingConfig;
+// export const config = loggingConfig;
 export const logger: Logger = pino(loggingConfig);

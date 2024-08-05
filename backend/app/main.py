@@ -17,17 +17,18 @@ from app.schemas import Message
 # Configure app logging
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s [%(name)s] %(levelname)s: %(message)s",
-    datefmt="%H:%M:%S",    
+    format="[%(asctime)s] %(levelname)s: [%(name)s] %(message)s",
+    datefmt="%H:%M:%S",
 )
 
 # Suppress readiness probes from the uvicorn logs
-class HealthcheckEndpointFilter(logging.Filter):
-    def filter(self, record: logging.LogRecord) -> bool:
-        return record.getMessage().find("/healthcheck") == -1
+# class HealthcheckEndpointFilter(logging.Filter):
+#     def filter(self, record: logging.LogRecord) -> bool:
+#         return record.getMessage().find("/healthcheck") == -1
+# logging.getLogger("uvicorn.access").addFilter(HealthcheckEndpointFilter())
 
-# Configure uvicorn logging.
-logging.getLogger("uvicorn.access").addFilter(HealthcheckEndpointFilter())
+# Disable uvicorn http logging
+logging.getLogger("uvicorn.access").disabled = True
 
 # ----------------------------------
 # WEB SETUP

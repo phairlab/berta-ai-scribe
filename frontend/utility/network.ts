@@ -1,8 +1,8 @@
 import suuid from "short-uuid";
 
-import { logger } from "./logging";
-
 import { DataError, ValidationError, isValidationError } from "@/data-models";
+
+import { logger } from "./logging";
 
 const log = logger.child({ module: "utility/network" });
 
@@ -88,7 +88,7 @@ async function performFetch(
   correlationId: string,
   init?: RequestInit,
 ) {
-  const method = init?.method || "GET";
+  const method = init?.method ?? "GET";
 
   log.trace(
     { correlationId: correlationId },
@@ -155,7 +155,7 @@ export async function APIFetch(
     return Response.json(EnvironmentError(error_message), { status: 400 });
   }
 
-  const method = init?.method || "GET";
+  const method = init?.method ?? "GET";
 
   log.trace(
     { correlationId: correlationId },
@@ -181,7 +181,7 @@ export async function clientFetch(
 ) {
   "use client";
   const fullPath = `/data/${path}`;
-  const method = init?.method || "GET";
+  const method = init?.method ?? "GET";
 
   log.trace(
     { correlationId: correlationId },

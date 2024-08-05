@@ -87,17 +87,14 @@ With either of the following options, the app can be accessed at the following a
 
 ### Option 1: Run Locally Using Docker
 
-Open a terminal window and run the following command:
+Open a terminal window and run the following commands:
 
 ```console
+docker compose build
 docker compose up
 ```
 
-To rebuild the images after making changes to the code:
-
-```console
-docker compose up --build
-```
+Rerun these commands after any changes to the code.
 
 ### Option 2: Run the App in a Local Development Environment
 
