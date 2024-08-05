@@ -1,15 +1,16 @@
 import os
-import logging
 
 from fastapi import APIRouter
 from pydantic import BaseModel
 
-from app.services.summarization import summarize_transcript
-from app.services.measurement import Stopwatch
+from app.services.ai import summarize_transcript
+from app.services.measurement import ExecutionTimer
 from app.services.error_handling import AIServiceTimeout, AIServiceError, APIError, BadRequest, TransientAIServiceError
 from app.schemas import APIErrorReport, GeneratedNote
+from app.config import get_app_logger
 
-logger = logging.getLogger(__name__)
+logger = get_app_logger(__name__)
+
 router = APIRouter()
 
 PROMPTS_FOLDER = ".prompts"
@@ -26,6 +27,8 @@ class RequestData(BaseModel):
     504: {"description": "AI Service Timeout", "model": APIErrorReport},
 })
 async def create_summary(data: RequestData):
+    logger.debug("Generating summary")
+    
     summary_file = f"{data.summaryType}.txt"
     summary_path = os.path.join(PROMPTS_FOLDER, summary_file)
     
@@ -38,10 +41,10 @@ async def create_summary(data: RequestData):
         with open(summary_path, "r", errors="ignore") as f:
             prompt = f.read()
 
-        with Stopwatch() as summarization_timer:
+        with ExecutionTimer() as summarization_timer:
             summary = await summarize_transcript(data.transcript, prompt)
 
-        logger.info(f"Summary generated in {summarization_timer.elapsed_ms / 1000:.2f}s")
+        logger.debug(f"Summary generated in {summarization_timer.elapsed_ms / 1000:.2f}s")
     except (AIServiceError, AIServiceTimeout, TransientAIServiceError) as e:
         raise e.to_http_exception()
     except Exception as e:

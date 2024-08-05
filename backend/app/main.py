@@ -21,12 +21,6 @@ logging.basicConfig(
     datefmt="%H:%M:%S",
 )
 
-# Suppress readiness probes from the uvicorn logs
-# class HealthcheckEndpointFilter(logging.Filter):
-#     def filter(self, record: logging.LogRecord) -> bool:
-#         return record.getMessage().find("/healthcheck") == -1
-# logging.getLogger("uvicorn.access").addFilter(HealthcheckEndpointFilter())
-
 # Disable uvicorn http logging
 logging.getLogger("uvicorn.access").disabled = True
 
