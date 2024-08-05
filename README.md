@@ -116,6 +116,8 @@ Rerun these commands after any changes to the code.
     npm run dev
     ```
 
+To enable trace logging for the frontend, change the NEXT_LOGGING_LEVEL environment variable to `trace` in `.env.local`.
+
 ## Deployment
 
 In a Snowflake SQL worksheet:

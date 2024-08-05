@@ -35,12 +35,12 @@ export const AIScribe = () => {
   const [noteType, setNoteType] = useState<string>(DEFAULT_NOTE_TYPE);
 
   const { action: transcribeAudio, result: transcript } =
-    useDataAction<Models.Transcript>("transcripts", "POST", {
+    useDataAction<Models.Transcript>("/transcripts", "POST", {
       recording: audioData,
     });
 
   const { action: generateNote, result: generatedNote } =
-    useDataAction<Models.GeneratedNote>("generated-notes", "POST", {
+    useDataAction<Models.GeneratedNote>("/generated-notes", "POST", {
       transcript: transcript?.text ?? null,
       summaryType: noteType,
     });

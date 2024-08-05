@@ -12,7 +12,7 @@ export const UnexpectedError = (error_message: string): DataError => ({
   detail: {
     name: "Unexpected Error",
     message: error_message,
-    shouldRetry: false,
+    shouldRetry: true,
   },
 });
 
@@ -144,7 +144,7 @@ export async function APIFetch(
   init?: RequestInit,
 ) {
   const apiUrlBase = process.env.APP_API_URL;
-  const fullPath = `${apiUrlBase}/${path}`;
+  const fullPath = `${apiUrlBase}${path}`;
 
   if (!apiUrlBase) {
     const error_message =
@@ -180,7 +180,7 @@ export async function clientFetch(
   init?: RequestInit,
 ) {
   "use client";
-  const fullPath = `/data/${path}`;
+  const fullPath = `/data${path}`;
   const method = init?.method ?? "GET";
 
   log.trace(

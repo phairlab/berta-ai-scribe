@@ -17,7 +17,7 @@ type AudioFileSelectProps = {
 export const AudioFileSelect = (props: AudioFileSelectProps) => {
   const inputFile = useRef<HTMLInputElement>(null);
   const { data: samples, loading: samplesLoading } =
-    useAutoQuery<Models.AudioSample[]>("audio-samples");
+    useAutoQuery<Models.AudioSample[]>("/audio-samples");
 
   const handleFileSelected = (e: React.FormEvent<HTMLInputElement>) => {
     if (e.currentTarget.files) {

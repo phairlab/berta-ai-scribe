@@ -10,7 +10,7 @@ export async function POST(request: Request) {
   const transcript = requestData.get("transcript");
   const summaryType = requestData.get("summaryType");
 
-  return APIFetch("summaries", correlationId, {
+  return APIFetch("/summaries", correlationId, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({

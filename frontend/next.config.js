@@ -2,7 +2,7 @@
 let nextConfig = {
   logging: {
     fetches: {
-      fullUrl: true,
+      fullUrl: process.env.NEXT_LOGGING_LEVEL === "trace",
     },
   },
   experimental: {

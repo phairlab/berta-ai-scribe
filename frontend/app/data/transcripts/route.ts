@@ -8,7 +8,7 @@ export async function POST(request: Request) {
 
   const requestData = await request.formData();
 
-  return APIFetch("transcripts", correlationId, {
+  return APIFetch("/transcripts", correlationId, {
     method: "POST",
     body: requestData,
   });
