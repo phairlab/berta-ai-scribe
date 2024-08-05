@@ -68,7 +68,7 @@ export const AIScribeAudioSource = (props: AIScribeAudioSourceProps) => {
   };
 
   return (
-    <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-4 max-w-full">
+    <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-4 max-w-full h-[94px]">
       <div className="flex flex-row gap-2 sm:gap-4 justify-center w-full">
         {audioData ? (
           <PlayPauseButton

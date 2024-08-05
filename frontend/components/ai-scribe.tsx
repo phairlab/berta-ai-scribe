@@ -110,7 +110,6 @@ export const AIScribe = () => {
         )}
         {generatedNote && (
           <div className="flex flex-col justify-center gap-6">
-            <Divider />
             <AIScribeOutput note={generatedNote} />
           </div>
         )}
