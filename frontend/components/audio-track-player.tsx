@@ -124,7 +124,7 @@ export const AudioTrackPlayer = (props: AudioTrackPlayerProps) => {
 
   const recorderOptions: RecordPluginOptions = {
     scrollingWaveform: true,
-    scrollingWaveformWindow: 15,
+    // scrollingWaveformWindow: 15,
     renderRecordedAudio: false,
     mimeType: "audio/webm",
   };
