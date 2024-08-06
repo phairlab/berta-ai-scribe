@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useTheme } from "next-themes";
 import WavesurferPlayer from "@wavesurfer/react";
-import Wavesurfer, { WaveSurferOptions } from "wavesurfer.js";
+import Wavesurfer, { WaveSurferOptions } from "wavesurfer.js/dist/wavesurfer";
 import HoverPlugin from "wavesurfer.js/dist/plugins/hover";
 import TimelinePlugin, {
   TimelinePluginOptions,
@@ -12,9 +12,9 @@ import RecordPlugin, {
   RecordPluginOptions,
 } from "wavesurfer.js/dist/plugins/record";
 
-import { AnimatePulse } from "./animate-pulse";
+import { tailwindColors } from "@/utility/display";
 
-import { tailwindColors } from "@/utility/color-helpers";
+import { AnimatePulse } from "./animate-pulse";
 
 /** Set of controls for audio playback and recording. */
 export interface AudioPlayerControls {
@@ -85,7 +85,7 @@ type AudioTrackPlayerProps = {
   onRecordingStarted?: () => void;
   onRecordingPaused?: () => void;
   onRecordingResumed?: () => void;
-  onRecordingEnded?: (recordingData: Blob) => void;
+  onRecordingEnded?: (recording: File) => void;
 };
 
 export const AudioTrackPlayer = (props: AudioTrackPlayerProps) => {
@@ -124,8 +124,9 @@ export const AudioTrackPlayer = (props: AudioTrackPlayerProps) => {
 
   const recorderOptions: RecordPluginOptions = {
     scrollingWaveform: true,
-    scrollingWaveformWindow: 15,
+    // scrollingWaveformWindow: 15,
     renderRecordedAudio: false,
+    mimeType: "audio/webm",
   };
 
   const handleInit = async (ws: Wavesurfer) => {
@@ -230,7 +231,7 @@ export const AudioTrackPlayer = (props: AudioTrackPlayerProps) => {
       props.onRecordingStarted?.();
     });
 
-    recordPlugin.on("record-pause", (_blob) => {
+    recordPlugin.on("record-pause", (_blob: Blob) => {
       setIsRecordingPaused(true);
       props.onRecordingPaused?.();
     });
@@ -240,14 +241,16 @@ export const AudioTrackPlayer = (props: AudioTrackPlayerProps) => {
       props.onRecordingResumed?.();
     });
 
-    recordPlugin.on("record-end", (blob) => {
+    recordPlugin.on("record-end", (blob: Blob) => {
       setIsRecording(false);
       setIsRecordingPaused(false);
 
-      props.onRecordingEnded?.(blob);
+      const file = new File([blob], "recording.webm");
+
+      props.onRecordingEnded?.(file);
     });
 
-    recordPlugin.on("record-progress", (milliseconds) => {
+    recordPlugin.on("record-progress", (milliseconds: number) => {
       setDuration(milliseconds / 1000);
     });
 

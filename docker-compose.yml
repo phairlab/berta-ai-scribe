@@ -3,7 +3,7 @@ version: '3.8'
 services:
   backend:
     build: ./backend
-    env_file: ".env"
+    env_file: ./backend/.env
     ports:
       - "8000:8000"
     networks:
@@ -11,8 +11,9 @@ services:
   
   frontend:
     build: ./frontend
+    env_file: ./frontend/.env.local
     environment:
-      APP_API_URL: http://backend:8000/api
+      - APP_API_URL=http://backend:8000/api
     ports:
       - "3000:3000"
     depends_on:

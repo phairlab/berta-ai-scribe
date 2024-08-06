@@ -2,15 +2,18 @@
 
 import { useEffect, useState } from "react";
 import { Divider } from "@nextui-org/divider";
-import { Button } from "@nextui-org/button";
+
+import * as Models from "@/data-models";
+import { useDataAction } from "@/hooks/use-data-action";
+import { logger } from "@/utility/logging";
 
 import { AIScribeAudioSource } from "./ai-scribe-audio-source";
 import { AIScribeControls } from "./ai-scribe-controls";
 import { SimpleLoadingMessage } from "./simple-loading-message";
 import { AIScribeOutput } from "./ai-scribe-output";
+import { ErrorReport } from "./error-report";
 
-import * as Actions from "@/data-actions";
-import * as Models from "@/data-models";
+const log = logger.child({ module: "components/ai-scribe" });
 
 const NOTE_TYPES = [
   "Dx and DDx",
@@ -24,132 +27,95 @@ const NOTE_TYPES = [
 ];
 
 const DEFAULT_NOTE_TYPE = "Full Visit";
-
-type ErrorResponse = {
-  message: string;
-  retry: () => void;
-};
+const TRANSCRIPTION_TIMEOUT = 60;
+const NOTE_GENERATION_TIMEOUT = 60;
 
 export const AIScribe = () => {
-  const [audioData, setAudioData] = useState<Blob | null>(null);
-  const [transcript, setTranscript] = useState<Models.Transcript | null>(null);
+  const [audioData, setAudioData] = useState<File | null>(null);
   const [noteType, setNoteType] = useState<string>(DEFAULT_NOTE_TYPE);
-  const [generatedNote, setGeneratedNote] =
-    useState<Models.GeneratedNote | null>(null);
-  const [isTranscribing, setIsTranscribing] = useState(false);
-  const [isNoteGenerating, setIsNoteGenerating] = useState(false);
-  const [error, setError] = useState<ErrorResponse | null>(null);
+
+  const { action: transcribeAudio, result: transcript } =
+    useDataAction<Models.Transcript>("POST", "/transcripts");
+
+  const { action: generateNote, result: generatedNote } =
+    useDataAction<Models.GeneratedNote>("POST", "/generated-notes");
 
   // Immediately transcribe new audio.
   useEffect(() => {
+    transcribeAudio.reset();
+    generateNote.reset();
+
     if (audioData) {
-      transcribeAudio(audioData);
+      log.debug("Transcribing Audio");
+      transcribeAudio.execute({ recording: audioData }, TRANSCRIPTION_TIMEOUT);
     }
   }, [audioData]);
 
+  // Immediately generate note on transcription.
   useEffect(() => {
-    if (transcript) {
-      generateNote(transcript, noteType);
+    if (transcript && !generateNote.executing) {
+      log.debug(`Generating Note: ${noteType}`);
+      generateNote.execute(
+        { transcript: transcript.text, summaryType: noteType },
+        NOTE_GENERATION_TIMEOUT,
+      );
     }
   }, [transcript]);
 
-  const handleAudioDataChanged = async (data: Blob | null) => {
-    // Reset state.
-    setTranscript(null);
-    setNoteType(DEFAULT_NOTE_TYPE);
-    setGeneratedNote(null);
-    setIsNoteGenerating(false);
-    setError(null);
-
+  const handleAudioDataChanged = (data: File | null) => {
     // Save new audio data.
     setAudioData(data);
   };
 
-  const transcribeAudio = async (data: Blob) => {
-    setTranscript(null);
-    setIsTranscribing(true);
-
-    const mimeType = data.type;
-    const extension = mimeType.split(";")[0].split("/")[1] || "webm";
-    const filename = `recording.${extension}`;
-    const formData = new FormData();
-
-    formData.append("recording", data, filename);
-
-    try {
-      const transcript = await Actions.transcribeAudio(formData);
-
-      setTranscript(transcript);
-    } catch (error: unknown) {
-      const errorMessage = `An error occurred during audio transcription.`;
-
-      setError({
-        message: errorMessage,
-        retry: () => {
-          setError(null);
-          transcribeAudio(data);
-        },
-      });
-    } finally {
-      setIsTranscribing(false);
-    }
-  };
-
-  const generateNote = async (
-    transcript: Models.Transcript,
-    noteType: string,
-  ) => {
-    setGeneratedNote(null);
-    setIsNoteGenerating(true);
-
-    try {
-      const note = await Actions.generateNote(transcript.text, noteType);
-
-      setGeneratedNote(note);
-    } catch (error: unknown) {
-      const errorMessage = `An error occurred during note generation.`;
-
-      setError({
-        message: errorMessage,
-        retry: () => {
-          setError(null);
-          generateNote(transcript, noteType);
-        },
-      });
-    } finally {
-      setIsNoteGenerating(false);
-    }
+  const handleAudioSourceReset = () => {
+    setNoteType(DEFAULT_NOTE_TYPE);
   };
 
   return (
     <div className="flex flex-col gap-4">
-      <AIScribeAudioSource onAudioDataChanged={handleAudioDataChanged} />
+      <AIScribeAudioSource
+        onAudioDataChanged={handleAudioDataChanged}
+        onReset={handleAudioSourceReset}
+      />
       <div className="flex flex-col gap-6">
         <Divider />
         <AIScribeControls
-          canSubmit={!!audioData && !isTranscribing && !isNoteGenerating}
+          canSubmit={
+            transcript !== null &&
+            !transcribeAudio.executing &&
+            !generateNote.executing
+          }
           noteTypes={NOTE_TYPES}
           selectedNoteType={noteType}
           onNoteTypeChanged={(noteType) => setNoteType(noteType)}
-          onSubmit={() => transcript && generateNote(transcript, noteType)}
+          onSubmit={() =>
+            transcript &&
+            generateNote.execute(
+              { transcript: transcript.text, summaryType: noteType },
+              NOTE_GENERATION_TIMEOUT,
+            )
+          }
         />
-        {isTranscribing && (
+        {transcribeAudio.executing && (
           <SimpleLoadingMessage>Transcribing Audio</SimpleLoadingMessage>
         )}
-        {isNoteGenerating && (
+        {generateNote.executing && (
           <SimpleLoadingMessage>Generating: {noteType}</SimpleLoadingMessage>
         )}
-        {error && (
-          <div className="flex flex-row gap-4 justify-center items-center mx-6 pt-6">
-            <span className="text-red-500">{error.message}</span>
-            <Button variant="ghost" onClick={error.retry}>
-              Retry
-            </Button>
-          </div>
+        {transcribeAudio.error && (
+          <ErrorReport
+            errorInfo={transcribeAudio.error}
+            retryAction={transcribeAudio.execute}
+          />
+        )}
+        {generateNote.error && (
+          <ErrorReport
+            errorInfo={generateNote.error}
+            retryAction={generateNote.execute}
+          />
         )}
         {generatedNote && (
           <div className="flex flex-col justify-center gap-6">
-            <Divider />
             <AIScribeOutput note={generatedNote} />
           </div>
         )}

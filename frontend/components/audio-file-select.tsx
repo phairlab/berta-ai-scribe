@@ -4,48 +4,36 @@ import { useRef } from "react";
 import { Button } from "@nextui-org/button";
 import { Select, SelectItem } from "@nextui-org/select";
 
-import { useData } from "@/hooks/useData";
+import { useAutoQuery } from "@/hooks/use-auto-query";
 import * as Models from "@/data-models";
+import { downloadFile } from "@/utility/network";
 
-const ACCEPT_FILE_TYPES = ["m4a", "mp3", "webm", "mp4", "mpga", "wav", "mpeg"];
+const ACCEPT_FILE_TYPES = ["mp3", "mp4", "mpeg", "m4a", "webm", "wav", "mpga"];
 
 type AudioFileSelectProps = {
-  onFileSelected: (audioData: Blob, audioTitle: string) => void;
+  onFileSelected: (audioData: File, audioTitle: string) => void;
 };
 
 export const AudioFileSelect = (props: AudioFileSelectProps) => {
   const inputFile = useRef<HTMLInputElement>(null);
-
-  const { data: audioSamples, loading: isLoadingAudioSamples } = useData<
-    Models.AudioSample[]
-  >("audio-samples", []);
+  const { data: samples, loading: samplesLoading } =
+    useAutoQuery<Models.AudioSample[]>("/audio-samples");
 
   const handleFileSelected = (e: React.FormEvent<HTMLInputElement>) => {
     if (e.currentTarget.files) {
       const file = e.currentTarget.files[0];
 
-      var reader = new FileReader();
-
-      reader.onload = (ev) => {
-        const filename = file.name;
-        var data = new Blob([new Uint8Array(ev.target?.result as ArrayBuffer)]);
-
-        props.onFileSelected?.(data, filename);
-      };
-
-      reader.onerror = (_ev) => {
-        // TODO: Handle file read error.
-      };
-
-      reader.readAsArrayBuffer(file);
+      props.onFileSelected?.(file, `local-device/${file.name}`);
     }
   };
 
   const handleSampleAudioSelected = async (samples: any) => {
-    const sampleUrl = (samples as Set<string>).values().next().value;
-    const data = await fetch(sampleUrl).then((r) => r.blob());
+    const sampleUrl: string = (samples as Set<string>).values().next().value;
+    const filename: string = sampleUrl.split("/").slice(-1)[0];
 
-    props.onFileSelected?.(data, sampleUrl);
+    const file = await downloadFile(sampleUrl, filename);
+
+    props.onFileSelected?.(file, sampleUrl);
   };
 
   return (
@@ -67,10 +55,10 @@ export const AudioFileSelect = (props: AudioFileSelectProps) => {
         onChange={handleFileSelected}
       />
       <Select
-        aria-label="Use an Audio Sample"
+        aria-label="Select an Audio Sample"
         className="w-36"
-        isLoading={isLoadingAudioSamples}
-        items={audioSamples}
+        isLoading={samplesLoading}
+        items={samples ?? []}
         placeholder="Use a Sample"
         selectedKeys={[]}
         selectionMode="single"

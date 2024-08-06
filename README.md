@@ -21,7 +21,9 @@ The following steps assume you are using [Visual Studio Code](https://code.visua
 
     Using VS Code, <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> and select **Git: Clone**.
 
-2. Copy the `env.example` file to `.env` and fill in the required environment variables.
+2. In the `backend` folder, copy the `env.example` file to `.env` and fill in the required environment variables.
+
+3. In the `frontend` folder, copy the `env.local.example` file to `.env.local` and fill in the required environment variables.
 
 ### Configure Local Development Environment
 
@@ -72,6 +74,8 @@ The following steps assume you are using [Visual Studio Code](https://code.visua
     npm install
     ```
 
+8. If opening the entire project as a monorepo in VSCode (rather than opening only the frontend or backend folders in separate workspaces), refer to the advice here for configuring ESLint settings in VSCode: https://www.codalas.com/en/2311/configuring-vscode-for-subfolder-projects-to-ensure-correct-eslint-operation.
+
 ## Local Development
 
 With either of the following options, the app can be accessed at the following addresses:
@@ -83,17 +87,14 @@ With either of the following options, the app can be accessed at the following a
 
 ### Option 1: Run Locally Using Docker
 
-Open a terminal window and run the following command:
+Open a terminal window and run the following commands:
 
 ```console
+docker compose build
 docker compose up
 ```
 
-To rebuild the images after making changes to the code:
-
-```console
-docker compose up --build
-```
+Rerun these commands after any changes to the code.
 
 ### Option 2: Run the App in a Local Development Environment
 
@@ -114,6 +115,8 @@ docker compose up --build
     cd frontend
     npm run dev
     ```
+
+To enable trace logging for the frontend, change the NEXT_LOGGING_LEVEL environment variable to `trace` in `.env.local`.
 
 ## Deployment
 

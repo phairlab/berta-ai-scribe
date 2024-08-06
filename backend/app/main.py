@@ -1,25 +1,28 @@
 import logging
 from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html, get_swagger_ui_oauth2_redirect_html
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+
 from app.config import settings
-from app.api import audio, transcripts, summaries
+from app.api import transcripts, summaries
+from app.schemas import Message
 
 # ----------------------------------
 # LOGGING CONFIG
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
+# Configure app logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="[%(asctime)s] %(levelname)s: [%(name)s] %(message)s",
+    datefmt="%H:%M:%S",
+)
 
-# Suppress readiness probes from the uvicorn logs
-class HealthcheckEndpointFilter(logging.Filter):
-    def filter(self, record: logging.LogRecord) -> bool:
-        return record.getMessage().find("/healthcheck") == -1
-    
-logging.getLogger("uvicorn.access").addFilter(HealthcheckEndpointFilter())
+# Disable uvicorn http logging
+logging.getLogger("uvicorn.access").disabled = True
 
 # ----------------------------------
 # WEB SETUP
@@ -43,7 +46,7 @@ app.add_middleware(
 # ENDPOINTS
 
 # Root
-@app.get("/")
+@app.get("", response_model=Message, tags=["Miscellaneous"])
 async def root():
     return {"message": f"Welcome to the {settings.APP_NAME} API"}
 
@@ -53,8 +56,8 @@ async def favicon():
     return FileResponse(Path("favicon.ico"))
 
 # Readiness Probe
-@app.get("/healthcheck", tags=["Health Check"])
-async def root():
+@app.get("/healthcheck", response_model=Message, tags=["Miscellaneous"])
+async def health_check():
     return {"message": "Ready"}
 
 # Configure self-hosted docs
@@ -81,7 +84,6 @@ async def redoc_html():
     )
 
 # Include API routers
-app.include_router(audio.router, prefix="/api/audio", tags=["Audio"])
 app.include_router(transcripts.router, prefix="/api/transcripts", tags=["Transcripts"])
 app.include_router(summaries.router, prefix="/api/summaries", tags=["Summaries"])
 

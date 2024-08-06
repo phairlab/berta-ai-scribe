@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { formatDuration } from "@/utility/audio-helpers";
+import { formatDuration } from "@/utility/display";
 
 type AudioTrackInfoProps = {
   duration: number | null;
@@ -17,7 +17,7 @@ export const AudioTrackInfo = (props: AudioTrackInfoProps) => {
       ? props.isRecordingPaused
         ? "RECORDING PAUSED"
         : "RECORDING"
-      : props.audioTitle ?? undefined;
+      : (props.audioTitle ?? undefined);
 
     setTitle(newTitle);
   });
