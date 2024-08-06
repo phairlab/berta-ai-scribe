@@ -9,7 +9,7 @@ import { useDataAction } from "./use-data-action";
 const log = logger.child({ module: "hooks/use-auto-query" });
 
 export const useAutoQuery = <T>(path: string) => {
-  const { action, result } = useDataAction<T>(path, "GET");
+  const { action, result } = useDataAction<T>("GET", path);
   const { execute, abort, executing, error, id } = action;
   const retryTimer = useRef<NodeJS.Timeout | null>(null);
 

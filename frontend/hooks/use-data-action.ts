@@ -9,11 +9,7 @@ import * as Network from "@/utility/network";
 
 const log = logger.child({ module: "hooks/use-data-action" });
 
-export const useDataAction = <T>(
-  path: string,
-  method?: "GET" | "POST",
-  parameters?: { [field: string]: string | File | null },
-) => {
+export const useDataAction = <T>(method: "GET" | "POST", path: string) => {
   const [result, setResult] = useState<T | null>(null);
   const [executing, setExecuting] = useState<boolean>(false);
   const [error, setError] = useState<DataError | null>(null);
@@ -41,7 +37,10 @@ export const useDataAction = <T>(
     setError(null);
   };
 
-  const execute = async (timeout?: number) => {
+  const execute = async (
+    parameters?: { [field: string]: string | File },
+    timeout?: number,
+  ) => {
     log.trace(
       { correlationId: id.current },
       `Executing Action ${method} ${path}${timeout ? ` (timeout: ${timeout}s)` : ""}`,

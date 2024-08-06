@@ -35,15 +35,10 @@ export const AIScribe = () => {
   const [noteType, setNoteType] = useState<string>(DEFAULT_NOTE_TYPE);
 
   const { action: transcribeAudio, result: transcript } =
-    useDataAction<Models.Transcript>("/transcripts", "POST", {
-      recording: audioData,
-    });
+    useDataAction<Models.Transcript>("POST", "/transcripts");
 
   const { action: generateNote, result: generatedNote } =
-    useDataAction<Models.GeneratedNote>("/generated-notes", "POST", {
-      transcript: transcript?.text ?? null,
-      summaryType: noteType,
-    });
+    useDataAction<Models.GeneratedNote>("POST", "/generated-notes");
 
   // Immediately transcribe new audio.
   useEffect(() => {
@@ -52,15 +47,18 @@ export const AIScribe = () => {
 
     if (audioData) {
       log.debug("Transcribing Audio");
-      transcribeAudio.execute(TRANSCRIPTION_TIMEOUT);
+      transcribeAudio.execute({ recording: audioData }, TRANSCRIPTION_TIMEOUT);
     }
   }, [audioData]);
 
   // Immediately generate note on transcription.
   useEffect(() => {
     if (transcript && !generateNote.executing) {
-      log.debug(`Generating Note -> ${noteType}`);
-      generateNote.execute(NOTE_GENERATION_TIMEOUT);
+      log.debug(`Generating Note: ${noteType}`);
+      generateNote.execute(
+        { transcript: transcript.text, summaryType: noteType },
+        NOTE_GENERATION_TIMEOUT,
+      );
     }
   }, [transcript]);
 
