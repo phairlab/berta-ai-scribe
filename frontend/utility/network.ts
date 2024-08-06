@@ -8,26 +8,26 @@ const log = logger.child({ module: "utility/network" });
 
 export const CORRELATION_ID_HEADER = "Jenkins-Correlation-Id";
 
-export const UnexpectedError = (error_message: string): DataError => ({
+export const UnexpectedError = (errorMessage: string): DataError => ({
   detail: {
     name: "Unexpected Error",
-    message: error_message,
+    message: errorMessage,
     shouldRetry: true,
   },
 });
 
-export const EnvironmentError = (error_message: string): DataError => ({
+export const EnvironmentError = (errorMessage: string): DataError => ({
   detail: {
     name: "Environment Error",
-    message: error_message,
+    message: errorMessage,
     shouldRetry: false,
   },
 });
 
-const ServerError = (error_message: string): DataError => ({
+const ServerError = (errorMessage: string): DataError => ({
   detail: {
     name: "Server Error",
-    message: error_message,
+    message: errorMessage,
     shouldRetry: false,
   },
 });
@@ -48,10 +48,10 @@ const ServerUnresponsiveError: DataError = {
   },
 };
 
-const BadResponse = (error_message: string): DataError => ({
+const BadResponse = (errorMessage: string): DataError => ({
   detail: {
     name: "Bad Response",
-    message: error_message,
+    message: errorMessage,
     shouldRetry: true,
   },
 });
@@ -147,12 +147,12 @@ export async function apiFetch(
   const fullPath = `${apiUrlBase}${path}`;
 
   if (!apiUrlBase) {
-    const error_message =
+    const errorMessage =
       "Either the environment was not set correctly, or an API fetch was attempted from a client component.";
 
-    log.error(error_message);
+    log.error(errorMessage);
 
-    return Response.json(EnvironmentError(error_message), { status: 400 });
+    return Response.json(EnvironmentError(errorMessage), { status: 400 });
   }
 
   const method = init?.method ?? "GET";
