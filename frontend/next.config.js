@@ -1,15 +1,14 @@
 /** @type {import('next').NextConfig} */
 let nextConfig = {
-  logging: {
-    fetches: {
-      fullUrl: process.env.NEXT_LOGGING_LEVEL === "trace",
-    },
-  },
   experimental: {
     // Configure for next-logging.
     serverComponentsExternalPackages: ["pino", "pino-pretty"],
   },
 };
+
+if (process.env.LOGGING_LEVEL === "trace") {
+  nextConfig = { ...nextConfig, logging: { fetches: { fullUrl: true }} }
+}
 
 // These CSP settings match those imposed by Snowflake, to be used during local development.
 // Doesn't include the injected values for external integrations (which should not be happening through the client in any case).

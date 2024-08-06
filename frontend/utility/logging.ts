@@ -3,7 +3,7 @@ import pino, { Logger, LoggerOptions } from "pino";
 import { postClientLog } from "./logging.server";
 
 let loggingConfig: LoggerOptions<never> = {
-  level: process.env.NEXT_LOGGING_LEVEL ?? "info",
+  level: "debug",
   browser: {
     write: () => {},
     transmit: {
