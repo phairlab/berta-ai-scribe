@@ -1,13 +1,29 @@
 import suuid from "short-uuid";
 
-import { apiFetch, CORRELATION_ID_HEADER } from "@/utility/network";
+import { apiFetch, BadRequest, CORRELATION_ID_HEADER } from "@/utility/network";
+import { logger } from "@/utility/logging";
+
+const log = logger.child({ module: "route-handlers/transcripts" });
 
 export async function POST(request: Request) {
   const correlationId: string =
     request.headers.get(CORRELATION_ID_HEADER) ?? suuid.generate();
 
-  const requestData = await request.formData();
+  let requestData: FormData;
 
+  // Attempt to read request body.
+  try {
+    requestData = await request.formData();
+  } catch {
+    const errorMessage =
+      "The request data was not provided in the correct format.";
+
+    log.error({ correlationId: correlationId }, errorMessage);
+
+    return Response.json(BadRequest(errorMessage), { status: 400 });
+  }
+
+  // Request transcript generation via the backend service.
   return apiFetch("/transcripts", correlationId, {
     method: "POST",
     body: requestData,

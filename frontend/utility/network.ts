@@ -24,6 +24,22 @@ export const EnvironmentError = (errorMessage: string): DataError => ({
   },
 });
 
+export const BadRequest = (errorMessage: string): DataError => ({
+  detail: {
+    name: "Bad Response",
+    message: errorMessage,
+    shouldRetry: false,
+  },
+});
+
+const BadResponse = (errorMessage: string): DataError => ({
+  detail: {
+    name: "Bad Response",
+    message: errorMessage,
+    shouldRetry: true,
+  },
+});
+
 const ServerError = (errorMessage: string): DataError => ({
   detail: {
     name: "Server Error",
@@ -47,14 +63,6 @@ const ServerUnresponsiveError: DataError = {
     shouldRetry: true,
   },
 };
-
-const BadResponse = (errorMessage: string): DataError => ({
-  detail: {
-    name: "Bad Response",
-    message: errorMessage,
-    shouldRetry: true,
-  },
-});
 
 const TimeoutError: DataError = {
   detail: {
