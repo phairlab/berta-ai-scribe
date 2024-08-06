@@ -2,9 +2,9 @@
 
 import { useEffect, useRef } from "react";
 
-import { useDataAction } from "./use-data-action";
-
 import { logger } from "@/utility/logging";
+
+import { useDataAction } from "./use-data-action";
 
 const log = logger.child({ module: "hooks/use-auto-query" });
 

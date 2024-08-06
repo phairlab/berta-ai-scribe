@@ -47,8 +47,8 @@ export const AIScribe = () => {
 
   // Immediately transcribe new audio.
   useEffect(() => {
-    transcribeAudio.executing && transcribeAudio.abort();
-    generateNote.executing && generateNote.abort();
+    transcribeAudio.reset();
+    generateNote.reset();
 
     if (audioData) {
       log.debug("Transcribing Audio");

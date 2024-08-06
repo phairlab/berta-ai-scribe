@@ -1,6 +1,6 @@
 import suuid from "short-uuid";
 
-import { APIFetch, CORRELATION_ID_HEADER } from "@/utility/network";
+import { apiFetch, CORRELATION_ID_HEADER } from "@/utility/network";
 
 export async function POST(request: Request) {
   const correlationId: string =
@@ -10,7 +10,7 @@ export async function POST(request: Request) {
   const transcript = requestData.get("transcript");
   const summaryType = requestData.get("summaryType");
 
-  return APIFetch("/summaries", correlationId, {
+  return apiFetch("/summaries", correlationId, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({

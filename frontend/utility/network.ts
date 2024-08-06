@@ -138,7 +138,7 @@ async function performFetch(
   }
 }
 
-export async function APIFetch(
+export async function apiFetch(
   path: string,
   correlationId: string,
   init?: RequestInit,

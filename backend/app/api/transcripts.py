@@ -24,12 +24,12 @@ async def create_transcript(recording: UploadFile):
 
     try:
         # Transcription cannot be performed on files > 25 MB.        
-        if recording.size <= MB_to_bytes(1):
+        if recording.size <= MB_to_bytes(25):
             # Process the file directly.
             with ExecutionTimer() as transcription_timer:
                 transcript = await transcribe_audio(recording.file, recording.filename, recording.content_type, timeout=settings.TRANSCRIPTION_TIMEOUT)
         else:
-            logger.warning(f"File is {bytes_to_MB(recording.size):.2f} MB and will be split for transcribing.")
+            logger.warning(f"File is {bytes_to_MB(recording.size):.2f} MB and must be split for transcribing.")
 
             with ExecutionTimer() as transcription_timer:
                 try:

@@ -1,6 +1,6 @@
 import suuid from "short-uuid";
 
-import { APIFetch, CORRELATION_ID_HEADER } from "@/utility/network";
+import { apiFetch, CORRELATION_ID_HEADER } from "@/utility/network";
 
 export async function POST(request: Request) {
   const correlationId: string =
@@ -8,7 +8,7 @@ export async function POST(request: Request) {
 
   const requestData = await request.formData();
 
-  return APIFetch("/transcripts", correlationId, {
+  return apiFetch("/transcripts", correlationId, {
     method: "POST",
     body: requestData,
   });

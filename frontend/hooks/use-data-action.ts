@@ -35,6 +35,12 @@ export const useDataAction = <T>(
     }
   };
 
+  const reset = () => {
+    abort();
+    setResult(null);
+    setError(null);
+  };
+
   const execute = async (timeout?: number) => {
     log.trace(
       { correlationId: id.current },
@@ -147,5 +153,8 @@ export const useDataAction = <T>(
     }
   };
 
-  return { action: { execute, abort, executing, error, id }, result } as const;
+  return {
+    action: { execute, abort, reset, executing, error, id },
+    result,
+  } as const;
 };
