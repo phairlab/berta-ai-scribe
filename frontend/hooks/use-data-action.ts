@@ -47,9 +47,12 @@ export const useDataAction = <T>(
       `Executing Action ${method} ${path}${timeout ? ` (timeout: ${timeout}s)` : ""}`,
     );
 
-    // If a fetch is already in progress, cancel it first.
+    // If a fetch is already in progress, throw an error.
     if (controller.current) {
-      controller.current.abort();
+      const errorMessage = `Attempt to re-execute an action in progress. Must first abort or wait for the action to complete (${method} ${path}).`;
+
+      log.error({ correlationId: id.current }, errorMessage);
+      throw new Error(errorMessage);
     }
 
     // Reset state.
