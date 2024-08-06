@@ -27,10 +27,10 @@ class RequestData(BaseModel):
     504: {"description": "AI Service Timeout", "model": APIErrorReport},
 })
 async def create_summary(data: RequestData):
-    logger.debug("Generating summary")
-    
     summary_file = f"{data.summaryType}.txt"
     summary_path = os.path.join(PROMPTS_FOLDER, summary_file)
+
+    logger.debug(f"Generating summary: {data.summaryType}")    
     
     if not os.path.exists(summary_path):
         error_message = f"{data.summaryType} is not a valid note type."

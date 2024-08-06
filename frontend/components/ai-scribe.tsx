@@ -81,12 +81,20 @@ export const AIScribe = () => {
         <Divider />
         <AIScribeControls
           canSubmit={
-            !!audioData && !transcribeAudio.executing && !generateNote.executing
+            transcript !== null &&
+            !transcribeAudio.executing &&
+            !generateNote.executing
           }
           noteTypes={NOTE_TYPES}
           selectedNoteType={noteType}
           onNoteTypeChanged={(noteType) => setNoteType(noteType)}
-          onSubmit={() => transcript && generateNote.execute()}
+          onSubmit={() =>
+            transcript &&
+            generateNote.execute(
+              { transcript: transcript.text, summaryType: noteType },
+              NOTE_GENERATION_TIMEOUT,
+            )
+          }
         />
         {transcribeAudio.executing && (
           <SimpleLoadingMessage>Transcribing Audio</SimpleLoadingMessage>
