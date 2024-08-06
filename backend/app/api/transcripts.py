@@ -39,7 +39,7 @@ async def create_transcript(recording: UploadFile):
                         logger.debug(f"Transcribing segment {i+1}")
 
                         (file, audio_format) = segment
-                        content_type = f"audio/{"mpeg" if audio_format == "mp3" else audio_format}"
+                        content_type = f"audio/{audio_format}"
                         filename = f"{Path(recording.filename).stem}-{i:>03}.{audio_format}"
                         prompt = partial_transcripts[i-1] if i > 1 else None
 
