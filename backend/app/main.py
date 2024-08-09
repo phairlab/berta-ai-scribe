@@ -46,7 +46,7 @@ app.add_middleware(
 # ENDPOINTS
 
 # Root
-@app.get("", response_model=Message, tags=["Miscellaneous"])
+@app.get("/", response_model=Message, tags=["Miscellaneous"])
 async def root():
     return {"message": f"Welcome to the {settings.APP_NAME} API"}
 

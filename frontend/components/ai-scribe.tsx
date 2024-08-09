@@ -27,8 +27,8 @@ const NOTE_TYPES = [
 ];
 
 const DEFAULT_NOTE_TYPE = "Full Visit";
-const TRANSCRIPTION_TIMEOUT = 60;
-const NOTE_GENERATION_TIMEOUT = 60;
+const TRANSCRIPTION_TIMEOUT = 600;
+const NOTE_GENERATION_TIMEOUT = 600;
 
 export const AIScribe = () => {
   const [audioData, setAudioData] = useState<File | null>(null);
@@ -105,13 +105,23 @@ export const AIScribe = () => {
         {transcribeAudio.error && (
           <ErrorReport
             errorInfo={transcribeAudio.error}
-            retryAction={transcribeAudio.execute}
+            retryAction={() =>
+              transcribeAudio.execute(
+                { recording: audioData! },
+                TRANSCRIPTION_TIMEOUT,
+              )
+            }
           />
         )}
         {generateNote.error && (
           <ErrorReport
             errorInfo={generateNote.error}
-            retryAction={generateNote.execute}
+            retryAction={() =>
+              generateNote.execute(
+                { transcript: transcript!.text, summaryType: noteType },
+                NOTE_GENERATION_TIMEOUT,
+              )
+            }
           />
         )}
         {generatedNote && (

@@ -7,7 +7,7 @@ from app.services.ai import summarize_transcript
 from app.services.measurement import ExecutionTimer
 from app.services.error_handling import AIServiceTimeout, AIServiceError, APIError, BadRequest, TransientAIServiceError
 from app.schemas import APIErrorReport, GeneratedNote
-from app.config import get_app_logger
+from app.config import get_app_logger, settings
 
 logger = get_app_logger(__name__)
 
@@ -54,7 +54,7 @@ async def create_summary(data: RequestData):
     return GeneratedNote(
         text=summary,
         noteType=data.summaryType,
-        serviceUsed="OpenAI API",
-        modelUsed='gpt-4o',
+        serviceUsed=settings.SUMMARIZATION_SERVICE,
+        modelUsed=settings.SUMMARIZATION_MODEL,
         timeToGenerate=summarization_timer.elapsed_ms,
     )
