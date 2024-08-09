@@ -75,7 +75,7 @@ class Controls implements AudioPlayerControls {
 
 type AudioTrackPlayerProps = {
   audioData: Blob | null;
-  height: number;
+  isHidden: boolean;
   onInit?: (controls: AudioPlayerControls) => void;
   onDurationChanged?: (seconds: number | null) => void;
   onLoading?: () => void;
@@ -90,6 +90,7 @@ type AudioTrackPlayerProps = {
 
 export const AudioTrackPlayer = (props: AudioTrackPlayerProps) => {
   const NO_AUDIO_URL = "no-audio.mp3";
+  const height = 70;
 
   const { theme } = useTheme();
   const wavesurfer = useRef<Wavesurfer | null>(null);
@@ -102,7 +103,6 @@ export const AudioTrackPlayer = (props: AudioTrackPlayerProps) => {
   const [duration, setDuration] = useState<number | null>(null);
 
   const [options, setOptions] = useState<Partial<WaveSurferOptions>>({
-    height: props.height - 20,
     barRadius: 100,
     barWidth: 2,
     progressColor:
@@ -113,9 +113,7 @@ export const AudioTrackPlayer = (props: AudioTrackPlayerProps) => {
     cursorWidth: 1,
     cursorColor: tailwindColors["zinc-500"],
     fillParent: true,
-    normalize: true,
     interact: false,
-    autoplay: false,
   });
 
   const timelineOptions: TimelinePluginOptions = {
@@ -208,14 +206,6 @@ export const AudioTrackPlayer = (props: AudioTrackPlayerProps) => {
     });
   }, [theme, isRecording]);
 
-  // Handle changes to player display height.
-  useEffect(() => {
-    setOptions({
-      ...options,
-      height: props.height,
-    });
-  }, [props.height]);
-
   // Handle changes to duration.
   // Doing this here will ensure the event only fires on actual changes.
   useEffect(() => {
@@ -260,10 +250,11 @@ export const AudioTrackPlayer = (props: AudioTrackPlayerProps) => {
   return (
     <AnimatePulse isActive={isRecording && isRecordingPaused}>
       <div
-        className={`w-full flex flex-col h-[${props.height}px] ${!loadedAudioData.current || !isReady ? "pointer-events-none" : ""}`}
+        className={`w-full flex flex-col ${!loadedAudioData.current || !isReady ? "pointer-events-none" : ""} ${props.isHidden ? "hidden" : ""}`}
       >
         <WavesurferPlayer
-          height={props.height - 20}
+          autoplay={false}
+          height={height}
           url={NO_AUDIO_URL}
           onDestroy={handleDestroy}
           onInit={handleInit}
