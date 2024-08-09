@@ -68,7 +68,7 @@ export const AIScribeAudioSource = (props: AIScribeAudioSourceProps) => {
   };
 
   return (
-    <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-4 max-w-full h-[94px]">
+    <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-4 max-w-full">
       <div className="flex flex-row gap-2 sm:gap-4 justify-center w-full">
         {audioData ? (
           <PlayPauseButton
@@ -84,20 +84,18 @@ export const AIScribeAudioSource = (props: AIScribeAudioSourceProps) => {
             onClick={toggleRecording}
           />
         )}
-        <div className="w-full relative flex flex-col gap-2">
+        <div className="w-full flex flex-col gap-2">
           {!audioData && !isRecording && (
-            <div className="absolute inset-0 z-20 bg-white dark:bg-black">
-              <div className="w-full h-[70px] flex justify-center items-center border rounded-lg border-zinc-100 dark:border-zinc-900">
-                <div className="text-center text-zinc-500 sm:mb-2">
-                  Start Recording or <br className="sm:hidden" /> Select a File
-                </div>
+            <div className="w-full h-[70px] flex justify-center items-center border rounded-lg border-zinc-100 dark:border-zinc-900">
+              <div className="text-center text-zinc-500 sm:mb-2">
+                Start Recording or <br className="sm:hidden" /> Select a File
               </div>
             </div>
           )}
           <div className={`w-full ${isPlayerLoading ? "invisible" : ""}`}>
             <AudioTrackPlayer
               audioData={audioData}
-              height={50}
+              isHidden={!audioData && !isRecording}
               onDurationChanged={(seconds) => setDuration(seconds)}
               onInit={handleAudioPlayerInit}
               onLoading={() => setIsPlayerLoading(true)}
@@ -110,7 +108,9 @@ export const AIScribeAudioSource = (props: AIScribeAudioSourceProps) => {
               onRecordingStarted={() => setIsRecording(true)}
             />
           </div>
-          <div className={`mx-2 ${isPlayerLoading ? "invisible" : ""}`}>
+          <div
+            className={`mx-2 ${isPlayerLoading ? "invisible" : ""} ${!audioData && !isRecording ? "hidden" : ""}`}
+          >
             <AudioTrackInfo
               audioTitle={audioTitle}
               duration={duration}

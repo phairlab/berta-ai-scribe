@@ -72,7 +72,7 @@ export const AIScribe = () => {
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6">
       <AIScribeAudioSource
         onAudioDataChanged={handleAudioDataChanged}
         onReset={handleAudioSourceReset}
