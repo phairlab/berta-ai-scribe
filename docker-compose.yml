@@ -1,26 +1,17 @@
 version: '3.8'
 
 services:
-  backend:
-    build: ./backend
-    env_file: ./backend/.env
+  web-service:
+    build: ./web-service
+    env_file: ./web-service/.env
     ports:
-      - "8000:8000"
-    networks:
-      - app-network
-  
-  frontend:
-    build: ./frontend
-    env_file: ./frontend/.env.local
+      - "8000:8000"  
+  user-interface:
+    build: ./user-interface
+    env_file: ./user-interface/.env.local
     environment:
-      - APP_API_URL=http://backend:8000/api
+      - APP_API_URL=http://web-service:8000/api
     ports:
       - "3000:3000"
     depends_on:
-      - backend
-    networks:
-      - app-network
-
-networks:
-  app-network:
-    driver: bridge
+      - web-service
