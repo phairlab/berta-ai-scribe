@@ -6,6 +6,7 @@ import suuid from "short-uuid";
 import { logger } from "@/utility/logging";
 import { DataError, isDataError } from "@/data-models";
 import * as Network from "@/utility/network";
+import { clientFetch } from "@/utility/network.client";
 
 const log = logger.child({ module: "hooks/use-data-action" });
 
@@ -101,7 +102,7 @@ export const useDataAction = <T>(method: "GET" | "POST", path: string) => {
 
     // Perform fetch.
     try {
-      const response = await Network.clientFetch(path, id.current, init);
+      const response = await clientFetch(path, id.current, init);
       const data = await response.json();
 
       if (response.ok) {

@@ -6,7 +6,7 @@ import { Select, SelectItem } from "@nextui-org/select";
 
 import { useAutoQuery } from "@/hooks/use-auto-query";
 import * as Models from "@/data-models";
-import { downloadFile } from "@/utility/network";
+import { downloadFile } from "@/utility/network.client";
 
 const ACCEPT_FILE_TYPES = ["mp3", "mp4", "mpeg", "m4a", "webm", "wav", "mpga"];
 

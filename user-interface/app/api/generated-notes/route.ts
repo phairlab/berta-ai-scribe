@@ -1,6 +1,7 @@
 import suuid from "short-uuid";
 
-import { apiFetch, BadRequest, CORRELATION_ID_HEADER } from "@/utility/network";
+import { BadRequest, CORRELATION_ID_HEADER } from "@/utility/network";
+import { webServiceFetch } from "@/utility/network.server";
 import { logger } from "@/utility/logging";
 
 const log = logger.child({ module: "route-handlers/generated-notes" });
@@ -46,7 +47,7 @@ export async function POST(request: Request) {
   }
 
   // Request note generation via the backend service.
-  return apiFetch("/summaries", correlationId, {
+  return webServiceFetch("/summaries", correlationId, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({

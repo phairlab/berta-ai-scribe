@@ -1,5 +1,3 @@
-import suuid from "short-uuid";
-
 import { DataError, ValidationError, isValidationError } from "@/data-models";
 
 import { logger } from "./logging";
@@ -32,7 +30,7 @@ export const BadRequest = (errorMessage: string): DataError => ({
   },
 });
 
-const BadResponse = (errorMessage: string): DataError => ({
+export const BadResponse = (errorMessage: string): DataError => ({
   detail: {
     name: "Bad Response",
     message: errorMessage,
@@ -40,7 +38,7 @@ const BadResponse = (errorMessage: string): DataError => ({
   },
 });
 
-const ServerError = (errorMessage: string): DataError => ({
+export const ServerError = (errorMessage: string): DataError => ({
   detail: {
     name: "Server Error",
     message: errorMessage,
@@ -48,7 +46,7 @@ const ServerError = (errorMessage: string): DataError => ({
   },
 });
 
-const APIValidationFailed = (error: ValidationError): DataError => ({
+export const APIValidationFailed = (error: ValidationError): DataError => ({
   detail: {
     name: "Data Validation Error",
     message: JSON.stringify(error.detail),
@@ -56,7 +54,7 @@ const APIValidationFailed = (error: ValidationError): DataError => ({
   },
 });
 
-const ServerUnresponsiveError: DataError = {
+export const ServerUnresponsiveError: DataError = {
   detail: {
     name: "Server Unavailable",
     message: "The server is currently not responding.",
@@ -64,7 +62,7 @@ const ServerUnresponsiveError: DataError = {
   },
 };
 
-const TimeoutError: DataError = {
+export const TimeoutError: DataError = {
   detail: {
     name: "Server Timed Out",
     message: "The request timed out while waiting for the server to respond.",
@@ -72,7 +70,7 @@ const TimeoutError: DataError = {
   },
 };
 
-const RequestAborted: DataError = {
+export const RequestAborted: DataError = {
   detail: {
     name: "Request Aborted",
     message: "The request was aborted.",
@@ -86,12 +84,12 @@ function logFetchError(
   correlationId: string,
   error: Error,
 ) {
-  const errorMessage = `Fetch Failure ${method} ${path}: [${error.name}] ${error.message}`;
+  const errorMessage = `Failed to Fetch ${method} ${path}: [${error.name}] ${error.message}`;
 
   log.error({ correlationId: correlationId }, errorMessage);
 }
 
-async function performFetch(
+export async function performFetch(
   path: string,
   correlationId: string,
   init?: RequestInit,
@@ -143,112 +141,5 @@ async function performFetch(
 
       return Response.json(ServerError((e as Error).message), { status: 500 });
     }
-  }
-}
-
-export async function apiFetch(
-  path: string,
-  correlationId: string,
-  init?: RequestInit,
-) {
-  const apiUrlBase = process.env.APP_API_URL;
-  const fullPath = `${apiUrlBase}${path}`;
-
-  if (!apiUrlBase) {
-    const errorMessage =
-      "Either the environment was not set correctly, or an API fetch was attempted from a client component.";
-
-    log.error(errorMessage);
-
-    return Response.json(EnvironmentError(errorMessage), { status: 400 });
-  }
-
-  const method = init?.method ?? "GET";
-
-  log.trace(
-    { correlationId: correlationId },
-    `API ${method} ${fullPath} Request`,
-  );
-
-  const start = performance.now();
-  const response = await performFetch(fullPath, correlationId, init);
-  const duration = Math.floor(performance.now() - start);
-
-  log.info(
-    { correlationId: correlationId },
-    `API ${method} ${fullPath} ${response.status} in ${duration}ms`,
-  );
-
-  return response;
-}
-
-export async function clientFetch(
-  path: string,
-  correlationId: string,
-  init?: RequestInit,
-) {
-  "use client";
-  const fullPath = `/api${path}`;
-  const method = init?.method ?? "GET";
-
-  log.trace(
-    { correlationId: correlationId },
-    `CLIENT ${method} ${fullPath} Request`,
-  );
-
-  const start = performance.now();
-  const response = await performFetch(fullPath, correlationId, init);
-  const duration = Math.floor(performance.now() - start);
-
-  log.info(
-    { correlationId: correlationId },
-    `CLIENT ${method} ${fullPath} ${response.status} in ${duration}ms`,
-  );
-
-  return response;
-}
-
-export async function downloadFile(path: string, filename: string) {
-  "use client";
-
-  const correlationId = suuid.generate();
-
-  log.trace({ correlationId: correlationId }, `CLIENT DOWNLOAD ${path}`);
-
-  try {
-    const start = performance.now();
-    const response = await fetch(path);
-
-    if (response.ok) {
-      const data = await response.blob();
-      const duration = Math.floor(performance.now() - start);
-
-      const file = new File([data], filename, { type: data.type });
-
-      log.info(
-        { correlationId: correlationId, mimeType: data?.type },
-        `CLIENT DOWNLOAD ${path} ${response.status} in ${duration}ms`,
-      );
-
-      return file;
-    } else {
-      const duration = Math.floor(performance.now() - start);
-
-      log.info(
-        { correlationId: correlationId },
-        `CLIENT DOWNLOAD ${path} ${response.status} in ${duration}ms`,
-      );
-
-      const errorMessage = await response.text();
-
-      throw new Error(errorMessage);
-    }
-  } catch (e: unknown) {
-    log.error(
-      { correlationId: correlationId },
-      `CLIENT DOWNLOAD FAILED: [${(e as Error).name}] ${(e as Error).message}`,
-    );
-
-    throw e;
   }
 }

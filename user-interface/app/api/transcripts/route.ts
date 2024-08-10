@@ -1,6 +1,7 @@
 import suuid from "short-uuid";
 
-import { apiFetch, BadRequest, CORRELATION_ID_HEADER } from "@/utility/network";
+import { BadRequest, CORRELATION_ID_HEADER } from "@/utility/network";
+import { webServiceFetch } from "@/utility/network.server";
 import { logger } from "@/utility/logging";
 
 const log = logger.child({ module: "route-handlers/transcripts" });
@@ -24,7 +25,7 @@ export async function POST(request: Request) {
   }
 
   // Request transcript generation via the backend service.
-  return apiFetch("/transcripts", correlationId, {
+  return webServiceFetch("/transcripts", correlationId, {
     method: "POST",
     body: requestData,
   });
