@@ -7,7 +7,7 @@ let nextConfig = {
 };
 
 if (process.env.LOGGING_LEVEL === "trace") {
-  nextConfig = { ...nextConfig, logging: { fetches: { fullUrl: true }} }
+  nextConfig = { ...nextConfig, logging: { fetches: { fullUrl: true } } };
 }
 
 // These CSP settings match those imposed by Snowflake, to be used during local development.
