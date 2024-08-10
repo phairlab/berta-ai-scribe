@@ -188,7 +188,7 @@ export async function clientFetch(
   init?: RequestInit,
 ) {
   "use client";
-  const fullPath = `/data${path}`;
+  const fullPath = `/api${path}`;
   const method = init?.method ?? "GET";
 
   log.trace(
