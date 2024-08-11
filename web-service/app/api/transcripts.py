@@ -20,7 +20,7 @@ router = APIRouter()
     504: {"description": "AI Service Timeout", "model": APIErrorReport},
 })
 async def create_transcript(recording: UploadFile):
-    logger.debug("Generating transcription")
+    logger.info("Generating transcript")
 
     try:
         # Transcription cannot be performed on files > 25 MB.        
@@ -50,15 +50,9 @@ async def create_transcript(recording: UploadFile):
                 except Exception as e:
                     raise e
 
-        logger.debug(f"Transcript generated in {transcription_timer.elapsed_ms / 1000:.2f}s")
+        logger.info(f"Transcript generated in {transcription_timer.elapsed_ms / 1000:.2f}s")
     
-        return Transcript(
-            text=transcript,
-            timeToProcessAudio=0,
-            timeToGenerate=transcription_timer.elapsed_ms,
-            serviceUsed="OpenAI API",
-            modelUsed="whisper-1"
-        )
+        return Transcript(text=transcript)
     except (AudioProcessingError, AIServiceError, AIServiceTimeout, TransientAIServiceError) as e:
         raise e.to_http_exception()
     except Exception as e:

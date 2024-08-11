@@ -1,4 +1,5 @@
 import logging
+from typing import Literal
 
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -23,10 +24,12 @@ class Settings(BaseSettings):
     SNOWFLAKE_TOKEN_PATH: str = "/snowflake/session/token"
     SNOWFLAKE_USER: str | None = None
     SNOWFLAKE_WAREHOUSE: str = "WH_SMALL"
-    SUMMARIZATION_SERVICE: str = "SNOWFLAKE_CORTEX"
+    SUMMARIZATION_SERVICE: Literal["OPENAI", "SNOWFLAKE_CORTEX"] = "SNOWFLAKE_CORTEX"
     SUMMARIZATION_MODEL: str = "llama3-70b"
     SUMMARIZATION_TIMEOUT: int = 600
+    TRANSCRIPTION_SERVICE: Literal["OPENAI", "LOCAL_WHISPER"] = "OPENAI"
     TRANSCRIPTION_TIMEOUT: int = 600
+    WHISPER_SERVICE_URL: str = "http://localhost:8010"
 
     model_config = SettingsConfigDict(env_file='.env', case_sensitive=True)    
 

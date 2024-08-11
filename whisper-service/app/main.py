@@ -1,15 +1,15 @@
 import logging
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html, get_swagger_ui_oauth2_redirect_html
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
+import app.transcription as transcription
 from app.config import settings
-from app.api import transcripts, summaries
-from app.schemas import Message
+from app.schemas import Message, Transcript
 
 # ----------------------------------
 # LOGGING CONFIG
@@ -83,9 +83,14 @@ async def redoc_html():
         redoc_js_url="/static/redoc.standalone.js"
     )
 
-# Include API routers
-app.include_router(transcripts.router, prefix="/api/transcripts", tags=["Transcripts"])
-app.include_router(summaries.router, prefix="/api/summaries", tags=["Summaries"])
+@app.post("/transcribe-audio", response_model=Transcript)
+async def transcribe_audio(audio: UploadFile):
+    try:
+       transcript = transcription.transcribe_audio(audio.file, filename=audio.filename)
+
+       return Transcript(text=transcript, modelUsed="faster-whisper-large-v2")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 # ----------------------------------
 # FALLBACK
@@ -93,4 +98,4 @@ app.include_router(summaries.router, prefix="/api/summaries", tags=["Summaries"]
 # Handle case when the app is not run via the uvicorn command
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8010)

@@ -7,7 +7,7 @@ from app.services.ai import summarize_transcript
 from app.services.measurement import ExecutionTimer
 from app.services.error_handling import AIServiceTimeout, AIServiceError, APIError, BadRequest, TransientAIServiceError
 from app.schemas import APIErrorReport, GeneratedNote
-from app.config import get_app_logger, settings
+from app.config import get_app_logger
 
 logger = get_app_logger(__name__)
 
@@ -30,7 +30,7 @@ async def create_summary(data: RequestData):
     summary_file = f"{data.summaryType}.txt"
     summary_path = os.path.join(PROMPTS_FOLDER, summary_file)
 
-    logger.debug(f"Generating summary: {data.summaryType}")    
+    logger.info(f"Generating summary: {data.summaryType}")    
     
     if not os.path.exists(summary_path):
         error_message = f"{data.summaryType} is not a valid note type."
@@ -44,17 +44,11 @@ async def create_summary(data: RequestData):
         with ExecutionTimer() as summarization_timer:
             summary = await summarize_transcript(data.transcript, prompt)
 
-        logger.debug(f"Summary generated in {summarization_timer.elapsed_ms / 1000:.2f}s")
+        logger.info(f"Summary generated in {summarization_timer.elapsed_ms / 1000:.2f}s")
     except (AIServiceError, AIServiceTimeout, TransientAIServiceError) as e:
         raise e.to_http_exception()
     except Exception as e:
         logger.error(e)
         raise APIError(str(e)).to_http_exception()
 
-    return GeneratedNote(
-        text=summary,
-        noteType=data.summaryType,
-        serviceUsed=settings.SUMMARIZATION_SERVICE,
-        modelUsed=settings.SUMMARIZATION_MODEL,
-        timeToGenerate=summarization_timer.elapsed_ms,
-    )
+    return GeneratedNote(text=summary, noteType=data.summaryType)

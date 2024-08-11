@@ -13,14 +13,7 @@ class Message(BaseModel):
 
 class Transcript(BaseModel):
     text: str
-    timeToProcessAudio: int
-    timeToGenerate: int
-    serviceUsed: str
-    modelUsed: str
 
 class GeneratedNote(BaseModel):
     text: str
     noteType: str
-    timeToGenerate: int
-    serviceUsed: str
-    modelUsed: str
