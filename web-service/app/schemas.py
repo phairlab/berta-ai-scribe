@@ -16,6 +16,7 @@ class Transcript(BaseModel):
 
 class GeneratedNote(BaseModel):
     text: str
+    noteType: str
 
 class NoteGenerationParameters(BaseModel):
     transcript: str
