@@ -6,6 +6,7 @@ import aiohttp
 import openai
 import snowflake.connector
 import snowflake.cortex
+from snowflake.snowpark.exceptions import SnowparkClientException
 from snowflake.snowpark import Session
 from openai import AsyncOpenAI, NotGiven
 
@@ -46,14 +47,21 @@ async def transcribe_audio(audio_file: BinaryIO, filename: str, content_type: st
             form_data = aiohttp.FormData()
             form_data.add_field("audio", audio_file.read(), filename=filename)
 
-            async with session.post("/transcribe-audio", data=form_data) as response:
-                if response.status == 200:
-                    transcript = await response.json()
-                    return transcript["text"]
-                else:
-                    error = await response.json()
-                    error_message = error["detail"]
-                    raise ExternalServiceError(service, error_message)
+            try:
+                async with session.post("/transcribe-audio", data=form_data) as response:
+                    if response.status == 200:
+                        transcript = await response.json()
+                        return transcript["text"]
+                    else:
+                        error = await response.json()
+                        error_message = error["detail"]
+                        raise ExternalServiceError(service, error_message)
+            except aiohttp.ServerTimeoutError as e:
+                raise ExternalServiceTimeout(service, str(e))
+            except aiohttp.ServerConnectionError as e:
+                raise ExternalServiceInterruption(service, str(e))
+            except (aiohttp.ClientPayloadError, aiohttp.ClientResponseError, aiohttp.RedirectClientError) as e:
+                raise ExternalServiceError(service, str(e))
 
     else:
         raise WebServiceError(f"Unknown transcription service '{settings.TRANSCRIPTION_SERVICE}'. Check and correct the server configuration.")
@@ -116,8 +124,7 @@ async def summarize_transcript(transcript: str, prompt: str, timeout: int | None
                     summary = json.loads(response)["choices"][0]["messages"]
 
             return summary
-        except Exception as e:
-            logger.error(e)
+        except SnowparkClientException as e:
             raise ExternalServiceError(service, str(e))
     else:
         raise WebServiceError(f"Unknown note generation service '{settings.TRANSCRIPTION_SERVICE}'. Check and correct the server configuration.")
