@@ -10,7 +10,7 @@ export async function webServiceFetch(
   correlationId: string,
   init?: RequestInit,
 ) {
-  const apiUrlBase = process.env.APP_API_URL;
+  const apiUrlBase = process.env.WEB_SERVICE_URL;
   const fullPath = `${apiUrlBase}${path}`;
 
   if (!apiUrlBase) {

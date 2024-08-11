@@ -4,7 +4,7 @@ from fastapi import APIRouter, UploadFile
 
 from app.config import get_app_logger, settings
 from app.services.audio_processing import split_audio
-from app.services.ai import transcribe_audio
+from app.services.ai import transcribe
 from app.services.measurement import ExecutionTimer, MB_to_bytes, bytes_to_MB
 from app.services.error_handling import WebServiceError
 from app.schemas import Transcript, ErrorReport
@@ -27,7 +27,7 @@ async def create_transcript(recording: UploadFile):
         if recording.size <= MB_to_bytes(25):
             # Process the file directly.
             with ExecutionTimer() as transcription_timer:
-                transcript = await transcribe_audio(recording.file, recording.filename, recording.content_type, timeout=settings.TRANSCRIPTION_TIMEOUT)
+                transcript = await transcribe(recording.file, recording.filename, recording.content_type, timeout=settings.TRANSCRIPTION_TIMEOUT)
         else:
             logger.warning(f"File is {bytes_to_MB(recording.size):.2f} MB and must be split for transcribing.")
 
@@ -42,7 +42,7 @@ async def create_transcript(recording: UploadFile):
                     filename = f"{Path(recording.filename).stem}-{i:>03}.{audio_format}"
                     prompt = partial_transcripts[i-1] if i > 1 else None
 
-                    partial_transcript = await transcribe_audio(file, filename, content_type, prompt, timeout=settings.TRANSCRIPTION_TIMEOUT)                        
+                    partial_transcript = await transcribe(file, filename, content_type, prompt, timeout=settings.TRANSCRIPTION_TIMEOUT)                        
                     partial_transcripts.append(partial_transcript)
 
                 transcript = " ".join(partial_transcripts)

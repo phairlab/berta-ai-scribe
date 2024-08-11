@@ -47,7 +47,7 @@ export const AIScribe = () => {
 
     if (audioData) {
       log.debug("Transcribing Audio");
-      transcribeAudio.execute({ recording: audioData }, TRANSCRIPTION_TIMEOUT);
+      transcribeAudio.execute({ audio: audioData }, TRANSCRIPTION_TIMEOUT);
     }
   }, [audioData]);
 
@@ -56,7 +56,7 @@ export const AIScribe = () => {
     if (transcript && !generateNote.executing) {
       log.debug(`Generating Note: ${noteType}`);
       generateNote.execute(
-        { transcript: transcript.text, summaryType: noteType },
+        { transcript: transcript.text, noteType: noteType },
         NOTE_GENERATION_TIMEOUT,
       );
     }
@@ -91,7 +91,7 @@ export const AIScribe = () => {
           onSubmit={() =>
             transcript &&
             generateNote.execute(
-              { transcript: transcript.text, summaryType: noteType },
+              { transcript: transcript.text, noteType: noteType },
               NOTE_GENERATION_TIMEOUT,
             )
           }
@@ -107,7 +107,7 @@ export const AIScribe = () => {
             errorInfo={transcribeAudio.error}
             retryAction={() =>
               transcribeAudio.execute(
-                { recording: audioData! },
+                { audio: audioData! },
                 TRANSCRIPTION_TIMEOUT,
               )
             }
@@ -118,7 +118,7 @@ export const AIScribe = () => {
             errorInfo={generateNote.error}
             retryAction={() =>
               generateNote.execute(
-                { transcript: transcript!.text, summaryType: noteType },
+                { transcript: transcript!.text, noteType: noteType },
                 NOTE_GENERATION_TIMEOUT,
               )
             }

@@ -10,6 +10,8 @@ services:
     env_file: ./web-service/.env
     environment:
       - TRANSCRIPTION_SERVICE=LOCAL_WHISPER
+      - SUMMARIZATION_SERVICE=OPENAI
+      - SUMMARIZATION_MODEL=gpt-4o
       - WHISPER_SERVICE_URL=http://whisper-service:8010
     ports:
       - "8000:8000"
@@ -19,7 +21,7 @@ services:
     build: ./user-interface
     env_file: ./user-interface/.env.local
     environment:
-      - APP_API_URL=http://web-service:8000/api
+      - WEB_SERVICE_URL=http://web-service:8000
     ports:
       - "3000:3000"
     depends_on:

@@ -25,7 +25,7 @@ export async function POST(request: Request) {
   }
 
   // Request transcript generation via the backend service.
-  return webServiceFetch("/transcripts", correlationId, {
+  return webServiceFetch("/api/ai-operations/transcribe-audio", correlationId, {
     method: "POST",
     body: requestData,
   });

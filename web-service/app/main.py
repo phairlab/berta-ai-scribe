@@ -8,7 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.api import transcripts, summaries
+from app.api import ai_operations
 from app.schemas import Message
 
 # ----------------------------------
@@ -84,8 +84,7 @@ async def redoc_html():
     )
 
 # Include API routers
-app.include_router(transcripts.router, prefix="/api/transcripts", tags=["Transcripts"])
-app.include_router(summaries.router, prefix="/api/summaries", tags=["Summaries"])
+app.include_router(ai_operations.router, prefix="/api/ai-operations", tags=["AI Operations"])
 
 # ----------------------------------
 # FALLBACK

@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     return Response.json(BadRequest(errorMessage), { status: 400 });
   }
 
-  const summaryType = requestData.get("summaryType");
+  const summaryType = requestData.get("noteType");
 
   // Handle missing note type.
   if (!summaryType) {
@@ -47,12 +47,12 @@ export async function POST(request: Request) {
   }
 
   // Request note generation via the backend service.
-  return webServiceFetch("/summaries", correlationId, {
+  return webServiceFetch("/api/ai-operations/generate-note", correlationId, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       transcript: transcript,
-      summaryType: summaryType,
+      noteType: summaryType,
     }),
   });
 }

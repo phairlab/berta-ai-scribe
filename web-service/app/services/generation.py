@@ -1,14 +1,12 @@
 import os
 import json
-from typing import BinaryIO
 
-import aiohttp
 import openai
 import snowflake.connector
 import snowflake.cortex
 from snowflake.snowpark.exceptions import SnowparkClientException
 from snowflake.snowpark import Session
-from openai import AsyncOpenAI, NotGiven
+from openai import AsyncOpenAI
 
 from app.services.error_handling import ExternalServiceTimeout, ExternalServiceError, ExternalServiceInterruption, WebServiceError
 from app.config import get_app_logger, settings
@@ -22,54 +20,19 @@ def get_login_token() -> str | None:
     else:
         return None
 
-async def transcribe_audio(audio_file: BinaryIO, filename: str, content_type: str, prompt: str | None = None, timeout: int | None = None) -> str:
-    if settings.TRANSCRIPTION_SERVICE == "OPENAI":
-        logger.info("Generating transcript using OpenAI API")
-        service = "OpenAI"
-        
-        try:
-            openai_client = AsyncOpenAI(timeout=timeout, max_retries=0)
-            transcript = await openai_client.audio.transcriptions.create(model="whisper-1", file=(filename, audio_file, content_type), prompt=prompt or NotGiven)
-
-            return transcript.text
-        except openai.APITimeoutError as e:
-            raise ExternalServiceTimeout(service, str(e))
-        except (openai.ConflictError, openai.InternalServerError, openai.RateLimitError, openai.UnprocessableEntityError) as e:
-            raise ExternalServiceInterruption(service, str(e))
-        except Exception as e:
-            raise ExternalServiceError(service, str(e))
-
-    elif settings.TRANSCRIPTION_SERVICE == "LOCAL_WHISPER":
-        logger.info(f"Generating transcript using local whisper service: {settings.WHISPER_SERVICE_URL}")
-        service = "Transcription Service"
-
-        async with aiohttp.ClientSession(settings.WHISPER_SERVICE_URL) as session:
-            form_data = aiohttp.FormData()
-            form_data.add_field("audio", audio_file.read(), filename=filename)
-
-            try:
-                async with session.post("/transcribe-audio", data=form_data) as response:
-                    if response.status == 200:
-                        transcript = await response.json()
-                        return transcript["text"]
-                    else:
-                        error = await response.json()
-                        error_message = error["detail"]
-                        raise ExternalServiceError(service, error_message)
-            except aiohttp.ServerTimeoutError as e:
-                raise ExternalServiceTimeout(service, str(e))
-            except aiohttp.ServerConnectionError as e:
-                raise ExternalServiceInterruption(service, str(e))
-            except (aiohttp.ClientPayloadError, aiohttp.ClientResponseError, aiohttp.RedirectClientError) as e:
-                raise ExternalServiceError(service, str(e))
-
-    else:
-        raise WebServiceError(f"Unknown transcription service '{settings.TRANSCRIPTION_SERVICE}'. Check and correct the server configuration.")
-
-async def summarize_transcript(transcript: str, prompt: str, timeout: int | None = None) -> str:
+async def summarize_transcript(transcript: str, instructions: str, timeout: int | None = None) -> str:
     messages = [
         {"role": "system", "content": "Format your responses plain text only, do not include any markdown syntax. Use asterisks before and after header text to indicate headers."},
-        {"role": "system", "content": prompt},
+        {"role": "system", "content": f"You will be provided the text of a transcript as input, use those instructions to generate the response: : {instructions}"},
+        {
+            "role": "system",
+            "content": 
+                """
+                Do not state any facts in the response that are not clearly supported by statements in the transcript.
+                If the transcript does not contain enough information for a section, it can be left blank or omitted.
+                If there is not enough information to generate the response as directed overall, or the transcript does not appear relevant to the instructions, you can reply to that effect instead.
+                """
+        },
         {"role": "user", "content": transcript}
     ]
 
@@ -108,10 +71,8 @@ async def summarize_transcript(transcript: str, prompt: str, timeout: int | None
             }
         else:
             connection_parameters = {
-                "account": settings.SNOWFLAKE_ACCOUNT,
-                "user": settings.SNOWFLAKE_USER,
+                "connection_name": "AHSJENKINS",
                 "role": settings.SNOWFLAKE_ROLE,
-                "password": settings.SNOWFLAKE_PASSWORD,
                 "database": settings.SNOWFLAKE_DATABASE,
                 "schema": settings.SNOWFLAKE_SCHEMA,
                 "warehouse": settings.SNOWFLAKE_WAREHOUSE,
