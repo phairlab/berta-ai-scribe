@@ -21,14 +21,14 @@ def get_login_token() -> str | None:
     else:
         return None
 
-async def transcribe_audio(audio_file: BinaryIO, filename: str, content_type: str, prompt: str | NotGiven = NotGiven, timeout: int | None = None) -> str:
+async def transcribe_audio(audio_file: BinaryIO, filename: str, content_type: str, prompt: str | None = None, timeout: int | None = None) -> str:
     if settings.TRANSCRIPTION_SERVICE == "OPENAI":
         logger.info("Generating transcript using OpenAI API")
         service = "OpenAI"
         
         try:
             openai_client = AsyncOpenAI(timeout=timeout, max_retries=0)
-            transcript = await openai_client.audio.transcriptions.create(model="whisper-1", file=(filename, audio_file, content_type), prompt=prompt)
+            transcript = await openai_client.audio.transcriptions.create(model="whisper-1", file=(filename, audio_file, content_type), prompt=prompt or NotGiven)
 
             return transcript.text
         except openai.APITimeoutError as e:
