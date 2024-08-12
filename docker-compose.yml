@@ -17,9 +17,9 @@ services:
       - "8000:8000"
     depends_on:
       - whisper-service
-  user-interface:
-    build: ./user-interface
-    env_file: ./user-interface/.env.local
+  ai-scribe-app:
+    build: ./ai-scribe-app
+    env_file: ./ai-scribe-app/.env.local
     environment:
       - WEB_SERVICE_URL=http://web-service:8000
     ports:
