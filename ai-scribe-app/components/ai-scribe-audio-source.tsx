@@ -24,6 +24,7 @@ export const AIScribeAudioSource = (props: AIScribeAudioSourceProps) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [isRecordingPaused, setIsRecordingPaused] = useState(false);
+  const [recordingError, setRecordingError] = useState<string | null>(null);
   const [duration, setDuration] = useState<number | null>(null);
 
   const setAudioTrack = (data: File | null, title: string | null) => {
@@ -45,20 +46,27 @@ export const AIScribeAudioSource = (props: AIScribeAudioSourceProps) => {
     setIsRecording(false);
     setIsRecordingPaused(false);
 
-    setAudioTrack(recording, "RECORDED AUDIO");
+    setAudioTrack(recording, `Recorded Audio (${recording.type})`);
   };
 
   const toggleRecording = async () => {
+    setRecordingError(null);
+
     if (isRecording) {
       audioControls.current?.togglePauseRecording();
     } else {
-      audioControls.current?.startRecording();
+      try {
+        await audioControls.current?.startRecording();
+      } catch (e: unknown) {
+        setRecordingError((e as Error).message);
+      }
     }
   };
 
   const reset = () => {
     setIsRecording(false);
     setIsRecordingPaused(false);
+    setRecordingError(null);
     setIsPlaying(false);
     setDuration(null);
 
@@ -88,7 +96,14 @@ export const AIScribeAudioSource = (props: AIScribeAudioSourceProps) => {
           {!audioData && !isRecording && (
             <div className="w-full h-[70px] flex justify-center items-center border rounded-lg border-zinc-100 dark:border-zinc-900">
               <div className="text-center text-zinc-500 sm:mb-2">
-                Start Recording or <br className="sm:hidden" /> Select a File
+                {recordingError ? (
+                  <span className="text-red-500">{recordingError}</span>
+                ) : (
+                  <span>
+                    Start Recording or <br className="sm:hidden" />
+                    Select a File
+                  </span>
+                )}
               </div>
             </div>
           )}

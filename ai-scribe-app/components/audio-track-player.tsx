@@ -5,12 +5,8 @@ import { useTheme } from "next-themes";
 import WavesurferPlayer from "@wavesurfer/react";
 import Wavesurfer, { WaveSurferOptions } from "wavesurfer.js/dist/wavesurfer";
 import HoverPlugin from "wavesurfer.js/dist/plugins/hover";
-import TimelinePlugin, {
-  TimelinePluginOptions,
-} from "wavesurfer.js/dist/plugins/timeline";
-import RecordPlugin, {
-  RecordPluginOptions,
-} from "wavesurfer.js/dist/plugins/record";
+import TimelinePlugin from "wavesurfer.js/dist/plugins/timeline";
+import RecordPlugin from "wavesurfer.js/dist/plugins/record";
 
 import { tailwindColors } from "@/utility/display";
 
@@ -43,17 +39,26 @@ class Controls implements AudioPlayerControls {
 
   public startRecording = async () => {
     if (this.recorder && !this.recorder.isRecording()) {
-      const devices = await RecordPlugin.getAvailableAudioDevices();
-
-      if (devices.length == 0) {
-        // TODO: Handle no mic.
-        return;
+      try {
+        await this.recorder.startMic();
+        await this.recorder.startRecording();
+      } catch (e: unknown) {
+        // Handle microphone not available.
+        if (e instanceof DOMException) {
+          switch (e.name) {
+            case "NotFoundError":
+              throw Error(
+                "No recording device detected. Please configure a microphone and try again.",
+              );
+            case "NotAllowedError":
+              throw Error(
+                "Access to the microphone was blocked. Please adjust your device permissions and try again.",
+              );
+            default:
+              throw e;
+          }
+        }
       }
-
-      await this.recorder.startMic({ deviceId: devices[0].deviceId });
-      await this.recorder.startRecording({
-        deviceId: devices[0].deviceId,
-      });
     }
   };
 
@@ -116,17 +121,6 @@ export const AudioTrackPlayer = (props: AudioTrackPlayerProps) => {
     interact: false,
   });
 
-  const timelineOptions: TimelinePluginOptions = {
-    style: { color: tailwindColors["zinc-400"] },
-  };
-
-  const recorderOptions: RecordPluginOptions = {
-    scrollingWaveform: true,
-    // scrollingWaveformWindow: 15,
-    renderRecordedAudio: false,
-    mimeType: "audio/webm",
-  };
-
   const handleInit = async (ws: Wavesurfer) => {
     wavesurfer.current = ws;
     recorder.current = configureRecorder();
@@ -140,7 +134,12 @@ export const AudioTrackPlayer = (props: AudioTrackPlayerProps) => {
     loadedAudioData.current = props.audioData;
 
     ws.registerPlugin(HoverPlugin.create());
-    ws.registerPlugin(TimelinePlugin.create(timelineOptions));
+    ws.registerPlugin(
+      TimelinePlugin.create({
+        style: { color: tailwindColors["zinc-400"] },
+      }),
+    );
+
     ws.registerPlugin(recorder.current);
   };
 
@@ -214,7 +213,10 @@ export const AudioTrackPlayer = (props: AudioTrackPlayerProps) => {
 
   /** Activate and configure recording functionality for the player. */
   const configureRecorder = (): RecordPlugin => {
-    const recordPlugin = RecordPlugin.create(recorderOptions);
+    const recordPlugin = RecordPlugin.create({
+      scrollingWaveform: true,
+      renderRecordedAudio: false,
+    });
 
     recordPlugin.on("record-start", () => {
       setIsRecording(true);
@@ -235,7 +237,12 @@ export const AudioTrackPlayer = (props: AudioTrackPlayerProps) => {
       setIsRecording(false);
       setIsRecordingPaused(false);
 
-      const file = new File([blob], "recording.webm");
+      const mimeType = blob.type;
+      const fileExtension = mimeType.split("/")[1];
+
+      const file = new File([blob], `recording.${fileExtension}`, {
+        type: mimeType,
+      });
 
       props.onRecordingEnded?.(file);
     });
