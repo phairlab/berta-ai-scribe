@@ -4,7 +4,7 @@ from pathlib import Path
 from fastapi import APIRouter, UploadFile
 
 from app.services.transcription import transcribe
-from app.services.generation import summarize_transcript
+from app.services.generative_ai import summarize_transcript
 from app.services.audio_processing import split_audio
 from app.services.measurement import ExecutionTimer, MB_to_bytes, bytes_to_MB
 from app.services.error_handling import WebServiceError, BadRequest
@@ -94,4 +94,4 @@ async def generate_note(parameters: NoteGenerationParameters):
         logger.exception(e)
         raise WebServiceError(str(e)).as_http_exception()
 
-    return GeneratedNote(text=note, noteType=parameters.noteType)
+    return GeneratedNote(text=note, title=parameters.noteType)

@@ -1,22 +1,15 @@
 version: '3.8'
 
 services:
-  whisper-service:
-    build: ./whisper-service
-    ports:
-      - "8010:8010"
   web-service:
     build: ./web-service
     env_file: ./web-service/.env
     environment:
-      - TRANSCRIPTION_SERVICE=LOCAL_WHISPER
+      - TRANSCRIPTION_SERVICE=OPENAI
       - SUMMARIZATION_SERVICE=OPENAI
       - SUMMARIZATION_MODEL=gpt-4o
-      - WHISPER_SERVICE_URL=http://whisper-service:8010
     ports:
       - "8000:8000"
-    depends_on:
-      - whisper-service
   ai-scribe-app:
     build: ./ai-scribe-app
     env_file: ./ai-scribe-app/.env.local

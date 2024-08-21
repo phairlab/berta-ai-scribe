@@ -27,10 +27,13 @@ async def transcribe(audio_file: BinaryIO, filename: str, content_type: str, pro
             raise ExternalServiceError(service, str(e))
 
     elif settings.TRANSCRIPTION_SERVICE == "LOCAL_WHISPER":
-        logger.info(f"Generating transcript using local whisper service: {settings.WHISPER_SERVICE_URL}")
+        if settings.LOCAL_WHISPER_SERVICE_URL is None:
+            raise WebServiceError("The connection to the local whisper service is missing. Check and correct the server configuration.")
+
+        logger.info(f"Generating transcript using local whisper service at {settings.LOCAL_WHISPER_SERVICE_URL}")
         service = "Transcription Service"
 
-        async with aiohttp.ClientSession(settings.WHISPER_SERVICE_URL) as session:
+        async with aiohttp.ClientSession(settings.LOCAL_WHISPER_SERVICE_URL) as session:
             form_data = aiohttp.FormData()
             form_data.add_field("audio", audio_file.read(), filename=filename)
 

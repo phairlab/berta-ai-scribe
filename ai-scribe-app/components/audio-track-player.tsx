@@ -12,8 +12,8 @@ import { tailwindColors } from "@/utility/display";
 
 import { AnimatePulse } from "./animate-pulse";
 
-/** Set of controls for audio playback and recording. */
-export interface AudioPlayerControls {
+/** Controls for audio playback and recording. */
+export type AudioPlayerControls = {
   /** Toggle audio playback. */
   playPause: () => void;
 
@@ -25,23 +25,61 @@ export interface AudioPlayerControls {
 
   /** Stops and finalizes audio recording. */
   endRecording: () => void;
-}
+};
 
-class Controls implements AudioPlayerControls {
-  public constructor(
-    private wavesurfer: Wavesurfer,
-    private recorder: RecordPlugin,
-  ) {}
+type AudioTrackPlayerProps = {
+  audioData: Blob | null;
+  isHidden: boolean;
+  onInit?: (controls: AudioPlayerControls) => void;
+  onDurationChanged?: (seconds: number | null) => void;
+  onLoading?: () => void;
+  onReady?: () => void;
+  onPlay?: () => void;
+  onPause?: () => void;
+  onRecordingStarted?: () => void;
+  onRecordingPaused?: () => void;
+  onRecordingResumed?: () => void;
+  onRecordingEnded?: (recording: File) => void;
+};
 
-  public playPause = () => {
-    this.wavesurfer.playPause();
+export const AudioTrackPlayer = (props: AudioTrackPlayerProps) => {
+  const NO_AUDIO_URL = "no-audio.mp3";
+  const PLAYER_HEIGHT = 70;
+
+  const { theme } = useTheme();
+  const wavesurfer = useRef<Wavesurfer | null>(null);
+  const recorder = useRef<RecordPlugin | null>(null);
+  const loadedAudioData = useRef<Blob | null>(null);
+
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [isReady, setIsReady] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isRecordingPaused, setIsRecordingPaused] = useState(false);
+  const [duration, setDuration] = useState<number | null>(null);
+
+  const [options, setOptions] = useState<Partial<WaveSurferOptions>>({
+    barRadius: 100,
+    barWidth: 2,
+    progressColor:
+      theme === "light"
+        ? tailwindColors["zinc-400"]
+        : tailwindColors["zinc-600"],
+    waveColor: tailwindColors["blue-400"],
+    cursorWidth: 1,
+    cursorColor: tailwindColors["zinc-500"],
+    fillParent: true,
+    interact: false,
+  });
+
+  const playPause = () => {
+    wavesurfer.current?.playPause();
   };
 
-  public startRecording = async () => {
-    if (this.recorder && !this.recorder.isRecording()) {
+  const startRecording = async () => {
+    if (recorder.current && !recorder.current.isRecording()) {
       try {
-        await this.recorder.startMic();
-        await this.recorder.startRecording();
+        await recorder.current.startMic();
+        await recorder.current.startRecording();
       } catch (e: unknown) {
         // Handle microphone not available.
         if (e instanceof DOMException) {
@@ -62,64 +100,24 @@ class Controls implements AudioPlayerControls {
     }
   };
 
-  public togglePauseRecording = () => {
-    if (this.recorder.isRecording()) {
-      this.recorder.pauseRecording();
-    } else if (this.recorder.isPaused()) {
-      this.recorder.resumeRecording();
+  const togglePauseRecording = () => {
+    if (recorder.current) {
+      if (recorder.current.isRecording()) {
+        recorder.current.pauseRecording();
+      } else if (recorder.current.isPaused()) {
+        recorder.current.resumeRecording();
+      }
     }
   };
 
-  public endRecording = () => {
-    if (this.recorder.isRecording() || this.recorder.isPaused()) {
-      this.recorder.stopRecording();
-      this.recorder.stopMic();
+  const endRecording = () => {
+    if (recorder.current) {
+      if (recorder.current.isRecording() || recorder.current.isPaused()) {
+        recorder.current.stopRecording();
+        recorder.current.stopMic();
+      }
     }
   };
-}
-
-type AudioTrackPlayerProps = {
-  audioData: Blob | null;
-  isHidden: boolean;
-  onInit?: (controls: AudioPlayerControls) => void;
-  onDurationChanged?: (seconds: number | null) => void;
-  onLoading?: () => void;
-  onReady?: () => void;
-  onPlay?: () => void;
-  onPause?: () => void;
-  onRecordingStarted?: () => void;
-  onRecordingPaused?: () => void;
-  onRecordingResumed?: () => void;
-  onRecordingEnded?: (recording: File) => void;
-};
-
-export const AudioTrackPlayer = (props: AudioTrackPlayerProps) => {
-  const NO_AUDIO_URL = "no-audio.mp3";
-  const height = 70;
-
-  const { theme } = useTheme();
-  const wavesurfer = useRef<Wavesurfer | null>(null);
-  const recorder = useRef<RecordPlugin | null>(null);
-  const loadedAudioData = useRef<Blob | null>(null);
-  const [isInitialized, setIsInitialized] = useState(false);
-  const [isReady, setIsReady] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
-  const [isRecordingPaused, setIsRecordingPaused] = useState(false);
-  const [duration, setDuration] = useState<number | null>(null);
-
-  const [options, setOptions] = useState<Partial<WaveSurferOptions>>({
-    barRadius: 100,
-    barWidth: 2,
-    progressColor:
-      theme === "light"
-        ? tailwindColors["zinc-400"]
-        : tailwindColors["zinc-600"],
-    waveColor: tailwindColors["blue-400"],
-    cursorWidth: 1,
-    cursorColor: tailwindColors["zinc-500"],
-    fillParent: true,
-    interact: false,
-  });
 
   const handleInit = async (ws: Wavesurfer) => {
     wavesurfer.current = ws;
@@ -147,7 +145,12 @@ export const AudioTrackPlayer = (props: AudioTrackPlayerProps) => {
     // Report initialized the first time the player is ready.
     if (!isInitialized) {
       setIsInitialized(true);
-      props.onInit?.(new Controls(wavesurfer.current!, recorder.current!));
+      props.onInit?.({
+        playPause,
+        startRecording,
+        togglePauseRecording,
+        endRecording,
+      });
     }
 
     setDuration(seconds);
@@ -189,7 +192,7 @@ export const AudioTrackPlayer = (props: AudioTrackPlayerProps) => {
       ...options,
       interact: isReady && loadedAudioData.current != null,
     });
-  }, [isReady, isRecording]);
+  }, [isReady]);
 
   // Handle changes to player display colors.
   useEffect(() => {
@@ -251,6 +254,10 @@ export const AudioTrackPlayer = (props: AudioTrackPlayerProps) => {
       setDuration(milliseconds / 1000);
     });
 
+    recordPlugin.on("destroy", () => {
+      recordPlugin.unAll();
+    });
+
     return recordPlugin;
   };
 
@@ -261,7 +268,7 @@ export const AudioTrackPlayer = (props: AudioTrackPlayerProps) => {
       >
         <WavesurferPlayer
           autoplay={false}
-          height={height}
+          height={PLAYER_HEIGHT}
           url={NO_AUDIO_URL}
           onDestroy={handleDestroy}
           onInit={handleInit}

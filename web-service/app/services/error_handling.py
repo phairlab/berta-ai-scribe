@@ -41,6 +41,30 @@ class BadRequest(WebServiceError):
     should_retry = False
     status_code = 400
 
+class Unauthorized(WebServiceError):
+    """
+    An attempt to access data outside an authenticated connection.
+
+    - **HTTP Status Code:** 401 Unauthorized
+    - **Client Should Auto-Retry:** False. The issue must be investigated and corrected by the development team.
+    """
+    name = "Unauthorized"
+    resolution = "The issue must be investigated and corrected by the development team."
+    should_retry = False
+    status_code = 401
+
+class Forbidden(WebServiceError):
+    """
+    The current user does not have permission to perform this action.
+
+    - **HTTP Status Code:** 401 Unauthorized
+    - **Client Should Auto-Retry:** False. The issue must be investigated and corrected by the development team.
+    """
+    name = "Unauthorized"
+    resolution = "The issue must be investigated and corrected by the development team."
+    should_retry = False
+    status_code = 403
+
 class UnsupportedAudioFormat(WebServiceError):
     """
     Represents an error that occurred due to an audio file being provided in an unsupported format.

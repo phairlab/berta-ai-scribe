@@ -1,5 +1,3 @@
-"use client";
-
 import { useRef, useState } from "react";
 import { Button } from "@nextui-org/button";
 
@@ -7,7 +5,8 @@ import { AudioTrackPlayer, AudioPlayerControls } from "./audio-track-player";
 import { AudioTrackInfo } from "./audio-track-info";
 import { PlayPauseButton } from "./play-pause-button";
 import { RecordButton } from "./record-button";
-import { AudioFileSelect } from "./audio-file-select";
+import { AudioFileBrowseButton } from "./audio-file-browse-button";
+import { AudioSampleSelect } from "./audio-sample-select";
 
 type AIScribeAudioSourceProps = {
   onAudioDataChanged?: (audioUrl: File | null) => void;
@@ -38,8 +37,8 @@ export const AIScribeAudioSource = (props: AIScribeAudioSourceProps) => {
     setIsPlayerInitialized(true);
   };
 
-  const handleFileSelected = (audioData: File, audioTitle: string) => {
-    setAudioTrack(audioData, audioTitle);
+  const handleFileSelected = (titlePrefix: string) => (audioFile: File) => {
+    setAudioTrack(audioFile, `${titlePrefix}/${audioFile.name}`);
   };
 
   const handleRecordingFinished = (recording: File) => {
@@ -136,7 +135,14 @@ export const AIScribeAudioSource = (props: AIScribeAudioSourceProps) => {
         </div>
       </div>
       {!audioData && !isRecording ? (
-        <AudioFileSelect onFileSelected={handleFileSelected} />
+        <div className="flex flex-row sm:flex-col gap-2 sm:gap-1 sm:h-[70px] justify-end items-center sm:items-start">
+          <AudioFileBrowseButton
+            onFileSelected={handleFileSelected("local-device")}
+          />
+          <AudioSampleSelect
+            onFileSelected={handleFileSelected("sample-recordings")}
+          />
+        </div>
       ) : (
         <div className="flex justify-end sm:mt-[9px] sm:mb-auto">
           {isRecording ? (

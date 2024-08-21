@@ -1,19 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Divider } from "@nextui-org/divider";
 
-import * as Models from "@/data-models";
-import { useDataAction } from "@/hooks/use-data-action";
-import { logger } from "@/utility/logging";
+import { Transcript, GeneratedNote } from "@/models";
+import { useWebService } from "@/hooks/use-web-service";
 
 import { AIScribeAudioSource } from "./ai-scribe-audio-source";
 import { AIScribeControls } from "./ai-scribe-controls";
 import { SimpleLoadingMessage } from "./simple-loading-message";
 import { AIScribeOutput } from "./ai-scribe-output";
 import { ErrorReport } from "./error-report";
-
-const log = logger.child({ module: "components/ai-scribe" });
 
 const NOTE_TYPES = [
   "Dx and DDx",
@@ -31,40 +29,49 @@ const TRANSCRIPTION_TIMEOUT = 600;
 const NOTE_GENERATION_TIMEOUT = 600;
 
 export const AIScribe = () => {
-  const [audioData, setAudioData] = useState<File | null>(null);
+  const [audioFile, setAudioFile] = useState<File | null>(null);
   const [noteType, setNoteType] = useState<string>(DEFAULT_NOTE_TYPE);
 
-  const { action: transcribeAudio, result: transcript } =
-    useDataAction<Models.Transcript>("POST", "/transcripts");
+  const { action: transcribeAudioAction, result: transcript } =
+    useWebService<Transcript>("POST", "/api/ai-operations/transcribe-audio");
 
-  const { action: generateNote, result: generatedNote } =
-    useDataAction<Models.GeneratedNote>("POST", "/generated-notes");
+  const { action: generateNoteAction, result: generatedNote } =
+    useWebService<GeneratedNote>("POST", "/api/ai-operations/generate-note");
 
   // Immediately transcribe new audio.
   useEffect(() => {
-    transcribeAudio.reset();
-    generateNote.reset();
-
-    if (audioData) {
-      log.debug("Transcribing Audio");
-      transcribeAudio.execute({ audio: audioData }, TRANSCRIPTION_TIMEOUT);
-    }
-  }, [audioData]);
+    transcribeAudio();
+  }, [audioFile]);
 
   // Immediately generate note on transcription.
   useEffect(() => {
-    if (transcript && !generateNote.executing) {
-      log.debug(`Generating Note: ${noteType}`);
-      generateNote.execute(
+    generateNote();
+  }, [transcript]);
+
+  const transcribeAudio = () => {
+    transcribeAudioAction.reset();
+    generateNoteAction.reset();
+
+    if (audioFile) {
+      const formData = new FormData();
+
+      formData.append("audio", audioFile);
+      transcribeAudioAction.execute(formData, TRANSCRIPTION_TIMEOUT);
+    }
+  };
+
+  const generateNote = () => {
+    if (transcript !== undefined && !generateNoteAction.executing) {
+      generateNoteAction.execute(
         { transcript: transcript.text, noteType: noteType },
         NOTE_GENERATION_TIMEOUT,
       );
     }
-  }, [transcript]);
+  };
 
   const handleAudioDataChanged = (data: File | null) => {
     // Save new audio data.
-    setAudioData(data);
+    setAudioFile(data);
   };
 
   const handleAudioSourceReset = () => {
@@ -81,47 +88,49 @@ export const AIScribe = () => {
         <Divider />
         <AIScribeControls
           canSubmit={
-            transcript !== null &&
-            !transcribeAudio.executing &&
-            !generateNote.executing
+            transcript !== undefined &&
+            !transcribeAudioAction.executing &&
+            !generateNoteAction.executing
           }
           noteTypes={NOTE_TYPES}
           selectedNoteType={noteType}
           onNoteTypeChanged={(noteType) => setNoteType(noteType)}
-          onSubmit={() =>
-            transcript &&
-            generateNote.execute(
-              { transcript: transcript.text, noteType: noteType },
-              NOTE_GENERATION_TIMEOUT,
-            )
-          }
+          onSubmit={generateNote}
         />
-        {transcribeAudio.executing && (
-          <SimpleLoadingMessage>Transcribing Audio</SimpleLoadingMessage>
+        {transcribeAudioAction.executing && (
+          <div className="flex flex-row gap-3 items-center justify-center">
+            <SimpleLoadingMessage>Transcribing Audio</SimpleLoadingMessage>
+            <Link
+              className="text-blue-500"
+              href=""
+              onClick={transcribeAudioAction.abort}
+            >
+              (Cancel)
+            </Link>
+          </div>
         )}
-        {generateNote.executing && (
-          <SimpleLoadingMessage>Generating: {noteType}</SimpleLoadingMessage>
+        {generateNoteAction.executing && (
+          <div className="flex flex-row gap-3 items-center justify-center">
+            <SimpleLoadingMessage>Generating: {noteType}</SimpleLoadingMessage>
+            <Link
+              className="text-blue-500"
+              href=""
+              onClick={generateNoteAction.abort}
+            >
+              (Cancel)
+            </Link>
+          </div>
         )}
-        {transcribeAudio.error && (
+        {transcribeAudioAction.error && (
           <ErrorReport
-            errorInfo={transcribeAudio.error}
-            retryAction={() =>
-              transcribeAudio.execute(
-                { audio: audioData! },
-                TRANSCRIPTION_TIMEOUT,
-              )
-            }
+            errorInfo={transcribeAudioAction.error}
+            retryAction={transcribeAudio}
           />
         )}
-        {generateNote.error && (
+        {generateNoteAction.error && (
           <ErrorReport
-            errorInfo={generateNote.error}
-            retryAction={() =>
-              generateNote.execute(
-                { transcript: transcript!.text, noteType: noteType },
-                NOTE_GENERATION_TIMEOUT,
-              )
-            }
+            errorInfo={generateNoteAction.error}
+            retryAction={generateNote}
           />
         )}
         {generatedNote && (
