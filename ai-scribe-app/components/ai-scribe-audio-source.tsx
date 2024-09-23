@@ -9,15 +9,15 @@ import { AudioFileBrowseButton } from "./audio-file-browse-button";
 import { AudioSampleSelect } from "./audio-sample-select";
 
 type AIScribeAudioSourceProps = {
-  onAudioDataChanged?: (audioUrl: File | null) => void;
+  audio: string | File | null;
+  audioTitle?: string;
+  onAudioFile: (audioData: File) => void;
   onReset?: () => void;
 };
 
 export const AIScribeAudioSource = (props: AIScribeAudioSourceProps) => {
   const audioControls = useRef<AudioPlayerControls | null>(null);
 
-  const [audioData, setAudioData] = useState<File | null>(null);
-  const [audioTitle, setAudioTitle] = useState<string | null>(null);
   const [isPlayerInitialized, setIsPlayerInitialized] = useState(false);
   const [isPlayerLoading, setIsPlayerLoading] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -26,26 +26,16 @@ export const AIScribeAudioSource = (props: AIScribeAudioSourceProps) => {
   const [recordingError, setRecordingError] = useState<string | null>(null);
   const [duration, setDuration] = useState<number | null>(null);
 
-  const setAudioTrack = (data: File | null, title: string | null) => {
-    setAudioTitle(title);
-    setAudioData(data);
-    props.onAudioDataChanged?.(data);
-  };
-
   const handleAudioPlayerInit = (controls: AudioPlayerControls) => {
     audioControls.current = controls;
     setIsPlayerInitialized(true);
-  };
-
-  const handleFileSelected = (titlePrefix: string) => (audioFile: File) => {
-    setAudioTrack(audioFile, `${titlePrefix}/${audioFile.name}`);
   };
 
   const handleRecordingFinished = (recording: File) => {
     setIsRecording(false);
     setIsRecordingPaused(false);
 
-    setAudioTrack(recording, `Recorded Audio (${recording.type})`);
+    props.onAudioFile(recording);
   };
 
   const toggleRecording = async () => {
@@ -69,15 +59,13 @@ export const AIScribeAudioSource = (props: AIScribeAudioSourceProps) => {
     setIsPlaying(false);
     setDuration(null);
 
-    setAudioTrack(null, null);
-
     props.onReset?.();
   };
 
   return (
-    <div className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-4 max-w-full">
-      <div className="flex flex-row gap-2 sm:gap-4 justify-center w-full">
-        {audioData ? (
+    <div className="flex flex-col-reverse md:flex-row gap-2 md:gap-4 max-w-full">
+      <div className="flex flex-row gap-2 md:gap-4 justify-center w-full">
+        {props.audio ? (
           <PlayPauseButton
             action={isPlaying ? "pause" : "play"}
             isDisabled={isPlayerLoading}
@@ -92,14 +80,14 @@ export const AIScribeAudioSource = (props: AIScribeAudioSourceProps) => {
           />
         )}
         <div className="w-full flex flex-col gap-2">
-          {!audioData && !isRecording && (
+          {!props.audio && !isRecording && (
             <div className="w-full h-[70px] flex justify-center items-center border rounded-lg border-zinc-100 dark:border-zinc-900">
-              <div className="text-center text-zinc-500 sm:mb-2">
+              <div className="text-center text-zinc-500 md:mb-2">
                 {recordingError ? (
                   <span className="text-red-500">{recordingError}</span>
                 ) : (
                   <span>
-                    Start Recording or <br className="sm:hidden" />
+                    Start Recording or <br />
                     Select a File
                   </span>
                 )}
@@ -108,8 +96,8 @@ export const AIScribeAudioSource = (props: AIScribeAudioSourceProps) => {
           )}
           <div className={`w-full ${isPlayerLoading ? "invisible" : ""}`}>
             <AudioTrackPlayer
-              audioData={audioData}
-              isHidden={!audioData && !isRecording}
+              audioData={props.audio ?? null}
+              isHidden={!props.audio && !isRecording}
               onDurationChanged={(seconds) => setDuration(seconds)}
               onInit={handleAudioPlayerInit}
               onLoading={() => setIsPlayerLoading(true)}
@@ -123,10 +111,10 @@ export const AIScribeAudioSource = (props: AIScribeAudioSourceProps) => {
             />
           </div>
           <div
-            className={`mx-2 ${isPlayerLoading ? "invisible" : ""} ${!audioData && !isRecording ? "hidden" : ""}`}
+            className={`mx-2 ${isPlayerLoading ? "invisible" : ""} ${!props.audio && !isRecording ? "hidden" : ""}`}
           >
             <AudioTrackInfo
-              audioTitle={audioTitle}
+              audioTitle={props.audioTitle ?? "Audio Recording"}
               duration={duration}
               isRecording={isRecording}
               isRecordingPaused={isRecordingPaused}
@@ -134,17 +122,13 @@ export const AIScribeAudioSource = (props: AIScribeAudioSourceProps) => {
           </div>
         </div>
       </div>
-      {!audioData && !isRecording ? (
-        <div className="flex flex-row sm:flex-col gap-2 sm:gap-1 sm:h-[70px] justify-end items-center sm:items-start">
-          <AudioFileBrowseButton
-            onFileSelected={handleFileSelected("local-device")}
-          />
-          <AudioSampleSelect
-            onFileSelected={handleFileSelected("sample-recordings")}
-          />
+      {!props.audio && !isRecording ? (
+        <div className="flex flex-row md:flex-col gap-2 md:gap-1 md:h-[70px] justify-end items-center md:items-start">
+          <AudioFileBrowseButton onFileSelected={props.onAudioFile} />
+          <AudioSampleSelect onFileSelected={props.onAudioFile} />
         </div>
       ) : (
-        <div className="flex justify-end sm:mt-[9px] sm:mb-auto">
+        <div className="flex justify-end md:mt-[9px] md:mb-auto">
           {isRecording ? (
             <Button size="sm" onClick={audioControls.current?.endRecording}>
               Finish Recording

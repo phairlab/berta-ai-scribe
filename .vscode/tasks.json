@@ -2,19 +2,11 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			"type": "shell",
-			"command": "pip install -r \"${workspaceFolder}/web-service/requirements.txt\"",
+			"label": "Install Web API Requirements",
+			"detail": "Install Python dependencies for the backend Web API to the current environment.",
 			"group": "build",
-			"label": "pip: install requirements - web-service",
-			"detail": "install python dependencies into the current environment",
-			"presentation": {
-				"echo": true,
-				"reveal": "always",
-				"focus": false,
-				"panel": "shared",
-				"showReuseMessage": true,
-				"clear": false
-			}
-		},
+			"type": "shell",
+			"command": "pip install -r \"${workspaceFolder}/web-api/requirements.txt\"",
+		}
 	]
 }

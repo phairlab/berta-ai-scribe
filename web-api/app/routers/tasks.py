@@ -1,0 +1,55 @@
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Body, UploadFile, status
+
+import app.services.tasks as tasks
+import app.services.error_handling as errors
+import app.schemas as sch
+from app.services.db import get_tag, useDatabase
+from app.services.security import authenticate_user, useUserSession
+from app.services.logging import WebAPILogger
+from app.config import settings
+
+log = WebAPILogger(__name__)
+
+router = APIRouter(dependencies=[Depends(authenticate_user)], responses={
+    status.HTTP_500_INTERNAL_SERVER_ERROR: {"description": "Internal Server Error", "model": sch.WebAPIError},
+    status.HTTP_502_BAD_GATEWAY: {"description": "External Service Error", "model": sch.WebAPIError},
+    status.HTTP_503_SERVICE_UNAVAILABLE: {"description": "External Service Unavailable", "model": sch.WebAPIError},
+    status.HTTP_504_GATEWAY_TIMEOUT: {"description": "External Service Timeout", "model": sch.WebAPIError},
+})
+
+@router.post("/transcribe-audio", generate_unique_id_function=(lambda _: "TranscribeAudio"))
+async def transcribe_audio(
+    database: useDatabase, 
+    userSession: useUserSession, 
+    *, 
+    audio: UploadFile
+) -> sch.TextResponse:
+    try:
+        transcript = await tasks.transcribe_audio(database, userSession, audio.file, audio.filename, audio.content_type)
+    except (errors.ExternalServiceError, errors.AudioProcessingError) as e:
+        raise e
+    except Exception as e:
+        raise errors.WebAPIException(str(e))
+        
+    return sch.TextResponse(text=transcript)
+
+@router.post("/generate-draft-note")
+async def generate_draft_note(
+    database: useDatabase, 
+    userSession: useUserSession,
+    *, 
+    instructions: Annotated[str, Body()], 
+    transcript: Annotated[str, Body()]
+) -> sch.GenerationResponse:
+    # Get the stream of note segments.
+    try:
+        tag = get_tag(database)
+        note_text = tasks.generate_note(database, userSession, tag, settings.GENERATIVE_AI_MODEL, instructions, transcript)
+    except errors.ExternalServiceError as e:
+        raise e
+    except Exception as e:
+        raise errors.WebAPIException(str(e))
+
+    return sch.GenerationResponse(text=note_text, tag=tag)

@@ -3,22 +3,24 @@
     // Hover to view descriptions of existing attributes.
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
-    "configurations": [        
-        {
-            "name": "Firefox DevTools",
-            "type": "firefox",
-            "request": "launch",
-            "url": "http://localhost:3000",
-            "webRoot": "${workspaceFolder}/ai-scribe-app",
-            "presentation": {
-                "hidden": true
-            },
-        },        
+    "configurations": [
         {
             "name": "Edge DevTools",
             "type": "msedge",
             "request": "launch",
-            "url": "http://localhost:3000",
+            "url": "http://localhost:4000",
+            "webRoot": "${workspaceFolder}/ai-scribe-app",
+            "presentation": {
+                "hidden": true
+            },
+        },
+        {
+            "name": "Firefox DevTools",
+            "type": "firefox",
+            "request": "launch",
+            "reAttach": false,
+            "clearConsoleOnReload": true,
+            "url": "http://localhost:4000",
             "webRoot": "${workspaceFolder}/ai-scribe-app",
             "presentation": {
                 "hidden": true
@@ -28,14 +30,14 @@
             "name": "Chrome DevTools",
             "type": "chrome",
             "request": "launch",
-            "url": "http://localhost:3000",
+            "url": "http://localhost:4000",
             "webRoot": "${workspaceFolder}/ai-scribe-app",
             "presentation": {
                 "hidden": true
             },
         },
         {
-            "name": "Client (Background)",
+            "name": "Node: AI Scribe",
             "cwd": "${workspaceFolder}/ai-scribe-app",
             "type": "node",
             "request": "launch",
@@ -47,104 +49,59 @@
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "presentation": {
-                "hidden": false,
-                "group": "Launch Silent",
-                "order": 3
-            },
-        },
-        {
-            "name": "Client (Browser)",
-            "cwd": "${workspaceFolder}/ai-scribe-app",
-            "type": "node",
-            "request": "launch",
-            "runtimeArgs": [
-                "run-script",
-                "dev"
-            ],
-            "runtimeExecutable": "npm",
-            "skipFiles": [
-                "<node_internals>/**"
-            ],
-            "serverReadyAction":{
-                "action": "openExternally",
-                "killOnServerStop": false,
-                "pattern": "- Local:        http://localhost:([0-9]+)",
-                "uriFormat": "http://localhost:%s"
-            },
             "presentation": {
                 "hidden": true
-            },
+            }
         },
         {
-            "name": "Server (Background)",
-            "cwd": "${workspaceFolder}/web-service",
+            "name": "Web API",
+            "cwd": "${workspaceFolder}/web-api",
             "type": "debugpy",
             "request": "launch",
-            "purpose": ["debug-in-terminal"],
-            "console": "internalConsole",
+            "redirectOutput": true,
             "module": "uvicorn",
             "args": [
                 "app.main:app",
-                "--reload"
+                "--reload",
+                "--port",
+                "8000"
             ],
+            "autoReload": {
+                "enable": true
+            },
             "presentation": {
                 "hidden": false,
-                "group": "Launch Silent",
-                "order": 2
+                "order": 4
             },
         }
     ],
     "compounds": [
         {
-            "name": "Launch - External Browser",
-            "configurations": ["Server (Background)", "Client (Browser)"],
+            "name": "Launch - Edge",
+            "configurations": ["Web API", "Node: AI Scribe", "Edge DevTools"],
             "stopAll": true,
             "presentation": {
-                "hidden": false,                
-                "group": "Launch Browser",
+                "hidden": false,
                 "order": 1
             }
         },
         {
-            "name": "Launch - Edge (DevTools)",
-            "configurations": ["Server (Background)", "Client (Background)", "Edge DevTools"],
+            "name": "Launch - Firefox",
+            "configurations": ["Web API", "Node: AI Scribe", "Firefox DevTools"],
             "stopAll": true,
             "presentation": {
                 "hidden": false,
-                "group": "Launch Browser",
                 "order": 2
             }
         },
         {
-            "name": "Launch - Firefox (DevTools)",
-            "configurations": ["Server (Background)", "Client (Background)", "Firefox DevTools"],
+            "name": "Launch - Chrome",
+            "configurations": ["Web API", "Node: AI Scribe", "Chrome DevTools"],
             "stopAll": true,
             "presentation": {
                 "hidden": false,
-                "group": "Launch Browser",
                 "order": 3
             }
-        },
-        {
-            "name": "Launch - Chrome (DevTools)",
-            "configurations": ["Server (Background)", "Client (Background)", "Chrome DevTools"],
-            "stopAll": true,
-            "presentation": {
-                "hidden": false,
-                "group": "Launch Browser",
-                "order": 4
-            }
-        },
-        {
-            "name": "Client/Server (Background)",
-            "configurations": ["Server (Background)", "Client (Background)"],
-            "stopAll": true,
-            "presentation": {
-                "hidden": false,
-                "group": "Launch Silent",
-                "order": 1
-            }
-        },
+        }
     ]
 }

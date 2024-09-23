@@ -2,26 +2,29 @@ import { Button } from "@nextui-org/button";
 import { Card, CardBody, CardHeader } from "@nextui-org/card";
 import { Divider } from "@nextui-org/divider";
 
-import { GeneratedNote } from "@/models";
+type AIScribeOutputProps = {
+  title: string;
+  text: string;
+};
 
-export const AIScribeOutput = ({ note }: { note: GeneratedNote }) => {
+export const AIScribeOutput = (props: AIScribeOutputProps) => {
   const copyNote = async () => {
-    if (note.text) {
-      await navigator.clipboard.writeText(note.text);
+    if (props.text) {
+      await navigator.clipboard.writeText(props.text);
     }
   };
 
   return (
     <Card radius="sm" shadow="sm">
       <CardHeader className="flex flex-row gap-4 justify-between items-center">
-        <p className="text-lg font-semibold">{note.title}</p>
+        <p className="text-lg font-semibold">{props.title}</p>
         <Button color="default" size="sm" onClick={copyNote}>
           Copy
         </Button>
       </CardHeader>
       <Divider />
       <CardBody>
-        <p className="text-left max-w-2xl whitespace-pre-wrap">{note.text}</p>
+        <p className="text-left max-w-2xl whitespace-pre-wrap">{props.text}</p>
       </CardBody>
     </Card>
   );

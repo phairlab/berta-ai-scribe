@@ -113,6 +113,30 @@ export const SunFilledIcon = ({
 );
 
 // TODO: Add attribution (https://help.thenounproject.com/hc/en-us/articles/200509948-Medium-Specific-Credit-Requirements-Examples).
+// Settings by Adrien Coquet from <a href="https://thenounproject.com/browse/icons/term/settings/" target="_blank" title="Settings Icons">Noun Project</a> (CC BY 3.0)
+export const SettingsIcon: React.FC<IconSvgProps> = ({
+  size = 24,
+  width,
+  height,
+  ...props
+}: IconSvgProps) => (
+  <svg
+    aria-hidden="true"
+    focusable="false"
+    height={size || height}
+    role="presentation"
+    strokeWidth="0"
+    viewBox="0 0 100 100"
+    width={size || width}
+    {...props}
+  >
+    <g fill="currentColor">
+      <path d="M94.8,40.8L84.2,39c-0.6-1.9-1.4-3.7-2.3-5.5l6.2-8.7c0.9-1.3,0.8-3.1-0.3-4.2l-8.5-8.5c-1.1-1.1-2.9-1.3-4.2-0.3    l-8.7,6.2c-1.7-0.9-3.6-1.7-5.5-2.3L59.2,5.2c-0.3-1.6-1.6-2.7-3.2-2.7H44c-1.6,0-2.9,1.1-3.2,2.7L39,15.8    c-1.9,0.6-3.7,1.4-5.5,2.3l-8.7-6.2c-1.3-0.9-3.1-0.8-4.2,0.3l-8.5,8.5c-1.1,1.1-1.3,2.9-0.3,4.2l6.2,8.7    c-0.9,1.7-1.7,3.6-2.3,5.5L5.2,40.8c-1.6,0.3-2.7,1.6-2.7,3.2v12c0,1.6,1.1,2.9,2.7,3.2L15.8,61c0.6,1.9,1.4,3.7,2.3,5.5l-6.2,8.7    c-0.9,1.3-0.8,3.1,0.3,4.2l8.5,8.5c1.1,1.1,2.9,1.3,4.2,0.3l8.7-6.2c1.7,0.9,3.6,1.7,5.5,2.3l1.8,10.6c0.3,1.6,1.6,2.7,3.2,2.7h12    c1.6,0,2.9-1.1,3.2-2.7L61,84.2c1.9-0.6,3.7-1.4,5.5-2.3l8.7,6.2c1.3,0.9,3.1,0.8,4.2-0.3l8.5-8.5c1.1-1.1,1.3-2.9,0.3-4.2    l-6.2-8.7c0.9-1.7,1.7-3.6,2.3-5.5l10.6-1.8c1.6-0.3,2.7-1.6,2.7-3.2V44C97.5,42.4,96.4,41.1,94.8,40.8z M50,67.1    c-9.5,0-17.1-7.7-17.1-17.1c0-9.5,7.7-17.1,17.1-17.1S67.1,40.5,67.1,50C67.1,59.5,59.5,67.1,50,67.1z" />
+    </g>
+  </svg>
+);
+
+// TODO: Add attribution (https://help.thenounproject.com/hc/en-us/articles/200509948-Medium-Specific-Credit-Requirements-Examples).
 // mic by Kholila wale from <a href="https://thenounproject.com/browse/icons/term/mic/" target="_blank" title="mic Icons">Noun Project</a> (CC BY 3.0)
 export const MicrophoneIcon: React.FC<IconSvgProps> = ({
   size = 24,
@@ -128,7 +152,7 @@ export const MicrophoneIcon: React.FC<IconSvgProps> = ({
     role="presentation"
     stroke="black"
     strokeWidth="0"
-    viewBox="-5 -10 110 120"
+    viewBox="0 0 100 100"
     width={size || width}
     {...props}
   >
@@ -212,7 +236,7 @@ export const PlayIcon: React.FC<IconSvgProps> = ({
     role="presentation"
     stroke="black"
     strokeWidth="0"
-    viewBox="-5 -10 110 120"
+    viewBox="0 0 100 100"
     width={size || width}
     {...props}
   >
@@ -238,7 +262,7 @@ export const PauseIcon: React.FC<IconSvgProps> = ({
     role="presentation"
     stroke="black"
     strokeWidth="0"
-    viewBox="-5 -10 110 120"
+    viewBox="0 0 100 100"
     width={size || width}
     {...props}
   >
@@ -265,7 +289,7 @@ export const DownloadIcon: React.FC<IconSvgProps> = ({
     role="presentation"
     stroke="black"
     strokeWidth="0"
-    viewBox="-5 -10 110 120"
+    viewBox="0 0 100 100"
     width={size || width}
     {...props}
   >
@@ -273,5 +297,33 @@ export const DownloadIcon: React.FC<IconSvgProps> = ({
       <path d="M47.206,72.855c1.563,1.563,4.11,1.563,5.671,0l22.14-22.125c0.781-0.78,1.201-1.805,1.201-2.828s-0.333-2.048-1.114-2.828   c-1.562-1.563-3.978-1.563-5.54,0L54,60.87V20.027c0-2.209-1.791-4-4-4s-4,1.791-4,4V59.87L30.846,44.949   c-1.563-1.563-4.327-1.563-5.89,0c-1.562,1.561-1.562,4.096,0,5.656L47.206,72.855z" />
       <path d="M76,76H24c-2.209,0-4,1.791-4,4s1.791,4,4,4h52c2.209,0,4-1.791,4-4S78.209,76,76,76z" />
     </g>
+  </svg>
+);
+export const DeleteDocumentIcon: React.FC<IconSvgProps> = (props) => (
+  <svg
+    aria-hidden="true"
+    fill="none"
+    focusable="false"
+    height="1em"
+    role="presentation"
+    viewBox="0 0 24 24"
+    width="1em"
+    {...props}
+  >
+    <path
+      d="M21.07 5.23c-1.61-.16-3.22-.28-4.84-.37v-.01l-.22-1.3c-.15-.92-.37-2.3-2.71-2.3h-2.62c-2.33 0-2.55 1.32-2.71 2.29l-.21 1.28c-.93.06-1.86.12-2.79.21l-2.04.2c-.42.04-.72.41-.68.82.04.41.4.71.82.67l2.04-.2c5.24-.52 10.52-.32 15.82.21h.08c.38 0 .71-.29.75-.68a.766.766 0 0 0-.69-.82Z"
+      fill="currentColor"
+    />
+    <path
+      d="M19.23 8.14c-.24-.25-.57-.39-.91-.39H5.68c-.34 0-.68.14-.91.39-.23.25-.36.59-.34.94l.62 10.26c.11 1.52.25 3.42 3.74 3.42h6.42c3.49 0 3.63-1.89 3.74-3.42l.62-10.25c.02-.36-.11-.7-.34-.95Z"
+      fill="currentColor"
+      opacity={0.399}
+    />
+    <path
+      clipRule="evenodd"
+      d="M9.58 17a.75.75 0 0 1 .75-.75h3.33a.75.75 0 0 1 0 1.5h-3.33a.75.75 0 0 1-.75-.75ZM8.75 13a.75.75 0 0 1 .75-.75h5a.75.75 0 0 1 0 1.5h-5a.75.75 0 0 1-.75-.75Z"
+      fill="currentColor"
+      fillRule="evenodd"
+    />
   </svg>
 );

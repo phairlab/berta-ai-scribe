@@ -1,32 +1,43 @@
-import { useState } from "react";
-import { Select, SelectItem } from "@nextui-org/select";
+import { useContext, useState } from "react";
+import { Select, SelectItem, SelectSection } from "@nextui-org/select";
 import { Button } from "@nextui-org/button";
 
+import { NoteDefinition } from "@/models";
+import { NoteDefinitionsContext } from "@/contexts/note-definitions-context";
+import { sortDefinitionsByTitle } from "@/utility/display";
+
 type AIScribeControlsProps = {
-  noteTypes: string[];
-  selectedNoteType: string;
-  canSubmit: boolean;
-  onNoteTypeChanged: (noteType: string) => void;
+  selectedNoteType?: NoteDefinition;
+  isDisabled: boolean;
+  onNoteTypeChanged: (noteType: NoteDefinition) => void;
   onSubmit: () => void;
 };
 
 export const AIScribeControls = (props: AIScribeControlsProps) => {
+  const { noteDefinitions } = useContext(NoteDefinitionsContext);
+
   const [isSelectOpen, setIsSelectOpen] = useState(false);
   const [canCloseSelect, setCanCloseSelect] = useState(false);
 
   return (
-    <div className="flex flex-row items-center justify-center gap-4">
+    <div className="flex flex-col md:flex-row items-end md:items-center justify-center gap-4">
       <Select
         aria-label="Select a Note Type"
-        className="flex-none w-40"
+        className="flex-none w-[300px] max-w-full"
         disallowEmptySelection={true}
         isOpen={isSelectOpen}
         placeholder="Make a Selection"
-        selectedKeys={[props.selectedNoteType]}
+        selectedKeys={
+          props.selectedNoteType ? [props.selectedNoteType.uuid] : undefined
+        }
         selectionMode="single"
         size="md"
         onChange={(e) => {
-          props.onNoteTypeChanged(e.target.value);
+          props.onNoteTypeChanged(
+            noteDefinitions?.find(
+              (noteType) => noteType.uuid === e.target.value,
+            )!,
+          );
           setIsSelectOpen(false);
           setCanCloseSelect(false);
         }}
@@ -40,14 +51,36 @@ export const AIScribeControls = (props: AIScribeControlsProps) => {
           }
         }}
       >
-        {props.noteTypes.map((type) => (
-          <SelectItem key={type}>{type}</SelectItem>
-        ))}
+        <SelectSection
+          className={noteDefinitions.some((d) => !d.isBuiltin) ? "" : "hidden"}
+          title="Custom Note Types"
+        >
+          {noteDefinitions
+            .filter((d) => !d.isBuiltin)
+            .sort(sortDefinitionsByTitle)
+            .map((noteType) => (
+              <SelectItem key={noteType.uuid}>{noteType.title}</SelectItem>
+            ))}
+        </SelectSection>
+        <SelectSection
+          title={
+            noteDefinitions.some((d) => !d.isBuiltin)
+              ? "Built-in Note Types"
+              : undefined
+          }
+        >
+          {noteDefinitions
+            .filter((d) => d.isBuiltin)
+            .sort(sortDefinitionsByTitle)
+            .map((noteType) => (
+              <SelectItem key={noteType.uuid}>{noteType.title}</SelectItem>
+            ))}
+        </SelectSection>
       </Select>
       <Button
         className="flex-none"
         color="primary"
-        isDisabled={!props.canSubmit}
+        isDisabled={!props.isDisabled}
         size="md"
         onClick={() => props.onSubmit()}
       >

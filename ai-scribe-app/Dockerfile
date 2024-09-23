@@ -8,7 +8,7 @@ COPY package*.json ./
 RUN npm install
 
 # Make port 8000 available to outside the container.
-EXPOSE 3000
+EXPOSE 4000
 
 # Environment
 ENV NODE_ENV=production

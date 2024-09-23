@@ -18,8 +18,8 @@ RUN python -c 'from whisperx.vad import load_vad_model; load_vad_model("cpu");'
 # Preload Meta's Whisper large-v2 model
 RUN python -c 'import faster_whisper; model = faster_whisper.WhisperModel("large-v2");'
 
-# Make port 8000 available to outside the container.
-EXPOSE 8000
+# Make port 8010 available to outside the container.
+EXPOSE 8010
 
 # Copy the current directory contents into the container.
 COPY . .

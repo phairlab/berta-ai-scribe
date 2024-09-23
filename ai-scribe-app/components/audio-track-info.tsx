@@ -24,8 +24,11 @@ export const AudioTrackInfo = (props: AudioTrackInfoProps) => {
 
   return (
     <div className="flex flex-col-reverse sm:flex-row justify-between items-end sm:gap-2 text-xs text-zinc-400 dark:text-zinc-500">
-      <div className="truncate max-w-[250px] font-semibold" title={title}>
-        {title}
+      <div
+        className="truncate max-w-[250px] font-semibold"
+        title={title ?? "Audio"}
+      >
+        {title ?? "Audio"}
       </div>
       <div className="flex flex-row gap-1">
         <strong>Duration:</strong>

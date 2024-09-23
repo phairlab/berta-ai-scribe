@@ -9,6 +9,7 @@ import TimelinePlugin from "wavesurfer.js/dist/plugins/timeline";
 import RecordPlugin from "wavesurfer.js/dist/plugins/record";
 
 import { tailwindColors } from "@/utility/display";
+import { useAccessToken } from "@/hooks/use-access-token";
 
 import { AnimatePulse } from "./animate-pulse";
 
@@ -28,7 +29,7 @@ export type AudioPlayerControls = {
 };
 
 type AudioTrackPlayerProps = {
-  audioData: Blob | null;
+  audioData: string | Blob | null;
   isHidden: boolean;
   onInit?: (controls: AudioPlayerControls) => void;
   onDurationChanged?: (seconds: number | null) => void;
@@ -47,9 +48,10 @@ export const AudioTrackPlayer = (props: AudioTrackPlayerProps) => {
   const PLAYER_HEIGHT = 70;
 
   const { theme } = useTheme();
+  const accessToken = useAccessToken();
   const wavesurfer = useRef<Wavesurfer | null>(null);
   const recorder = useRef<RecordPlugin | null>(null);
-  const loadedAudioData = useRef<Blob | null>(null);
+  const loadedAudioData = useRef<string | Blob | null>(null);
 
   const [isInitialized, setIsInitialized] = useState(false);
   const [isReady, setIsReady] = useState(false);
@@ -69,6 +71,9 @@ export const AudioTrackPlayer = (props: AudioTrackPlayerProps) => {
     cursorColor: tailwindColors["zinc-500"],
     fillParent: true,
     interact: false,
+    fetchParams: {
+      headers: { "Jenkins-Authorization": `Bearer ${accessToken}` },
+    },
   });
 
   const playPause = () => {
@@ -126,7 +131,11 @@ export const AudioTrackPlayer = (props: AudioTrackPlayerProps) => {
     ws.setOptions(options);
 
     if (props.audioData) {
-      await ws.loadBlob(props.audioData);
+      if (typeof props.audioData === "string") {
+        await ws.load(props.audioData);
+      } else {
+        await ws.loadBlob(props.audioData);
+      }
     }
 
     loadedAudioData.current = props.audioData;
@@ -174,7 +183,11 @@ export const AudioTrackPlayer = (props: AudioTrackPlayerProps) => {
       wavesurfer.current?.stop();
 
       if (props.audioData) {
-        wavesurfer.current?.loadBlob(props.audioData);
+        if (typeof props.audioData === "string") {
+          wavesurfer.current?.load(props.audioData);
+        } else {
+          wavesurfer.current?.loadBlob(props.audioData);
+        }
       }
 
       loadedAudioData.current = props.audioData;
@@ -241,7 +254,7 @@ export const AudioTrackPlayer = (props: AudioTrackPlayerProps) => {
       setIsRecordingPaused(false);
 
       const mimeType = blob.type;
-      const fileExtension = mimeType.split("/")[1];
+      const fileExtension = mimeType.split(";")[0].split("/")[1];
 
       const file = new File([blob], `recording.${fileExtension}`, {
         type: mimeType,

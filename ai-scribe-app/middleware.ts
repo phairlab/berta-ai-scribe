@@ -3,30 +3,44 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 export function middleware(request: NextRequest) {
-  if (request.nextUrl.pathname.startsWith("/api")) {
-    const headers = new Headers(request.headers);
+  if (process.env.NODE_ENV === "development") {
+    // Redirect /openapi.json calls during development.
+    if (request.nextUrl.pathname === "/openapi.json") {
+      const url = request.nextUrl.clone();
 
-    if (process.env.NODE_ENV === "development") {
-      headers.set(
+      url.pathname = "/api/openapi.json";
+
+      return NextResponse.redirect(url);
+    }
+
+    // Set the snowflake context user.
+    const requestHeaders = new Headers(request.headers);
+
+    if (process.env.SNOWFLAKE_CONTEXT_USER) {
+      requestHeaders.set(
         "sf-context-current-user",
-        process.env.DEV_USER ?? "DEV_USER",
+        process.env.SNOWFLAKE_CONTEXT_USER,
       );
     }
 
-    const destination = new URL(
-      process.env.WEB_SERVICE_URL ?? "http://web-service:8000",
-    );
+    // Proxy Web API requests during development.
+    if (request.nextUrl.pathname.startsWith("/api")) {
+      const destination = new URL("http://localhost:8000");
 
-    const url = request.nextUrl.clone();
+      const url = request.nextUrl.clone();
 
-    url.protocol = destination.protocol;
-    url.host = destination.host;
-    url.port = destination.port;
+      url.protocol = destination.protocol;
+      url.host = destination.host;
+      url.port = destination.port;
+      url.pathname = request.nextUrl.pathname.slice("/api".length);
 
-    return NextResponse.rewrite(url, { headers: headers });
+      return NextResponse.rewrite(url, { headers: requestHeaders });
+    }
+
+    // For other requests in dev, only update the headers.
+    return NextResponse.next({ request: { headers: requestHeaders } });
   }
-}
 
-export const config = {
-  matcher: "/api/:path*",
-};
+  // In production, forward the request as normal.
+  return NextResponse.next();
+}

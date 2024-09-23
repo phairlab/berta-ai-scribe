@@ -1,5 +1,9 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+# RSA Keys
+*.p8
+*.pub
+
 # dependencies
 /node_modules
 /.pnp

@@ -2,11 +2,11 @@
 export type ApplicationError = {
   name: string;
   message: string;
-  shouldRetry?: boolean;
+  retry?: boolean;
 };
 
 /** Details of a validation issue from a web service request. */
-export type WebServiceValidationErrorDetails = {
+export type ServerValidationError = {
   type: string;
   loc: [string, string | number];
   msg: string;
@@ -14,100 +14,90 @@ export type WebServiceValidationErrorDetails = {
 };
 
 /** General form of an error response from the web service. */
-export type WebServiceError = {
-  detail: any;
-};
-
-/** Application error returned by the web service. */
-export type WebServiceApplicationError = {
-  detail: ApplicationError;
-};
-
-/** Validation error returned by the web service. */
-export type WebServiceValidationError = {
-  detail: WebServiceValidationErrorDetails;
+export type WebApiError<T> = {
+  detail: T;
 };
 
 /** Determines whether the entity is a WebServiceError. */
-export function isWebServiceError(entity: any): entity is WebServiceError {
-  return "detail" in entity;
+export function isWebApiError(entity: any): entity is WebApiError<any> {
+  return (
+    typeof entity === "object" &&
+    entity !== null &&
+    (entity as WebApiError<any>).detail !== undefined
+  );
 }
 
 /** Determines whether the entity is a WebServiceValidationError. */
-export function isWebServiceValidationError(
+export function isServerValidationError(
   entity: any,
-): entity is WebServiceValidationError {
+): entity is ServerValidationError {
   return (
-    isWebServiceError(entity) &&
-    "type" in entity.detail &&
-    "loc" in entity.detail &&
-    "msg" in entity.detail
+    (entity as ServerValidationError).type !== undefined &&
+    (entity as ServerValidationError).loc !== undefined &&
+    (entity as ServerValidationError).msg !== undefined
   );
 }
 
 /** Determines whether the entity is a WebServiceAPIError. */
-export function isWebServiceAPIError(
-  entity: any,
-): entity is WebServiceApplicationError {
+export function isApplicationError(entity: any): entity is ApplicationError {
   return (
-    isWebServiceError(entity) &&
-    "name" in entity.detail &&
-    "message" in entity.detail
+    (entity as ApplicationError).name !== undefined &&
+    (entity as ApplicationError).message !== undefined
   );
 }
 
 export const UnexpectedError = (errorMessage: string): ApplicationError => ({
   name: "Unexpected Error",
   message: errorMessage,
-  shouldRetry: true,
+  retry: true,
 });
 
 export const ConfigurationError = (errorMessage: string): ApplicationError => ({
   name: "Configuration Error",
   message: errorMessage,
-  shouldRetry: false,
+  retry: false,
 });
 
 export const BadRequest = (errorMessage: string): ApplicationError => ({
   name: "Bad Request",
   message: errorMessage,
-  shouldRetry: false,
+  retry: false,
 });
 
 export const BadResponse = (errorMessage: string): ApplicationError => ({
   name: "Bad Response",
   message: errorMessage,
-  shouldRetry: true,
+  retry: true,
 });
 
 export const ServerError = (errorMessage: string): ApplicationError => ({
   name: "Server Error",
   message: errorMessage,
-  shouldRetry: false,
+  retry: false,
 });
 
 export const ValidationError = (
-  error: WebServiceValidationErrorDetails,
+  errors: ServerValidationError[],
 ): ApplicationError => ({
   name: "Validation Error",
-  message: JSON.stringify(error),
-  shouldRetry: false,
+  message: JSON.stringify(errors),
+  retry: false,
 });
 
 export const ServerUnresponsiveError: ApplicationError = {
   name: "Server Unavailable",
   message: "The server is currently not responding.",
-  shouldRetry: true,
+  retry: true,
 };
 
 export const TimeoutError: ApplicationError = {
   name: "Server Timed Out",
   message: "The request timed out.",
-  shouldRetry: true,
+  retry: true,
 };
 
 export const RequestAborted: ApplicationError = {
   name: "Request Aborted",
   message: "The request was aborted.",
-  shouldRetry: false,
+  retry: false,
 };

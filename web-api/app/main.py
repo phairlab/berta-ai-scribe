@@ -1,0 +1,328 @@
+import os
+import json
+import shutil
+import logging
+import traceback
+from datetime import datetime, timezone
+from pathlib import Path
+from contextlib import asynccontextmanager
+from uuid import uuid4
+
+from fastapi import FastAPI, Request, Response, status
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.exceptions import RequestValidationError
+from fastapi.encoders import jsonable_encoder
+from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html, get_swagger_ui_oauth2_redirect_html
+from fastapi.staticfiles import StaticFiles
+from snowflake.connector.secret_detector import SecretDetector
+from sqlalchemy.orm import Session as SQLAlchemySession
+
+import app.services.data as data
+import app.services.db as db
+from app.services.logging import log_error, log_request
+from app.config import settings
+from app.services.error_handling import WebAPIException
+from app.services.measurement import ExecutionTimer
+from app.services.logging import WebAPILogger, RequestMetrics
+from app.services.security import decode_token, WebAPISession
+from app.routers import authorization, tasks, sample_recordings, encounters, note_definitions
+from app.schemas import SimpleMessage, WebAPIError, WebAPIErrorDetail
+
+# ----------------------------------
+# LOGGING CONFIG
+
+# Configure app logging
+log_format = "[%(asctime)s] %(levelname)s: [%(name)s] %(message)s"
+log_dateformat = "%H:%M:%S"
+logging.basicConfig(level=logging.INFO, format=log_format, datefmt=log_dateformat)
+
+logging_level = settings.LOGGING_LEVEL.upper()
+match logging_level:
+    case "TRACE":
+        snowflake_level = logging.DEBUG
+        sqlalchemy_level = logging.DEBUG
+        uvicorn_level = logging.DEBUG
+    case "DEBUG":
+        snowflake_level = logging.INFO
+        sqlalchemy_level = logging.INFO
+        uvicorn_level = logging.WARNING
+    case "INFO":
+        snowflake_level = logging.WARNING if settings.ENVIRONMENT == "development" else logging.WARNING
+        sqlalchemy_level = logging.WARNING if settings.ENVIRONMENT == "development" else logging.WARNING
+        uvicorn_level = logging.WARNING
+    case _:
+        snowflake_level = logging.getLevelNamesMapping()[logging_level]
+        sqlalchemy_level = logging.getLevelNamesMapping()[logging_level]
+        uvicorn_level = logging.getLevelNamesMapping()[logging_level]
+
+logging.getLogger("httpx").disabled = True
+logging.getLogger("uvicorn.access").setLevel(uvicorn_level)
+
+logging.getLogger("sqlalchemy.engine").setLevel(sqlalchemy_level)
+logging.getLogger("sqlalchemy.pool").setLevel(sqlalchemy_level)
+
+logging.getLogger("snowflake.connector.cursor").disabled = True
+for logger_name in ["snowflake.connector", "snowflake.connector.connection", "snowflake.snowpark.session", "botocore", "boto3"]:
+    logger = logging.getLogger(logger_name)
+    logger.setLevel(snowflake_level)
+    for handler in logger.handlers:
+        # Prevent secrets from leaking into logs
+        handler.setFormatter(SecretDetector(log_format, log_dateformat))
+
+# ----------------------------------
+# WEB SETUP
+
+# Define startup / shutdown behaviour
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    # On startup, initialize a snowflake session.
+    # data.snowflake_session = data.create_snowflake_session()
+
+    # On startup, for development environments simulate the snowflake mounted stage.
+    if settings.ENVIRONMENT == "development":
+        if os.path.isdir(settings.RECORDINGS_FOLDER):
+            try:
+                shutil.rmtree(settings.RECORDINGS_FOLDER)
+            except:
+                pass
+
+        os.mkdir(settings.RECORDINGS_FOLDER)
+        with SQLAlchemySession(data.db_engine) as database, data.create_snowflake_session() as snowflake_session:
+            for user in database.query(db.User).all():
+                os.mkdir(Path(settings.RECORDINGS_FOLDER, user.username))
+                try:
+                    snowflake_session.file.get(f"@RECORDING_FILES/{user.username}",f"{settings.RECORDINGS_FOLDER}/{user.username}")
+                except:
+                    pass
+    
+    yield
+
+    # On shutdown, gracefully clean up the database engine and snowflake session.
+    try:
+        data.db_engine.dispose()
+    except:
+        pass
+
+    # try:
+    #     data.snowflake_session.close()
+    # except:
+    #     pass
+
+    # On shutdown, cleanup / remove the simulated mounted stage
+    if settings.ENVIRONMENT == "development":
+        try:
+            shutil.rmtree(settings.RECORDINGS_FOLDER)
+        except:
+            pass
+
+# Create the app
+app = FastAPI(lifespan=lifespan, title=f"{settings.APP_NAME} API", version=settings.APP_VERSION, docs_url=None, redoc_url=None)
+
+# Exception handlers
+@app.exception_handler(WebAPIException)
+async def webapi_exception_handler(request: Request, exc: WebAPIException):
+    try:
+        with SQLAlchemySession(data.db_engine) as database:
+            request_id = request.headers.get("x-request-id")
+        
+            try:
+                credentials = request.headers.get("authorization")
+                if not credentials.startswith("Bearer "):
+                    raise Exception()
+                
+                session = decode_token(credentials.removeprefix("Bearer "))
+            except:
+                session = WebAPISession(username=request.headers.get("sf_context_current_user") or "Anonymous", sessionId="None")
+
+            stack_trace = " ".join(traceback.TracebackException.from_exception(exc).format())
+            log_error(database, datetime.now(timezone.utc), request.url.path, request.method, exc.status_code, exc.name, exc.message, stack_trace, exc.uuid, request_id, session)
+    except:
+        pass
+
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=jsonable_encoder(WebAPIError(
+            detail=WebAPIErrorDetail(
+                name=exc.name,
+                message=exc.message,
+                retry=exc.retry,
+            ),
+        )),
+        headers=exc.headers
+    )
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    try:
+        with SQLAlchemySession(data.db_engine) as database:
+            request_id = request.headers.get("x-request-id")
+        
+            try:
+                credentials = request.headers.get("authorization")
+                if not credentials.startswith("Bearer "):
+                    raise Exception()
+                
+                session = decode_token(credentials.removeprefix("Bearer "))
+            except:
+                session = WebAPISession(username=request.headers.get("sf_context_current_user") or "Anonymous", sessionId="None")
+
+            stack_trace = " ".join(traceback.TracebackException.from_exception(exc).format())
+            log_error(database, datetime.now(timezone.utc), request.url.path, request.method, status.HTTP_422_UNPROCESSABLE_ENTITY, "Validation Error", str(exc), stack_trace, str(uuid4()), request_id, session)
+    except:
+        pass
+
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content=jsonable_encoder({ "detail": exc.errors(), "body": json.dumps(exc.body, default=str) })
+    )
+
+# Exception handlers
+@app.exception_handler(Exception)
+async def webapi_exception_handler(request: Request, exc: Exception):
+    try:
+        with SQLAlchemySession(data.db_engine) as database:
+            request_id = request.headers.get("x-request-id")
+        
+            try:
+                credentials = request.headers.get("authorization")
+                if not credentials.startswith("Bearer "):
+                    raise Exception()
+                
+                session = decode_token(credentials.removeprefix("Bearer "))
+            except:
+                session = WebAPISession(username=request.headers.get("sf_context_current_user") or "Anonymous", sessionId="None")
+
+            stack_trace = " ".join(traceback.TracebackException.from_exception(exc).format())
+            log_error(database, datetime.now(timezone.utc), request.url.path, request.method, status.HTTP_500_INTERNAL_SERVER_ERROR, "Internal Server Error", str(exc), stack_trace, str(uuid4()), request_id, session)
+    except:
+        pass
+
+    error = WebAPIException(str(exc))
+
+    return JSONResponse(
+        status_code=error.status_code,
+        content=jsonable_encoder(WebAPIError(
+            detail=WebAPIErrorDetail(
+                name=error.name,
+                message=error.message,
+                retry=error.retry,
+            ),
+        )),
+        headers=error.headers
+    )
+
+# Configure static files
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# ----------------------------------
+# MIDDLEWARE
+
+@app.middleware("http")
+async def request_logging_middleware(request: Request, call_next):
+    log = WebAPILogger("app.http")
+
+    requested_at = datetime.now(timezone.utc)
+
+    headers = dict(request.scope["headers"])
+    if b"jenkins-authorization" in headers:
+        headers[b"authorization"] = headers[b"jenkins-authorization"]
+        request.scope["headers"] = [(k, v) for k, v in headers.items()]
+
+    request_id = request.headers.get("x-request-id")
+    
+    try:
+        credentials = request.headers.get("authorization")
+        if not credentials.startswith("Bearer "):
+            raise Exception()
+        
+        session = decode_token(credentials.removeprefix("Bearer "))
+    except:
+        session = WebAPISession(username=request.headers.get("sf_context_current_user") or "Anonymous", sessionId="None")
+
+    with ExecutionTimer() as timer:
+        response: Response = await call_next(request)
+
+    if request.url.path == "/healthcheck" and response.status_code < 300:
+        return response
+
+    log.request(
+        metrics = RequestMetrics(
+            url=request.url.path,
+            method=request.method,
+            status_code=int(response.status_code),
+            duration=timer.elapsed_ms,
+        ),
+        session = session
+    )
+
+    with SQLAlchemySession(data.db_engine) as database:
+        log_request(database, requested_at, request.url.path, request.method, int(response.status_code), timer.elapsed_ms, request_id, session)
+        
+    if response.status_code >= 400:
+        response_body = b""
+        async for chunk in response.body_iterator:
+            response_body += chunk
+        
+        log.error(response_body, session)
+        
+        return Response(content=response_body, status_code=response.status_code, headers=dict(response.headers), media_type=response.media_type)
+
+    return response
+
+# ----------------------------------
+# ENDPOINTS
+
+# Root
+@app.get("/", response_model=SimpleMessage, tags=["Miscellaneous"])
+async def root():
+    return {"message": f"Welcome to the {settings.APP_NAME} API"}
+
+# Favicon
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return FileResponse(Path("static/favicon.ico"))
+
+# Readiness Probe
+@app.get("/healthcheck", response_model=SimpleMessage, tags=["Miscellaneous"])
+async def health_check():
+    return {"message": "Ready"}
+
+# Configure self-hosted docs
+@app.get("/docs", include_in_schema=False)
+async def custom_swagger_ui_html():
+    return get_swagger_ui_html(
+        openapi_url=app.openapi_url,
+        title=f"{app.title} - Swagger UI",
+        swagger_favicon_url="static/favicon.ico",
+        oauth2_redirect_url=app.swagger_ui_oauth2_redirect_url,
+        swagger_js_url="static/swagger-ui-bundle.js",
+        swagger_css_url="static/swagger-ui.css",
+    )
+
+@app.get(app.swagger_ui_oauth2_redirect_url, include_in_schema=False)
+async def swagger_ui_redirect():
+    return get_swagger_ui_oauth2_redirect_html()
+
+@app.get("/redoc", include_in_schema=False)
+async def redoc_html():
+    return get_redoc_html(
+        openapi_url=app.openapi_url,
+        title=f"{app.title} - ReDoc",
+        redoc_favicon_url="static/favicon.ico",
+        redoc_js_url="static/redoc.standalone.js"
+    )
+
+# Include API routers
+app.include_router(authorization.router, tags=["Authorization"])
+app.include_router(tasks.router, prefix="/tasks", tags=["Tasks"])
+app.include_router(sample_recordings.router, prefix="/sample-recordings", tags=["Sample Recordings"])
+app.include_router(encounters.router, prefix="/encounters", tags=["Encounters"])
+app.include_router(note_definitions.router, prefix="/note-definitions", tags=["Note Definitions"])
+
+# ----------------------------------
+# FALLBACK
+
+# Handle case when the app is not run via the uvicorn command
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)

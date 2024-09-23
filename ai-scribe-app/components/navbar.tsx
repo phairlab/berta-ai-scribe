@@ -1,17 +1,38 @@
+"use client";
+
+import { useState } from "react";
 import {
   Navbar as NextUINavbar,
   NavbarContent,
+  NavbarMenu,
+  NavbarMenuToggle,
   NavbarBrand,
   NavbarItem,
+  NavbarMenuItem,
 } from "@nextui-org/navbar";
+import { Link } from "@nextui-org/link";
+import { link as linkStyles } from "@nextui-org/theme";
 import NextLink from "next/link";
+import clsx from "clsx";
 
+import { siteConfig } from "@/config/site";
 import { ThemeSwitch } from "@/components/theme-switch";
-import { Logo } from "@/components/icons";
+import { Logo, SettingsIcon } from "@/components/icons";
+import { useSession } from "@/hooks/use-session";
+
+import { EncounterList } from "./encounter-list";
+import { userDisplayName } from "@/utility/display";
 
 export const Navbar = () => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const userSession = useSession();
+
   return (
-    <NextUINavbar position="sticky">
+    <NextUINavbar
+      isMenuOpen={isMenuOpen}
+      position="sticky"
+      onMenuOpenChange={setIsMenuOpen}
+    >
       <NavbarContent className="basis-1/5 sm:basis-full" justify="start">
         <NavbarBrand as="li" className="gap-3 max-w-fit">
           <NextLink className="flex justify-start items-center gap-1" href="/">
@@ -19,20 +40,74 @@ export const Navbar = () => {
             <p className="font-bold text-inherit">JENKINS</p>
           </NextLink>
         </NavbarBrand>
+        <ul className="hidden lg:flex gap-4 justify-start ml-2">
+          {Object.entries(siteConfig.navItems).map(([label, href]) => (
+            <NavbarItem key={href}>
+              <NextLink
+                className={clsx(
+                  linkStyles({ color: "foreground" }),
+                  "data-[active=true]:text-primary data-[active=true]:font-medium",
+                )}
+                color="foreground"
+                href={href}
+              >
+                {label}
+              </NextLink>
+            </NavbarItem>
+          ))}
+        </ul>
       </NavbarContent>
 
       <NavbarContent
         className="hidden sm:flex basis-1/5 sm:basis-full"
         justify="end"
       >
-        <NavbarItem className="hidden sm:flex gap-2">
+        <NavbarItem className="hidden sm:flex gap-3 items-center">
+          <p className="flex mt-px text-xs text-zinc-400 cursor-default max-w-[350px] overflow-hidden text-ellipsis">
+            {userDisplayName(userSession)}
+          </p>
+          <NextLink
+            aria-label="Settings"
+            className="text-zinc-500 hover:text-zinc-400 dark:hover:text-zinc-600"
+            href="/settings"
+          >
+            <SettingsIcon className="mt-[1px]" size={21} />
+          </NextLink>
           <ThemeSwitch />
         </NavbarItem>
       </NavbarContent>
 
-      <NavbarContent className="sm:hidden basis-1 pl-4" justify="end">
+      <NavbarContent
+        className="flex flex-row items-center max-w-fit sm:hidden basis-1 pl-2"
+        justify="end"
+      >
+        <p className="mt-px text-xs text-zinc-400 cursor-default max-w-[20vw] overflow-clip text-ellipsis">
+          {userDisplayName(userSession)}
+        </p>
         <ThemeSwitch />
+        <NavbarMenuToggle />
       </NavbarContent>
+
+      <NavbarMenu>
+        <div className="mx-4 mt-2 flex flex-col gap-4">
+          <NavbarMenuItem>
+            <Link
+              className="text-zinc-600 dark:text-zinc-400"
+              color="foreground"
+              href="/settings"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              <div className="flex flex-row gap-2">
+                <SettingsIcon className="mt-[4px]" size={18} />
+                Settings
+              </div>
+            </Link>
+          </NavbarMenuItem>
+          <NavbarMenuItem onClick={() => setIsMenuOpen(false)}>
+            <EncounterList />
+          </NavbarMenuItem>
+        </div>
+      </NavbarMenu>
     </NextUINavbar>
   );
 };

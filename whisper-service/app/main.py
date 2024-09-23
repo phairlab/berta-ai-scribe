@@ -88,7 +88,7 @@ async def transcribe_audio(audio: UploadFile):
     try:
        transcript = transcription.transcribe_audio(audio.file, filename=audio.filename)
 
-       return Transcript(text=transcript, modelUsed="faster-whisper-large-v2")
+       return Transcript(text=transcript or "", modelUsed="faster-whisper-large-v2")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

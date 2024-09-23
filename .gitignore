@@ -6,3 +6,7 @@
 
 # Environment
 .env
+
+# RSA Keys
+*.p8
+*.pub

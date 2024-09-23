@@ -1,0 +1,45 @@
+from typing import Literal
+
+from dotenv import load_dotenv
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Load the .env settings into environment variables
+load_dotenv()
+
+class Settings(BaseSettings):
+    ENVIRONMENT: Literal["production", "development"] = "production"
+    APP_NAME: str = "AHS \"Jenkins\" Scribe"
+    APP_VERSION: str = "0.2.0"
+
+    AUDIO_FORMAT: str = "webm"
+    AUDIO_BITRATE: str = "32k"
+    LOGGING_LEVEL: str = "info"
+
+    JWT_ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_SECRET: str
+    ACCESS_TOKEN_EXPIRE_MINUTES: int
+
+    OPENAI_API_KEY: str
+
+    SNOWFLAKE_TOKEN_PATH: str = "/snowflake/session/token"
+    SNOWFLAKE_ACCOUNT: str
+    SNOWFLAKE_HOST: str | None = None
+    SNOWFLAKE_ROLE: str
+    SNOWFLAKE_DATABASE: str
+    SNOWFLAKE_SCHEMA: str
+    SNOWFLAKE_WAREHOUSE: str
+    SNOWFLAKE_USERNAME: str | None = None
+    SNOWFLAKE_PASSWORD: str | None = None
+
+    SYSTEM_USER: str = "SYSTEM"
+    DEFAULT_NOTE_DEFINITION: str = "Full Visit"
+    RECORDINGS_FOLDER: str = ".recordings"
+
+    GENERATIVE_AI_SERVICE: Literal["OPENAI", "SNOWFLAKE_CORTEX"] = "OPENAI"
+    GENERATIVE_AI_MODEL: str = "gpt-4o"
+    TRANSCRIPTION_SERVICE: Literal["OPENAI", "LOCAL_WHISPER"] = "OPENAI"
+    LOCAL_WHISPER_SERVICE_URL: str | None = None
+
+    model_config = SettingsConfigDict(env_file='.env', case_sensitive=True)    
+
+settings = Settings()

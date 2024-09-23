@@ -1,6 +1,6 @@
-# "Jenkins" AI Scribe - Internal AHS Version
+***NOTE**: THIS DOCUMENTATION IS UNDER DEVELOPMENT AND CURRENTLY OUT OF DATE*
 
-TODO: Project description.
+# "Jenkins" AI Scribe
 
 ## Prerequisites
 

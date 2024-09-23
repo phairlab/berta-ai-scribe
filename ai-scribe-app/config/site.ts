@@ -1,10 +1,18 @@
-export type SiteConfig = typeof siteConfig;
+export type SiteConfig = {
+  name: string;
+  description: string;
+  navItems: NavItems;
+  navMenuItems: NavItems;
+  links: NavItems;
+};
 
-export const siteConfig = {
-  name: '"Jenkins" AI Scribe',
+type NavItems = { [label: string]: string };
+
+export const siteConfig: SiteConfig = {
+  name: 'AHS "Jenkins" Scribe',
   description:
-    "Record patient conversations and use AI to generate medical notes.",
-  navItems: [],
-  navMenuItems: [],
+    "Record patient conversations and use Generative AI to create draft notes.",
+  navItems: {},
+  navMenuItems: {},
   links: {},
 };

@@ -1,21 +1,27 @@
 version: '3.8'
 
 services:
-  web-service:
-    build: ./web-service
-    env_file: ./web-service/.env
-    environment:
-      - TRANSCRIPTION_SERVICE=OPENAI
-      - SUMMARIZATION_SERVICE=OPENAI
-      - SUMMARIZATION_MODEL=gpt-4o
+  web-api:
+    build: ./web-api
+    env_file: ./web-api/.env
     ports:
       - "8000:8000"
   ai-scribe-app:
     build: ./ai-scribe-app
-    env_file: ./ai-scribe-app/.env.local
     environment:
-      - WEB_SERVICE_URL=http://web-service:8000
+      - WEB_API_SERVER=http://web-api:8000
+    ports:
+      - "4000:4000"
+    depends_on:
+      - web-api
+  router:
+    build:
+      context: ./router
+      args:
+        - FRONTEND_SERVICE=ai-scribe-app:4000
+        - BACKEND_SERVICE=web-api:8000
     ports:
       - "3000:3000"
     depends_on:
-      - web-service
+      - ai-scribe-app
+      - web-api
