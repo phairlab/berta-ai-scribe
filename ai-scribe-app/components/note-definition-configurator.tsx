@@ -199,44 +199,46 @@ export const NoteDefinitionConfigurator = () => {
           assistance, please reach out to a member of the project team.
         </p>
       </div>
-      {noteDefinitions &&
-        noteDefinitions
-          .filter((definition) => !definition.isBuiltin)
-          .toSorted((a, b) =>
-            a.title < b.title ? -1 : a.title === b.title ? 0 : 1,
-          )
-          .map((definition) => (
-            <div key={definition.uuid} className="flex flex-row gap-2 h-5">
-              <div
-                className={`basis-full text-start self-stretch w-[300px] ps-2 h-7 ${definition.uuid === activeNoteDefinition.uuid ? "border-s-4 border-blue-500" : ""}`}
-              >
-                {definition.title}
-              </div>
-              {definition.isUnsaved ? (
-                <ActionWaitSpinner size="sm">
-                  <span className="text-sm">Saving</span>
-                </ActionWaitSpinner>
-              ) : (
-                <div className="flex flex-row gap-2 h-5">
-                  <Link
-                    className="text-sm"
-                    href="#"
-                    onClick={() => setActiveNoteDefinition(definition)}
-                  >
-                    Edit
-                  </Link>
-                  <Divider orientation="vertical" />
-                  <Link
-                    className="text-sm"
-                    href="#"
-                    onClick={() => deleteNoteDefinition(definition)}
-                  >
-                    Delete
-                  </Link>
+      <div className="flex flex-col gap-3 max-w-[90%] sm:max-w-[600px]">
+        {noteDefinitions &&
+          noteDefinitions
+            .filter((definition) => !definition.isBuiltin)
+            .toSorted((a, b) =>
+              a.title < b.title ? -1 : a.title === b.title ? 0 : 1,
+            )
+            .map((definition) => (
+              <div key={definition.uuid} className="flex flex-row gap-2 h-5">
+                <div
+                  className={`basis-full text-start self-stretch w-[300px] ps-2 h-7 ${definition.uuid === activeNoteDefinition.uuid ? "border-s-4 border-blue-500" : ""}`}
+                >
+                  {definition.title}
                 </div>
-              )}
-            </div>
-          ))}
+                {definition.isUnsaved ? (
+                  <ActionWaitSpinner size="sm">
+                    <span className="text-sm">Saving</span>
+                  </ActionWaitSpinner>
+                ) : (
+                  <div className="flex flex-row gap-2 h-5">
+                    <Link
+                      className="text-sm"
+                      href="#"
+                      onClick={() => setActiveNoteDefinition(definition)}
+                    >
+                      Edit
+                    </Link>
+                    <Divider orientation="vertical" />
+                    <Link
+                      className="text-sm"
+                      href="#"
+                      onClick={() => deleteNoteDefinition(definition)}
+                    >
+                      Delete
+                    </Link>
+                  </div>
+                )}
+              </div>
+            ))}
+      </div>
       <div className="md:flex md:flex-row md:gap-2 w-full">
         <div className="w-full">
           <Input
@@ -285,7 +287,7 @@ export const NoteDefinitionConfigurator = () => {
           updateNoteDefinition({ instructions: instructions })
         }
       />
-      <div className="flex flex-row gap-2 w-full justify-end items-center">
+      <div className="flex flex-col md:flex-row gap-2 w-full justify-end items-center">
         <Select
           label="Audio Sample"
           labelPlacement="outside"
@@ -326,40 +328,42 @@ export const NoteDefinitionConfigurator = () => {
               ))}
           </SelectSection>
         </Select>
-        <Button
-          className="mt-6"
-          color="default"
-          isDisabled={
-            !activeNoteDefinition.title ||
-            !activeNoteDefinition.instructions ||
-            !selectedRecording ||
-            !!noteGenerator.generatingNoteType
-          }
-          variant="ghost"
-          onClick={test}
-        >
-          Test
-        </Button>
-        <Button
-          className="mt-6"
-          color="primary"
-          isDisabled={
-            !activeNoteDefinition.title || !activeNoteDefinition.instructions
-          }
-          onClick={save}
-        >
-          {noteDefinitions.find((d) => d.uuid == activeNoteDefinition.uuid)
-            ? "Save"
-            : "Create"}
-        </Button>
-        <Button
-          className="mt-6"
-          color="default"
-          isDisabled={!!noteGenerator.generatingNoteType}
-          onClick={reset}
-        >
-          Reset
-        </Button>
+        <div className="flex flex-row gap-2 w-full justify-end items-center">
+          <Button
+            className="mt-2 md:mt-6"
+            color="default"
+            isDisabled={
+              !activeNoteDefinition.title ||
+              !activeNoteDefinition.instructions ||
+              !selectedRecording ||
+              !!noteGenerator.generatingNoteType
+            }
+            variant="ghost"
+            onClick={test}
+          >
+            Test
+          </Button>
+          <Button
+            className="mt-2 md:mt-6"
+            color="primary"
+            isDisabled={
+              !activeNoteDefinition.title || !activeNoteDefinition.instructions
+            }
+            onClick={save}
+          >
+            {noteDefinitions.find((d) => d.uuid == activeNoteDefinition.uuid)
+              ? "Save"
+              : "Create"}
+          </Button>
+          <Button
+            className="mt-2 md:mt-6"
+            color="default"
+            isDisabled={!!noteGenerator.generatingNoteType}
+            onClick={reset}
+          >
+            Reset
+          </Button>
+        </div>
       </div>
       <div className="flex flex-col gap-4">
         {noteGenerator.generatingNoteType && (
