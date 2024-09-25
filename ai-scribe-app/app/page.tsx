@@ -4,12 +4,12 @@ import { Divider } from "@nextui-org/divider";
 
 import { AIScribe } from "@/components/ai-scribe";
 import { EncounterList } from "@/components/encounter-list";
-import { UserConsent } from "@/components/user-consent";
+import { TermsOfUse } from "@/components/terms-of-use";
 
 export default function Home() {
   return (
     <div className="flex flex-row max-w-5xl gap-5 items-stretch">
-      <UserConsent />
+      <TermsOfUse />
       <section className="min-w-[200px] hidden sm:flex flex-col">
         <EncounterList />
       </section>
