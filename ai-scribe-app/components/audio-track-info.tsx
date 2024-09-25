@@ -32,7 +32,7 @@ export const AudioTrackInfo = (props: AudioTrackInfoProps) => {
       </div>
       <div className="flex flex-row gap-1">
         <strong>Duration:</strong>
-        {props.duration ? formatDuration(props.duration) : "N/A"}
+        {props.duration ? formatDuration(props.duration) : "-:--"}
       </div>
     </div>
   );

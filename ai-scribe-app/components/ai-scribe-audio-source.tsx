@@ -117,7 +117,11 @@ export const AIScribeAudioSource = (props: AIScribeAudioSourceProps) => {
           <AudioTrackPlayer
             audioData={props.audio ?? null}
             isHidden={!props.audio && !isRecording}
-            onDurationChanged={(seconds) => setDuration(seconds)}
+            onDurationChanged={(seconds) => {
+              if (duration != seconds) {
+                setDuration(seconds);
+              }
+            }}
             onInit={handleAudioPlayerInit}
             onLoading={() => setIsPlayerLoading(true)}
             onPause={() => setIsPlaying(false)}

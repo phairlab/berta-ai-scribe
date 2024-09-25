@@ -1,9 +1,11 @@
 import { DraftNote, Encounter, NoteDefinition, UserSession } from "@/models";
 
-export function formatDuration(seconds: number) {
+export function formatDuration(duration: number) {
+  const seconds = Math.trunc(duration);
+
   return [
-    Math.floor((seconds % 3600) / 60), // minutes
-    Math.floor(seconds % 60), // seconds
+    Math.trunc((seconds % 3600) / 60), // minutes
+    Math.trunc(seconds % 60), // seconds
   ]
     .map((v) => (v < 10 ? `0${v}` : v))
     .join(":");

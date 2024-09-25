@@ -43,6 +43,7 @@ type AudioTrackPlayerProps = {
   onRecordingPaused?: () => void;
   onRecordingResumed?: () => void;
   onRecordingEnded?: (recording: File) => void;
+  onRecordingDurationChanged?: (seconds: number) => void;
 };
 
 export const AudioTrackPlayer = (props: AudioTrackPlayerProps) => {
@@ -61,6 +62,7 @@ export const AudioTrackPlayer = (props: AudioTrackPlayerProps) => {
   const [isRecordingPaused, setIsRecordingPaused] = useState(false);
   const [percentLoaded, setPercentLoaded] = useState<number>(0);
   const [error, setError] = useState<string>();
+  const [durationMs, setDurationMs] = useState<number | null>(null);
 
   const [options, setOptions] = useState<Partial<WaveSurferOptions>>({
     barRadius: 100,
@@ -95,7 +97,7 @@ export const AudioTrackPlayer = (props: AudioTrackPlayerProps) => {
     ws.registerPlugin(recorder.current);
   };
 
-  const handleReady = (_: Wavesurfer) => {
+  const handleReady = (_: Wavesurfer, seconds: number) => {
     if (!isInitialized) {
       setIsInitialized(true);
       props.onInit?.({
@@ -106,40 +108,17 @@ export const AudioTrackPlayer = (props: AudioTrackPlayerProps) => {
       });
     }
 
+    if (!isRecording) {
+      setDurationMs(seconds * 1000);
+    }
+
     setIsReady(true);
     props.onReady?.();
-  };
-
-  const handleLoad = (_: Wavesurfer) => {
-    setIsReady(false);
-    props.onDurationChanged?.(null);
-    setError(undefined);
-    setPercentLoaded(0);
-
-    props.onLoading?.();
   };
 
   const handleLoading = (_: Wavesurfer, percent: number) => {
     if (loadedAudio) {
       setPercentLoaded(percent);
-    }
-  };
-
-  const handleDecode = (_: Wavesurfer, seconds: number) => {
-    if (loadedAudio) {
-      props.onDurationChanged?.(seconds);
-    }
-  };
-
-  const handleError = (_: Wavesurfer, error: Error | string | undefined) => {
-    if (!isRecording) {
-      setError(
-        typeof error === "string"
-          ? error
-          : typeof error === typeof Error
-            ? error?.message
-            : "Error Loading Audio",
-      );
     }
   };
 
@@ -153,6 +132,12 @@ export const AudioTrackPlayer = (props: AudioTrackPlayerProps) => {
     if (isInitialized && props.audioData !== loadedAudio) {
       wavesurfer.current?.stop();
       recorder.current?.stopRecording();
+
+      setIsReady(false);
+      setDurationMs(null);
+      setError(undefined);
+      setPercentLoaded(0);
+      props.onLoading?.();
 
       if (props.audioData) {
         if (typeof props.audioData === "string") {
@@ -192,6 +177,12 @@ export const AudioTrackPlayer = (props: AudioTrackPlayerProps) => {
         : tailwindColors["blue-400"],
     });
   }, [theme, isRecording]);
+
+  useEffect(() => {
+    props.onDurationChanged?.(
+      durationMs ? Math.trunc(durationMs / 1000) : null,
+    );
+  }, [durationMs]);
 
   const playPause = () => {
     wavesurfer.current?.playPause();
@@ -278,7 +269,7 @@ export const AudioTrackPlayer = (props: AudioTrackPlayerProps) => {
     });
 
     recordPlugin.on("record-progress", (milliseconds: number) => {
-      props.onDurationChanged?.(milliseconds / 1000);
+      setDurationMs(milliseconds);
     });
 
     recordPlugin.on("destroy", () => {
@@ -337,11 +328,8 @@ export const AudioTrackPlayer = (props: AudioTrackPlayerProps) => {
             autoplay={false}
             height={PLAYER_HEIGHT}
             url={NO_AUDIO_URL}
-            onDecode={handleDecode}
             onDestroy={handleDestroy}
-            onError={handleError}
             onInit={handleInit}
-            onLoad={handleLoad}
             onLoading={handleLoading}
             onPause={() => props.onPause?.()}
             onPlay={() => props.onPlay?.()}
