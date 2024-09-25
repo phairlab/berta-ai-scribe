@@ -169,7 +169,7 @@ export const AIScribe = () => {
     }
   }, [transcript]);
 
-  const createEncounter = (audio: File) => {
+  const createEncounter = (audio: File): Encounter => {
     const encounter: Encounter = {
       newId: shortUUID.generate(),
       createdAt: new Date(),
@@ -182,12 +182,24 @@ export const AIScribe = () => {
       isUnsaved: true,
     };
 
-    currentId.current = encounter.newId;
+    return encounter;
+  };
+
+  const handleAudioFileGenerated = (audio: File) => {
+    const encounter = createEncounter(audio);
+
     setEncounters([encounter, ...encounters]);
+    saveEncounterToDb(encounter, audio);
+
+    currentId.current = encounter.newId;
     setActiveEncounter(encounter);
-
     setAudio(audio);
+  };
 
+  const handleAudioFileRecovered = (audio: File) => {
+    const encounter = createEncounter(audio);
+
+    setEncounters([encounter, ...encounters]);
     saveEncounterToDb(encounter, audio);
   };
 
@@ -338,7 +350,8 @@ export const AIScribe = () => {
     <div className="flex flex-col gap-6">
       <AIScribeAudioSource
         audio={audio ?? null}
-        onAudioFile={createEncounter}
+        onAudioFile={handleAudioFileGenerated}
+        onRecoverRecording={handleAudioFileRecovered}
         onReset={reset}
       />
       <div className="flex flex-col gap-6">

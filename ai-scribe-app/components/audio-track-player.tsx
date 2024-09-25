@@ -7,6 +7,8 @@ import Wavesurfer, { WaveSurferOptions } from "wavesurfer.js/dist/wavesurfer";
 import HoverPlugin from "wavesurfer.js/dist/plugins/hover";
 import TimelinePlugin from "wavesurfer.js/dist/plugins/timeline";
 import RecordPlugin from "wavesurfer.js/dist/plugins/record";
+import clsx from "clsx";
+import { Progress } from "@nextui-org/progress";
 
 import { tailwindColors } from "@/utility/display";
 import { useAccessToken } from "@/hooks/use-access-token";
@@ -51,13 +53,14 @@ export const AudioTrackPlayer = (props: AudioTrackPlayerProps) => {
   const accessToken = useAccessToken();
   const wavesurfer = useRef<Wavesurfer | null>(null);
   const recorder = useRef<RecordPlugin | null>(null);
-  const loadedAudioData = useRef<string | Blob | null>(null);
 
+  const [loadedAudio, setLoadedAudio] = useState<string | Blob | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isReady, setIsReady] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [isRecordingPaused, setIsRecordingPaused] = useState(false);
-  const [duration, setDuration] = useState<number | null>(null);
+  const [percentLoaded, setPercentLoaded] = useState<number>(0);
+  const [error, setError] = useState<string>();
 
   const [options, setOptions] = useState<Partial<WaveSurferOptions>>({
     barRadius: 100,
@@ -75,6 +78,120 @@ export const AudioTrackPlayer = (props: AudioTrackPlayerProps) => {
       headers: { "Jenkins-Authorization": `Bearer ${accessToken}` },
     },
   });
+
+  const handleInit = async (ws: Wavesurfer) => {
+    wavesurfer.current = ws;
+    recorder.current = configureRecorder();
+
+    ws.setOptions(options);
+
+    ws.registerPlugin(HoverPlugin.create());
+    ws.registerPlugin(
+      TimelinePlugin.create({
+        style: { color: tailwindColors["zinc-400"] },
+      }),
+    );
+
+    ws.registerPlugin(recorder.current);
+  };
+
+  const handleReady = (_: Wavesurfer) => {
+    if (!isInitialized) {
+      setIsInitialized(true);
+      props.onInit?.({
+        playPause,
+        startRecording,
+        togglePauseRecording,
+        endRecording,
+      });
+    }
+
+    setIsReady(true);
+    props.onReady?.();
+  };
+
+  const handleLoad = (_: Wavesurfer) => {
+    setIsReady(false);
+    props.onDurationChanged?.(null);
+    setError(undefined);
+    setPercentLoaded(0);
+
+    props.onLoading?.();
+  };
+
+  const handleLoading = (_: Wavesurfer, percent: number) => {
+    if (loadedAudio) {
+      setPercentLoaded(percent);
+    }
+  };
+
+  const handleDecode = (_: Wavesurfer, seconds: number) => {
+    if (loadedAudio) {
+      props.onDurationChanged?.(seconds);
+    }
+  };
+
+  const handleError = (_: Wavesurfer, error: Error | string | undefined) => {
+    if (!isRecording) {
+      setError(
+        typeof error === "string"
+          ? error
+          : typeof error === typeof Error
+            ? error?.message
+            : "Error Loading Audio",
+      );
+    }
+  };
+
+  const handleDestroy = (_: Wavesurfer) => {
+    recorder.current?.unAll();
+    recorder.current?.destroy();
+  };
+
+  // Handle changes to audio source.
+  useEffect(() => {
+    if (isInitialized && props.audioData !== loadedAudio) {
+      wavesurfer.current?.stop();
+      recorder.current?.stopRecording();
+
+      if (props.audioData) {
+        if (typeof props.audioData === "string") {
+          wavesurfer.current?.load(props.audioData);
+        } else {
+          wavesurfer.current?.loadBlob(props.audioData);
+        }
+      }
+
+      setLoadedAudio(props.audioData);
+    }
+  }, [props.audioData, isInitialized]);
+
+  // Handle changes to Wavesurfer options.
+  useEffect(() => {
+    wavesurfer.current?.setOptions(options);
+  }, [options]);
+
+  // Handle changes to player interactive state.
+  useEffect(() => {
+    setOptions({
+      ...options,
+      interact: isReady && loadedAudio != null,
+    });
+  }, [isReady]);
+
+  // Handle changes to player display colors.
+  useEffect(() => {
+    setOptions({
+      ...options,
+      progressColor:
+        theme === "light"
+          ? tailwindColors["zinc-400"]
+          : tailwindColors["zinc-600"],
+      waveColor: isRecording
+        ? tailwindColors["red-400"]
+        : tailwindColors["blue-400"],
+    });
+  }, [theme, isRecording]);
 
   const playPause = () => {
     wavesurfer.current?.playPause();
@@ -124,109 +241,6 @@ export const AudioTrackPlayer = (props: AudioTrackPlayerProps) => {
     }
   };
 
-  const handleInit = async (ws: Wavesurfer) => {
-    wavesurfer.current = ws;
-    recorder.current = configureRecorder();
-
-    ws.setOptions(options);
-
-    if (props.audioData) {
-      if (typeof props.audioData === "string") {
-        await ws.load(props.audioData);
-      } else {
-        await ws.loadBlob(props.audioData);
-      }
-    }
-
-    loadedAudioData.current = props.audioData;
-
-    ws.registerPlugin(HoverPlugin.create());
-    ws.registerPlugin(
-      TimelinePlugin.create({
-        style: { color: tailwindColors["zinc-400"] },
-      }),
-    );
-
-    ws.registerPlugin(recorder.current);
-  };
-
-  const handleReady = (_ws: Wavesurfer, seconds: number) => {
-    // Report initialized the first time the player is ready.
-    if (!isInitialized) {
-      setIsInitialized(true);
-      props.onInit?.({
-        playPause,
-        startRecording,
-        togglePauseRecording,
-        endRecording,
-      });
-    }
-
-    setDuration(seconds);
-    setIsReady(true);
-    props.onReady?.();
-  };
-
-  const handleDestroy = () => {
-    recorder.current?.unAll();
-    recorder.current?.destroy();
-  };
-
-  // Handle changes to audio source.
-  useEffect(() => {
-    if (isInitialized && props.audioData !== loadedAudioData.current) {
-      setIsRecording(false);
-      setIsRecordingPaused(false);
-      setIsReady(false);
-      setDuration(null);
-
-      wavesurfer.current?.stop();
-
-      if (props.audioData) {
-        if (typeof props.audioData === "string") {
-          wavesurfer.current?.load(props.audioData);
-        } else {
-          wavesurfer.current?.loadBlob(props.audioData);
-        }
-      }
-
-      loadedAudioData.current = props.audioData;
-    }
-  }, [props.audioData]);
-
-  // Handle changes to Wavesurfer options.
-  useEffect(() => {
-    wavesurfer.current?.setOptions(options);
-  }, [options]);
-
-  // Handle changes to player interactive state.
-  useEffect(() => {
-    setOptions({
-      ...options,
-      interact: isReady && loadedAudioData.current != null,
-    });
-  }, [isReady]);
-
-  // Handle changes to player display colors.
-  useEffect(() => {
-    setOptions({
-      ...options,
-      progressColor:
-        theme === "light"
-          ? tailwindColors["zinc-400"]
-          : tailwindColors["zinc-600"],
-      waveColor: isRecording
-        ? tailwindColors["red-400"]
-        : tailwindColors["blue-400"],
-    });
-  }, [theme, isRecording]);
-
-  // Handle changes to duration.
-  // Doing this here will ensure the event only fires on actual changes.
-  useEffect(() => {
-    props.onDurationChanged?.(duration);
-  }, [duration]);
-
   /** Activate and configure recording functionality for the player. */
   const configureRecorder = (): RecordPlugin => {
     const recordPlugin = RecordPlugin.create({
@@ -264,7 +278,7 @@ export const AudioTrackPlayer = (props: AudioTrackPlayerProps) => {
     });
 
     recordPlugin.on("record-progress", (milliseconds: number) => {
-      setDuration(milliseconds / 1000);
+      props.onDurationChanged?.(milliseconds / 1000);
     });
 
     recordPlugin.on("destroy", () => {
@@ -275,22 +289,66 @@ export const AudioTrackPlayer = (props: AudioTrackPlayerProps) => {
   };
 
   return (
-    <AnimatePulse isActive={isRecording && isRecordingPaused}>
+    <div
+      className={clsx({
+        "relative w-full h-full": true,
+        hidden: props.isHidden,
+      })}
+    >
+      {error && !isRecording && (
+        <div className="text-red-500 flex w-full justify-center mt-[15px]">
+          {error}
+        </div>
+      )}
       <div
-        className={`w-full flex flex-col ${!loadedAudioData.current || !isReady ? "pointer-events-none" : ""} ${props.isHidden ? "hidden" : ""}`}
+        className={clsx([
+          "z-10 absolute flex w-full justify-center mt-[22px] transition-opacity ease-in-out",
+          !!error || isReady || !loadedAudio ? "opacity-0" : "opacity-100",
+        ])}
       >
-        <WavesurferPlayer
-          autoplay={false}
-          height={PLAYER_HEIGHT}
-          url={NO_AUDIO_URL}
-          onDestroy={handleDestroy}
-          onInit={handleInit}
-          onLoad={() => props.onLoading?.()}
-          onPause={() => props.onPause?.()}
-          onPlay={() => props.onPlay?.()}
-          onReady={handleReady}
-        />
+        <div className="flex flex-row gap-2 items-center justify-start w-[80%]">
+          <Progress
+            aria-label="Loading"
+            className="mt-1"
+            classNames={{
+              indicator:
+                percentLoaded === 0
+                  ? "bg-zinc-400 dark:bg-zinc-600"
+                  : "bg-blue-500",
+            }}
+            isIndeterminate={percentLoaded === 0}
+            size="sm"
+            value={percentLoaded}
+          />
+        </div>
       </div>
-    </AnimatePulse>
+      <AnimatePulse isActive={isRecording && isRecordingPaused}>
+        <div
+          className={clsx([
+            {
+              "pointer-events-none": !error && (!loadedAudio || !isReady),
+              hidden: !!error,
+            },
+            "transition-opacity ease-in-out",
+            isReady ? "opacity-100" : "opacity-0 invisible",
+          ])}
+        >
+          <WavesurferPlayer
+            autoplay={false}
+            height={PLAYER_HEIGHT}
+            url={NO_AUDIO_URL}
+            onDecode={handleDecode}
+            onDestroy={handleDestroy}
+            onError={handleError}
+            onInit={handleInit}
+            onLoad={handleLoad}
+            onLoading={handleLoading}
+            onPause={() => props.onPause?.()}
+            onPlay={() => props.onPlay?.()}
+            onReady={handleReady}
+          />
+        </div>
+      </AnimatePulse>
+    </div>
   );
 };

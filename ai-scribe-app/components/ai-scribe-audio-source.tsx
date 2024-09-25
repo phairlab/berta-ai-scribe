@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@nextui-org/button";
 
 import { AudioTrackPlayer, AudioPlayerControls } from "./audio-track-player";
@@ -12,11 +12,13 @@ type AIScribeAudioSourceProps = {
   audio: string | File | null;
   audioTitle?: string;
   onAudioFile: (audioData: File) => void;
+  onRecoverRecording: (audioData: File) => void;
   onReset?: () => void;
 };
 
 export const AIScribeAudioSource = (props: AIScribeAudioSourceProps) => {
   const audioControls = useRef<AudioPlayerControls | null>(null);
+  const recordingInProgress = useRef(false);
 
   const [isPlayerInitialized, setIsPlayerInitialized] = useState(false);
   const [isPlayerLoading, setIsPlayerLoading] = useState(true);
@@ -26,16 +28,34 @@ export const AIScribeAudioSource = (props: AIScribeAudioSourceProps) => {
   const [recordingError, setRecordingError] = useState<string | null>(null);
   const [duration, setDuration] = useState<number | null>(null);
 
+  useEffect(() => {
+    // Done as a bug fix.
+    // Something was blocking the isRecording value from updating at the normal time.
+    recordingInProgress.current = isRecording;
+  }, [isRecording]);
+
+  useEffect(() => {
+    setIsRecording(false);
+    setIsRecordingPaused(false);
+    setRecordingError(null);
+    setIsPlaying(false);
+    setDuration(null);
+  }, [props.audio]);
+
   const handleAudioPlayerInit = (controls: AudioPlayerControls) => {
     audioControls.current = controls;
     setIsPlayerInitialized(true);
   };
 
   const handleRecordingFinished = (recording: File) => {
-    setIsRecording(false);
-    setIsRecordingPaused(false);
+    if (recordingInProgress.current) {
+      setIsRecording(false);
+      setIsRecordingPaused(false);
 
-    props.onAudioFile(recording);
+      props.onAudioFile(recording);
+    } else {
+      props.onRecoverRecording(recording);
+    }
   };
 
   const toggleRecording = async () => {
@@ -94,22 +114,20 @@ export const AIScribeAudioSource = (props: AIScribeAudioSourceProps) => {
               </div>
             </div>
           )}
-          <div className={`w-full ${isPlayerLoading ? "invisible" : ""}`}>
-            <AudioTrackPlayer
-              audioData={props.audio ?? null}
-              isHidden={!props.audio && !isRecording}
-              onDurationChanged={(seconds) => setDuration(seconds)}
-              onInit={handleAudioPlayerInit}
-              onLoading={() => setIsPlayerLoading(true)}
-              onPause={() => setIsPlaying(false)}
-              onPlay={() => setIsPlaying(true)}
-              onReady={() => setIsPlayerLoading(false)}
-              onRecordingEnded={handleRecordingFinished}
-              onRecordingPaused={() => setIsRecordingPaused(true)}
-              onRecordingResumed={() => setIsRecordingPaused(false)}
-              onRecordingStarted={() => setIsRecording(true)}
-            />
-          </div>
+          <AudioTrackPlayer
+            audioData={props.audio ?? null}
+            isHidden={!props.audio && !isRecording}
+            onDurationChanged={(seconds) => setDuration(seconds)}
+            onInit={handleAudioPlayerInit}
+            onLoading={() => setIsPlayerLoading(true)}
+            onPause={() => setIsPlaying(false)}
+            onPlay={() => setIsPlaying(true)}
+            onReady={() => setIsPlayerLoading(false)}
+            onRecordingEnded={(audio) => handleRecordingFinished(audio)}
+            onRecordingPaused={() => setIsRecordingPaused(true)}
+            onRecordingResumed={() => setIsRecordingPaused(false)}
+            onRecordingStarted={() => setIsRecording(true)}
+          />
           <div
             className={`mx-2 ${isPlayerLoading ? "invisible" : ""} ${!props.audio && !isRecording ? "hidden" : ""}`}
           >
@@ -131,7 +149,7 @@ export const AIScribeAudioSource = (props: AIScribeAudioSourceProps) => {
         <div className="flex justify-end md:mt-[9px] md:mb-auto">
           {isRecording ? (
             <Button size="sm" onClick={audioControls.current?.endRecording}>
-              Finish Recording
+              Save Recording
             </Button>
           ) : (
             <Button size="sm" onClick={reset}>
