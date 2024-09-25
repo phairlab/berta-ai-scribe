@@ -70,6 +70,7 @@ CREATE TABLE generation_log (
 CREATE TABLE users (
   username VARCHAR(100) NOT NULL,
   registered_at TIMESTAMP_LTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  default_note_type CHAR(36),
   PRIMARY KEY (username)
 );
 

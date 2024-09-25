@@ -21,6 +21,7 @@ import {
 import { webApiAction } from "@/utility/web-api";
 import { useAccessToken } from "@/hooks/use-access-token";
 import { EncountersContext } from "@/contexts/encounters-context";
+import { useDefaultNoteDefinition } from "@/hooks/use-default-note-definition";
 
 import { subtitle } from "./primitives";
 import { AIScribeOutput } from "./ai-scribe-output";
@@ -39,6 +40,9 @@ export const NoteDefinitionConfigurator = () => {
   const [activeNoteDefinition, setActiveNoteDefinition] = useState<
     Partial<NoteDefinition>
   >(() => createNoteDefinition());
+
+  const { defaultNoteDefinition, setDefaultNoteDefinition } =
+    useDefaultNoteDefinition();
 
   const [selectedRecording, setSelectedRecording] = useState<string>();
   const [draftNote, setDraftNote] = useState<DraftNote>();
@@ -190,8 +194,84 @@ export const NoteDefinitionConfigurator = () => {
     }
   };
 
+  const updateDefaultNoteDefinition = (
+    definition: NoteDefinition | undefined,
+  ) => {
+    if (definition) {
+      setDefaultNoteDefinition(definition);
+      saveDefaultNoteDefinitionToDb(definition);
+    }
+  };
+
+  const saveDefaultNoteDefinitionToDb = async (
+    defintion: NoteDefinition,
+    retry: number = 0,
+  ) => {
+    try {
+      void (await webApiAction<void>(
+        "PATCH",
+        `/api/note-definitions/${defintion.uuid}/set-default`,
+        {
+          accessToken: accessToken,
+        },
+      ));
+    } catch {
+      setTimeout(
+        () => saveDefaultNoteDefinitionToDb(defintion, retry + 1),
+        (retry + 1) * 3000,
+      );
+    }
+  };
+
   return (
     <div className="flex flex-col gap-6 justify-center items-center max-w-2xl w-full">
+      <h2 className={`${subtitle()} text-center`}>Default Note Type</h2>
+      <div className="flex flex-col gap-3 text-small text-zinc-500 max-w-[90%] sm:max-w-[600px]">
+        <Select
+          aria-label="Select a Note Type"
+          className="flex-none w-[300px] max-w-full"
+          disallowEmptySelection={true}
+          placeholder="Make a Selection"
+          selectedKeys={
+            defaultNoteDefinition ? [defaultNoteDefinition.uuid] : undefined
+          }
+          selectionMode="single"
+          size="md"
+          onChange={(e) =>
+            updateDefaultNoteDefinition(
+              noteDefinitions.find((d) => d.uuid == e.target.value),
+            )
+          }
+        >
+          <SelectSection
+            className={
+              noteDefinitions.some((d) => !d.isBuiltin) ? "" : "hidden"
+            }
+            title="Custom Note Types"
+          >
+            {noteDefinitions
+              .filter((d) => !d.isBuiltin)
+              .sort(sortDefinitionsByTitle)
+              .map((noteType) => (
+                <SelectItem key={noteType.uuid}>{noteType.title}</SelectItem>
+              ))}
+          </SelectSection>
+          <SelectSection
+            title={
+              noteDefinitions.some((d) => !d.isBuiltin)
+                ? "Built-in Note Types"
+                : undefined
+            }
+          >
+            {noteDefinitions
+              .filter((d) => d.isBuiltin)
+              .sort(sortDefinitionsByTitle)
+              .map((noteType) => (
+                <SelectItem key={noteType.uuid}>{noteType.title}</SelectItem>
+              ))}
+          </SelectSection>
+        </Select>
+      </div>
       <h2 className={`${subtitle()} text-center`}>Custom Note Types</h2>
       <div className="flex flex-col gap-3 text-small text-zinc-500 max-w-[90%] sm:max-w-[600px]">
         <p>

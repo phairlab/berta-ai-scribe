@@ -41,6 +41,7 @@ class User(JenkinsContext):
 
     username: Mapped[str] = mapped_column(VARCHAR(100), primary_key=True)
     registered_at: Mapped[datetime] = mapped_column(TIMESTAMP_LTZ, init=False, default=datetime.now(timezone.utc))
+    default_note_type: Mapped[str] = mapped_column(CHAR(36), default=None)
 
     encounters: Mapped[list["Encounter"]] = relationship(init=False, back_populates="user", cascade="all, delete")
     note_definitions: Mapped[list["NoteDefinition"]] = relationship(init=False, back_populates="user", cascade="all, delete")

@@ -25,13 +25,19 @@ import { ActionWaitSpinner } from "./action-wait-spinner";
 
 export const AIScribe = () => {
   const accessToken = useAccessToken();
-  const defaultNoteType = useDefaultNoteDefinition();
+  const { defaultNoteDefinition: defaultNoteType } = useDefaultNoteDefinition();
   const currentId = useRef<string>();
 
   const { encounters, setEncounters } = useContext(EncountersContext);
   const { activeEncounter, setActiveEncounter } = useContext(
     ActiveEncounterContext,
   );
+
+  useEffect(() => {
+    if (!selectedNoteType) {
+      setSelectedNoteType(defaultNoteType);
+    }
+  }, [defaultNoteType]);
 
   const [selectedNoteType, setSelectedNoteType] = useState(defaultNoteType);
   const [audio, setAudio] = useState<string | File>();

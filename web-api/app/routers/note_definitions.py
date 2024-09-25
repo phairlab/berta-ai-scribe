@@ -92,6 +92,19 @@ async def update_note_definition(
     
     # Return the note definition with applied changes.
     return sch.NoteDefinition.from_db_record(note_definition)
+
+@router.patch("/{uuid}/set-default")
+async def set_default_note_type(userSession: useUserSession, database: useDatabase, *, uuid: str):
+    try:
+        user: db.User = database.execute(
+            select(db.User) \
+                .where(db.User.username == userSession.username)
+        ).one()[0]
+    except NoResultFound:
+        raise errors.BadRequest("User is not registered.")
+    
+    user.default_note_type = uuid
+    database.commit()
     
 @router.delete("/{uuid}")
 async def delete_note_definition(userSession: useUserSession, database: useDatabase, *, uuid: str):

@@ -38,7 +38,7 @@ async def authenticate_snowflake_user(
 
     # Create a user session.
     session_id = str(uuid.uuid4())
-    user_session = sch.WebAPISession(username=user.username, sessionId=session_id, rights=[])
+    user_session = sch.WebAPISession(username=user.username, sessionId=session_id, rights=[], defaultNoteType=user.default_note_type)
     
     # Generate and return an access token.
     token = create_access_token(user_session)

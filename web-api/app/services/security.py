@@ -41,6 +41,7 @@ def decode_token(token: str, verify_expiry: bool = True) -> WebAPISession:
             username=payload["username"],
             sessionId=payload["sessionId"],
             rights=payload.get("rights") or [],
+            defaultNoteType=payload.get("defaultNoteType"),
         )
     except jwt.ExpiredSignatureError:
         raise Unauthorized("Credentials expired")
