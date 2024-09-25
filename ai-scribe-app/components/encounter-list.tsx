@@ -20,19 +20,30 @@ import { useAccessToken } from "@/hooks/use-access-token";
 
 import { DeleteDocumentIcon } from "./icons";
 
-export const EncounterList = () => {
+type EncounterListProps = {
+  onEncounterSelected?: (encounter: Encounter | null) => void;
+};
+
+export const EncounterList = ({ onEncounterSelected }: EncounterListProps) => {
   const accessToken = useAccessToken();
   const { encounters, setEncounters } = useContext(EncountersContext);
   const { activeEncounter, setActiveEncounter } = useContext(
     ActiveEncounterContext,
   );
 
-  const selectEncounter = (encounter: Encounter) => {
-    const id = encounter?.newId ?? encounter.uuid;
-    const activeId = activeEncounter?.newId ?? activeEncounter?.uuid;
+  const selectEncounter = (encounter: Encounter | null) => {
+    if (!encounter) {
+      setActiveEncounter(null);
+      onEncounterSelected?.(null);
+    } else {
+      const id = encounter?.newId ?? encounter.uuid;
+      const activeId = activeEncounter?.newId ?? activeEncounter?.uuid;
 
-    if (activeId !== id) {
-      setActiveEncounter(encounter);
+      if (activeId !== id) {
+        setActiveEncounter(encounter);
+      }
+
+      onEncounterSelected?.(encounter);
     }
   };
 
@@ -91,7 +102,7 @@ export const EncounterList = () => {
           key="new"
           className={`h-12 ${!activeEncounter ? "border-s-4 rounded-s-none border-blue-500" : ""}`}
           textValue="New Recording"
-          onPress={() => setActiveEncounter(null)}
+          onPress={() => selectEncounter(null)}
         >
           <span className="text-blue-500 dark:text-blue-400 text-bold">
             New Recording

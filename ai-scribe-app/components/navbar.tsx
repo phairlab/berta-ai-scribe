@@ -14,16 +14,19 @@ import { Link } from "@nextui-org/link";
 import { link as linkStyles } from "@nextui-org/theme";
 import NextLink from "next/link";
 import clsx from "clsx";
+import { useRouter } from "next/navigation";
 
 import { siteConfig } from "@/config/site";
 import { ThemeSwitch } from "@/components/theme-switch";
 import { Logo, SettingsIcon } from "@/components/icons";
 import { useSession } from "@/hooks/use-session";
-
-import { EncounterList } from "./encounter-list";
 import { userDisplayName } from "@/utility/display";
 
+import { EncounterList } from "./encounter-list";
+
 export const Navbar = () => {
+  const router = useRouter();
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const userSession = useSession();
 
@@ -104,7 +107,12 @@ export const Navbar = () => {
             </Link>
           </NavbarMenuItem>
           <NavbarMenuItem onClick={() => setIsMenuOpen(false)}>
-            <EncounterList />
+            <EncounterList
+              onEncounterSelected={() => {
+                router.push("/");
+                setIsMenuOpen(false);
+              }}
+            />
           </NavbarMenuItem>
         </div>
       </NavbarMenu>
