@@ -9,7 +9,7 @@ load_dotenv()
 class Settings(BaseSettings):
     ENVIRONMENT: Literal["production", "development"] = "production"
     APP_NAME: str = "AHS \"Jenkins\" Scribe"
-    APP_VERSION: str = "0.2.1"
+    APP_VERSION: str = "0.2.2"
 
     AUDIO_FORMAT: str = "webm"
     AUDIO_BITRATE: str = "32k"

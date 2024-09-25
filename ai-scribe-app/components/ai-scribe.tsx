@@ -306,50 +306,10 @@ export const AIScribe = () => {
     }
   };
 
-  const deleteNoteFromDb = async (
-    encounter: Encounter,
-    note: DraftNote,
-    retry: number = 0,
-  ) => {
-    if (encounter.uuid) {
-      try {
-        void (await webApiAction<void>(
-          "DELETE",
-          `/api/encounters/${encounter.uuid}/draft-notes/${note.tag}`,
-          {
-            accessToken: accessToken,
-          },
-        ));
-      } catch {
-        setTimeout(
-          () => deleteNoteFromDb(encounter, note, retry + 1),
-          (retry + 1) * 3000,
-        );
-      }
-    } else {
-      // Wait for encounter to be saved.
-      setTimeout(() => deleteNoteFromDb(encounter, note), 1000);
-    }
-  };
-
   const copyOutput = async (output: string) => {
     if (output) {
       await navigator.clipboard.writeText(output);
     }
-  };
-
-  const hideNote = (note: DraftNote) => {
-    const newNotes = notes.filter((n) => n.tag !== note.tag);
-
-    if (activeTab == note.tag) {
-      setActiveTab(
-        newNotes.length > 0 ? (newNotes[0].tag ?? "transcript") : "transcript",
-      );
-    }
-
-    activeEncounter!.draftNotes = newNotes;
-    setNotes(newNotes);
-    deleteNoteFromDb(activeEncounter!, note);
   };
 
   return (
@@ -437,13 +397,6 @@ export const AIScribe = () => {
                         onClick={() => copyOutput(note.text)}
                       >
                         Copy
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="light"
-                        onClick={() => hideNote(note)}
-                      >
-                        Hide
                       </Button>
                     </CardHeader>
                     <Divider />
