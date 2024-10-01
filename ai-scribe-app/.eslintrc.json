@@ -51,6 +51,7 @@
         "argsIgnorePattern": "^_.*?$"
       }
     ],
+    "import/no-relative-parent-imports": ["warn", { "ignore": ["@/*"] }],
     "import/order": [
       "warn",
       {
@@ -66,12 +67,37 @@
         ],
         "pathGroups": [
           {
-            "pattern": "@/**",
+            "pattern": "@(react|react-native)",
+            "group": "external",
+            "position": "before"
+          },
+          {
+            "pattern": "{next,next/*,next-themes,next-themes/**}",
             "group": "external",
             "position": "after"
+          },
+          {
+            "pattern": "@nextui-org/**",
+            "group": "external",
+            "position": "after"
+          },
+          {
+            "pattern": "@/features/**",
+            "group": "internal",
+            "position": "after"
+          },
+          {
+            "pattern": "@/**",
+            "group": "internal"
           }
         ],
-        "newlines-between": "always"
+        "newlines-between": "always",
+        "distinctGroup": true,
+        "alphabetize": {
+          "order": "asc",
+          "caseInsensitive": true
+        },
+        "pathGroupsExcludedImportTypes": []
       }
     ],
     "react/self-closing-comp": "warn",

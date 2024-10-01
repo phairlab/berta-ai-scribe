@@ -3,17 +3,15 @@ from typing import BinaryIO, Iterable
 import openai
 from openai import OpenAI, AsyncOpenAI, NotGiven
 from openai.types.chat import ChatCompletionMessageParam
-from sqlalchemy.orm import Session as SQLAlchemySession
 
-from app.schemas import WebAPISession
-from app.services.logging import log_transcription, log_generation
+from app.schemas import TranscriptionOutput, GenerationOutput
 from app.services.audio_processing import get_duration
 from app.services.measurement import ExecutionTimer
 from app.services.error_handling import ExternalServiceTimeout, ExternalServiceError, ExternalServiceInterruption, AudioProcessingError
 
 SERVICE_NAME = "OpenAI"
 
-async def transcribe(database: SQLAlchemySession, userSession: WebAPISession, audio_file: BinaryIO, filename: str, content_type: str, prompt: str | None = None) -> str:
+async def transcribe(audio_file: BinaryIO, filename: str, content_type: str, prompt: str | None = None) -> TranscriptionOutput:
     try:
         audio_duration = get_duration(audio_file)
     except Exception as e:
@@ -31,10 +29,16 @@ async def transcribe(database: SQLAlchemySession, userSession: WebAPISession, au
     except Exception as e:
         raise ExternalServiceError(SERVICE_NAME, str(e))
 
-    log_transcription(database, timer.started_at, SERVICE_NAME, audio_duration, timer.elapsed_ms, userSession)
-    return transcript
+    # log_transcription(database, timer.started_at, SERVICE_NAME, audio_duration, timer.elapsed_ms, userSession)
+    return TranscriptionOutput(
+        transcript=transcript,
+        transcribedAt=timer.started_at,
+        service=SERVICE_NAME,
+        audioDuration=audio_duration,
+        timeToGenerate=timer.elapsed_ms,
+    )
 
-def complete(database: SQLAlchemySession, userSession: WebAPISession, tag: str, model: str, messages: Iterable[ChatCompletionMessageParam]) -> str:
+def complete(model: str, messages: Iterable[ChatCompletionMessageParam]) -> GenerationOutput:
     try:
         with ExecutionTimer() as timer:
             openai_client = OpenAI(timeout=None, max_retries=0)
@@ -51,5 +55,13 @@ def complete(database: SQLAlchemySession, userSession: WebAPISession, tag: str, 
     except Exception as e:
         raise ExternalServiceError(SERVICE_NAME, str(e))
     
-    log_generation(database, timer.started_at, SERVICE_NAME, model, tag, completion_tokens, prompt_tokens, timer.elapsed_ms, userSession)
-    return text
+    # log_generation(database, timer.started_at, SERVICE_NAME, model, tag, completion_tokens, prompt_tokens, timer.elapsed_ms, userSession)
+    return GenerationOutput(
+        text=text,
+        generatedAt=timer.started_at,
+        service=SERVICE_NAME,
+        model=model,
+        completionTokens=completion_tokens,
+        promptTokens=prompt_tokens,
+        timeToGenerate=timer.elapsed_ms,
+    )

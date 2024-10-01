@@ -1,7 +1,6 @@
 import uuid
-from typing import Annotated
 
-from fastapi import APIRouter, Form
+from fastapi import APIRouter, BackgroundTasks
 from sqlalchemy import select
 from sqlalchemy.exc import NoResultFound
 
@@ -20,7 +19,8 @@ router = APIRouter()
 async def authenticate_snowflake_user(
     snowflakeUser: useSnowflakeContextUser, 
     userAgent: useUserAgent,
-    database: useDatabase
+    database: useDatabase,
+    backgroundTasks: BackgroundTasks
 ) -> sch.Token:
     # Get the user record. Auto-register the user if not found.
     try:
@@ -45,6 +45,6 @@ async def authenticate_snowflake_user(
 
     # Log the session
     log.authenticated(user_session)
-    log_session(database, user_session, userAgent)
+    backgroundTasks.add_task(log_session, database, user_session, userAgent)
 
     return sch.Token(accessToken=token, tokenType="Snowflake Context")

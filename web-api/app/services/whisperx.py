@@ -2,10 +2,8 @@ import json
 from typing import BinaryIO
 
 import aiohttp
-from sqlalchemy.orm import Session as SQLAlchemySession
 
-from app.schemas import WebAPISession
-from app.services.logging import log_transcription
+from app.schemas import TranscriptionOutput
 from app.services.audio_processing import get_duration
 from app.services.measurement import ExecutionTimer
 from app.services.error_handling import ExternalServiceTimeout, ExternalServiceError, ExternalServiceInterruption, AudioProcessingError
@@ -13,7 +11,7 @@ from app.config import settings
 
 SERVICE_NAME = "Local WhisperX"
 
-async def transcribe(database: SQLAlchemySession, userSession: WebAPISession, audio_file: BinaryIO, filename: str, content_type: str, prompt: str | None = None) -> str:
+async def transcribe(audio_file: BinaryIO, filename: str, content_type: str, prompt: str | None = None) -> TranscriptionOutput:
     try:
         audio_duration = get_duration(audio_file)
     except Exception as e:
@@ -40,5 +38,11 @@ async def transcribe(database: SQLAlchemySession, userSession: WebAPISession, au
             except (aiohttp.ClientPayloadError, aiohttp.ClientResponseError, aiohttp.RedirectClientError) as e:
                 raise ExternalServiceError(SERVICE_NAME, str(e))
 
-    log_transcription(database, timer.started_at, SERVICE_NAME, audio_duration, timer.elapsed_ms, userSession)
-    return transcript
+    # log_transcription(database, timer.started_at, SERVICE_NAME, audio_duration, timer.elapsed_ms, userSession)
+    return TranscriptionOutput(
+        transcript=transcript,
+        transcribedAt=timer.started_at,
+        service=SERVICE_NAME,
+        audioDuration=audio_duration,
+        timeToGenerate=timer.elapsed_ms,
+    )

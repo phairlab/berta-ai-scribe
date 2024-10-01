@@ -1,13 +1,13 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Body, UploadFile, status
+from fastapi import APIRouter, Depends, Body, UploadFile, status, BackgroundTasks
 
 import app.services.tasks as tasks
 import app.services.error_handling as errors
 import app.schemas as sch
 from app.services.db import get_tag, useDatabase
 from app.services.security import authenticate_user, useUserSession
-from app.services.logging import WebAPILogger
+from app.services.logging import WebAPILogger, log_transcription, log_generation
 from app.config import settings
 
 log = WebAPILogger(__name__)
@@ -21,24 +21,26 @@ router = APIRouter(dependencies=[Depends(authenticate_user)], responses={
 
 @router.post("/transcribe-audio", generate_unique_id_function=(lambda _: "TranscribeAudio"))
 async def transcribe_audio(
-    database: useDatabase, 
-    userSession: useUserSession, 
+    userSession: useUserSession,
+    backgroundTasks: BackgroundTasks,
     *, 
     audio: UploadFile
 ) -> sch.TextResponse:
     try:
-        transcript = await tasks.transcribe_audio(database, userSession, audio.file, audio.filename, audio.content_type)
+        transcription_output = await tasks.transcribe_audio(audio.file, audio.filename, audio.content_type)
+        backgroundTasks.add_task(log_transcription, transcription_output.transcribedAt, transcription_output.service, transcription_output.audioDuration, transcription_output.timeToGenerate, userSession)
     except (errors.ExternalServiceError, errors.AudioProcessingError) as e:
         raise e
     except Exception as e:
         raise errors.WebAPIException(str(e))
         
-    return sch.TextResponse(text=transcript)
+    return sch.TextResponse(text=transcription_output.transcript)
 
 @router.post("/generate-draft-note")
 async def generate_draft_note(
     database: useDatabase, 
     userSession: useUserSession,
+    backgroundTasks: BackgroundTasks,
     *, 
     instructions: Annotated[str, Body()], 
     transcript: Annotated[str, Body()]
@@ -46,10 +48,11 @@ async def generate_draft_note(
     # Get the stream of note segments.
     try:
         tag = get_tag(database)
-        note_text = tasks.generate_note(database, userSession, tag, settings.GENERATIVE_AI_MODEL, instructions, transcript)
+        generation_output = tasks.generate_note(settings.GENERATIVE_AI_MODEL, instructions, transcript)
+        backgroundTasks.add_task(log_generation, generation_output.generatedAt, generation_output.service, generation_output.model, tag, generation_output.completionTokens, generation_output.promptTokens, generation_output.timeToGenerate, userSession)
     except errors.ExternalServiceError as e:
         raise e
     except Exception as e:
         raise errors.WebAPIException(str(e))
 
-    return sch.GenerationResponse(text=note_text, tag=tag)
+    return sch.GenerationResponse(text=generation_output.text, tag=tag)

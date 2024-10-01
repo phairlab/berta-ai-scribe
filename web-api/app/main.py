@@ -14,6 +14,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.encoders import jsonable_encoder
 from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html, get_swagger_ui_oauth2_redirect_html
 from fastapi.staticfiles import StaticFiles
+from starlette.background import BackgroundTask
 from snowflake.connector.secret_detector import SecretDetector
 from sqlalchemy.orm import Session as SQLAlchemySession
 
@@ -122,20 +123,18 @@ app = FastAPI(lifespan=lifespan, title=f"{settings.APP_NAME} API", version=setti
 @app.exception_handler(WebAPIException)
 async def webapi_exception_handler(request: Request, exc: WebAPIException):
     try:
-        with SQLAlchemySession(data.db_engine) as database:
-            request_id = request.headers.get("x-request-id")
-        
-            try:
-                credentials = request.headers.get("authorization")
-                if not credentials.startswith("Bearer "):
-                    raise Exception()
-                
-                session = decode_token(credentials.removeprefix("Bearer "))
-            except:
-                session = WebAPISession(username=request.headers.get("sf_context_current_user") or "Anonymous", sessionId="None")
+        request_id = request.headers.get("x-request-id")
+    
+        try:
+            credentials = request.headers.get("authorization")
+            if not credentials.startswith("Bearer "):
+                raise Exception()
+            
+            session = decode_token(credentials.removeprefix("Bearer "))
+        except:
+            session = WebAPISession(username=request.headers.get("sf_context_current_user") or "Anonymous", sessionId="None")
 
-            stack_trace = " ".join(traceback.TracebackException.from_exception(exc).format())
-            log_error(database, datetime.now(timezone.utc), request.url.path, request.method, exc.status_code, exc.name, exc.message, stack_trace, exc.uuid, request_id, session)
+        stack_trace = " ".join(traceback.TracebackException.from_exception(exc).format())
     except:
         pass
 
@@ -148,52 +147,50 @@ async def webapi_exception_handler(request: Request, exc: WebAPIException):
                 retry=exc.retry,
             ),
         )),
-        headers=exc.headers
+        headers=exc.headers,
+        background=BackgroundTask(log_error, datetime.now(timezone.utc), request.url.path, request.method, exc.status_code, exc.name, exc.message, stack_trace, exc.uuid, request_id, session)
     )
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     try:
-        with SQLAlchemySession(data.db_engine) as database:
-            request_id = request.headers.get("x-request-id")
-        
-            try:
-                credentials = request.headers.get("authorization")
-                if not credentials.startswith("Bearer "):
-                    raise Exception()
-                
-                session = decode_token(credentials.removeprefix("Bearer "))
-            except:
-                session = WebAPISession(username=request.headers.get("sf_context_current_user") or "Anonymous", sessionId="None")
+        request_id = request.headers.get("x-request-id")
+    
+        try:
+            credentials = request.headers.get("authorization")
+            if not credentials.startswith("Bearer "):
+                raise Exception()
+            
+            session = decode_token(credentials.removeprefix("Bearer "))
+        except:
+            session = WebAPISession(username=request.headers.get("sf_context_current_user") or "Anonymous", sessionId="None")
 
-            stack_trace = " ".join(traceback.TracebackException.from_exception(exc).format())
-            log_error(database, datetime.now(timezone.utc), request.url.path, request.method, status.HTTP_422_UNPROCESSABLE_ENTITY, "Validation Error", str(exc), stack_trace, str(uuid4()), request_id, session)
+        stack_trace = " ".join(traceback.TracebackException.from_exception(exc).format())
     except:
         pass
 
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        content=jsonable_encoder({ "detail": exc.errors(), "body": json.dumps(exc.body, default=str) })
+        content=jsonable_encoder({ "detail": exc.errors(), "body": json.dumps(exc.body, default=str) }),
+        background=BackgroundTask(log_error, datetime.now(timezone.utc), request.url.path, request.method, status.HTTP_422_UNPROCESSABLE_ENTITY, "Validation Error", str(exc), stack_trace, str(uuid4()), request_id, session)
     )
 
 # Exception handlers
 @app.exception_handler(Exception)
 async def webapi_exception_handler(request: Request, exc: Exception):
     try:
-        with SQLAlchemySession(data.db_engine) as database:
-            request_id = request.headers.get("x-request-id")
-        
-            try:
-                credentials = request.headers.get("authorization")
-                if not credentials.startswith("Bearer "):
-                    raise Exception()
-                
-                session = decode_token(credentials.removeprefix("Bearer "))
-            except:
-                session = WebAPISession(username=request.headers.get("sf_context_current_user") or "Anonymous", sessionId="None")
+        request_id = request.headers.get("x-request-id")
+    
+        try:
+            credentials = request.headers.get("authorization")
+            if not credentials.startswith("Bearer "):
+                raise Exception()
+            
+            session = decode_token(credentials.removeprefix("Bearer "))
+        except:
+            session = WebAPISession(username=request.headers.get("sf_context_current_user") or "Anonymous", sessionId="None")
 
-            stack_trace = " ".join(traceback.TracebackException.from_exception(exc).format())
-            log_error(database, datetime.now(timezone.utc), request.url.path, request.method, status.HTTP_500_INTERNAL_SERVER_ERROR, "Internal Server Error", str(exc), stack_trace, str(uuid4()), request_id, session)
+        stack_trace = " ".join(traceback.TracebackException.from_exception(exc).format())
     except:
         pass
 
@@ -208,7 +205,8 @@ async def webapi_exception_handler(request: Request, exc: Exception):
                 retry=error.retry,
             ),
         )),
-        headers=error.headers
+        headers=error.headers,
+        background=BackgroundTask(log_error, datetime.now(timezone.utc), request.url.path, request.method, status.HTTP_500_INTERNAL_SERVER_ERROR, "Internal Server Error", str(exc), stack_trace, str(uuid4()), request_id, session)
     )
 
 # Configure static files
@@ -255,8 +253,7 @@ async def request_logging_middleware(request: Request, call_next):
         session = session
     )
 
-    with SQLAlchemySession(data.db_engine) as database:
-        log_request(database, requested_at, request.url.path, request.method, int(response.status_code), timer.elapsed_ms, request_id, session)
+    background_log_request = BackgroundTask(log_request, requested_at, request.url.path, request.method, int(response.status_code), timer.elapsed_ms, request_id, session)
         
     if response.status_code >= 400:
         response_body = b""
@@ -265,8 +262,15 @@ async def request_logging_middleware(request: Request, call_next):
         
         log.error(response_body, session)
         
-        return Response(content=response_body, status_code=response.status_code, headers=dict(response.headers), media_type=response.media_type)
+        return Response(
+            content=response_body, 
+            status_code=response.status_code, 
+            headers=dict(response.headers), 
+            media_type=response.media_type,
+            background=background_log_request
+        )
 
+    response.background = background_log_request
     return response
 
 # ----------------------------------

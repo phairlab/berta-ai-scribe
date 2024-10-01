@@ -1,5 +1,6 @@
 from .draft_note import *
 from .encounter import *
+from .generation_output import *
 from .generation_response import *
 from .note_definition import *
 from .recording import *
@@ -7,6 +8,7 @@ from .sample_recording import *
 from .simple_message import *
 from .text_response import *
 from .token import *
+from .transcription_output import *
 from .user import *
 from .web_api_error_detail import *
 from .web_api_error import *

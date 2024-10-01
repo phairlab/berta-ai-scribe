@@ -1,12 +1,14 @@
 import "@/styles/globals.css";
-import { Metadata, Viewport } from "next";
-import clsx from "clsx";
-import { headers } from "next/headers";
 
-import { siteConfig } from "@/config/site";
+import * as React from "react";
+
+import clsx from "clsx";
+
+import { Metadata, Viewport } from "next";
+
 import { fontSans } from "@/config/fonts";
-import { Navbar } from "@/components/navbar";
-import { authenticate, fetchAppContextData } from "@/utility/web-api";
+import { siteConfig } from "@/config/site";
+import { Navbar } from "@/core-ui/navbar";
 
 import { Providers } from "./providers";
 
@@ -33,12 +35,6 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const snowflakeContextUser = headers().get("sf-context-current-user");
-  const userAgent = headers().get("user-agent");
-  const jenkinsUserAgent = headers().get("jenkins-user-agent");
-  const { accessToken, session } = await authenticate(snowflakeContextUser, jenkinsUserAgent ?? userAgent);
-  const appContextData = await fetchAppContextData(accessToken);
-
   return (
     <html suppressHydrationWarning className="overscroll-none" lang="en">
       <head />
@@ -48,11 +44,7 @@ export default async function RootLayout({
           fontSans.variable,
         )}
       >
-        <Providers
-          appContextData={appContextData}
-          sessionData={{ accessToken, session }}
-          themeProps={{ attribute: "class", defaultTheme: "light" }}
-        >
+        <Providers themeProps={{ attribute: "class", defaultTheme: "light" }}>
           <div className="relative flex flex-col h-screen mx-auto max-w-5xl px-6">
             <Navbar />
             <main className="container pt-3 sm:pt-6 px-6 flex-grow">
