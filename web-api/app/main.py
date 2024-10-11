@@ -26,7 +26,7 @@ from app.services.error_handling import WebAPIException
 from app.services.measurement import ExecutionTimer
 from app.services.logging import WebAPILogger, RequestMetrics
 from app.services.security import decode_token, WebAPISession
-from app.routers import authorization, tasks, sample_recordings, encounters, note_definitions
+from app.routers import authorization, tasks, sample_recordings, encounters, note_definitions, users
 from app.schemas import SimpleMessage, WebAPIError, WebAPIErrorDetail
 
 # ----------------------------------
@@ -322,6 +322,7 @@ app.include_router(tasks.router, prefix="/tasks", tags=["Tasks"])
 app.include_router(sample_recordings.router, prefix="/sample-recordings", tags=["Sample Recordings"])
 app.include_router(encounters.router, prefix="/encounters", tags=["Encounters"])
 app.include_router(note_definitions.router, prefix="/note-definitions", tags=["Note Definitions"])
+app.include_router(users.router, prefix="/users", tags=["Users"])
 
 # ----------------------------------
 # FALLBACK

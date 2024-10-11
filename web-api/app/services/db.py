@@ -46,6 +46,17 @@ class User(JenkinsContext):
     encounters: Mapped[list["Encounter"]] = relationship(init=False, back_populates="user", cascade="all, delete")
     note_definitions: Mapped[list["NoteDefinition"]] = relationship(init=False, back_populates="user", cascade="all, delete")
 
+class UserFeedback(JenkinsContext):
+    __tablename__ = "user_feedback"
+
+    sequence = Sequence("user_feedback_sequence", metadata=JenkinsContext.metadata)
+
+    id: Mapped[int] = id_column(sequence)
+    username: Mapped[str] = mapped_column(ForeignKey("users.username"))
+    submitted: Mapped[datetime] = mapped_column(TIMESTAMP_LTZ)
+    details: Mapped[str] = mapped_column(VARCHAR)
+    context: Mapped[str] = mapped_column(VARCHAR, default=None)
+
 class Encounter(JenkinsContext):
     __tablename__ = "encounters"
 
@@ -139,4 +150,3 @@ def retrieve_recording(username: str, filename: str, *, snowflakeSession: Snowfl
 def purge_recording(username: str, filename: str) -> None:
     with SQLAlchemySession(data.db_engine) as session:
         session.execute(text("REMOVE :stage_path;"), { "stage_path": f"@RECORDING_FILES/{username}/{filename}" })
-

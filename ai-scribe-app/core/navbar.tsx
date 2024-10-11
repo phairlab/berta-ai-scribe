@@ -7,7 +7,9 @@ import clsx from "clsx";
 import NextLink from "next/link";
 import { useRouter } from "next/navigation";
 
+import { Divider } from "@nextui-org/divider";
 import { Link } from "@nextui-org/link";
+import { useDisclosure } from "@nextui-org/modal";
 import {
   Navbar as NextUINavbar,
   NavbarContent,
@@ -24,6 +26,7 @@ import { siteConfig } from "@/config/site";
 import { EncounterNavigator } from "@/features/encounters/encounter-navigator";
 
 import { CurrentUser } from "./current-user";
+import { FeedbackModal } from "./feedback-modal";
 import { Logo, SettingsIcon } from "./icons";
 import { ThemeSwitch } from "./theme-switch";
 
@@ -31,6 +34,7 @@ export const Navbar = () => {
   const router = useRouter();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const feedbackModal = useDisclosure();
 
   return (
     <NextUINavbar
@@ -38,6 +42,12 @@ export const Navbar = () => {
       position="sticky"
       onMenuOpenChange={setIsMenuOpen}
     >
+      <FeedbackModal
+        isOpen={feedbackModal.isOpen}
+        onClose={feedbackModal.onClose}
+        onOpenChange={feedbackModal.onOpenChange}
+      />
+
       <NavbarContent className="basis-1/5 sm:basis-full" justify="start">
         <NavbarBrand as="li" className="gap-3 max-w-fit">
           <NextLink className="flex justify-start items-center gap-1" href="/">
@@ -61,6 +71,16 @@ export const Navbar = () => {
             </NavbarItem>
           ))}
         </ul>
+        <NavbarItem className="hidden sm:flex justify-center items-center">
+          <Link
+            color="foreground"
+            href="#"
+            size="sm"
+            onPress={feedbackModal.onOpen}
+          >
+            Feedback
+          </Link>
+        </NavbarItem>
       </NavbarContent>
 
       <NavbarContent
@@ -104,6 +124,17 @@ export const Navbar = () => {
               </div>
             </Link>
           </NavbarMenuItem>
+          <NavbarMenuItem>
+            <Link
+              className="text-zinc-600 dark:text-zinc-400 ms-[24px]"
+              color="foreground"
+              href="#"
+              onClick={feedbackModal.onOpen}
+            >
+              <div className="flex flex-row gap-2">Feedback</div>
+            </Link>
+          </NavbarMenuItem>
+          <Divider className="mt-3" />
           <NavbarMenuItem onClick={() => setIsMenuOpen(false)}>
             <EncounterNavigator
               onEncounterSelected={() => {

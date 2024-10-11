@@ -74,6 +74,16 @@ CREATE TABLE users (
   PRIMARY KEY (username)
 );
 
+CREATE SEQUENCE user_feedback_sequence;
+CREATE TABLE user_feedback (
+  id INTEGER NOT NULL DEFAULT user_feedback_sequence.nextval,
+  username VARCHAR(100) NOT NULL,
+  submitted TIMESTAMP_LTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  details VARCHAR NOT NULL,
+  context VARCHAR,
+  PRIMARY KEY (id)
+);
+
 CREATE SEQUENCE encounter_sequence;
 CREATE TABLE encounters (
   id INTEGER NOT NULL DEFAULT encounter_sequence.nextval,
