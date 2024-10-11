@@ -167,8 +167,8 @@ export const AudioPlayerRecorder = ({
               Save Recording
             </Button>
           ) : (
-            <Button size="sm" onClick={reset}>
-              Reset
+            <Button className="sm:hidden" size="sm" onClick={reset}>
+              New Recording
             </Button>
           )}
         </div>
