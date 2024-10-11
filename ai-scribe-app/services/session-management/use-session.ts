@@ -10,7 +10,7 @@ import {
 type SessionData =
   | {
       state: "Authenticated";
-      data: UserSessionData;
+      details: UserSessionData;
     }
   | {
       state: Exclude<AuthenticationState, "Authenticated">;
@@ -22,7 +22,7 @@ export function useSession() {
 
   function map(session: UserSession): SessionData {
     return session.state === "Authenticated"
-      ? { state: session.state, data: session.data }
+      ? { state: session.state, details: session.details }
       : { state: session.state };
   }
 

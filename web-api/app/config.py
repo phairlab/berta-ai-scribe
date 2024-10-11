@@ -11,8 +11,8 @@ class Settings(BaseSettings):
     APP_NAME: str = "AHS \"Jenkins\" Scribe"
     APP_VERSION: str = "0.2.4"
 
-    AUDIO_FORMAT: str = "webm"
-    AUDIO_BITRATE: str = "32k"
+    DEFAULT_AUDIO_FORMAT: str = "mp3"
+    DEFAULT_AUDIO_BITRATE: str = "32k"
     LOGGING_LEVEL: str = "info"
 
     JWT_ALGORITHM: str = "HS256"

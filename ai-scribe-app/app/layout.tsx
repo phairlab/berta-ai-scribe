@@ -8,7 +8,7 @@ import { Metadata, Viewport } from "next";
 
 import { fontSans } from "@/config/fonts";
 import { siteConfig } from "@/config/site";
-import { Navbar } from "@/core-ui/navbar";
+import { Navbar } from "@/core/navbar";
 
 import { Providers } from "./providers";
 

@@ -20,11 +20,13 @@ export const CurrentUser = () => {
             "overflow-clip md:overflow-hidden",
           )}
         >
-          {formatDisplayName(userSession.data.username)}
+          {formatDisplayName(userSession.details.username)}
         </p>
       )}
       {userSession.state === "Authenticating" && (
-        <WaitMessageSpinner size="xs">Logging In</WaitMessageSpinner>
+        <WaitMessageSpinner size="xs">
+          <span className="hidden sm:visible">Logging In</span>
+        </WaitMessageSpinner>
       )}
     </>
   );

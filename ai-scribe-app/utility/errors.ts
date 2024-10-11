@@ -1,3 +1,10 @@
+export class InvalidOperationError extends Error {
+  constructor(failedCondition: string) {
+    super(`Invalid Operation: ${failedCondition}`);
+    Object.setPrototypeOf(this, InvalidOperationError.prototype);
+  }
+}
+
 /** Details of an error encountered during use of the application. */
 export type ApplicationError = {
   name: string;
@@ -44,6 +51,18 @@ export function isApplicationError(entity: any): entity is ApplicationError {
     (entity as ApplicationError).name !== undefined &&
     (entity as ApplicationError).message !== undefined
   );
+}
+
+/** Returns the error directly if it is an ApplicationError,
+ * otherwise creates and returns an UnexpectedError from the provided error. */
+export function asApplicationError(error: unknown): ApplicationError {
+  if (isApplicationError(error)) {
+    return error;
+  } else if (typeof error === "string") {
+    return UnexpectedError(error);
+  } else {
+    return UnexpectedError((error as Error).message);
+  }
 }
 
 export const UnexpectedError = (errorMessage: string): ApplicationError => ({

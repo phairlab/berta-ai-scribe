@@ -14,7 +14,7 @@ import { useTheme } from "next-themes";
 import { Progress } from "@nextui-org/progress";
 
 import { headerNames } from "@/config/keys";
-import { AnimatedPulse } from "@/core-ui/animated-pulse";
+import { AnimatedPulse } from "@/core/animated-pulse";
 import { useAccessToken } from "@/services/session-management/use-access-token";
 import { tailwindColors } from "@/utility/constants";
 
@@ -58,7 +58,7 @@ export const WavesurferModule = ({
   const PLAYER_HEIGHT = 70;
 
   const { theme } = useTheme();
-  const { accessToken } = useAccessToken();
+  const accessToken = useAccessToken();
   const wavesurfer = useRef<Wavesurfer | null>(null);
   const recorder = useRef<RecordPlugin | null>(null);
 
@@ -84,7 +84,9 @@ export const WavesurferModule = ({
     fillParent: true,
     interact: false,
     fetchParams: {
-      headers: { [headerNames.JenkinsAuthorization]: `Bearer ${accessToken}` },
+      headers: {
+        [headerNames.JenkinsAuthorization]: `Bearer ${accessToken}`,
+      },
     },
   });
 
@@ -126,6 +128,12 @@ export const WavesurferModule = ({
   const handleLoading = (_: Wavesurfer, percent: number) => {
     if (loadedAudio) {
       setPercentLoaded(percent);
+    }
+  };
+
+  const handleError = (_: Wavesurfer, error: Error) => {
+    if (error && error.message) {
+      setError(error.message);
     }
   };
 
@@ -276,9 +284,7 @@ export const WavesurferModule = ({
       setIsRecordingPaused(false);
 
       const mimeType = blob.type;
-      const fileExtension = mimeType.split(";")[0].split("/")[1];
-
-      const file = new File([blob], `recording.${fileExtension}`, {
+      const file = new File([blob], "recording", {
         type: mimeType,
       });
 
@@ -303,8 +309,8 @@ export const WavesurferModule = ({
         hidden: isHidden,
       })}
     >
-      {error && !isRecording && (
-        <div className="text-red-500 flex w-full justify-center mt-[15px]">
+      {!!error && !isRecording && (
+        <div className="text-red-500 text-sm flex w-full text-center mt-[10px]">
           {error}
         </div>
       )}
@@ -346,6 +352,7 @@ export const WavesurferModule = ({
             height={PLAYER_HEIGHT}
             url={NO_AUDIO_URL}
             onDestroy={handleDestroy}
+            onError={handleError}
             onInit={handleInit}
             onLoading={handleLoading}
             onPause={() => onPause?.()}

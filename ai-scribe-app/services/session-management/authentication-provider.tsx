@@ -24,27 +24,32 @@ export const AuthenticationProvider = ({
     state: "Unauthenticated",
   });
 
-  function recoverSession(): UserSession | null {
-    const token = sessionStorage.getItem(sessionKeys.AccessToken);
+  // function recoverSession(): UserSession | null {
+  //   const token = sessionStorage.getItem(sessionKeys.AccessToken);
 
-    if (token) {
-      const sessionData = jwtDecode<UserSessionData>(token);
+  //   if (token) {
+  //     const sessionData = jwtDecode<UserSessionData>(token);
 
-      return {
-        state: "Authenticated",
-        accessToken: token,
-        data: sessionData,
-      };
-    }
+  //     return {
+  //       state: "Authenticated",
+  //       accessToken: token,
+  //       details: sessionData,
+  //     };
+  //   }
 
-    return null;
-  }
+  //   return null;
+  // }
 
   const startSession = async () => {
     setSession({ state: "Authenticating" });
 
     try {
       const token = await authenticate();
+
+      if (!token) {
+        throw Error("An error occurred while starting a session");
+      }
+
       const sessionData = jwtDecode<UserSessionData>(token);
 
       // Cache the access token to session storage.
@@ -53,7 +58,7 @@ export const AuthenticationProvider = ({
       setSession({
         state: "Authenticated",
         accessToken: token,
-        data: sessionData,
+        details: sessionData,
       });
     } catch (e: unknown) {
       setSession({ state: "Failed" });
@@ -65,13 +70,15 @@ export const AuthenticationProvider = ({
   // On load, initiate a session.
   useEffect(() => {
     if (session.state === "Unauthenticated") {
-      const recoveredSession = recoverSession();
+      // const recoveredSession = recoverSession();
 
-      if (recoveredSession) {
-        setSession(recoveredSession);
-      } else {
-        startSession();
-      }
+      // if (recoveredSession) {
+      //   setSession(recoveredSession);
+      // } else {
+      //   startSession();
+      // }
+
+      startSession();
     }
   }, []);
 

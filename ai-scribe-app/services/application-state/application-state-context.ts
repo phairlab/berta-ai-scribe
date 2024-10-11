@@ -1,36 +1,46 @@
 import { createContext } from "react";
 
-import { Encounter } from "@/features/encounters/encounter";
-import { NoteDefinition } from "@/features/note-types/note-definition";
-import { SampleRecording } from "@/features/sample-recordings/sample-recording";
+import { EncounterState } from "./encounter-state";
+import { NoteTypeState } from "./note-type-state";
+import { SampleRecordingState } from "./sample-recording-state";
 
-type StateSlice<T> = {
-  state: T;
-  set: (state: T) => void;
-};
-
-type PrefetchedStateSlice<T> = StateSlice<T> & { isFetched: boolean };
+export type LoadingStatus = "Uninitialized" | "Loading" | "Ready" | "Failed";
 
 export type ApplicationState = {
-  encounters: PrefetchedStateSlice<Encounter[]>;
-  noteTypes: PrefetchedStateSlice<NoteDefinition[]>;
-  sampleRecordings: PrefetchedStateSlice<SampleRecording[]>;
-  activeEncounter: StateSlice<Encounter | null>;
-  defaultNoteType: StateSlice<NoteDefinition | null>;
+  sampleRecordings: SampleRecordingState;
+  noteTypes: NoteTypeState;
+  encounters: EncounterState;
 };
 
-function noState<T>(placeholder: T) {
-  return { state: placeholder, set: () => void {} };
-}
+const nullSampleRecordingState: SampleRecordingState = {
+  status: "Uninitialized",
+  list: [],
+};
 
-function noPrefetchedState<T>(placeholder: T) {
-  return { ...noState(placeholder), isFetched: false };
-}
+const nullNoteTypeState: NoteTypeState = {
+  status: "Uninitialized",
+  list: [],
+  default: null,
+  exists: () => false,
+  get: () => void {},
+  put: () => void {},
+  remove: () => void {},
+  setDefault: () => void {},
+};
+
+const nullEncounterState: EncounterState = {
+  status: "Uninitialized",
+  list: [],
+  activeEncounter: null,
+  exists: () => false,
+  get: () => void {},
+  put: () => void {},
+  remove: () => void {},
+  setActive: () => void {},
+};
 
 export const ApplicationStateContext = createContext<ApplicationState>({
-  encounters: noPrefetchedState([]),
-  noteTypes: noPrefetchedState([]),
-  sampleRecordings: noPrefetchedState([]),
-  activeEncounter: noState(null),
-  defaultNoteType: noState(null),
+  sampleRecordings: nullSampleRecordingState,
+  noteTypes: nullNoteTypeState,
+  encounters: nullEncounterState,
 });

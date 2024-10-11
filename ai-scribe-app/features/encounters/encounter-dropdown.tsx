@@ -9,10 +9,9 @@ import {
   DropdownTrigger,
 } from "@nextui-org/dropdown";
 
-import { DeleteDocumentIcon } from "@/core-ui/icons";
+import { DeleteDocumentIcon } from "@/core/icons";
+import { Encounter } from "@/core/types";
 import { formatDatestring } from "@/utility/formatters";
-
-import { Encounter } from "./encounter";
 
 type EncounterDropdownMenu = PropsWithChildren<{
   encounter: Encounter;

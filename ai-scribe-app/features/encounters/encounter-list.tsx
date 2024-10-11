@@ -6,19 +6,20 @@ import { Listbox, ListboxItem } from "@nextui-org/listbox";
 import { Progress } from "@nextui-org/progress";
 import { ScrollShadow } from "@nextui-org/scroll-shadow";
 
-import { Encounter } from "./encounter";
+import { Encounter } from "@/core/types";
+
 import { EncounterDropdown } from "./encounter-dropdown";
 
 type EncounterListProps = {
   encounters: Encounter[];
-  activeId: string | undefined;
+  activeEncounter: Encounter | null;
   onSelected: (encounter: Encounter) => void;
   onDelete: (encounter: Encounter) => void;
 };
 
 export const EncounterList = ({
   encounters,
-  activeId,
+  activeEncounter,
   onSelected,
   onDelete,
 }: EncounterListProps) => (
@@ -29,13 +30,13 @@ export const EncounterList = ({
     >
       {encounters.map((encounter: Encounter) => (
         <ListboxItem
-          key={(encounter.newId ?? encounter.uuid)!}
+          key={encounter.uuid!}
           className={clsx("h-12 relative", {
             "border-s-4 rounded-s-none border-blue-500 data-[hover=true]:bg-transparent":
-              activeId && (encounter.newId ?? encounter.uuid) === activeId,
+              activeEncounter && encounter.uuid === activeEncounter.uuid,
           })}
           description={
-            encounter.isUnsaved ? (
+            encounter.tracking.isSaving && !encounter.tracking.isPersisted ? (
               <div className="flex flex-row gap-2 items-center justify-start ms-1 w-24">
                 <p className="text-xs">Saving</p>
                 <Progress

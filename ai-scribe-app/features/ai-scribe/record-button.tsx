@@ -1,6 +1,6 @@
 import { Button } from "@nextui-org/button";
 
-import { MicrophoneIcon, PauseIcon } from "@/core-ui/icons";
+import { MicrophoneIcon, PauseIcon } from "@/core/icons";
 
 type RecordButtonProps = {
   isDisabled: boolean;

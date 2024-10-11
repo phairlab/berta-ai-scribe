@@ -17,20 +17,21 @@ def get_duration(audio: BinaryIO) -> int:
     audio.seek(0)
     return len(segment)
 
-def reformat_audio(original: BinaryIO, format: str = settings.AUDIO_FORMAT, bitrate: str = settings.AUDIO_BITRATE) -> tuple[BinaryIO, str]:
+def reformat_audio(original: BinaryIO, format: str, bitrate: str = settings.DEFAULT_AUDIO_BITRATE) -> tuple[BinaryIO, int]:
     "Returns a new audio file (and its format) with the given audio file converted into a standard format and bitrate."
-    converted = tempfile.SpooledTemporaryFile()
+    reformatted = tempfile.SpooledTemporaryFile()
 
     try:
         segment: AudioSegment = AudioSegment.from_file(original)
-        segment.export(converted, bitrate=bitrate, format=format)
+        duration = len(segment)
+        segment.export(reformatted, bitrate=bitrate, format=format)
 
-        return (converted, format)
+        return (reformatted, duration)
     except Exception as e:
-        converted.close()
+        reformatted.close()
         raise AudioProcessingError(str(e))
 
-def split_audio(audio_file: BinaryIO, max_duration_ms: int = minutes_to_ms(2), format: str = settings.AUDIO_FORMAT, bitrate: str = settings.AUDIO_BITRATE) -> Iterator[tuple[BinaryIO, str]]:
+def split_audio(audio_file: BinaryIO, max_duration_ms: int = minutes_to_ms(2), format: str = settings.DEFAULT_AUDIO_FORMAT, bitrate: str = settings.DEFAULT_AUDIO_BITRATE) -> Iterator[tuple[BinaryIO, str]]:
     """Returns files representing sequential segments of the input file,
     where each is split on a point of silence where possible
     and guaranteed to be at most the indicated max duration."""

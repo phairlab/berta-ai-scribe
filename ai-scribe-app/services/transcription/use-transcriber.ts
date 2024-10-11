@@ -1,13 +1,9 @@
 import { useState } from "react";
 
-import { useAccessToken } from "@/services/session-management/use-access-token";
-import { downloadFile, httpAction } from "@/services/web-api/base-queries";
-import { ApplicationError, UnexpectedError } from "@/utility/errors";
+import { Encounter } from "@/core/types";
+import { useWebApi } from "@/services/web-api/use-web-api";
+import { ApplicationError } from "@/utility/errors";
 import { useAbortController } from "@/utility/use-abort-controller";
-
-export type TranscriberOutput = {
-  text: string;
-};
 
 type TranscriberProps = {
   onTranscribing?: () => void;
@@ -20,65 +16,45 @@ export function useTranscriber({
   onTranscript,
   onError,
 }: TranscriberProps) {
-  const { accessToken } = useAccessToken();
+  const webApi = useWebApi();
   const controller = useAbortController();
   const [isTranscribing, setIsTranscribing] = useState(false);
 
-  const transcribe = async (audio: string | File) => {
+  const transcribe = async (encounter: Encounter) => {
     if (isTranscribing) {
       controller.abort();
     }
 
     onTranscribing?.();
     setIsTranscribing(true);
-
-    let file: File;
     const abortSignal = controller.signal.current;
 
-    if (typeof audio === "string") {
-      try {
-        file = await downloadFile(
-          audio,
-          audio.split("/").reverse()[0],
-          accessToken,
-          abortSignal,
-        );
-      } catch (e: unknown) {
-        onError(UnexpectedError((e as Error).message), () => transcribe(audio));
-        setIsTranscribing(false);
-
-        return;
-      }
-    } else {
-      file = audio;
-    }
-
     try {
-      const formData = new FormData();
+      let audio: File;
 
-      formData.append("audio", file);
+      if (encounter.recording.cachedAudio) {
+        audio = encounter.recording.cachedAudio;
+      } else {
+        audio = await webApi.encounters.downloadRecording(
+          encounter.recording.filename,
+        );
+      }
 
-      const response = await httpAction<TranscriberOutput>(
-        "POST",
-        "/api/tasks/transcribe-audio",
-        {
-          data: formData,
-          accessToken: accessToken,
-          signal: abortSignal,
-        },
-      );
+      const response = await webApi.tasks.transcribeAudio(audio, abortSignal);
 
       onTranscript(response.text);
     } catch (e: unknown) {
-      onError(e as ApplicationError, () => transcribe(audio));
+      onError(e as ApplicationError, () => transcribe(encounter));
     } finally {
       setIsTranscribing(false);
     }
   };
 
   const abort = () => {
-    controller.abort();
-    setIsTranscribing(false);
+    if (isTranscribing) {
+      controller.abort();
+      setIsTranscribing(false);
+    }
   };
 
   return { transcribe, abort, isTranscribing } as const;

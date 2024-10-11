@@ -1,30 +1,43 @@
-import { useState } from "react";
+import { ReactNode, useState } from "react";
 
 import clsx from "clsx";
 
 import { Select, SelectItem, SelectSection } from "@nextui-org/select";
 
-import { sortDefinitionsByTitle } from "@/utility/sorters";
-
-import { NoteDefinition } from "./note-definition";
+import { NoteType } from "@/core/types";
 
 type NoteTypeSelectorProps = {
-  noteTypes: NoteDefinition[];
-  selected: NoteDefinition | undefined;
+  builtinTypes: NoteType[];
+  customTypes: NoteType[];
+  selected: NoteType | undefined;
+  label?: ReactNode;
+  labelPlacement?: "outside" | "outside-left" | "inside" | undefined;
+  placeholder?: string | undefined;
   isLoading: boolean;
-  onChange: (noteType: NoteDefinition | undefined) => void;
+  onChange: (noteType: NoteType | undefined) => void;
 };
 
 export const NoteTypeSelector = ({
-  noteTypes,
+  builtinTypes,
+  customTypes,
   selected,
+  label,
+  labelPlacement,
+  placeholder,
   isLoading,
   onChange,
 }: NoteTypeSelectorProps) => {
   const [isSelectOpen, setIsSelectOpen] = useState(false);
   const [canCloseSelect, setCanCloseSelect] = useState(false);
 
-  const hasCustomNotes = (): boolean => noteTypes.some((t) => !t.isBuiltin);
+  const hasCustomNotes = customTypes.length > 0;
+
+  const persisted = (noteTypes: NoteType[]) =>
+    noteTypes.filter((nt) => nt.tracking.isPersisted);
+
+  const find = (id: string) =>
+    customTypes.find((nt) => nt.uuid === id) ??
+    builtinTypes.find((nt) => nt.uuid === id);
 
   return (
     <Select
@@ -34,12 +47,14 @@ export const NoteTypeSelector = ({
       isDisabled={isLoading}
       isLoading={isLoading}
       isOpen={isSelectOpen}
-      placeholder="Select a Note Type"
+      label={label}
+      labelPlacement={labelPlacement}
+      placeholder={placeholder}
       selectedKeys={selected ? [selected.uuid] : undefined}
       selectionMode="single"
       size="md"
       onChange={(e) => {
-        onChange(noteTypes.find((t) => t.uuid == e.target.value));
+        onChange(find(e.target.value));
         setIsSelectOpen(false);
         setCanCloseSelect(false);
       }}
@@ -55,25 +70,17 @@ export const NoteTypeSelector = ({
       }}
     >
       <SelectSection
-        className={clsx({ hidden: !hasCustomNotes() })}
+        className={clsx({ hidden: !hasCustomNotes })}
         title="Custom Note Types"
       >
-        {noteTypes
-          .filter((t) => !t.isBuiltin)
-          .sort(sortDefinitionsByTitle)
-          .map((noteType) => (
-            <SelectItem key={noteType.uuid}>{noteType.title}</SelectItem>
-          ))}
+        {persisted(customTypes).map((noteType) => (
+          <SelectItem key={noteType.uuid}>{noteType.title}</SelectItem>
+        ))}
       </SelectSection>
-      <SelectSection
-        title={hasCustomNotes() ? "Built-in Note Types" : undefined}
-      >
-        {noteTypes
-          .filter((t) => t.isBuiltin)
-          .sort(sortDefinitionsByTitle)
-          .map((noteType) => (
-            <SelectItem key={noteType.uuid}>{noteType.title}</SelectItem>
-          ))}
+      <SelectSection title={hasCustomNotes ? "Built-in Note Types" : undefined}>
+        {persisted(builtinTypes).map((noteType) => (
+          <SelectItem key={noteType.uuid}>{noteType.title}</SelectItem>
+        ))}
       </SelectSection>
     </Select>
   );

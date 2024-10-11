@@ -1,6 +1,6 @@
 import { Button } from "@nextui-org/button";
 
-import { PauseIcon, PlayIcon } from "@/core-ui/icons";
+import { PauseIcon, PlayIcon } from "@/core/icons";
 
 type PlayPauseButtonProps = {
   isDisabled: boolean;

@@ -1,25 +1,19 @@
-import { DraftNote } from "@/services/note-generation/draft-note";
+type SortDirection = "Ascending" | "Descending";
 
-import { Encounter } from "@/features/encounters/encounter";
-import { NoteDefinition } from "@/features/note-types/note-definition";
-
-export function sortEncountersByDate(a: Encounter, b: Encounter): number {
-  return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+export function alphabetically<T>(
+  field: (x: T) => string,
+  direction: SortDirection = "Ascending",
+) {
+  return (a: T, b: T): number =>
+    (direction === "Descending" ? -1 : 1) *
+    (field(a) < field(b) ? -1 : field(a) > field(b) ? 1 : 0);
 }
 
-export function sortNotesByDate(a: DraftNote, b: DraftNote): number {
-  return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-}
-
-export function sortDefinitionsByTitle(
-  a: NoteDefinition,
-  b: NoteDefinition,
-): number {
-  if (a.title > b.title) {
-    return -1;
-  } else if (a.title === b.title) {
-    return 0;
-  } else {
-    return 1;
-  }
+export function byDate<T>(
+  field: (x: T) => Date,
+  direction: SortDirection = "Ascending",
+) {
+  return (a: T, b: T): number =>
+    (direction === "Descending" ? -1 : 1) *
+    (new Date(field(a)).getTime() - new Date(field(b)).getTime());
 }

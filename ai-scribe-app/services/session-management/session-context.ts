@@ -17,7 +17,7 @@ export type UserSession =
   | {
       state: "Authenticated";
       accessToken: string;
-      data: UserSessionData;
+      details: UserSessionData;
     }
   | {
       state: Exclude<AuthenticationState, "Authenticated">;

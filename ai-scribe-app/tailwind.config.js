@@ -3,7 +3,7 @@ import { nextui } from "@nextui-org/theme";
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
-    "./core-ui/**/*.{js,ts,jsx,tsx,mdx}",
+    "./core/**/*.{js,ts,jsx,tsx,mdx}",
     "./features/**/*.{js,ts,jsx,tsx,mdx}",
     "./services/**/*.{js,ts,jsx,tsx,mdx}",
     "./app/**/*.{js,ts,jsx,tsx,mdx}",

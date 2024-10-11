@@ -1,6 +1,6 @@
 import { headerNames } from "@/config/keys";
 
-export type WebApiToken = string;
+export type WebApiToken = string | undefined;
 
 type AuthenticationResponse = {
   accessToken: WebApiToken;
