@@ -11,9 +11,8 @@ import {
 
 import { DeleteDocumentIcon } from "@/core/icons";
 import { Encounter } from "@/core/types";
-import { formatDatestring } from "@/utility/formatters";
 
-type EncounterDropdownMenu = PropsWithChildren<{
+type EncounterDropdownProps = PropsWithChildren<{
   encounter: Encounter;
   onDelete: (encounter: Encounter) => void;
 }>;
@@ -22,7 +21,7 @@ export const EncounterDropdown = ({
   children,
   encounter,
   onDelete,
-}: EncounterDropdownMenu) => {
+}: EncounterDropdownProps) => {
   const handleAction = (key: string, encounter: Encounter) => {
     if (key === "delete") {
       onDelete(encounter);
@@ -30,25 +29,23 @@ export const EncounterDropdown = ({
   };
 
   return (
-    <div className="flex flex-row gap-2">
-      <p className="grow">{formatDatestring(encounter.createdAt)}</p>
-      <Dropdown className="absolute right-0.5 top-0 z-10">
-        <DropdownTrigger className="cursor-pointer">{children}</DropdownTrigger>
-        <DropdownMenu
-          onAction={(key) => handleAction(key.toString(), encounter)}
+    <Dropdown className="absolute right-0.5 top-0 z-10">
+      <DropdownTrigger>{children}</DropdownTrigger>
+      <DropdownMenu
+        aria-label="Encounter actions"
+        onAction={(key) => handleAction(key.toString(), encounter)}
+      >
+        <DropdownItem
+          key="delete"
+          className="text-red-600 dark:text-rose-500"
+          description="Cannot be undone"
+          startContent={
+            <DeleteDocumentIcon className="mt-px text-xl pointer-events-none flex-shrink-0" />
+          }
         >
-          <DropdownItem
-            key="delete"
-            className="text-red-600 dark:text-rose-500"
-            description="Cannot be undone"
-            startContent={
-              <DeleteDocumentIcon className="mt-px text-xl pointer-events-none flex-shrink-0" />
-            }
-          >
-            Delete Record
-          </DropdownItem>
-        </DropdownMenu>
-      </Dropdown>
-    </div>
+          Delete Record
+        </DropdownItem>
+      </DropdownMenu>
+    </Dropdown>
   );
 };
