@@ -3,13 +3,10 @@ from typing import Callable
 
 import snowflake.connector
 from snowflake.snowpark import Session as SnowflakeSession
-from snowflake.snowpark.exceptions import SnowparkClientException
 from snowflake.sqlalchemy import URL
 from sqlalchemy import Engine as SQLAlchemyEngine, event, create_engine
 
 from app.config import settings
-
-# snowflake_session: SnowflakeSession
 
 def is_spcs_oauth() -> bool:
     return os.path.isfile(settings.SNOWFLAKE_TOKEN_PATH)
@@ -36,7 +33,7 @@ def create_snowflake_engine() -> SQLAlchemyEngine:
         engine_url = URL(
             account=settings.SNOWFLAKE_ACCOUNT,
             user=settings.SNOWFLAKE_USERNAME,
-            password=settings.SNOWFLAKE_PASSWORD,
+            authenticator="externalbrowser",
             role=settings.SNOWFLAKE_ROLE,
             database=settings.SNOWFLAKE_DATABASE,
             schema=settings.SNOWFLAKE_SCHEMA,
@@ -46,9 +43,9 @@ def create_snowflake_engine() -> SQLAlchemyEngine:
 
     return create_engine(
         engine_url,
-        pool_pre_ping=True, 
-        max_overflow=10, 
-        pool_size=5,
+        pool_pre_ping=(settings.ENVIRONMENT != "development"), 
+        max_overflow=(0 if settings.ENVIRONMENT == "development" else 10), 
+        pool_size=(1 if settings.ENVIRONMENT == "development" else 5),
         pool_recycle=45*60, # 45 min
         hide_parameters=(settings.ENVIRONMENT != "development")
     )
@@ -75,7 +72,7 @@ def create_snowflake_session() -> SnowflakeSession:
         connection_parameters = {
             "account": settings.SNOWFLAKE_ACCOUNT,
             "user": settings.SNOWFLAKE_USERNAME,
-            "password": settings.SNOWFLAKE_PASSWORD,
+            "authenticator": "externalbrowser",
             "role": settings.SNOWFLAKE_ROLE,
             "database": settings.SNOWFLAKE_DATABASE,
             "schema": settings.SNOWFLAKE_SCHEMA,
@@ -88,34 +85,14 @@ def create_snowflake_session() -> SnowflakeSession:
 
 def inject_snowflake_session(func: Callable):
     def inner(*args, **kwargs):
-        with create_snowflake_session() as session:
-            kwargs["snowflakeSession"] = session
-
+        if settings.ENVIRONMENT == "development":
             result = func(*args, **kwargs)
             return result
+        else:
+            with create_snowflake_session() as session:
+                kwargs["snowflakeSession"] = session
 
-        # global snowflake_session
-        # session: SnowflakeSession = snowflake_session
-
-        # try:
-        #     if "snowflakeSession" in kwargs:
-        #         kwargs["snowflakeSession"] = session
-
-        #     result = func(*args, **kwargs)
-        #     return result
-        # except SnowparkClientException:
-        #     try:
-        #         session.close()
-        #     except:
-        #         pass
-
-        #     snowflake_session = create_snowflake_session()
-        #     session = snowflake_session
-
-        #     if "snowflakeSession" in kwargs:
-        #         kwargs["snowflakeSession"] = session
-                
-        #     result = func(*args, **kwargs)
-        #     return result
+                result = func(*args, **kwargs)
+                return result
 
     return inner
