@@ -11,20 +11,24 @@ from app.services.error_handling import ExternalServiceError
 
 SERVICE_NAME = "Snowflake Cortex"
 
-@data.inject_snowflake_session
+# @data.inject_snowflake_session
 def complete(model: str, messages: str | list[ConversationMessage], *, snowflakeSession: SnowflakeSession = None) -> GenerationOutput:
     try:
-        # stream = snowflake.cortex.Complete(model, messages, session=snowflakeSession, options={ "temperature": 0 }, stream=True)
+        with data.create_snowflake_session() as session, ExecutionTimer() as timer:
+            stream = snowflake.cortex.Complete(model, messages, session=session, options={ "temperature": 0 }, stream=True)
 
-        # for update in stream:
-        #     yield update
+            text = ""
+            for update in stream:
+                text += update
 
-        with ExecutionTimer() as timer:
-            response = snowflake.cortex.Complete(model, messages, session=snowflakeSession, options={ "temperature": 0 })
+            completion_tokens = 0
+            prompt_tokens = 0
+
+            # response = snowflake.cortex.Complete(model, messages, session=session, options={ "temperature": 0 })
             
-            text = json.loads(response)["choices"][0]["messages"]
-            completion_tokens = json.loads(response)["usage"]["completion_tokens"]
-            prompt_tokens = json.loads(response)["usage"]["prompt_tokens"]
+            # text = json.loads(response)["choices"][0]["messages"]
+            # completion_tokens = json.loads(response)["usage"]["completion_tokens"]
+            # prompt_tokens = json.loads(response)["usage"]["prompt_tokens"]
     except Exception as e:
             raise ExternalServiceError(SERVICE_NAME, str(e))
     

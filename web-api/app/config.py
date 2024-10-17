@@ -29,7 +29,6 @@ class Settings(BaseSettings):
     SNOWFLAKE_SCHEMA: str
     SNOWFLAKE_WAREHOUSE: str
     SNOWFLAKE_USERNAME: str | None = None
-    SNOWFLAKE_PASSWORD: str | None = None
 
     SYSTEM_USER: str = "SYSTEM"
     DEFAULT_NOTE_DEFINITION: str = "Full Visit"

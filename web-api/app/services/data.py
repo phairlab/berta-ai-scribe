@@ -3,7 +3,6 @@ from typing import Callable
 
 import snowflake.connector
 from snowflake.snowpark import Session as SnowflakeSession
-from snowflake.snowpark.exceptions import SnowparkClientException
 from snowflake.sqlalchemy import URL
 from sqlalchemy import Engine as SQLAlchemyEngine, event, create_engine
 
@@ -36,7 +35,7 @@ def create_snowflake_engine() -> SQLAlchemyEngine:
         engine_url = URL(
             account=settings.SNOWFLAKE_ACCOUNT,
             user=settings.SNOWFLAKE_USERNAME,
-            password=settings.SNOWFLAKE_PASSWORD,
+            authenticator="externalbrowser",
             role=settings.SNOWFLAKE_ROLE,
             database=settings.SNOWFLAKE_DATABASE,
             schema=settings.SNOWFLAKE_SCHEMA,
@@ -46,9 +45,8 @@ def create_snowflake_engine() -> SQLAlchemyEngine:
 
     return create_engine(
         engine_url,
-        pool_pre_ping=True, 
-        max_overflow=10, 
-        pool_size=5,
+        pool_pre_ping=True,
+        pool_size=0,
         pool_recycle=45*60, # 45 min
         hide_parameters=(settings.ENVIRONMENT != "development")
     )
@@ -75,7 +73,7 @@ def create_snowflake_session() -> SnowflakeSession:
         connection_parameters = {
             "account": settings.SNOWFLAKE_ACCOUNT,
             "user": settings.SNOWFLAKE_USERNAME,
-            "password": settings.SNOWFLAKE_PASSWORD,
+            "authenticator": "externalbrowser",
             "role": settings.SNOWFLAKE_ROLE,
             "database": settings.SNOWFLAKE_DATABASE,
             "schema": settings.SNOWFLAKE_SCHEMA,
@@ -93,29 +91,5 @@ def inject_snowflake_session(func: Callable):
 
             result = func(*args, **kwargs)
             return result
-
-        # global snowflake_session
-        # session: SnowflakeSession = snowflake_session
-
-        # try:
-        #     if "snowflakeSession" in kwargs:
-        #         kwargs["snowflakeSession"] = session
-
-        #     result = func(*args, **kwargs)
-        #     return result
-        # except SnowparkClientException:
-        #     try:
-        #         session.close()
-        #     except:
-        #         pass
-
-        #     snowflake_session = create_snowflake_session()
-        #     session = snowflake_session
-
-        #     if "snowflakeSession" in kwargs:
-        #         kwargs["snowflakeSession"] = session
-                
-        #     result = func(*args, **kwargs)
-        #     return result
 
     return inner

@@ -90,7 +90,8 @@ async def lifespan(_: FastAPI):
         os.mkdir(settings.RECORDINGS_FOLDER)
         with SQLAlchemySession(data.db_engine) as database, data.create_snowflake_session() as snowflake_session:
             for user in database.query(db.User).all():
-                os.mkdir(Path(settings.RECORDINGS_FOLDER, user.username))
+                if not os.path.isdir(Path(settings.RECORDINGS_FOLDER, user.username)):
+                    os.mkdir(Path(settings.RECORDINGS_FOLDER, user.username))
                 try:
                     snowflake_session.file.get(f"@RECORDING_FILES/{user.username}",f"{settings.RECORDINGS_FOLDER}/{user.username}")
                 except:
