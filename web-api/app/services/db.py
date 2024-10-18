@@ -139,13 +139,13 @@ def stream_recording(username: str, filename: str) -> Iterator[bytes]:
 def delete_recording(username: str, filename: str) -> None:
     os.remove(Path(settings.RECORDINGS_FOLDER, username, filename))
 
-@data.inject_snowflake_session
-def persist_recording(file: BinaryIO, username: str, filename: str, *, snowflakeSession: SnowflakeSession = None) -> None:
-    snowflakeSession.file.put_stream(file, f"@RECORDING_FILES/{username}/{filename}", auto_compress=False)
+def persist_recording(file: BinaryIO, username: str, filename: str) -> None:
+    with data.get_snowflake_session() as snowflakeSession:
+        snowflakeSession.file.put_stream(file, f"@RECORDING_FILES/{username}/{filename}", auto_compress=False)
 
-@data.inject_snowflake_session
-def retrieve_recording(username: str, filename: str, *, snowflakeSession: SnowflakeSession = None) -> BinaryIO:
-    return snowflakeSession.file.get_stream(f"@RECORDING_FILES/{username}/{filename}")
+def retrieve_recording(username: str, filename: str) -> BinaryIO:
+    with data.get_snowflake_session() as snowflakeSession:
+        return snowflakeSession.file.get_stream(f"@RECORDING_FILES/{username}/{filename}")
 
 def purge_recording(username: str, filename: str) -> None:
     with SQLAlchemySession(data.db_engine) as session:
