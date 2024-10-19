@@ -52,14 +52,14 @@ export const AIScribe = () => {
   });
 
   const canTranscribe =
-    audio &&
-    activeEncounter &&
+    audio !== undefined &&
+    activeEncounter !== null &&
     activeEncounter.tracking.isPersisted &&
     !transcriber.isTranscribing;
 
   const canGenerateNote =
-    selectedNoteType &&
-    activeEncounter &&
+    selectedNoteType !== null &&
+    activeEncounter !== null &&
     activeEncounter.recording.transcript &&
     !noteGenerator.generatingNoteType;
 
@@ -178,7 +178,7 @@ export const AIScribe = () => {
         activeEncounter.recording.transcript!,
       );
     }
-  }, [activeEncounter]);
+  }, [audio, selectedNoteType, activeEncounter]);
 
   return (
     <div className="flex flex-col gap-6">
