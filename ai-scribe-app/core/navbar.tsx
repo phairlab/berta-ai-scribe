@@ -24,8 +24,8 @@ import { link as linkStyles } from "@nextui-org/theme";
 import { siteConfig } from "@/config/site";
 
 import { EncounterNavigator } from "@/features/encounters/encounter-navigator";
+import { CurrentUser } from "@/features/user-session/current-user";
 
-import { CurrentUser } from "./current-user";
 import { FeedbackModal } from "./feedback-modal";
 import { Logo, SettingsIcon } from "./icons";
 import { ThemeSwitch } from "./theme-switch";
