@@ -2,6 +2,12 @@ events {
   worker_connections  1024;
 }
 http {
+  proxy_connect_timeout 3600s;
+  proxy_send_timeout 3600s;
+  proxy_read_timeout 3600s;
+  fastcgi_read_timeout 3600s;
+  send_timeout 3600s;
+  client_body_timeout 3600s;
   sendfile on;
   client_max_body_size 0;
 
@@ -11,34 +17,36 @@ http {
     server_name localhost;
 
     location / {
-      proxy_pass  http://$FRONTEND_SERVICE/;
+      proxy_pass http://$FRONTEND_SERVICE/;
       proxy_set_header User-Agent $http_user_agent;
       proxy_set_header jenkins-user-agent $http_user_agent;
     }
 
     location /api {
-      rewrite     /api/(.*) /$1  break;
-      proxy_pass  http://$BACKEND_SERVICE/;
+      proxy_connect_timeout 3600s;
+      proxy_send_timeout 3600s;
+      proxy_read_timeout 3600s;
+      fastcgi_read_timeout 3600s;
+      send_timeout 3600s;
+      client_body_timeout 3600s;
+      rewrite /api/(.*) /$1 break;
+      proxy_pass http://$BACKEND_SERVICE/;
       proxy_set_header X-Forwarded-Proto https;
       proxy_set_header X-Forwarded-Method $request_method;
       proxy_set_header User-Agent $http_user_agent;
       proxy_set_header jenkins-user-agent $http_user_agent;
-      proxy_connect_timeout       600;
-      proxy_send_timeout          600;
-      proxy_read_timeout          600;
-      send_timeout                600;
-      client_body_timeout         600;
     }
 
     location /openapi.json {
-      rewrite     /(.*) /$1  break;
-      proxy_pass  http://$BACKEND_SERVICE/;
+      rewrite /(.*) /$1 break;
+      proxy_pass http://$BACKEND_SERVICE/;
       proxy_set_header X-Forwarded-Proto https;
       proxy_set_header X-Forwarded-Method $request_method;
     }
 
     location /router-healthcheck {
-      add_header Content-Type application/json;
+      access_log off;
+      default_type application/json;
       return 200 '{"message":"Ready"}';
     }
   }
