@@ -76,9 +76,6 @@ for logger_name in ["snowflake.connector", "snowflake.connector.connection", "sn
 # Define startup / shutdown behaviour
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    # On startup, initialize a snowflake session.
-    # data.snowflake_session = data.create_snowflake_session()
-
     # On startup, for development environments simulate the snowflake mounted stage.
     if settings.ENVIRONMENT == "development":
         if os.path.isdir(settings.RECORDINGS_FOLDER):
@@ -88,9 +85,10 @@ async def lifespan(_: FastAPI):
                 pass
 
         os.mkdir(settings.RECORDINGS_FOLDER)
-        with SQLAlchemySession(data.db_engine) as database, data.create_snowflake_session() as snowflake_session:
+        with SQLAlchemySession(data.db_engine) as database, data.get_snowflake_session() as snowflake_session:
             for user in database.query(db.User).all():
-                os.mkdir(Path(settings.RECORDINGS_FOLDER, user.username))
+                if not os.path.isdir(Path(settings.RECORDINGS_FOLDER, user.username)):
+                    os.mkdir(Path(settings.RECORDINGS_FOLDER, user.username))
                 try:
                     snowflake_session.file.get(f"@RECORDING_FILES/{user.username}",f"{settings.RECORDINGS_FOLDER}/{user.username}")
                 except:
@@ -98,18 +96,13 @@ async def lifespan(_: FastAPI):
     
     yield
 
-    # On shutdown, gracefully clean up the database engine and snowflake session.
+    # On shutdown, gracefully clean up the database engine.
     try:
         data.db_engine.dispose()
     except:
         pass
 
-    # try:
-    #     data.snowflake_session.close()
-    # except:
-    #     pass
-
-    # On shutdown, cleanup / remove the simulated mounted stage
+    # On shutdown, cleanup the simulated mounted stage
     if settings.ENVIRONMENT == "development":
         try:
             shutil.rmtree(settings.RECORDINGS_FOLDER)
@@ -175,7 +168,6 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         background=BackgroundTask(log_error, datetime.now(timezone.utc), request.url.path, request.method, status.HTTP_422_UNPROCESSABLE_ENTITY, "Validation Error", str(exc), stack_trace, str(uuid4()), request_id, session)
     )
 
-# Exception handlers
 @app.exception_handler(Exception)
 async def webapi_exception_handler(request: Request, exc: Exception):
     try:
@@ -316,7 +308,7 @@ async def redoc_html():
         redoc_js_url="static/redoc.standalone.js"
     )
 
-# Include API routers
+# API routers
 app.include_router(authorization.router, tags=["Authorization"])
 app.include_router(tasks.router, prefix="/tasks", tags=["Tasks"])
 app.include_router(sample_recordings.router, prefix="/sample-recordings", tags=["Sample Recordings"])
