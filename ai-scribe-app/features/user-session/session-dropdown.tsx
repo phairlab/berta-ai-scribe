@@ -16,7 +16,11 @@ export const SessionDropdown = ({ children }: SessionDropdownProps) => {
 
   const handleAction = (key: Key) => {
     if (key === "logout") {
-      void fetch("/sfc-endpoint/logout").then(() => router.refresh());
+      if (process.env.NODE_ENV === "development") {
+        window.location.reload();
+      } else {
+        void fetch("/sfc-endpoint/logout").then(() => router.refresh());
+      }
     }
   };
 
