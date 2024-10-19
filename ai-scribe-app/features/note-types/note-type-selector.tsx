@@ -8,6 +8,7 @@ import { SafeSelect } from "@/core/safe-select";
 import { NoteType } from "@/core/types";
 
 type NoteTypeSelectorProps = {
+  className?: string;
   builtinTypes: NoteType[];
   customTypes: NoteType[];
   selected: NoteType | undefined;
@@ -19,6 +20,7 @@ type NoteTypeSelectorProps = {
 };
 
 export const NoteTypeSelector = ({
+  className,
   builtinTypes,
   customTypes,
   selected,
@@ -44,7 +46,7 @@ export const NoteTypeSelector = ({
   return (
     <SafeSelect
       aria-label="Select a Note Type"
-      className="flex-none w-[300px] max-w-full"
+      className={className}
       disallowEmptySelection={true}
       isDisabled={isLoading}
       isLoading={isLoading}

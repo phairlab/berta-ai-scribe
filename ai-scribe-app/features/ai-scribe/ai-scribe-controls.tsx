@@ -21,9 +21,10 @@ export const AIScribeControls = ({
   const noteTypes = useNoteTypes();
 
   return (
-    <div className="flex flex-col md:flex-row items-end md:items-center justify-center gap-4">
+    <div className="flex flex-col md:flex-row items-end md:items-center md:justify-center gap-4">
       <NoteTypeSelector
         builtinTypes={noteTypes.builtin}
+        className="max-w-[300px]"
         customTypes={noteTypes.custom}
         isLoading={!noteTypes.isReady}
         placeholder="Select a Note Type"
@@ -31,7 +32,6 @@ export const AIScribeControls = ({
         onChange={onNoteTypeChanged}
       />
       <Button
-        className="flex-none"
         color="primary"
         isDisabled={isDisabled}
         size="md"

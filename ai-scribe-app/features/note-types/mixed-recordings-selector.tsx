@@ -44,6 +44,7 @@ export const MixedRecordingsSelector = ({
 
   return (
     <SafeSelect
+      className="w-full"
       isDisabled={isLoading}
       isLoading={isLoading}
       label="Audio Sample"
