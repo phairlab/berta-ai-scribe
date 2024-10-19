@@ -16,7 +16,7 @@ log = WebAPILogger(__name__)
 router = APIRouter()
 
 @router.get("/authenticate")
-async def authenticate_snowflake_user(
+def authenticate_snowflake_user(
     snowflakeUser: useSnowflakeContextUser, 
     userAgent: useUserAgent,
     database: useDatabase,

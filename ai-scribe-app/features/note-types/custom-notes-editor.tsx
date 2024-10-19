@@ -84,7 +84,7 @@ export const CustomNotesEditor = ({
 
   return (
     <>
-      <div className="flex flex-col md:flex-row md:gap-2 w-full">
+      <div className="flex flex-col sm:flex-row gap-2 w-full items-end">
         <Input
           isRequired
           label="Title"
@@ -122,14 +122,14 @@ export const CustomNotesEditor = ({
           onChanges({ instructions: instructions })
         }
       />
-      <div className="flex flex-col md:flex-row gap-2 w-full justify-end items-center">
-        <MixedRecordingsSelector
-          selectedRecording={recording}
-          onRecordingSelected={setRecording}
-        />
-        <div className="flex flex-row gap-2 w-full justify-end items-center">
+      <div className="flex flex-col md:flex-row gap-5 w-full items-center">
+        <div className="flex flex-col sm:flex-row flex-row gap-2 w-full">
+          <MixedRecordingsSelector
+            selectedRecording={recording}
+            onRecordingSelected={setRecording}
+          />
           <Button
-            className="mt-2 md:mt-6"
+            className="mt-2 sm:mt-6 ms-auto"
             color="default"
             isDisabled={!canTest}
             variant="ghost"
@@ -137,6 +137,8 @@ export const CustomNotesEditor = ({
           >
             Test
           </Button>
+        </div>
+        <div className="flex flex-row gap-2 justify-end items-center">
           <Button
             className="mt-2 md:mt-6"
             color="primary"

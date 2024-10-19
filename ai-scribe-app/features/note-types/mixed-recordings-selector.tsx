@@ -1,7 +1,8 @@
 import clsx from "clsx";
 
-import { Select, SelectItem, SelectSection } from "@nextui-org/select";
+import { SelectItem, SelectSection } from "@nextui-org/select";
 
+import { SafeSelect } from "@/core/safe-select";
 import { Recording, SampleRecording } from "@/core/types";
 import { formatDatestring } from "@/utility/formatters";
 
@@ -42,7 +43,8 @@ export const MixedRecordingsSelector = ({
   };
 
   return (
-    <Select
+    <SafeSelect
+      className="w-full"
       isDisabled={isLoading}
       isLoading={isLoading}
       label="Audio Sample"
@@ -68,6 +70,6 @@ export const MixedRecordingsSelector = ({
           <SelectItem key={sr.filename}>{sr.filename.split(".")[0]}</SelectItem>
         ))}
       </SelectSection>
-    </Select>
+    </SafeSelect>
   );
 };

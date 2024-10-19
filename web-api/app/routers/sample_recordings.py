@@ -14,7 +14,7 @@ router = APIRouter(dependencies=[Depends(authenticate_user)])
 SAMPLES_DIRECTORY = ".sample-recordings"
 
 @router.get("")
-async def list_samples() -> list[sch.SampleRecording]:
+def list_samples() -> list[sch.SampleRecording]:
     with open(".sample-recordings/transcripts.json", "r", encoding="utf-8") as f:
         file_text = f.read()
 
@@ -27,7 +27,7 @@ async def list_samples() -> list[sch.SampleRecording]:
 @router.get("/{filename}", responses={
     status.HTTP_404_NOT_FOUND: {"description": "Not Found", "model": sch.WebAPIError},
 })
-async def download_sample(filename: str) -> FileResponse:
+def download_sample(filename: str) -> FileResponse:
     filepath = os.path.join(SAMPLES_DIRECTORY, filename)
     if not os.path.isfile(filepath):
         raise errors.NotFound("Recording not found")
@@ -35,7 +35,7 @@ async def download_sample(filename: str) -> FileResponse:
     return FileResponse(filepath)
 
 @router.get("/{filename}/transcript")
-async def get_sample_transcript(filename: str) -> sch.TextResponse:
+def get_sample_transcript(filename: str) -> sch.TextResponse:
     with open(".sample-recordings/transcripts.json", "r", encoding="utf-8") as f:
         file_text = f.read()
 

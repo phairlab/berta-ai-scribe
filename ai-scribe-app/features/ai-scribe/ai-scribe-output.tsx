@@ -34,7 +34,7 @@ export const AIScribeOutput = ({
   onActiveChanged,
   onErrorDismissed,
 }: AIScribeOutputProps) => {
-  const [activeTab, setActiveTab] = useState<string>();
+  const [activeTab, setActiveTab] = useState<string>("");
 
   function isError(output: AIScribeOutputType): output is AIScribeError {
     return "content" in output && isApplicationError(output.content);
@@ -60,7 +60,7 @@ export const AIScribeOutput = ({
             : undefined;
 
     if (activeTab !== key) {
-      setActiveTab(key);
+      setActiveTab(key ?? "");
     }
   }, [activeOutput, error, recording, notes]);
 

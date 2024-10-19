@@ -1,4 +1,6 @@
-import { Select, SelectItem } from "@nextui-org/select";
+import { SelectItem } from "@nextui-org/select";
+
+import { SafeSelect } from "@/core/safe-select";
 
 import { useSampleRecordings } from "./use-sample-recordings";
 
@@ -18,7 +20,7 @@ export const SampleRecordingSelector = ({
   };
 
   return (
-    <Select
+    <SafeSelect
       aria-label="Select an Audio Sample"
       className="w-32"
       isDisabled={!sampleRecordings.isReady}
@@ -34,6 +36,6 @@ export const SampleRecordingSelector = ({
           {recording.filename.split(".")[0]}
         </SelectItem>
       ))}
-    </Select>
+    </SafeSelect>
   );
 };

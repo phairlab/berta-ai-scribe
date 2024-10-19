@@ -50,7 +50,7 @@ export default function Settings() {
       <h1 className={title()}>Settings</h1>
       <div className="flex flex-col gap-6 justify-center items-center max-w-2xl w-full">
         <h2 className={`${subtitle()} text-center`}>Default Note Type</h2>
-        <div className="max-w-[90%] sm:max-w-[600px]">
+        <div className="w-[300px] max-w-[90%] sm:max-w-[600px]">
           <NoteTypeSelector
             builtinTypes={noteTypes.builtin}
             customTypes={noteTypes.custom}

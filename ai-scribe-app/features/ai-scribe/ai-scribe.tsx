@@ -52,14 +52,14 @@ export const AIScribe = () => {
   });
 
   const canTranscribe =
-    audio &&
-    activeEncounter &&
+    audio !== undefined &&
+    activeEncounter !== null &&
     activeEncounter.tracking.isPersisted &&
     !transcriber.isTranscribing;
 
   const canGenerateNote =
-    selectedNoteType &&
-    activeEncounter &&
+    selectedNoteType !== null &&
+    activeEncounter !== null &&
     activeEncounter.recording.transcript &&
     !noteGenerator.generatingNoteType;
 
@@ -159,26 +159,30 @@ export const AIScribe = () => {
     }
   };
 
-  // Respond to changes in the active encounter's state.
+  // React to changes in the active encounter's state.
   useEffect(() => {
-    // Update the UI when the active encounter changes.
+    // Reset the UI when the active encounter changes.
     if (!activeEncounter || ref.current?.uuid !== activeEncounter.uuid) {
       handleActiveEncounterChanged();
     }
+  }, [activeEncounter]);
 
-    // Auto-transcribe new encounters.
+  // Auto-transcribe encounters on audio available.
+  useEffect(() => {
     if (canTranscribe && !activeEncounter.recording.transcript) {
       transcriber.transcribe(activeEncounter);
     }
+  }, [audio, activeEncounter]);
 
-    // Auto-generate first note.
+  // Auto-generate first note on transcript available.
+  useEffect(() => {
     if (canGenerateNote && activeEncounter.draftNotes.length === 0) {
       noteGenerator.generateNote(
         selectedNoteType,
         activeEncounter.recording.transcript!,
       );
     }
-  }, [activeEncounter]);
+  }, [selectedNoteType, activeEncounter]);
 
   return (
     <div className="flex flex-col gap-6">

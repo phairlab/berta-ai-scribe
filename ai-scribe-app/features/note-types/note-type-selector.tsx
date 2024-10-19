@@ -1,12 +1,14 @@
-import { ReactNode, useState } from "react";
+import { ReactNode } from "react";
 
 import clsx from "clsx";
 
-import { Select, SelectItem, SelectSection } from "@nextui-org/select";
+import { SelectItem, SelectSection } from "@nextui-org/select";
 
+import { SafeSelect } from "@/core/safe-select";
 import { NoteType } from "@/core/types";
 
 type NoteTypeSelectorProps = {
+  className?: string;
   builtinTypes: NoteType[];
   customTypes: NoteType[];
   selected: NoteType | undefined;
@@ -18,6 +20,7 @@ type NoteTypeSelectorProps = {
 };
 
 export const NoteTypeSelector = ({
+  className,
   builtinTypes,
   customTypes,
   selected,
@@ -27,61 +30,47 @@ export const NoteTypeSelector = ({
   isLoading,
   onChange,
 }: NoteTypeSelectorProps) => {
-  const [isSelectOpen, setIsSelectOpen] = useState(false);
-  const [canCloseSelect, setCanCloseSelect] = useState(false);
-
   const hasCustomNotes = customTypes.length > 0;
 
-  const persisted = (noteTypes: NoteType[]) =>
+  const persistedNoteTypes = (noteTypes: NoteType[]) =>
     noteTypes.filter((nt) => nt.tracking.isPersisted);
 
-  const find = (id: string) =>
-    customTypes.find((nt) => nt.uuid === id) ??
-    builtinTypes.find((nt) => nt.uuid === id);
+  const handleChange = (key: string) => {
+    const noteType =
+      customTypes.find((nt) => nt.uuid === key) ??
+      builtinTypes.find((nt) => nt.uuid === key);
+
+    onChange(noteType);
+  };
 
   return (
-    <Select
+    <SafeSelect
       aria-label="Select a Note Type"
-      className="flex-none w-[300px] max-w-full"
+      className={className}
       disallowEmptySelection={true}
       isDisabled={isLoading}
       isLoading={isLoading}
-      isOpen={isSelectOpen}
       label={label}
       labelPlacement={labelPlacement}
       placeholder={placeholder}
-      selectedKeys={selected ? [selected.uuid] : undefined}
+      selectedKeys={selected ? [selected.uuid] : []}
       selectionMode="single"
       size="md"
-      onChange={(e) => {
-        onChange(find(e.target.value));
-        setIsSelectOpen(false);
-        setCanCloseSelect(false);
-      }}
-      // Fix for NextUI Select/Popover bug on some mobile browsers.
-      onOpenChange={(open) => {
-        if (open) {
-          setIsSelectOpen(true);
-          setTimeout(() => setCanCloseSelect(true), 500);
-        } else if (canCloseSelect) {
-          setIsSelectOpen(false);
-          setCanCloseSelect(false);
-        }
-      }}
+      onChange={(e) => handleChange(e.target.value)}
     >
       <SelectSection
         className={clsx({ hidden: !hasCustomNotes })}
         title="Custom Note Types"
       >
-        {persisted(customTypes).map((noteType) => (
+        {persistedNoteTypes(customTypes).map((noteType) => (
           <SelectItem key={noteType.uuid}>{noteType.title}</SelectItem>
         ))}
       </SelectSection>
       <SelectSection title={hasCustomNotes ? "Built-in Note Types" : undefined}>
-        {persisted(builtinTypes).map((noteType) => (
+        {persistedNoteTypes(builtinTypes).map((noteType) => (
           <SelectItem key={noteType.uuid}>{noteType.title}</SelectItem>
         ))}
       </SelectSection>
-    </Select>
+    </SafeSelect>
   );
 };

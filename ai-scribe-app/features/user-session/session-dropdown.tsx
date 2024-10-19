@@ -1,3 +1,5 @@
+"use client";
+
 import { Key, PropsWithChildren } from "react";
 
 import { useRouter } from "next/navigation";
@@ -19,6 +21,7 @@ export const SessionDropdown = ({ children }: SessionDropdownProps) => {
       if (process.env.NODE_ENV === "development") {
         window.location.reload();
       } else {
+        sessionStorage.clear();
         void fetch("/sfc-endpoint/logout").then(() => router.refresh());
       }
     }
