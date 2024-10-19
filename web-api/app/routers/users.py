@@ -9,7 +9,7 @@ from app.services.security import authenticate_user, useUserSession
 router = APIRouter(dependencies=[Depends(authenticate_user)])
 
 @router.post("/current/submit-feedback")
-async def submit_feedback(
+def submit_feedback(
     userSession: useUserSession, 
     database: useDatabase, 
     *, 

@@ -15,7 +15,7 @@ from app.config import settings
 router = APIRouter(dependencies=[Depends(authenticate_user)])
 
 @router.get("")
-async def get_note_definitions(userSession: useUserSession, database: useDatabase) -> list[sch.NoteDefinition]:
+def get_note_definitions(userSession: useUserSession, database: useDatabase) -> list[sch.NoteDefinition]:
     # Get the built-in note definitions, and those for the current user.
     records = database.execute(
         select(db.NoteDefinition) \
@@ -29,7 +29,7 @@ async def get_note_definitions(userSession: useUserSession, database: useDatabas
     return [sch.NoteDefinition.from_db_record(record[0]) for record in records]
 
 @router.post("")
-async def create_note_definition(
+def create_note_definition(
     userSession: useUserSession, 
     database: useDatabase, 
     *,
@@ -62,7 +62,7 @@ async def create_note_definition(
     return sch.NoteDefinition.from_db_record(definition)
 
 @router.patch("/{uuid}")
-async def update_note_definition(
+def update_note_definition(
     userSession: useUserSession, 
     database: useDatabase, 
     *, 
@@ -94,7 +94,7 @@ async def update_note_definition(
     return sch.NoteDefinition.from_db_record(note_definition)
 
 @router.patch("/{uuid}/set-default")
-async def set_default_note_type(userSession: useUserSession, database: useDatabase, *, uuid: str):
+def set_default_note_type(userSession: useUserSession, database: useDatabase, *, uuid: str):
     try:
         user: db.User = database.execute(
             select(db.User) \
@@ -107,7 +107,7 @@ async def set_default_note_type(userSession: useUserSession, database: useDataba
     database.commit()
     
 @router.delete("/{uuid}")
-async def delete_note_definition(userSession: useUserSession, database: useDatabase, *, uuid: str):
+def delete_note_definition(userSession: useUserSession, database: useDatabase, *, uuid: str):
     # Fetch the note definition and confirm it exists.
     try:
         note_definition: db.NoteDefinition = database.execute(

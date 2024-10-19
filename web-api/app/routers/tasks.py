@@ -37,7 +37,7 @@ async def transcribe_audio(
     return sch.TextResponse(text=transcription_output.transcript)
 
 @router.post("/generate-draft-note")
-async def generate_draft_note(
+def generate_draft_note(
     database: useDatabase, 
     userSession: useUserSession,
     backgroundTasks: BackgroundTasks,

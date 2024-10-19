@@ -21,7 +21,7 @@ from app.config import settings
 router = APIRouter(dependencies=[Depends(authenticate_user)])
 
 @router.get("")
-async def get_encounters(userSession: useUserSession, database: useDatabase) -> list[sch.Encounter]:
+def get_encounters(userSession: useUserSession, database: useDatabase) -> list[sch.Encounter]:
     # Fetch the encounter records for the current user.
     records = database.execute(
         select(db.Encounter) \
@@ -36,7 +36,7 @@ async def get_encounters(userSession: useUserSession, database: useDatabase) -> 
     return [sch.Encounter.from_db_record(record[0]) for record in records]
 
 @router.get("/recording-files/{filename}")
-async def get_recording_file(userSession: useUserSession, *, filename: str) -> FileResponse:
+def get_recording_file(userSession: useUserSession, *, filename: str) -> FileResponse:
     filepath = Path(settings.RECORDINGS_FOLDER, userSession.username, filename)
 
     if not os.path.isfile(filepath):
@@ -45,7 +45,7 @@ async def get_recording_file(userSession: useUserSession, *, filename: str) -> F
     return FileResponse(filepath)
 
 @router.post("")
-async def create_encounter(
+def create_encounter(
     userSession: useUserSession, 
     database: useDatabase,
     *, 
@@ -95,7 +95,7 @@ async def create_encounter(
     return sch.Encounter.from_db_record(encounter)
 
 @router.patch("/{uuid}")
-async def update_encounter(
+def update_encounter(
     userSession: useUserSession, 
     database: useDatabase, 
     *, 
@@ -130,7 +130,7 @@ async def update_encounter(
     return sch.Encounter.from_db_record(db_record)
     
 @router.delete("/{uuid}")
-async def delete_encounter(
+def delete_encounter(
     userSession: useUserSession, 
     database: useDatabase,
     *, 
@@ -169,7 +169,7 @@ async def delete_encounter(
         raise errors.DatabaseError(str(e))
 
 @router.post("/{uuid}/draft-notes")
-async def create_draft_note(
+def create_draft_note(
     userSession: useUserSession, 
     database: useDatabase, 
     *, 
@@ -229,7 +229,7 @@ async def create_draft_note(
         raise errors.DatabaseError(str(e))
 
 @router.delete("/{uuid}/draft-notes/{tag}")
-async def delete_draft_note(userSession: useUserSession, database: useDatabase, *, uuid: str, tag: str):
+def delete_draft_note(userSession: useUserSession, database: useDatabase, *, uuid: str, tag: str):
     # Fetch draft note.
     try:
         draft_note: db.DraftNote = database.execute(
