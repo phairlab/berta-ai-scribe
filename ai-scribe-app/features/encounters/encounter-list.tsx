@@ -7,6 +7,7 @@ import { Progress } from "@nextui-org/progress";
 import { ScrollShadow } from "@nextui-org/scroll-shadow";
 
 import { Encounter } from "@/core/types";
+import { formatDatestring } from "@/utility/formatters";
 
 import { EncounterDropdown } from "./encounter-dropdown";
 
@@ -54,14 +55,17 @@ export const EncounterList = ({
           textValue={encounter.title}
           onPress={() => onSelected(encounter)}
         >
-          <EncounterDropdown
-            encounter={encounter}
-            onDelete={() => onDelete(encounter)}
-          >
-            <p className="text-xl text-zinc-500 leading-none align-top -mt-2 me-2">
-              ...
-            </p>
-          </EncounterDropdown>
+          <div className="flex flex-row gap-2">
+            <p className="grow">{formatDatestring(encounter.createdAt)}</p>
+            <EncounterDropdown
+              encounter={encounter}
+              onDelete={() => onDelete(encounter)}
+            >
+              <p className="cursor-pointer text-xl text-zinc-500 leading-none align-top -mt-2 me-2">
+                ...
+              </p>
+            </EncounterDropdown>
+          </div>
         </ListboxItem>
       ))}
     </Listbox>
