@@ -24,7 +24,7 @@ export const AIScribeControls = ({
     <div className="flex flex-col md:flex-row items-end md:items-center md:justify-center gap-4">
       <NoteTypeSelector
         builtinTypes={noteTypes.builtin}
-        className="max-w-[300px]"
+        className="w-[300px]"
         customTypes={noteTypes.custom}
         isLoading={!noteTypes.isReady}
         placeholder="Select a Note Type"

@@ -19,21 +19,8 @@ export default function Home() {
     applicationState.sampleRecordings.status !== "Ready";
 
   return (
-    <div className="flex flex-row max-w-5xl gap-5 items-stretch">
+    <div className="w-full flex flex-row gap-5 items-start">
       <TermsOfUse />
-      {!isLoading && (
-        <>
-          <section className="min-w-[200px] hidden sm:flex flex-col">
-            <EncounterNavigator />
-          </section>
-          <div className="hidden sm:flex">
-            <Divider
-              className="bg-zinc-100 dark:bg-zinc-900"
-              orientation="vertical"
-            />
-          </div>
-        </>
-      )}
       {isLoading ? (
         <div className="flex justify-center items-center w-full h-[20vh]">
           <Progress
@@ -44,9 +31,20 @@ export default function Home() {
           />
         </div>
       ) : (
-        <section className="w-full basis-full flex flex-col items-stretch justify-start py-2">
-          <AIScribe />
-        </section>
+        <>
+          <div className="w-[200px] hidden sm:flex flex-col">
+            <EncounterNavigator />
+          </div>
+          <div className="hidden sm:flex">
+            <Divider
+              className="bg-zinc-100 dark:bg-zinc-900"
+              orientation="vertical"
+            />
+          </div>
+          <div className="w-full flex flex-col shrink grow-0 items-stretch justify-center py-2">
+            <AIScribe />
+          </div>
+        </>
       )}
     </div>
   );

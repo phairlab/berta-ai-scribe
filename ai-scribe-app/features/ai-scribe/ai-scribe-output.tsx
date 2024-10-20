@@ -76,9 +76,12 @@ export const AIScribeOutput = ({
   };
 
   return (
-    <div className="flex w-full max-w-2xl flex-col">
+    <div className="flex flex-col w-full">
       <Tabs
         aria-label="AI Scribe Output"
+        classNames={{
+          tabList: "overflow-x-auto",
+        }}
         selectedKey={activeTab}
         variant="solid"
         onSelectionChange={handleSelectionChange}

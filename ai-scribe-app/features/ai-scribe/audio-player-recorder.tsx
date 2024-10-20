@@ -94,7 +94,7 @@ export const AudioPlayerRecorder = ({
   };
 
   return (
-    <div className="flex flex-col-reverse md:flex-row gap-2 md:gap-4 max-w-full">
+    <div className="flex flex-col-reverse md:flex-row gap-2 md:gap-4">
       <div className="flex flex-row gap-2 md:gap-4 justify-center w-full">
         {audio ? (
           <PlayPauseButton
