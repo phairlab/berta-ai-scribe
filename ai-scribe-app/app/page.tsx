@@ -19,31 +19,29 @@ export default function Home() {
     applicationState.sampleRecordings.status !== "Ready";
 
   return (
-    <div className="w-full flex flex-row gap-5 items-start">
+    <div className="flex flex-row w-full gap-5 items-start justify-center">
       <TermsOfUse />
       {isLoading ? (
-        <div className="flex justify-center items-center w-full h-[20vh]">
+        <div className="flex justify-center items-center w-[50%] h-[40vh]">
           <Progress
             isIndeterminate
-            className="max-w-sm"
+            className="max-w-xs"
             label="Loading Scribe"
             size="sm"
           />
         </div>
       ) : (
         <>
-          <div className="w-[200px] hidden sm:flex flex-col">
+          <nav className="hidden sm:block w-[200px]">
             <EncounterNavigator />
-          </div>
-          <div className="hidden sm:flex">
-            <Divider
-              className="bg-zinc-100 dark:bg-zinc-900"
-              orientation="vertical"
-            />
-          </div>
-          <div className="w-full flex flex-col shrink grow-0 items-stretch justify-center py-2">
+          </nav>
+          <Divider
+            className="hidden sm:block bg-zinc-100 dark:bg-zinc-900"
+            orientation="vertical"
+          />
+          <section className="w-full sm:w-[calc(100%-220px)] py-2">
             <AIScribe />
-          </div>
+          </section>
         </>
       )}
     </div>
