@@ -192,7 +192,7 @@ export const AIScribe = () => {
         onRecoverRecording={(audio) => handleAudioFileGenerated(audio, false)}
         onReset={() => encounters.setActive(null)}
       />
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-6 items-center">
         <Divider className="bg-zinc-100 dark:bg-zinc-900" />
         <AIScribeControls
           isDisabled={!canGenerateNote}

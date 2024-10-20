@@ -36,7 +36,11 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html suppressHydrationWarning className="overscroll-none" lang="en">
+    <html
+      suppressHydrationWarning
+      className="overscroll-none min-w-[325px]"
+      lang="en"
+    >
       <head />
       <body
         className={clsx(
@@ -45,11 +49,9 @@ export default async function RootLayout({
         )}
       >
         <Providers themeProps={{ attribute: "class", defaultTheme: "light" }}>
-          <div className="relative flex flex-col h-screen mx-auto max-w-5xl">
+          <div className="relative flex flex-col h-screen w-full max-w-5xl mx-auto">
             <Navbar />
-            <main className="container pt-3 sm:pt-6 px-6 flex-grow mx-auto">
-              {children}
-            </main>
+            <main className="w-full pt-3 sm:pt-6 px-6">{children}</main>
             <footer className="w-full flex items-center justify-center py-3">
               <></>
             </footer>
