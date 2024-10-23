@@ -5,14 +5,14 @@ from datetime import datetime, timezone
 
 from fastapi import Depends
 from sqlalchemy import ForeignKey, text
-from sqlalchemy.orm import Session as SQLAlchemySession, DeclarativeBase, MappedAsDataclass, Mapped, mapped_column, relationship
+from sqlalchemy.orm import Session as SQLAlchemySession, DeclarativeBase, Mapped, mapped_column, relationship
 from snowflake.sqlalchemy import TIMESTAMP_LTZ, VARCHAR, CHAR, ARRAY
 from sqids import Sqids
 
 import app.services.data as data
 from app.config import settings
 
-sqids = Sqids(alphabet='abcdefghijklmnopqrstuvwxyz1234567890')
+sqids = Sqids(alphabet='ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890')
 
 def get_database_session() -> Iterator[SQLAlchemySession]:
     with SQLAlchemySession(data.db_engine) as database:

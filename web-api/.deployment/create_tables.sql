@@ -3,7 +3,7 @@ CREATE STAGE recording_files DIRECTORY = ( ENABLE = TRUE );
 -- Used for generating "Sqid" hashids.
 -- 42857 is the first integer to generate a 5-digit hashid using
 -- an alphabet with capital letters and numbers.
-CREATE SEQUENCE sqid_sequence START WITH 42857 INCREMENT BY 1 NOORDER;
+CREATE SEQUENCE sqid_sequence START WITH 42875 INCREMENT BY 1 NOORDER;
 
 CREATE TABLE session_log (
   session_id CHAR(36) NOT NULL,
