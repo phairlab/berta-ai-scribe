@@ -93,6 +93,7 @@ CREATE TABLE user_feedback (
   context VARCHAR NOT NULL DEFAULT '(NOT CAPTURED)',
   session_id CHAR(36),
   PRIMARY KEY (id) RELY,
+  FOREIGN KEY (username) REFERENCES users (username) RELY
 );
 
 CREATE TABLE note_definitions (
@@ -104,10 +105,10 @@ CREATE TABLE note_definitions (
   instructions VARCHAR NOT NULL,
   model VARCHAR(50),
   inactivated TIMESTAMP_LTZ,
-  replaced_by VARCHAR(12),
+  successor_id VARCHAR(12),
   PRIMARY KEY (id) RELY,
   FOREIGN KEY (username) REFERENCES users (username) RELY,
-  FOREIGN KEY (replaced_by) REFERENCES note_definitions (id) RELY
+  FOREIGN KEY (successor_id) REFERENCES note_definitions (id) RELY
 );
 
 CREATE TABLE encounters (
@@ -131,13 +132,13 @@ CREATE TABLE recordings (
   file_size INTEGER NOT NULL,
   duration INTEGER,
   transcript VARCHAR,
-  audio_conversion_task CHAR(36),
-  transcription_task CHAR(36),
+  audio_conversion_task_id CHAR(36),
+  transcription_task_id CHAR(36),
   PRIMARY KEY (id) RELY,
   UNIQUE (filename) RELY,
   FOREIGN KEY (encounter_id) REFERENCES encounters (id) RELY,
-  FOREIGN KEY (audio_conversion_task) REFERENCES audio_conversion_log (task_id) RELY,
-  FOREIGN KEY (transcription_task) REFERENCES transcription_log (task_id) RELY
+  FOREIGN KEY (audio_conversion_task_id) REFERENCES audio_conversion_log (task_id) RELY,
+  FOREIGN KEY (transcription_task_id) REFERENCES transcription_log (task_id) RELY
 );
 
 CREATE TABLE draft_notes (
@@ -148,12 +149,12 @@ CREATE TABLE draft_notes (
   created TIMESTAMP_LTZ NOT NULL,
   title VARCHAR(100) NOT NULL,
   content VARCHAR NOT NULL,
-  generation_task CHAR(36) NOT NULL,
+  generation_task_id CHAR(36) NOT NULL,
   inactivated TIMESTAMP_LTZ,
-  replaced_by VARCHAR(12),
+  successor_id VARCHAR(12),
   PRIMARY KEY (id) RELY,
   FOREIGN KEY (encounter_id) REFERENCES encounters (id) RELY,
   FOREIGN KEY (definition_id) REFERENCES note_definitions (id) RELY,
-  FOREIGN KEY (generation_task) REFERENCES generation_log (task_id) RELY,
-  FOREIGN KEY (replaced_by) REFERENCES draft_notes (id) RELY,
+  FOREIGN KEY (generation_task_id) REFERENCES generation_log (task_id) RELY,
+  FOREIGN KEY (successor_id) REFERENCES draft_notes (id) RELY,
 );
