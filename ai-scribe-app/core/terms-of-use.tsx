@@ -16,6 +16,8 @@ import { ScrollShadow } from "@nextui-org/scroll-shadow";
 
 import { sessionKeys } from "@/config/keys";
 
+import { ConsentScript } from "./consent-script";
+
 export const TermsOfUse = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
 
@@ -52,10 +54,10 @@ export const TermsOfUse = () => {
         <ModalBody>
           <ScrollShadow>
             <div className="flex flex-col gap-6 justify-center items-center">
-              <div className="flex flex-col gap-3 text-small text-zinc-500 max-w-[90%] sm:max-w-[600px]">
+              <div className="flex flex-col gap-3 text-small text-zinc-500 me-2 max-w-[90%] sm:max-w-[600px]">
                 <p className="text-red-500 font-semibold">
                   <strong>Important</strong> - AHS Jenkins Terms of Use (Updated
-                  September 3, 2024)
+                  October 23, 2024)
                 </p>
                 <p>
                   By using the AI Scribe application, you agree to the following
@@ -96,17 +98,7 @@ export const TermsOfUse = () => {
                     judgment.
                   </li>
                 </ul>
-                <p>
-                  <strong>Consent Script:</strong>
-                  <br />
-                  &quot;I would like to use a transcription tool for our visit
-                  today. It helps increase the time for direct patient care in
-                  Alberta&apos;s Health Care System. I would like your
-                  permission to record and transcribe your visit. I will use
-                  this to help summarize the outcomes of your visit on your
-                  chart. Saying no to being recorded is okay and will have no
-                  impact on your care.&quot;
-                </p>
+                <ConsentScript />
               </div>
             </div>
           </ScrollShadow>

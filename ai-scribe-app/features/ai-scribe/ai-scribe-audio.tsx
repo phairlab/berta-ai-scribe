@@ -13,7 +13,7 @@ import {
   WavesurferModuleControls,
 } from "./wavesurfer-module";
 
-type AudioPlayerRecorderProps = {
+type AIScribeAudioProps = {
   audio: string | File | null;
   audioTitle?: string;
   onAudioFile: (audioData: File) => void;
@@ -21,13 +21,13 @@ type AudioPlayerRecorderProps = {
   onReset?: () => void;
 };
 
-export const AudioPlayerRecorder = ({
+export const AIScribeAudio = ({
   audio,
   audioTitle,
   onAudioFile,
   onRecoverRecording,
   onReset,
-}: AudioPlayerRecorderProps) => {
+}: AIScribeAudioProps) => {
   const audioControls = useRef<WavesurferModuleControls | null>(null);
   const recordingInProgress = useRef(false);
 

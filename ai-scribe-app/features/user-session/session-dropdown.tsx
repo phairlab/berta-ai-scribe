@@ -19,6 +19,7 @@ export const SessionDropdown = ({ children }: SessionDropdownProps) => {
   const handleAction = (key: Key) => {
     if (key === "logout") {
       if (process.env.NODE_ENV === "development") {
+        sessionStorage.clear();
         window.location.reload();
       } else {
         sessionStorage.clear();
