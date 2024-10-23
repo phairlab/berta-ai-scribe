@@ -6,6 +6,7 @@ import shortUUID from "short-uuid";
 
 import { Divider } from "@nextui-org/divider";
 
+import { ConsentScript } from "@/core/consent-script";
 import { DraftNote, Encounter } from "@/core/types";
 import { WaitMessageSpinner } from "@/core/wait-message-spinner";
 import { useNoteGenerator } from "@/services/note-generation/use-note-generator";
@@ -15,13 +16,13 @@ import { ApplicationError } from "@/utility/errors";
 import { useEncounters } from "@/features/encounters/use-encounters";
 import { useNoteTypes } from "@/features/note-types/use-note-types";
 
+import { AIScribeAudio } from "./ai-scribe-audio";
 import { AIScribeControls } from "./ai-scribe-controls";
 import {
   AIScribeError,
   AIScribeOutput,
   AIScribeOutputType,
 } from "./ai-scribe-output";
-import { AudioPlayerRecorder } from "./audio-player-recorder";
 import { createEncounter } from "./create-encounter";
 
 export const AIScribe = () => {
@@ -186,7 +187,7 @@ export const AIScribe = () => {
 
   return (
     <div className="flex flex-col gap-6">
-      <AudioPlayerRecorder
+      <AIScribeAudio
         audio={audio ?? null}
         onAudioFile={(audio) => handleAudioFileGenerated(audio, true)}
         onRecoverRecording={(audio) => handleAudioFileGenerated(audio, false)}
@@ -208,6 +209,9 @@ export const AIScribe = () => {
             )
           }
         />
+        {audio === undefined && (
+          <ConsentScript className="text-sm text-justify sm:text-start text-zinc-400 dark:text-zinc-600 w-96 max-w-[80%] mt-8" />
+        )}
         {activeEncounter?.tracking.isSaving &&
           !activeEncounter.tracking.isPersisted && (
             <WaitMessageSpinner>Saving</WaitMessageSpinner>
