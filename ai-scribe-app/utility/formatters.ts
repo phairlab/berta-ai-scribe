@@ -9,7 +9,7 @@ export function formatDuration(duration: number | null | undefined) {
     Math.trunc((seconds % 3600) / 60), // minutes
     Math.trunc(seconds % 60), // seconds
   ]
-    .map((v) => (v < 10 ? `0${v}` : v))
+    .map((v) => (isNaN(v) ? "??" : v < 10 ? `0${v}` : v))
     .join(":");
 }
 

@@ -84,6 +84,7 @@ export const WavesurferModule = ({
     fillParent: true,
     interact: false,
     fetchParams: {
+      credentials: "include",
       headers: {
         [headerNames.JenkinsAuthorization]: `Bearer ${accessToken}`,
       },
@@ -155,10 +156,12 @@ export const WavesurferModule = ({
       onLoading?.();
 
       if (audioData) {
+        const peaks = [0];
+
         if (typeof audioData === "string") {
-          wavesurfer.current?.load(audioData);
+          wavesurfer.current?.load(audioData, [peaks]);
         } else {
-          wavesurfer.current?.loadBlob(audioData);
+          wavesurfer.current?.loadBlob(audioData, [peaks]);
         }
       }
 
@@ -338,17 +341,19 @@ export const WavesurferModule = ({
       </div>
       <AnimatedPulse isPulsing={isRecording && isRecordingPaused}>
         <div
-          className={clsx([
-            {
-              "pointer-events-none": !error && (!loadedAudio || !isReady),
-              hidden: !!error,
-            },
-            "transition-opacity ease-in-out",
-            isReady ? "opacity-100" : "opacity-0 invisible",
-          ])}
+          // className={clsx([
+          //   {
+          //     "pointer-events-none": !error && (!loadedAudio || !isReady),
+          //     hidden: !!error,
+          //   },
+          //   "transition-opacity ease-in-out",
+          //   isReady ? "opacity-100" : "opacity-0 invisible",
+          // ])}
+          className={clsx({ invisible: !isRecording })}
         >
           <WavesurferPlayer
             autoplay={false}
+            backend="MediaElement"
             height={PLAYER_HEIGHT}
             url={NO_AUDIO_URL}
             onDestroy={handleDestroy}

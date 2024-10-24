@@ -52,7 +52,7 @@ export const EncounterList = ({
               <p className="ms-1">{encounter.title?.toUpperCase()}</p>
             )
           }
-          textValue={encounter.title}
+          textValue={encounter.uuid}
           onPress={() => onSelected(encounter)}
         >
           <div className="flex flex-row gap-2">

@@ -1,5 +1,8 @@
 .recordings/
 
+# audiowaveform executable
+audiowaveform.exe
+
 # Converted from .gitignore using: https://codesandbox.io/s/transform-gitignore-to-dockerignore-online-7e9ox7
 
 Dockerfile

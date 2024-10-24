@@ -1,11 +1,8 @@
-import os
 from datetime import datetime, timezone
 from typing import Annotated
-from pathlib import Path
 from uuid import uuid4
 
 from fastapi import APIRouter, UploadFile, Depends, Body
-from fastapi.responses import FileResponse
 from sqlalchemy import select, and_, or_
 from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import NoResultFound
@@ -34,15 +31,6 @@ def get_encounters(userSession: useUserSession, database: useDatabase) -> list[s
     ).unique().all()
     
     return [sch.Encounter.from_db_record(record[0]) for record in records]
-
-@router.get("/recording-files/{filename}")
-def get_recording_file(userSession: useUserSession, *, filename: str) -> FileResponse:
-    filepath = Path(settings.RECORDINGS_FOLDER, userSession.username, filename)
-
-    if not os.path.isfile(filepath):
-        raise errors.NotFound("File not found")
-    
-    return FileResponse(filepath)
 
 @router.post("")
 def create_encounter(

@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
 import jwt
-from fastapi import Depends, Header
+from fastapi import Cookie, Depends, Header
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.config import settings
@@ -63,6 +63,13 @@ async def authenticate_user(credentials: useCredentials) -> WebAPISession:
     return session
 
 useUserSession = Annotated[WebAPISession, Depends(authenticate_user)]
+
+async def authenticate_session_cookie(jenkins_session: Annotated[str, Cookie()]) -> WebAPISession:
+    session = decode_token(jenkins_session)
+
+    return session
+
+useCookieUserSession = Annotated[WebAPISession, Depends(authenticate_session_cookie)]
 
 async def authorize_user(rights: list[str], session: useUserSession) -> WebAPISession:
     if any(rights):
