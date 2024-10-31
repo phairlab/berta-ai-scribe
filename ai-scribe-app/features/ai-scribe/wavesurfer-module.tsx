@@ -263,7 +263,7 @@ export const WavesurferModule = ({
   /** Activate and configure recording functionality for the player. */
   const configureRecorder = (): RecordPlugin => {
     const recordPlugin = RecordPlugin.create({
-      scrollingWaveform: true,
+      scrollingWaveform: false,
       renderRecordedAudio: false,
     });
 
