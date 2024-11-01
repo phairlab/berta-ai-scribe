@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 
 import { NoteType } from "@/core/types";
 import { alphabetically } from "@/utility/sorters";
 
 import { LoadingStatus } from "./application-state-context";
 
-type Setter<T> = (state: T) => void;
+type Setter<T> = Dispatch<SetStateAction<T>>;
 
 export type NoteTypeState = {
   status: LoadingStatus;
@@ -58,14 +58,16 @@ export function useNoteTypeState(
     exists: (id: string) => noteTypes.some((nt) => nt.uuid === id),
     get: (id: string) => noteTypes.find((nt) => nt.uuid === id),
     put: (data: NoteType) => {
-      setNoteTypes(
+      setNoteTypes((noteTypes) =>
         [...noteTypes.filter((nt) => nt.uuid !== data.uuid), data].sort(
           alphabetically((x) => x.title),
         ),
       );
     },
     remove: (id: string) => {
-      setNoteTypes([...noteTypes.filter((nt) => nt.uuid !== id)]);
+      setNoteTypes((noteTypes) => [
+        ...noteTypes.filter((nt) => nt.uuid !== id),
+      ]);
     },
     setDefault: (id: string | null) => {
       setDefaultNoteTypeId(id);

@@ -18,7 +18,7 @@ export type AIScribeError = {
 export type AIScribeOutputType = Recording | DraftNote | AIScribeError;
 
 type AIScribeOutputProps = {
-  recording: Recording;
+  recording: Recording | undefined;
   notes: DraftNote[];
   error: AIScribeError | undefined;
   activeOutput: AIScribeOutputType | undefined;
@@ -98,7 +98,7 @@ export const AIScribeOutput = ({
             <NoteCard note={note} showTitle={false} />
           </Tab>
         ))}
-        {recording.transcript && (
+        {recording?.transcript && (
           <Tab key="transcript" title="Transcript">
             <TranscriptCard recording={recording} showTitle={false} />
           </Tab>

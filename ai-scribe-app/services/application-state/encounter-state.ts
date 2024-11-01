@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 
 import { Encounter } from "@/core/types";
 import { byDate } from "@/utility/sorters";
 
 import { LoadingStatus } from "./application-state-context";
 
-type Setter<T> = (state: T) => void;
+type Setter<T> = Dispatch<SetStateAction<T>>;
 
 export type EncounterState = {
   status: LoadingStatus;
@@ -58,14 +58,16 @@ export function useEncounterState(
     exists: (id: string) => encounters.some((e) => e.uuid === id),
     get: (id: string) => encounters.find((e) => e.uuid === id),
     put: (data: Encounter) => {
-      setEncounters(
+      setEncounters((encounters) =>
         [...encounters.filter((e) => e.uuid !== data.uuid), data].sort(
           byDate((x) => x.createdAt, "Descending"),
         ),
       );
     },
     remove: (id: string) => {
-      setEncounters([...encounters.filter((e) => e.uuid !== id)]);
+      setEncounters((encounters) => [
+        ...encounters.filter((e) => e.uuid !== id),
+      ]);
     },
     setActive: (id: string | null) => {
       setActiveEncounterId(id);

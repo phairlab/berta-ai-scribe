@@ -1,3 +1,4 @@
+import json
 from datetime import datetime, timezone
 from typing import Annotated
 from uuid import uuid4
@@ -10,7 +11,7 @@ from sqlalchemy.exc import NoResultFound
 import app.schemas as sch
 import app.services.db as db
 import app.services.error_handling as errors
-from app.services.audio_processing import reformat_audio
+from app.services.audio_processing import reformat_audio, compute_peaks
 from app.services.security import authenticate_user, useUserSession
 from app.services.db import useDatabase
 from app.config import settings
@@ -46,9 +47,12 @@ def create_encounter(
     # file_extension = Path(audio.filename).suffix
     filename = f"{uuid4()}.mp3"
 
-    # Standardize all audio into mp3 at the default bitrate.
     try:
+        # Standardize all audio into mp3 at the default bitrate.
         (reformatted, duration) = reformat_audio(audio.file, format="mp3", bitrate=settings.DEFAULT_AUDIO_BITRATE)
+
+        # Compute waveform peaks.
+        peaks = compute_peaks(reformatted)
     except Exception as e:
         raise errors.AudioProcessingError(str(e))
 
@@ -64,7 +68,7 @@ def create_encounter(
     # Create the encounter record and associate it to the current user.
     try:
         encounter = db.Encounter(created_at=createdAt, title=(title or db.get_tag(database)))
-        encounter.recording = db.Recording(filename=filename, media_type="audio/mp3", duration=duration)
+        encounter.recording = db.Recording(filename=filename, media_type="audio/mp3", duration=duration, waveform_peaks=json.dumps(peaks))
         user.encounters.append(encounter)
 
         database.commit()

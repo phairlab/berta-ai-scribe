@@ -14,8 +14,10 @@ import {
 } from "./wavesurfer-module";
 
 type AIScribeAudioProps = {
-  audio: string | File | null;
+  audio: string | null;
+  waveformPeaks: number[] | null;
   audioTitle?: string;
+  isSaving: boolean;
   onAudioFile: (audioData: File) => void;
   onRecoverRecording: (audioData: File) => void;
   onReset?: () => void;
@@ -23,7 +25,9 @@ type AIScribeAudioProps = {
 
 export const AIScribeAudio = ({
   audio,
+  waveformPeaks,
   audioTitle,
+  isSaving,
   onAudioFile,
   onRecoverRecording,
   onReset,
@@ -111,7 +115,7 @@ export const AIScribeAudio = ({
           />
         )}
         <div className="w-full flex flex-col gap-2">
-          {!audio && !isRecording && (
+          {!audio && !isRecording && !isSaving && (
             <div className="w-full h-[70px] flex justify-center items-center border rounded-lg border-zinc-100 dark:border-zinc-900">
               <div className="text-center text-zinc-500 md:mb-2">
                 {recordingError ? (
@@ -127,7 +131,8 @@ export const AIScribeAudio = ({
           )}
           <WavesurferModule
             audioData={audio ?? null}
-            isHidden={!audio && !isRecording}
+            isHidden={(!audio && !isRecording) || isSaving}
+            waveformPeaks={waveformPeaks}
             onDurationChanged={(seconds) => {
               if (duration != seconds) {
                 setDuration(seconds);

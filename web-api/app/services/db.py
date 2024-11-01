@@ -81,8 +81,9 @@ class Recording(JenkinsContext):
     id: Mapped[int] = id_column(sequence)
     encounter_id: Mapped[int] = mapped_column(ForeignKey("encounters.id"), init=False)
     filename: Mapped[str] = mapped_column(VARCHAR(255))
-    media_type: Mapped[str] = mapped_column(VARCHAR(255))
+    media_type: Mapped[str | None] = mapped_column(VARCHAR(255))
     duration: Mapped[int]
+    waveform_peaks: Mapped[str] = mapped_column(VARCHAR)
     transcript: Mapped[str | None] = mapped_column(VARCHAR, default=None)
     transcription_service: Mapped[str | None] = mapped_column(VARCHAR(50), default=None)
     time_to_transcribe: Mapped[int | None] = mapped_column(default=None)

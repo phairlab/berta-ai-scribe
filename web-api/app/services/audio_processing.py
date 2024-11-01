@@ -1,6 +1,10 @@
+import os
 import tempfile
+import subprocess
+import json
 from typing import BinaryIO, Iterator
 from functools import reduce
+from pathlib import Path
 
 from pydub import AudioSegment
 from pydub.silence import split_on_silence
@@ -30,6 +34,45 @@ def reformat_audio(original: BinaryIO, format: str, bitrate: str = settings.DEFA
     except Exception as e:
         reformatted.close()
         raise AudioProcessingError(str(e))
+
+def compute_peaks(audio: BinaryIO) -> list[float]:
+    temp_audio_filename = Path(tempfile.gettempdir(), f"{os.urandom(24).hex()}.mp3")
+    peaks_filename = Path(tempfile.gettempdir(), f"{os.urandom(24).hex()}.json")
+
+    try:
+        with open(temp_audio_filename, mode="wb+") as temp_audio_file:
+            temp_audio_file.write(audio.read())
+
+        subprocess.run(
+            ["audiowaveform", "-i", temp_audio_filename, "-o", peaks_filename, "--pixels-per-second", "20", "--bits", "8"],
+            stdout = subprocess.DEVNULL, # Suppress
+            stderr = subprocess.DEVNULL, # Suppress
+        )
+
+        with open(peaks_filename, mode="r", encoding="utf-8") as peaks_file:
+            waveform_data = peaks_file.read()
+    finally:
+        audio.seek(0)
+        
+        if os.path.exists(temp_audio_filename):
+            os.remove(temp_audio_filename)
+
+        if os.path.exists(peaks_filename):
+            os.remove(peaks_filename)
+
+    waveform_json = json.loads(waveform_data)
+    peaks: list[float] = waveform_json["data"]
+
+    # Round to 2 decimal places for normalization.
+    digits = 2
+
+    max_val = float(max(peaks))
+    normalized_peaks: list[float] = []
+
+    for x in peaks:
+        normalized_peaks.append(round(x / max_val, digits))
+
+    return normalized_peaks
 
 def split_audio(audio_file: BinaryIO, max_duration_ms: int = minutes_to_ms(2), format: str = settings.DEFAULT_AUDIO_FORMAT, bitrate: str = settings.DEFAULT_AUDIO_BITRATE) -> Iterator[tuple[BinaryIO, str]]:
     """Returns files representing sequential segments of the input file,

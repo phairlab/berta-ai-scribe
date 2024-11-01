@@ -15,7 +15,7 @@ export type Encounter = {
   uuid: string;
   createdAt: Date;
   title?: string;
-  recording: Recording;
+  recording?: Recording;
   draftNotes: DraftNote[];
 };
 
@@ -38,6 +38,7 @@ export type Recording = {
   filename: string;
   mediaType: string;
   duration?: number;
+  waveformPeaks?: number[];
   transcript?: string;
   transcriptionService?: string;
   timeToTranscribe?: number;

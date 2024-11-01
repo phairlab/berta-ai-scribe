@@ -9,11 +9,6 @@ export function createEncounter(fields: {
     {
       uuid: fields.tempId,
       createdAt: new Date(),
-      recording: {
-        filename: fields.audio.name,
-        mediaType: fields.audio.type,
-        cachedAudio: fields.audio,
-      },
       draftNotes: [],
     },
     "Not Persisted",

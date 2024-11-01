@@ -29,20 +29,13 @@ export function useEncounters() {
 
   /** Determines whether the preconditions for {@link canCreate} hold for this encounter. */
   const canCreate = (encounter: Encounter) =>
-    encounter.recording.cachedAudio !== undefined &&
     !encounters.exists(encounter.uuid);
 
   /** Adds a new encounter and persists it. */
-  const create = async (encounter: Encounter) => {
+  const create = async (encounter: Encounter, audio: File) => {
     if (encounters.exists(encounter.uuid)) {
       throw new InvalidOperationError(
         "Saving a new encounter with an ID that already exists",
-      );
-    }
-
-    if (!encounter.recording.cachedAudio) {
-      throw new InvalidOperationError(
-        "Saving a new encounter without audio data",
       );
     }
 
@@ -53,7 +46,7 @@ export function useEncounters() {
     try {
       // Persist the data.
       const persistedRecord = await webApi.encounters.create(
-        encounter.recording.cachedAudio,
+        audio,
         encounter.createdAt,
       );
 
@@ -102,8 +95,8 @@ export function useEncounters() {
       changes.title = encounter.title;
     }
 
-    if (encounter.recording.transcript !== existing.recording.transcript) {
-      changes.transcript = encounter.recording.transcript;
+    if (encounter.recording?.transcript !== existing.recording?.transcript) {
+      changes.transcript = encounter.recording?.transcript;
     }
 
     // Directly update when no changes need to be persisted.
@@ -134,15 +127,19 @@ export function useEncounters() {
     canCreate(encounter) || canUpdate(encounter);
 
   /** Adds or updates and then persists an encounter with the provided data. */
-  const save = async (encounter: Encounter) => {
+  const save = async (encounter: Encounter, audio?: File) => {
     if (encounters.status !== "Ready") {
-      throw new InvalidOperationError(
-        "Saving a new encounter before state ready",
-      );
+      throw new InvalidOperationError("Saving an encounter before state ready");
     }
 
     if (!encounters.exists(encounter.uuid)) {
-      await create(encounter);
+      if (audio === undefined) {
+        throw new InvalidOperationError(
+          "Saving a new encounter without audio data",
+        );
+      }
+
+      await create(encounter, audio);
     } else {
       await update(encounter);
     }

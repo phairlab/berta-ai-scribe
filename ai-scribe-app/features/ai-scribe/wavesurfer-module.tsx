@@ -26,7 +26,8 @@ export type WavesurferModuleControls = {
 };
 
 type WavesurferModuleProps = {
-  audioData: string | Blob | null;
+  audioData: string | null;
+  waveformPeaks: number[] | null;
   isHidden: boolean;
   onInit?: (controls: WavesurferModuleControls) => void;
   onDurationChanged?: (seconds: number | null) => void;
@@ -42,6 +43,7 @@ type WavesurferModuleProps = {
 
 export const WavesurferModule = ({
   audioData,
+  waveformPeaks,
   isHidden,
   onInit,
   onDurationChanged,
@@ -156,13 +158,7 @@ export const WavesurferModule = ({
       onLoading?.();
 
       if (audioData) {
-        const peaks = [0];
-
-        if (typeof audioData === "string") {
-          wavesurfer.current?.load(audioData, [peaks]);
-        } else {
-          wavesurfer.current?.loadBlob(audioData, [peaks]);
-        }
+        wavesurfer.current?.load(audioData, [waveformPeaks ?? [0]]);
       }
 
       setLoadedAudio(audioData);
@@ -319,7 +315,7 @@ export const WavesurferModule = ({
       )}
       <div
         className={clsx([
-          "z-10 absolute flex w-full justify-center mt-[22px] transition-opacity ease-in-out",
+          "-z-10 absolute flex w-full justify-center mt-[22px] transition-opacity ease-in-out",
           !!error || isReady || !loadedAudio ? "opacity-0" : "opacity-100",
         ])}
       >
@@ -349,7 +345,10 @@ export const WavesurferModule = ({
           //   "transition-opacity ease-in-out",
           //   isReady ? "opacity-100" : "opacity-0 invisible",
           // ])}
-          className={clsx({ invisible: !isRecording })}
+          className={clsx({
+            invisible:
+              !isRecording && (audioData == null || waveformPeaks === null),
+          })}
         >
           <WavesurferPlayer
             autoplay={false}

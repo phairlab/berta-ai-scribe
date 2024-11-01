@@ -26,7 +26,7 @@ export const MixedRecordingsSelector = ({
   const isLoading = !encounters.isReady || !sampleRecordings.isReady;
 
   const recentEncounters = encounters.list
-    .filter((e) => e.recording.transcript)
+    .filter((e) => e.recording?.transcript)
     .slice(0, 10);
 
   const anyRecentEncounters = recentEncounters.length > 0;
@@ -34,7 +34,7 @@ export const MixedRecordingsSelector = ({
   const handleChange = (filename: string) => {
     const pooledRecordings = [
       ...sampleRecordings.list,
-      ...recentEncounters.map((e) => e.recording),
+      ...recentEncounters.map((e) => e.recording!),
     ];
 
     const recording = pooledRecordings.find((r) => r.filename === filename);
@@ -58,7 +58,7 @@ export const MixedRecordingsSelector = ({
         title="Recent Recordings"
       >
         {recentEncounters.map((encounter) => (
-          <SelectItem key={encounter.recording.filename}>
+          <SelectItem key={encounter.recording!.filename}>
             {`${formatDatestring(new Date(encounter.createdAt))}${encounter.title ? ` (${encounter.title.toUpperCase()})` : ""}`}
           </SelectItem>
         ))}
