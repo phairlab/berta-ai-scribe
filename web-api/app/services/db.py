@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Annotated, BinaryIO, Iterator
+from typing import Annotated, Any, BinaryIO, Generator, Iterator
 from datetime import datetime, timezone
 
 from fastapi import Depends
@@ -194,27 +194,44 @@ class DraftNote(JenkinsDatabase):
     successor: Mapped["DraftNote" | None] = relationship()
 
 def save_recording(file: BinaryIO, username: str, filename: str) -> None:
-    if not os.path.isdir(Path(settings.RECORDINGS_FOLDER, username)):
-        os.mkdir(Path(settings.RECORDINGS_FOLDER, username))
+    """Writes a file to a user's recordings folder."""
 
-    with open(Path(settings.RECORDINGS_FOLDER, username, filename), "wb") as recording_file:
+    # Create the user's recordings directory if it does not yet exist.
+    user_folder = Path(settings.RECORDINGS_FOLDER, username)
+    if not os.path.isdir(user_folder):
+        os.mkdir(user_folder)
+
+    # Write the file.
+    with open(Path(user_folder, filename), "wb") as recording_file:
         recording_file.write(file.read())
 
-def stream_recording(username: str, filename: str) -> Iterator[bytes]:
-    with open(Path(settings.RECORDINGS_FOLDER, username, filename), "rb") as recording_file:
+def stream_recording(username: str, filename: str) -> Generator[bytes, Any, None]:
+    """Streams a file from the user's recordings folder."""
+
+    user_folder = Path(settings.RECORDINGS_FOLDER, username)
+    with open(Path(user_folder, filename), "rb") as recording_file:
         yield from recording_file
 
 def delete_recording(username: str, filename: str) -> None:
-    os.remove(Path(settings.RECORDINGS_FOLDER, username, filename))
+    """Removes a file from the user's recordings folder."""
+
+    user_folder = Path(settings.RECORDINGS_FOLDER, username)
+    os.remove(Path(user_folder, filename))
 
 def persist_recording(file: BinaryIO, username: str, filename: str) -> None:
+    """Saves a user's recording file directly to the Snowflake stage."""
+
     with data.get_snowflake_session() as snowflakeSession:
         snowflakeSession.file.put_stream(file, f"@RECORDING_FILES/{username}/{filename}", auto_compress=False)
 
 def retrieve_recording(username: str, filename: str) -> BinaryIO:
+    """Retrieves a user's recording file directly from the Snowflake stage."""
+
     with data.get_snowflake_session() as snowflakeSession:
         return snowflakeSession.file.get_stream(f"@RECORDING_FILES/{username}/{filename}")
 
 def purge_recording(username: str, filename: str) -> None:
+    """Deletes a user's recording file directly from the Snowflake stage."""
+
     with SQLAlchemySession(data.db_engine) as session:
         session.execute(text("REMOVE :stage_path;"), { "stage_path": f"@RECORDING_FILES/{username}/{filename}" })
