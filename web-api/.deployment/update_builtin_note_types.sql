@@ -139,4 +139,4 @@ USING
   ON t.title = n.title
   AND t.username = 'BUILTIN'
 WHEN MATCHED THEN UPDATE SET t.instructions = n.instructions
-WHEN NOT MATCHED THEN INSERT (id, username, title, instructions) VALUES (UUID_STRING(), 'BUILTIN', n.title, n.instructions);
+WHEN NOT MATCHED THEN INSERT (id, username, model, title, instructions) VALUES (UUID_STRING(), 'BUILTIN', 'llama3.1-405b', n.title, n.instructions);
