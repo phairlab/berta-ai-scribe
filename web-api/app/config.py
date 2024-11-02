@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     SNOWFLAKE_WAREHOUSE: str
     SNOWFLAKE_USERNAME: str | None = None
 
-    SYSTEM_USER: str = "SYSTEM"
+    SYSTEM_USER: str = "BUILTIN"
     DEFAULT_NOTE_DEFINITION: str = "Full Visit"
     RECORDINGS_FOLDER: str = ".recordings"
 

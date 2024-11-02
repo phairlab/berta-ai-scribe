@@ -162,9 +162,8 @@ class Recording(JenkinsDatabase):
 
     id: Mapped[str] = sqid_column(primary_key=True)
     encounter_id: Mapped[str] = mapped_column(ForeignKey("encounters.id"))
-    filename: Mapped[str] = mapped_column(VARCHAR(255), unique=True)
-    media_type: Mapped[str] = mapped_column(VARCHAR(255))
-    file_size: Mapped[int]
+    media_type: Mapped[str | None] = mapped_column(VARCHAR(255))
+    file_size: Mapped[int | None]
     duration: Mapped[int | None]
     waveform_peaks: Mapped[str | None]
     transcript: Mapped[str | None]

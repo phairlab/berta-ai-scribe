@@ -24,12 +24,13 @@ def authenticate_snowflake_user(
     response: Response,
     backgroundTasks: BackgroundTasks
 ) -> sch.Token:
-    # Get the user record. Auto-register the user if not found.
+    # Get the user record.
     try:
-        user = database.execute(
+        user = database.scalars(
             select(db.User).where(db.User.username == snowflakeUser)
-        ).one()[0]
+        ).one()
     except NoResultFound:
+        # Auto-register the user if not found.
         user = db.User(username=snowflakeUser)
 
         try:

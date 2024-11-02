@@ -127,9 +127,8 @@ CREATE TABLE encounters (
 CREATE TABLE recordings (
   id VARCHAR(12) NOT NULL,
   encounter_id VARCHAR(12) NOT NULL,
-  filename VARCHAR(255) NOT NULL,
-  media_type VARCHAR(255) NOT NULL,
-  file_size INTEGER NOT NULL,
+  media_type VARCHAR(255),
+  file_size INTEGER,
   duration INTEGER,
   waveform_peaks VARCHAR,
   transcript VARCHAR,
