@@ -9,9 +9,9 @@ import { AudioTrackInfo } from "./audio-track-info";
 import { PlayPauseButton } from "./play-pause-button";
 import { RecordButton } from "./record-button";
 import {
-  WavesurferModule,
-  WavesurferModuleControls,
-} from "./wavesurfer-module";
+  WavesurferWidget,
+  WavesurferWidgetControls,
+} from "./wavesurfer-widget";
 
 type AIScribeAudioProps = {
   audio: string | null;
@@ -32,7 +32,7 @@ export const AIScribeAudio = ({
   onRecoverRecording,
   onReset,
 }: AIScribeAudioProps) => {
-  const audioControls = useRef<WavesurferModuleControls | null>(null);
+  const audioControls = useRef<WavesurferWidgetControls | null>(null);
   const recordingInProgress = useRef(false);
 
   const [isPlayerInitialized, setIsPlayerInitialized] = useState(false);
@@ -57,7 +57,7 @@ export const AIScribeAudio = ({
     setDuration(null);
   }, [audio]);
 
-  const handleAudioPlayerInit = (controls: WavesurferModuleControls) => {
+  const handleAudioPlayerInit = (controls: WavesurferWidgetControls) => {
     audioControls.current = controls;
     setIsPlayerInitialized(true);
   };
@@ -129,7 +129,7 @@ export const AIScribeAudio = ({
               </div>
             </div>
           )}
-          <WavesurferModule
+          <WavesurferWidget
             audioData={audio ?? null}
             isHidden={(!audio && !isRecording) || isSaving}
             waveformPeaks={waveformPeaks}

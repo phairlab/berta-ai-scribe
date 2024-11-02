@@ -18,18 +18,18 @@ import { AnimatedPulse } from "@/core/animated-pulse";
 import { useAccessToken } from "@/services/session-management/use-access-token";
 import { tailwindColors } from "@/utility/constants";
 
-export type WavesurferModuleControls = {
+export type WavesurferWidgetControls = {
   playPause: () => void;
   startRecording: () => Promise<void>;
   togglePauseRecording: () => void;
   endRecording: () => void;
 };
 
-type WavesurferModuleProps = {
+type WavesurferWidgetProps = {
   audioData: string | null;
   waveformPeaks: number[] | null;
   isHidden: boolean;
-  onInit?: (controls: WavesurferModuleControls) => void;
+  onInit?: (controls: WavesurferWidgetControls) => void;
   onDurationChanged?: (seconds: number | null) => void;
   onLoading?: () => void;
   onReady?: () => void;
@@ -41,7 +41,7 @@ type WavesurferModuleProps = {
   onRecordingEnded?: (recording: File) => void;
 };
 
-export const WavesurferModule = ({
+export const WavesurferWidget = ({
   audioData,
   waveformPeaks,
   isHidden,
@@ -55,7 +55,7 @@ export const WavesurferModule = ({
   onRecordingPaused,
   onRecordingResumed,
   onRecordingEnded,
-}: WavesurferModuleProps) => {
+}: WavesurferWidgetProps) => {
   const NO_AUDIO_URL = "no-audio.mp3";
   const PLAYER_HEIGHT = 70;
 
@@ -259,8 +259,9 @@ export const WavesurferModule = ({
   /** Activate and configure recording functionality for the player. */
   const configureRecorder = (): RecordPlugin => {
     const recordPlugin = RecordPlugin.create({
-      scrollingWaveform: false,
+      scrollingWaveform: true,
       renderRecordedAudio: false,
+      audioBitsPerSecond: 96000,
     });
 
     recordPlugin.on("record-start", () => {

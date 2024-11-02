@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     APP_VERSION: str = "0.2.4"
 
     DEFAULT_AUDIO_FORMAT: str = "mp3"
-    DEFAULT_AUDIO_BITRATE: str = "32k"
+    DEFAULT_AUDIO_BITRATE: str = "96k"
     LOGGING_LEVEL: str = "info"
 
     JWT_ALGORITHM: str = "HS256"
