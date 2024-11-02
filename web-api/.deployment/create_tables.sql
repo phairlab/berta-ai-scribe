@@ -131,6 +131,7 @@ CREATE TABLE recordings (
   media_type VARCHAR(255) NOT NULL,
   file_size INTEGER NOT NULL,
   duration INTEGER,
+  waveform_peaks VARCHAR,
   transcript VARCHAR,
   audio_conversion_task_id CHAR(36),
   transcription_task_id CHAR(36),

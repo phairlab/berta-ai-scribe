@@ -166,6 +166,7 @@ class Recording(JenkinsDatabase):
     media_type: Mapped[str] = mapped_column(VARCHAR(255))
     file_size: Mapped[int]
     duration: Mapped[int | None]
+    waveform_peaks: Mapped[str | None]
     transcript: Mapped[str | None]
     audio_conversion_task_id: Mapped[str | None] = mapped_column(ForeignKey("audio_conversion_log.id"))
     transcription_task_id: Mapped[str | None] = mapped_column(ForeignKey("transcription_log.id"))
