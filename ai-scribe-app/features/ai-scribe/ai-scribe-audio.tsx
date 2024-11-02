@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@nextui-org/button";
 
+import { WaitMessageSpinner } from "@/core/wait-message-spinner";
+
 import { SampleRecordingSelector } from "@/features/sample-recordings/sample-recording-selector";
 
 import { AudioFileBrowseButton } from "./audio-file-browse-button";
@@ -100,10 +102,10 @@ export const AIScribeAudio = ({
   return (
     <div className="flex flex-col-reverse md:flex-row gap-2 md:gap-4">
       <div className="flex flex-row gap-2 md:gap-4 justify-center w-full">
-        {audio ? (
+        {audio || isSaving ? (
           <PlayPauseButton
             action={isPlaying ? "pause" : "play"}
-            isDisabled={isPlayerLoading}
+            isDisabled={isPlayerLoading || isSaving}
             onClick={audioControls.current?.playPause}
           />
         ) : (
@@ -115,11 +117,19 @@ export const AIScribeAudio = ({
           />
         )}
         <div className="w-full flex flex-col gap-2">
-          {!audio && !isRecording && !isSaving && (
+          {isSaving && (
+            <div className="mt-3">
+              <WaitMessageSpinner>Saving</WaitMessageSpinner>
+            </div>
+          )}
+          {audio === null && !isRecording && !isSaving && (
             <div className="w-full h-[70px] flex justify-center items-center border rounded-lg border-zinc-100 dark:border-zinc-900">
               <div className="text-center text-zinc-500 md:mb-2">
                 {recordingError ? (
-                  <span className="text-red-500">{recordingError}</span>
+                  <span className="text-red-500">
+                    An Error Occurred While <br />
+                    Loading this Audio
+                  </span>
                 ) : (
                   <span>
                     Start Recording or <br />
@@ -160,7 +170,7 @@ export const AIScribeAudio = ({
           </div>
         </div>
       </div>
-      {!audio && !isRecording ? (
+      {audio === null && !isRecording && !isSaving ? (
         <div className="flex flex-row md:flex-col gap-2 md:gap-1 md:h-[70px] justify-end items-center md:items-start">
           <AudioFileBrowseButton onFileSelected={onAudioFile} />
           <SampleRecordingSelector onFileSelected={onAudioFile} />

@@ -175,10 +175,7 @@ export const AIScribe = () => {
 
   // React to changes in the active encounter's state.
   useEffect(() => {
-    // Reset the UI when the active encounter changes.
-    // if (!activeEncounter || ref.current?.uuid !== activeEncounter.uuid) {
     handleActiveEncounterUpdated();
-    // }
   }, [activeEncounter]);
 
   // Auto-transcribe encounters on audio available.
@@ -231,10 +228,6 @@ export const AIScribe = () => {
         {activeEncounter === null && (
           <ConsentScript className="text-sm text-justify sm:text-start text-zinc-400 dark:text-zinc-600 w-96 max-w-[80%] mt-8" />
         )}
-        {activeEncounter?.tracking.isSaving &&
-          !activeEncounter.tracking.isPersisted && (
-            <WaitMessageSpinner>Saving</WaitMessageSpinner>
-          )}
         {transcriber.isTranscribing && (
           <WaitMessageSpinner onCancel={transcriber.abort}>
             Transcribing Audio
