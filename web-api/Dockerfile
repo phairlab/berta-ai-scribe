@@ -3,9 +3,13 @@ FROM python:3.11.9-slim-bookworm
 # Set the working directory in the container.
 WORKDIR /app
 
-# Install ffmpeg
+COPY /.deployment/audiowaveform_1.10.1-1-12_amd64.deb /app/audiowaveform_1.10.1-1-12_amd64.deb
+
+# Install ffmpeg and audiowaveform
 RUN apt-get -y update
 RUN apt-get -y upgrade
+RUN apt install -y ./audiowaveform_1.10.1-1-12_amd64.deb
+RUN apt-get -f install -y
 RUN apt-get install -y ffmpeg
 
 # Install the required Python packages.
