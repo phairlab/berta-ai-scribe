@@ -5,23 +5,16 @@ from openai import OpenAI, AsyncOpenAI, NotGiven
 from openai.types.chat import ChatCompletionMessageParam
 
 from app.schemas import TranscriptionOutput, GenerationOutput
-from app.services.audio_processing import get_duration
 from app.services.measurement import ExecutionTimer
-from app.services.error_handling import ExternalServiceTimeout, ExternalServiceError, ExternalServiceInterruption, AudioProcessingError
+from app.services.error_handling import ExternalServiceTimeout, ExternalServiceError, ExternalServiceInterruption
 
 SERVICE_NAME = "OpenAI"
 
 async def transcribe(audio_file: BinaryIO, filename: str, content_type: str, prompt: str | None = None) -> TranscriptionOutput:
     try:
-        audio_duration = get_duration(audio_file)
-    except Exception as e:
-        raise AudioProcessingError(str(e))
-    
-    try:
-        with ExecutionTimer() as timer:
-            openai_client = AsyncOpenAI(timeout=None, max_retries=0)
-            response = await openai_client.audio.transcriptions.create(model="whisper-1", file=(filename, audio_file, content_type), prompt=prompt or NotGiven)
-            transcript = response.text
+        openai_client = AsyncOpenAI(timeout=None, max_retries=0)
+        response = await openai_client.audio.transcriptions.create(model="whisper-1", file=(filename, audio_file, content_type), prompt=prompt or NotGiven)
+        transcript = response.text
     except openai.APITimeoutError as e:
         raise ExternalServiceTimeout(SERVICE_NAME, str(e))
     except (openai.ConflictError, openai.InternalServerError, openai.RateLimitError, openai.UnprocessableEntityError) as e:
@@ -29,13 +22,9 @@ async def transcribe(audio_file: BinaryIO, filename: str, content_type: str, pro
     except Exception as e:
         raise ExternalServiceError(SERVICE_NAME, str(e))
 
-    # log_transcription(database, timer.started_at, SERVICE_NAME, audio_duration, timer.elapsed_ms, userSession)
     return TranscriptionOutput(
         transcript=transcript,
-        transcribedAt=timer.started_at,
         service=SERVICE_NAME,
-        audioDuration=audio_duration,
-        timeToGenerate=timer.elapsed_ms,
     )
 
 def complete(model: str, messages: Iterable[ChatCompletionMessageParam]) -> GenerationOutput:
@@ -55,7 +44,6 @@ def complete(model: str, messages: Iterable[ChatCompletionMessageParam]) -> Gene
     except Exception as e:
         raise ExternalServiceError(SERVICE_NAME, str(e))
     
-    # log_generation(database, timer.started_at, SERVICE_NAME, model, tag, completion_tokens, prompt_tokens, timer.elapsed_ms, userSession)
     return GenerationOutput(
         text=text,
         generatedAt=timer.started_at,

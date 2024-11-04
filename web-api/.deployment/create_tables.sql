@@ -9,9 +9,8 @@ CREATE TABLE session_log (
   session_id CHAR(36) NOT NULL,
   username VARCHAR(255) NOT NULL,
   started TIMESTAMP_LTZ NOT NULL,
-  refreshes ARRAY[TIMESTAMP_LTZ NOT NULL] DEFAULT [],
   user_agent VARCHAR,
-  PRIMARY KEY (id) RELY
+  PRIMARY KEY (session_id) RELY
 );
 
 CREATE TABLE error_log (
@@ -20,8 +19,9 @@ CREATE TABLE error_log (
   name VARCHAR(500) NOT NULL,
   message VARCHAR NOT NULL,
   stack_trace VARCHAR NOT NULL,
+  request_id CHAR(36),
   session_id CHAR(36),
-  PRIMARY KEY (id) RELY
+  PRIMARY KEY (error_id) RELY
 );
 
 CREATE TABLE request_log (
@@ -32,39 +32,39 @@ CREATE TABLE request_log (
   status_code INTEGER NOT NULL,
   status_text VARCHAR(50),
   duration INTEGER NOT NULL,
-  error_id CHAR(36),
   session_id CHAR(36),
-  PRIMARY KEY (id) RELY
+  PRIMARY KEY (request_id) RELY
 );
 
 CREATE TABLE audio_conversion_log (
   task_id CHAR(36) NOT NULL,
+  recording_id VARCHAR(12) NOT NULL,
   started TIMESTAMP_LTZ NOT NULL,
   time INTEGER NOT NULL,
-  filename VARCHAR(255) NOT NULL,
-  original_media_type VARCHAR(255) NOT NULL,
-  original_file_size INTEGER NOT NULL,
+  original_media_type VARCHAR(255),
+  original_file_size INTEGER,
   converted_media_type VARCHAR(255),
   converted_file_size INTEGER,
   error_id CHAR(36),
   session_id CHAR(36),
-  PRIMARY KEY (id) RELY
+  PRIMARY KEY (task_id) RELY
 );
 
 CREATE TABLE transcription_log (
   task_id CHAR(36) NOT NULL,
+  recording_id VARCHAR(12) NOT NULL,
   started TIMESTAMP_LTZ NOT NULL,
   time INTEGER NOT NULL,
-  filename VARCHAR(255) NOT NULL,
   service VARCHAR(50) NOT NULL,
-  audio_duration INTEGER NOT NULL,
   error_id CHAR(36),
   session_id CHAR(36),
-  PRIMARY KEY (id) RELY
+  PRIMARY KEY (task_id) RELY
 );
 
 CREATE TABLE generation_log (
   task_id CHAR(36) NOT NULL,
+  record_id VARCHAR(12) NOT NULL,
+  task_type VARCHAR(255) NOT NULL,
   started TIMESTAMP_LTZ NOT NULL,
   time INTEGER NOT NULL,
   service VARCHAR(50) NOT NULL,
@@ -73,14 +73,14 @@ CREATE TABLE generation_log (
   prompt_tokens INTEGER NOT NULL,
   error_id CHAR(36),
   session_id CHAR(36),
-  PRIMARY KEY (id) RELY
+  PRIMARY KEY (task_id) RELY
 );
 
 CREATE TABLE users (
   username VARCHAR(255) NOT NULL,
   registered TIMESTAMP_LTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   default_note VARCHAR(12),
-  PRIMARY KEY (username) RELY,
+  PRIMARY KEY (username) RELY
 );
 
 INSERT INTO users (username) VALUES ('BUILTIN');
@@ -98,17 +98,15 @@ CREATE TABLE user_feedback (
 
 CREATE TABLE note_definitions (
   id VARCHAR(12) NOT NULL,
-  set_id VARCHAR(12) NOT NULL,
+  version VARCHAR(12) NOT NULL,
   username VARCHAR(255) NOT NULL,
   created TIMESTAMP_LTZ NOT NULL,
   title VARCHAR(100) NOT NULL,
   instructions VARCHAR NOT NULL,
   model VARCHAR(50),
   inactivated TIMESTAMP_LTZ,
-  successor_id VARCHAR(12),
-  PRIMARY KEY (id) RELY,
-  FOREIGN KEY (username) REFERENCES users (username) RELY,
-  FOREIGN KEY (successor_id) REFERENCES note_definitions (id) RELY
+  PRIMARY KEY (id, version) RELY,
+  FOREIGN KEY (username) REFERENCES users (username) RELY
 );
 
 CREATE TABLE encounters (
@@ -132,29 +130,19 @@ CREATE TABLE recordings (
   duration INTEGER,
   waveform_peaks VARCHAR,
   transcript VARCHAR,
-  audio_conversion_task_id CHAR(36),
-  transcription_task_id CHAR(36),
   PRIMARY KEY (id) RELY,
-  UNIQUE (filename) RELY,
-  FOREIGN KEY (encounter_id) REFERENCES encounters (id) RELY,
-  FOREIGN KEY (audio_conversion_task_id) REFERENCES audio_conversion_log (task_id) RELY,
-  FOREIGN KEY (transcription_task_id) REFERENCES transcription_log (task_id) RELY
+  FOREIGN KEY (encounter_id) REFERENCES encounters (id) RELY
 );
 
 CREATE TABLE draft_notes (
   id VARCHAR(12) NOT NULL,
-  set_id VARCHAR(12) NOT NULL,
   encounter_id VARCHAR(12) NOT NULL,
   definition_id VARCHAR(12) NOT NULL,
   created TIMESTAMP_LTZ NOT NULL,
   title VARCHAR(100) NOT NULL,
   content VARCHAR NOT NULL,
-  generation_task_id CHAR(36) NOT NULL,
   inactivated TIMESTAMP_LTZ,
-  successor_id VARCHAR(12),
   PRIMARY KEY (id) RELY,
   FOREIGN KEY (encounter_id) REFERENCES encounters (id) RELY,
-  FOREIGN KEY (definition_id) REFERENCES note_definitions (id) RELY,
-  FOREIGN KEY (generation_task_id) REFERENCES generation_log (task_id) RELY,
-  FOREIGN KEY (successor_id) REFERENCES draft_notes (id) RELY,
+  FOREIGN KEY (definition_id, definition_version) REFERENCES note_definitions (id, version) RELY
 );

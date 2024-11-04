@@ -10,13 +10,13 @@ from app.config import settings
 
 router = APIRouter()
 
-@router.get("/{filename}")
+@router.get("/{recordingId}")
 def get_recording_file(
     userSession: useCookieUserSession,
     *,
-    filename: str
+    recordingId: str
 ) -> FileResponse:
-    filepath = Path(settings.RECORDINGS_FOLDER, userSession.username, filename)
+    filepath = Path(settings.RECORDINGS_FOLDER, userSession.username, f"{recordingId}.mp3")
 
     if not os.path.isfile(filepath):
         raise errors.NotFound("File not found")

@@ -7,6 +7,7 @@ import app.services.db as db
 from .recording import Recording
 from .draft_note import DraftNote
 
+
 class Encounter(BaseModel):
     id: str
     created: datetime
@@ -25,6 +26,9 @@ class Encounter(BaseModel):
             label=db_record.label,
             summary=db_record.summary,
             recording=Recording.from_db_record(db_record.recording),
-            draftNotes=[DraftNote.from_db_record(d) for d in db_record.draft_notes if d.inactivated is None],
+            draftNotes=[
+                DraftNote.from_db_record(d)
+                for d in db_record.draft_notes
+                if d.inactivated is None
+            ],
         )
-    

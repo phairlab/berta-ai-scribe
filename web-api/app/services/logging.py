@@ -1,15 +1,15 @@
 import logging
-import json
 from typing import Annotated
 from datetime import datetime, timezone
+from uuid import uuid4
 from http.client import responses as http_responses
 
 from fastapi import Depends, Header
 from pydantic import BaseModel
-from sqlalchemy import text
 from sqlalchemy.orm import Session as SQLAlchemySession
 
 import app.services.data as data
+import app.services.db as db
 from app.config import settings
 from app.schemas import WebAPISession
 
@@ -65,174 +65,184 @@ useRequestId = Annotated[str, Depends(get_request_id)]
 log = WebAPILogger(__name__)
 
 def log_session(
+    database: db.SQLAlchemySession,
     session: WebAPISession, 
-    user_agent: str
+    user_agent: str,
 ):
-    values = { 
-        "session_id": session.sessionId, 
-        "username": session.username,
-        "started_at": datetime.now(timezone.utc),
-        "user_agent": user_agent,
-    }
+    """Records the initiation of a user session to the database."""
 
     try:
-        with SQLAlchemySession(data.db_engine) as database:
-            database.execute(
-                text(
-                    """
-                    INSERT INTO session_log (session_id, username, started_at, user_agent)
-                    VALUES (:session_id, :username, :started_at, :user_agent)
-                    """
-                ),
-                values
-            )
-            database.commit()
-    except Exception as e:
-        message = f"Error saving session log: {json.dumps(values, default=str)}; Error: {str(e)}"
-        log.warning(message, session)
+        session_record = db.SessionRecord(
+            session_id=session.sessionId,
+            username=session.username,
+            started=datetime.now(timezone.utc),
+            user_agent=user_agent,
+        )
 
-def log_request(
-    requested_at: datetime,
-    url: str, 
-    method: str, 
-    status_code: int, 
-    duration: int, 
-    request_id: str | None, 
-    session: WebAPISession | None
-):
-    values = {
-        "requested_at": requested_at,
-        "url": url,
-        "method": method,
-        "status_code": status_code,
-        "status_text": http_responses.get(status_code) or "Unknown",
-        "duration": duration,
-        "request_id": request_id,
-        "session_id": session.sessionId if session is not None else None,
-    }
-
-    try:
-        with SQLAlchemySession(data.db_engine) as database:
-            database.execute(
-                text(
-                    """
-                    INSERT INTO request_log (requested_at, url, method, status_code, status_text, duration, request_id, session_id)
-                    VALUES (:requested_at, :url, :method, :status_code, :status_text, :duration, :request_id, :session_id)
-                    """
-                ),
-                values
-            )
-            database.commit()
+        database.add(session_record)
+        database.commit()
     except Exception as e:
-        message = f"Error saving request log: {json.dumps(values, default=str)}; Error: {str(e)}"
+        message = f"Failed to save session log: {str(session_record)}; Error: {str(e)}"
         log.warning(message, session)
 
 def log_error(
-    occurred_at: datetime,
-    url: str, 
-    method: str, 
-    status_code: int, 
+    occurred: datetime,
     name: str, 
     message: str,
     stack_trace: str,
-    error_id: str | None,
-    request_id: str | None,
-    session: WebAPISession | None
+    *,
+    error_id: str | None = None,
+    request_id: str | None = None,
+    session: WebAPISession | None = None,
 ):
-    values = {
-        "occurred_at": occurred_at,
-        "url": url,
-        "method": method,
-        "status_code": status_code,
-        "status_text": http_responses.get(status_code) or "Unknown",
-        "name": name,
-        "message": message,
-        "stack_trace": stack_trace,
-        "error_id": error_id,
-        "request_id": request_id,
-        "session_id": session.sessionId if session is not None else None,
-    }
+    """Saves the record of an exception."""
+    
+    error_record = db.ErrorRecord(
+        error_id=error_id if error_id is not None else str(uuid4()),
+        occurred=occurred,
+        name=name,
+        message=message,
+        stack_trace=stack_trace,
+        request_id=request_id,
+        session_id=session.sessionId if session is not None else None,
+    )
 
     try:
         with SQLAlchemySession(data.db_engine) as database:
-            database.execute(
-                text(
-                    """
-                    INSERT INTO error_log (occurred_at, url, method, status_code, status_text, name, message, stack_trace, error_id, request_id, session_id)
-                    VALUES (:occurred_at, :url, :method, :status_code, :status_text, :name, :message, :stack_trace, :error_id, :request_id, :session_id)
-                    """
-                ),
-                values
-            )
+            database.add(error_record)
             database.commit()
     except Exception as e:
-        message = f"Error saving error log: {json.dumps(values, default=str)}; Error: {str(e)}"
+        message = f"Failed to save error log: {str(error_record)}; Error: {str(e)}"
+        log.warning(message, session)
+
+def log_request(
+    request_id: str | None,
+    requested: datetime,
+    url: str,
+    method: str,
+    status_code: int,
+    duration: int,
+    *,
+    session: WebAPISession | None = None
+):
+    """Saves the record of a request."""
+
+    request_record = db.RequestRecord(
+        request_id=request_id if request_id is not None else str(uuid4()),
+        requested=requested,
+        url=url,
+        method=method,
+        status_code=status_code,
+        status_text=http_responses.get(status_code) or "Unknown",
+        duration=duration,
+        session_id=session.sessionId if session is not None else None,
+    )
+
+    try:
+        with SQLAlchemySession(data.db_engine) as database:
+            database.add(request_record)
+            database.commit()
+    except Exception as e:
+        message = f"Failed to save request log: {str(request_record)}; Error: {str(e)}"
+        log.warning(message, session)
+
+def log_audio_conversion(
+    database: db.SQLAlchemySession,
+    recording_id: str,
+    started: datetime,
+    time: int,
+    original_media_type: str | None,
+    original_file_size: str | None,
+    converted_media_type: str | None,
+    converted_file_size: str | None,
+    *,
+    error_id: str | None = None,
+    session: WebAPISession | None = None,
+):
+    """Saves a record of an audio conversion task."""
+
+    audio_conversion_task = db.AudioConversionTask(
+        task_id=str(uuid4()),
+        recording_id=recording_id,
+        started=started,
+        time=time,
+        original_media_type=original_media_type,
+        original_file_size=original_file_size,
+        converted_media_type=converted_media_type,
+        converted_file_size=converted_file_size,
+        error_id=error_id,
+        session_id=session.sessionId if session is not None else None,
+    )
+
+    try:
+        database.add(audio_conversion_task)
+        database.commit()
+    except Exception as e:
+        message = f"Failed to save audio conversion log: {str(audio_conversion_task)}; Error: {str(e)}"
         log.warning(message, session)
 
 def log_transcription(
-    transcribed_at: datetime,
+    database: db.SQLAlchemySession,
+    recording_id: str,
+    started: datetime,
+    time: int,
     service: str,
-    audio_duration: int,
-    time_to_generate: int,
-    session: WebAPISession | None
+    *,
+    error_id: str | None = None,
+    session: WebAPISession | None = None,
 ):
-    values = {
-        "session_id": session.sessionId if session is not None else None,
-        "transcribed_at": transcribed_at,
-        "service": service,
-        "audio_duration": audio_duration,
-        "time_to_generate": time_to_generate,
-    }
+    """Saves a record of a transcription task."""
+
+    transcription_task = db.TranscriptionTask(
+        task_id=str(uuid4()),
+        recording_id=recording_id,
+        started=started,
+        time=time,
+        service=service,
+        error_id=error_id,
+        session_id=session.sessionId if session is not None else None,
+    )
 
     try:
-        with SQLAlchemySession(data.db_engine) as database:
-            database.execute(
-                text(
-                    """
-                    INSERT INTO transcription_log (session_id, transcribed_at, service, audio_duration, time_to_generate)
-                    VALUES (:session_id, :transcribed_at, :service, :audio_duration, :time_to_generate)
-                    """
-                ),
-                values
-            )
-            database.commit()
+        database.add(transcription_task)
+        database.commit()
     except Exception as e:
-        message = f"Error saving transcription log: {json.dumps(values, default=str)}; Error: {str(e)}"
+        message = f"Failed to save transcription log: {str(transcription_task)}; Error: {str(e)}"
         log.warning(message, session)
 
 def log_generation(
-    generated_at: datetime,
+    database: db.SQLAlchemySession,
+    record_id: str,
+    task_type: str,
+    started: datetime,
+    time: int,
     service: str,
     model: str,
-    tag: str,
     completion_tokens: int,
     prompt_tokens: int,
-    time_to_generate: int,
-    session: WebAPISession | None
+    *,
+    error_id: str | None = None,
+    session: WebAPISession | None = None,
 ):
-    values = {
-        "session_id": session.sessionId if session is not None else None,
-        "generated_at": generated_at,
-        "service": service,
-        "model": model,
-        "tag": tag,
-        "completion_tokens": completion_tokens,
-        "prompt_tokens": prompt_tokens,
-        "time_to_generate": time_to_generate,
-    }
+    """Saves a record of a generative AI task."""
+
+    generation_task = db.GenerationTask(
+        task_id=str(uuid4()),
+        record_id=record_id,
+        task_type=task_type,
+        started=started,
+        time=time,
+        service=service,
+        model=model,
+        completion_tokens=completion_tokens,
+        prompt_tokens=prompt_tokens,
+        error_id=error_id,
+        session_id=session.sessionId if session is not None else None,
+    )
 
     try:
-        with SQLAlchemySession(data.db_engine) as database:
-            database.execute(
-                text(
-                    """
-                    INSERT INTO generation_log (session_id, generated_at, service, model, tag, completion_tokens, prompt_tokens, time_to_generate)
-                    VALUES (:session_id, :generated_at, :service, :model, :tag, :completion_tokens, :prompt_tokens, :time_to_generate)
-                    """
-                ),
-                values
-            )
-            database.commit()
+        database.add(generation_task)
+        database.commit()
     except Exception as e:
-        message = f"Error saving transcription log: {json.dumps(values, default=str)}; Error: {str(e)}"
+        message = f"Failed to save generation log: {str(generation_task)}; Error: {str(e)}"
         log.warning(message, session)

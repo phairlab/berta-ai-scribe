@@ -15,12 +15,15 @@ def submit_feedback(
     *, 
     feedback: sch.UserFeedback
 ):
+    """
+    Saves new user feedback.
+    """
+    
     try:
         record = db.UserFeedback(
             username=userSession.username,
             submitted=feedback.submitted,
             details=feedback.details,
-            context="(Not Yet Implemented)",
         )
 
         database.add(record)

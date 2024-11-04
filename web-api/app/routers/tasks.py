@@ -1,13 +1,15 @@
 from typing import Annotated
+from pathlib import Path
 
-from fastapi import APIRouter, Depends, Body, UploadFile, status, BackgroundTasks
+from fastapi import APIRouter, Depends, Body, status, BackgroundTasks
 
 import app.services.tasks as tasks
 import app.services.error_handling as errors
 import app.schemas as sch
-from app.services.db import get_tag, useDatabase
+from app.services.db import new_sqid, useDatabase
 from app.services.security import authenticate_user, useUserSession
 from app.services.logging import WebAPILogger, log_transcription, log_generation
+from app.services.measurement import ExecutionTimer
 from app.config import settings
 
 log = WebAPILogger(__name__)
@@ -22,17 +24,56 @@ router = APIRouter(dependencies=[Depends(authenticate_user)], responses={
 @router.post("/transcribe-audio", generate_unique_id_function=(lambda _: "TranscribeAudio"))
 async def transcribe_audio(
     userSession: useUserSession,
+    database: useDatabase,
     backgroundTasks: BackgroundTasks,
     *, 
-    audio: UploadFile
+    recordingId: Annotated[str, Body()],
 ) -> sch.TextResponse:
     try:
-        transcription_output = await tasks.transcribe_audio(audio.file, audio.filename, audio.content_type)
-        backgroundTasks.add_task(log_transcription, transcription_output.transcribedAt, transcription_output.service, transcription_output.audioDuration, transcription_output.timeToGenerate, userSession)
+        media_type = "audio/mpeg"
+        filename = f"{recordingId}.mp3"
+        filepath = Path(settings.RECORDINGS_FOLDER, userSession.username, filename)
+
+        with ExecutionTimer() as timer, open(filepath, mode="rb") as file:
+            transcription_output = await tasks.transcribe_audio(file, filename, media_type)
+
+        backgroundTasks.add_task(
+            log_transcription,
+            database,
+            recordingId,
+            timer.started_at,
+            timer.elapsed_ms,
+            settings.TRANSCRIPTION_SERVICE,
+            session=userSession,
+        )
     except (errors.ExternalServiceError, errors.AudioProcessingError) as e:
+        backgroundTasks.add_task(
+            log_transcription,
+            database,
+            recordingId,
+            timer.started_at,
+            timer.elapsed_ms,
+            settings.TRANSCRIPTION_SERVICE,
+            error_id=e.uuid,
+            session=userSession,
+        )
+
         raise e
     except Exception as e:
-        raise errors.WebAPIException(str(e))
+        transcription_error = errors.WebAPIException(str(e))
+
+        backgroundTasks.add_task(
+            log_transcription,
+            database,
+            recordingId,
+            timer.started_at,
+            timer.elapsed_ms,
+            settings.TRANSCRIPTION_SERVICE,
+            error_id=transcription_error.uuid,
+            session=userSession,
+        )
+
+        raise transcription_error
         
     return sch.TextResponse(text=transcription_output.transcript)
 
@@ -47,12 +88,24 @@ def generate_draft_note(
 ) -> sch.GenerationResponse:
     # Get the stream of note segments.
     try:
-        tag = get_tag(database)
+        noteId = new_sqid(database)
         generation_output = tasks.generate_note(settings.GENERATIVE_AI_MODEL, instructions, transcript)
-        backgroundTasks.add_task(log_generation, generation_output.generatedAt, generation_output.service, generation_output.model, tag, generation_output.completionTokens, generation_output.promptTokens, generation_output.timeToGenerate, userSession)
+        backgroundTasks.add_task(
+            log_generation,
+            database,
+            noteId,
+            "GENERATE NOTE",
+            generation_output.generatedAt,
+            generation_output.timeToGenerate,
+            generation_output.service,
+            generation_output.model,
+            generation_output.completionTokens,
+            generation_output.promptTokens,
+            session=userSession,
+        )
     except errors.ExternalServiceError as e:
         raise e
     except Exception as e:
         raise errors.WebAPIException(str(e))
 
-    return sch.GenerationResponse(text=generation_output.text, tag=tag)
+    return sch.GenerationResponse(text=generation_output.text, noteId=noteId)

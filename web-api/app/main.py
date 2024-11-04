@@ -115,6 +115,8 @@ app = FastAPI(lifespan=lifespan, title=f"{settings.APP_NAME} API", version=setti
 # Exception handlers
 @app.exception_handler(WebAPIException)
 async def webapi_exception_handler(request: Request, exc: WebAPIException):
+    stack_trace = " ".join(traceback.TracebackException.from_exception(exc).format())
+
     try:
         request_id = request.headers.get("x-request-id")
     
@@ -126,8 +128,6 @@ async def webapi_exception_handler(request: Request, exc: WebAPIException):
             session = decode_token(credentials.removeprefix("Bearer "))
         except:
             session = WebAPISession(username=request.headers.get("sf_context_current_user") or "Anonymous", sessionId="None")
-
-        stack_trace = " ".join(traceback.TracebackException.from_exception(exc).format())
     except:
         pass
 
@@ -141,11 +141,22 @@ async def webapi_exception_handler(request: Request, exc: WebAPIException):
             ),
         )),
         headers=exc.headers,
-        background=BackgroundTask(log_error, datetime.now(timezone.utc), request.url.path, request.method, exc.status_code, exc.name, exc.message, stack_trace, exc.uuid, request_id, session)
+        background=BackgroundTask(
+            log_error,
+            datetime.now(timezone.utc),
+            exc.name,
+            exc.message,
+            stack_trace,
+            error_id=exc.uuid,
+            request_id=request_id,
+            session=session,
+        )
     )
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    stack_trace = " ".join(traceback.TracebackException.from_exception(exc).format())
+
     try:
         request_id = request.headers.get("x-request-id")
     
@@ -157,19 +168,27 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
             session = decode_token(credentials.removeprefix("Bearer "))
         except:
             session = WebAPISession(username=request.headers.get("sf_context_current_user") or "Anonymous", sessionId="None")
-
-        stack_trace = " ".join(traceback.TracebackException.from_exception(exc).format())
     except:
         pass
 
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content=jsonable_encoder({ "detail": exc.errors(), "body": json.dumps(exc.body, default=str) }),
-        background=BackgroundTask(log_error, datetime.now(timezone.utc), request.url.path, request.method, status.HTTP_422_UNPROCESSABLE_ENTITY, "Validation Error", str(exc), stack_trace, str(uuid4()), request_id, session)
+        background=BackgroundTask(
+            log_error,
+            datetime.now(timezone.utc),
+            "Validation Error",
+            str(exc),
+            stack_trace,
+            request_id=request_id,
+            session=session
+        )
     )
 
 @app.exception_handler(Exception)
 async def webapi_exception_handler(request: Request, exc: Exception):
+    stack_trace = " ".join(traceback.TracebackException.from_exception(exc).format())
+
     try:
         request_id = request.headers.get("x-request-id")
     
@@ -181,8 +200,6 @@ async def webapi_exception_handler(request: Request, exc: Exception):
             session = decode_token(credentials.removeprefix("Bearer "))
         except:
             session = WebAPISession(username=request.headers.get("sf_context_current_user") or "Anonymous", sessionId="None")
-
-        stack_trace = " ".join(traceback.TracebackException.from_exception(exc).format())
     except:
         pass
 
@@ -198,7 +215,16 @@ async def webapi_exception_handler(request: Request, exc: Exception):
             ),
         )),
         headers=error.headers,
-        background=BackgroundTask(log_error, datetime.now(timezone.utc), request.url.path, request.method, status.HTTP_500_INTERNAL_SERVER_ERROR, "Internal Server Error", str(exc), stack_trace, str(uuid4()), request_id, session)
+        background=BackgroundTask(
+            log_error,
+            datetime.now(timezone.utc),
+            "Internal Server Error",
+            str(exc),
+            stack_trace,
+            error_id=error.uuid,
+            request_id=request_id,
+            session=session
+        )
     )
 
 # Configure static files
@@ -218,6 +244,10 @@ async def request_logging_middleware(request: Request, call_next):
         headers[b"authorization"] = headers[b"jenkins-authorization"]
         request.scope["headers"] = [(k, v) for k, v in headers.items()]
 
+    if b"x-request-id" not in headers:
+        headers[b"x-request-id"] = str(uuid4()).encode()
+        request.scope["headers"] = [(k, v) for k, v in headers.items()]
+        
     request_id = request.headers.get("x-request-id")
     
     try:
@@ -245,7 +275,16 @@ async def request_logging_middleware(request: Request, call_next):
         session = session
     )
 
-    background_log_request = BackgroundTask(log_request, requested_at, request.url.path, request.method, int(response.status_code), timer.elapsed_ms, request_id, session)
+    background_log_request = BackgroundTask(
+        log_request,
+        request_id,
+        requested_at,
+        request.url.path,
+        request.method,
+        int(response.status_code),
+        timer.elapsed_ms,
+        session=session,
+    )
         
     if response.status_code >= 400:
         response_body = b""
@@ -313,7 +352,7 @@ app.include_router(authorization.router, tags=["Authorization"])
 app.include_router(tasks.router, prefix="/tasks", tags=["Tasks"])
 app.include_router(sample_recordings.router, prefix="/sample-recordings", tags=["Sample Recordings"])
 app.include_router(encounters.router, prefix="/encounters", tags=["Encounters"])
-app.include_router(recordings.router, prefix="/encounters/recording-files", tags=["Encounters"])
+app.include_router(recordings.router, prefix="/recordings", tags=["Recordings"])
 app.include_router(note_definitions.router, prefix="/note-definitions", tags=["Note Definitions"])
 app.include_router(users.router, prefix="/users", tags=["Users"])
 

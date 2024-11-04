@@ -4,7 +4,7 @@ from typing import Annotated, Any, BinaryIO, Generator, Iterator
 from datetime import datetime, timezone
 
 from fastapi import Depends
-from sqlalchemy import ForeignKey, text
+from sqlalchemy import ForeignKey, ForeignKeyConstraint, text
 from sqlalchemy.orm import Session as SQLAlchemySession, DeclarativeBase, Mapped, mapped_column, relationship
 from snowflake.sqlalchemy import TIMESTAMP_LTZ, VARCHAR, CHAR, ARRAY
 from sqids import Sqids
@@ -21,7 +21,7 @@ def get_database_session() -> Iterator[SQLAlchemySession]:
 useDatabase = Annotated[SQLAlchemySession, Depends(get_database_session)]
 
 def new_sqid(database: SQLAlchemySession) -> str:
-    id = database.execute(text("SELECT sqid_sequence.nextval")).one()[0]
+    id = database.scalars(text("SELECT sqid_sequence.nextval")).one()
     return sqids.encode(id)
 
 def sqid_column(primary_key: bool = False):
@@ -40,7 +40,6 @@ class SessionRecord(JenkinsDatabase):
     session_id: Mapped[str] = uuid_column(primary_key=True)
     username: Mapped[str] = mapped_column(VARCHAR(255))
     started: Mapped[datetime] = mapped_column(TIMESTAMP_LTZ)
-    refreshes: Mapped[str] = mapped_column(ARRAY)
     user_agent: Mapped[str]
 
 class ErrorRecord(JenkinsDatabase):
@@ -51,6 +50,7 @@ class ErrorRecord(JenkinsDatabase):
     name: Mapped[str] = mapped_column(VARCHAR(500))
     message: Mapped[str]
     stack_trace: Mapped[str]
+    request_id: Mapped[str | None] = uuid_column()
     session_id: Mapped[str | None] = uuid_column()
 
 class RequestRecord(JenkinsDatabase):
@@ -63,16 +63,15 @@ class RequestRecord(JenkinsDatabase):
     status_code: Mapped[int]
     status_text: Mapped[str | None] = mapped_column(VARCHAR(50))
     duration: Mapped[int]
-    error_id: Mapped[str | None] = uuid_column()
     session_id: Mapped[str | None] = uuid_column()
 
 class AudioConversionTask(JenkinsDatabase):
     __tablename__ = "audio_conversion_log"
 
     task_id: Mapped[str] = uuid_column(primary_key=True)
+    recording_id: Mapped[str] = sqid_column()
     started: Mapped[datetime] = mapped_column(TIMESTAMP_LTZ)
     time: Mapped[int]
-    filename: Mapped[str] = mapped_column(VARCHAR(255))
     original_media_type: Mapped[str] = mapped_column(VARCHAR(255))
     original_file_size: Mapped[int]
     converted_media_type: Mapped[str | None] = mapped_column(VARCHAR(255))
@@ -84,11 +83,10 @@ class TranscriptionTask(JenkinsDatabase):
     __tablename__ = "transcription_log"
 
     task_id: Mapped[str] = uuid_column(primary_key=True)
+    recording_id: Mapped[str] = sqid_column()
     started: Mapped[datetime] = mapped_column(TIMESTAMP_LTZ)
     time: Mapped[int]
-    filename: Mapped[str] = mapped_column(VARCHAR(255))
     service: Mapped[str] = mapped_column(VARCHAR(50))
-    audio_duration: Mapped[int]
     error_id: Mapped[str | None] = uuid_column()
     session_id: Mapped[str | None] = uuid_column()
 
@@ -96,6 +94,8 @@ class GenerationTask(JenkinsDatabase):
     __tablename__ = "generation_log"
 
     task_id: Mapped[str] = uuid_column(primary_key=True)
+    record_id: Mapped[str] = sqid_column()
+    task_type: Mapped[str] = mapped_column(VARCHAR(255))    
     started: Mapped[datetime] = mapped_column(TIMESTAMP_LTZ)
     time: Mapped[int]
     service: Mapped[str] = mapped_column(VARCHAR(50))
@@ -129,17 +129,15 @@ class NoteDefinition(JenkinsDatabase):
     __tablename__ = "note_definitions"
 
     id: Mapped[str] = sqid_column(primary_key=True)
-    set_id: Mapped[str] = sqid_column()
+    version: Mapped[str] = sqid_column(primary_key=True)
     username: Mapped[str] = mapped_column(ForeignKey("users.username"))
     created: Mapped[datetime] = mapped_column(TIMESTAMP_LTZ)
     title: Mapped[str] = mapped_column(VARCHAR(100))
     instructions: Mapped[str]
     model: Mapped[str]
     inactivated: Mapped[datetime | None] = mapped_column(TIMESTAMP_LTZ)
-    successor_id: Mapped[str | None] = mapped_column(ForeignKey("note_definitions.id"))
 
     user: Mapped["User"] = relationship(back_populates="note_definitions")
-    successor: Mapped["NoteDefinition" | None] = relationship()
 
 class Encounter(JenkinsDatabase):
     __tablename__ = "encounters"
@@ -154,8 +152,8 @@ class Encounter(JenkinsDatabase):
     purged: Mapped[datetime | None] = mapped_column(TIMESTAMP_LTZ)
 
     user: Mapped["User"] = relationship(back_populates="encounters")
-    recording: Mapped["Recording"] = relationship(back_populates="encounter", lazy="selectin", cascade="all, delete")
-    draft_notes: Mapped[list["DraftNote"]] = relationship(back_populates="encounter", lazy="selectin")
+    recording: Mapped["Recording"] = relationship(back_populates="encounter", cascade="all, delete")
+    draft_notes: Mapped[list["DraftNote"]] = relationship(back_populates="encounter")
 
 class Recording(JenkinsDatabase):
     __tablename__ = "recordings"
@@ -167,31 +165,29 @@ class Recording(JenkinsDatabase):
     duration: Mapped[int | None]
     waveform_peaks: Mapped[str | None]
     transcript: Mapped[str | None]
-    audio_conversion_task_id: Mapped[str | None] = mapped_column(ForeignKey("audio_conversion_log.id"))
-    transcription_task_id: Mapped[str | None] = mapped_column(ForeignKey("transcription_log.id"))
 
     encounter: Mapped["Encounter"] = relationship(back_populates="recording")
-    audio_conversion_task: Mapped["AudioConversionTask" | None] = relationship()
-    transcription_task: Mapped["TranscriptionTask" | None] = relationship()
 
 class DraftNote(JenkinsDatabase):
     __tablename__ = "draft_notes"
 
     id: Mapped[str] = sqid_column(primary_key=True)
-    set_id: Mapped[str] = sqid_column()
     encounter_id: Mapped[str] = mapped_column(ForeignKey("encounters.id"))
-    definition_id: Mapped[str] = mapped_column(ForeignKey("note_definitions.id"))
+    definition_id: Mapped[str] = sqid_column()
+    definition_version: Mapped[str] = sqid_column()
     created: Mapped[datetime] = mapped_column(TIMESTAMP_LTZ)
     title: Mapped[str] = mapped_column(VARCHAR(100))
     content: Mapped[str]
-    generation_task_id: Mapped[str] = uuid_column()
     inactivated: Mapped[datetime | None] = mapped_column(TIMESTAMP_LTZ)
-    successor_id: Mapped[str | None] = mapped_column(ForeignKey("draft_notes.id"))
+
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["definition_id", "definition_version"], ["note_definitions.id", "note_definitions.version"]
+        ),
+    )
 
     encounter: Mapped["Encounter"] = relationship(back_populates="draft_notes")
     note_definition: Mapped["NoteDefinition"] = relationship()
-    generation_task: Mapped["GenerationTask"] = relationship()
-    successor: Mapped["DraftNote" | None] = relationship()
 
 def save_recording(file: BinaryIO, username: str, filename: str) -> None:
     """Writes a file to a user's recordings folder."""
