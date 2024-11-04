@@ -60,6 +60,7 @@ export default async function RootLayout({
               <Image
                 alt="AHS Logo"
                 height={30}
+                priority={true}
                 src="/ahs-color-logo.png"
                 width={100}
               />
