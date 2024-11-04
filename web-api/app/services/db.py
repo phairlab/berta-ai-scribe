@@ -217,8 +217,11 @@ def delete_recording(username: str, filename: str) -> None:
 def persist_recording(file: BinaryIO, username: str, filename: str) -> None:
     """Saves a user's recording file directly to the Snowflake stage."""
 
-    with data.get_snowflake_session() as snowflakeSession:
-        snowflakeSession.file.put_stream(file, f"@RECORDING_FILES/{username}/{filename}", auto_compress=False)
+    try:
+        with data.get_snowflake_session() as snowflakeSession:
+            snowflakeSession.file.put_stream(file, f"@RECORDING_FILES/{username}/{filename}", auto_compress=False)
+    finally:
+        file.close()
 
 def retrieve_recording(username: str, filename: str) -> BinaryIO:
     """Retrieves a user's recording file directly from the Snowflake stage."""

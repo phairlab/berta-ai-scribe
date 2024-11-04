@@ -129,9 +129,16 @@ def create_encounter(
         db.save_recording(reformatted, userSession.username, filename)
 
         if settings.ENVIRONMENT == "development":
-            db.persist_recording(reformatted, userSession.username, filename)
+            # This operation will close the file once completed.
+            backgroundTasks.add_task(
+                db.persist_recording,
+                reformatted,
+                userSession.username,
+                filename
+            )
     finally:
-        reformatted.close()
+        if settings.ENVIRONMENT != "development":
+            reformatted.close()
     
     return sch.Encounter.from_db_record(encounter)
 
