@@ -15,7 +15,7 @@ const download =
   (getAccessToken: () => WebApiToken) =>
   (filename: string, cancellation?: AbortSignal): Promise<File> =>
     downloadFile(
-      `/api/sample-recordings/${filename}`,
+      `/api/sample-recordings/${filename}/download`,
       filename,
       getAccessToken(),
       cancellation,

@@ -6,11 +6,10 @@ import { setTracking } from "@/utility/tracking";
 export function createNoteType(): EditedNoteType {
   const noteType: EditedNoteType = setTracking(
     {
-      uuid: shortUUID.generate(),
-      createdAt: new Date(),
+      id: shortUUID.generate(),
+      modified: new Date(),
       isBuiltin: false,
-      isDefault: false,
-      isDiscarded: false,
+      isSystemDefault: false,
     },
     "Not Persisted",
   );

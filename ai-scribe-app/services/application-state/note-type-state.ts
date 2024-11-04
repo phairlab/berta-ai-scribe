@@ -36,7 +36,7 @@ export function useNoteTypeState(
     const id = defaultNoteTypeId;
 
     if (defaultNoteType) {
-      setDefaultNoteType(noteTypes.find((nt) => nt.uuid === id) ?? null);
+      setDefaultNoteType(noteTypes.find((nt) => nt.id === id) ?? null);
     } else {
       setDefaultNoteType(null);
     }
@@ -46,7 +46,7 @@ export function useNoteTypeState(
   useEffect(() => {
     if (defaultNoteType) {
       setDefaultNoteType(
-        noteTypes.find((nt) => nt.uuid === defaultNoteType.uuid) ?? null,
+        noteTypes.find((nt) => nt.id === defaultNoteType.id) ?? null,
       );
     }
   }, [noteTypes]);
@@ -55,19 +55,17 @@ export function useNoteTypeState(
     status: status,
     list: noteTypes,
     default: defaultNoteType,
-    exists: (id: string) => noteTypes.some((nt) => nt.uuid === id),
-    get: (id: string) => noteTypes.find((nt) => nt.uuid === id),
+    exists: (id: string) => noteTypes.some((nt) => nt.id === id),
+    get: (id: string) => noteTypes.find((nt) => nt.id === id),
     put: (data: NoteType) => {
       setNoteTypes((noteTypes) =>
-        [...noteTypes.filter((nt) => nt.uuid !== data.uuid), data].sort(
+        [...noteTypes.filter((nt) => nt.id !== data.id), data].sort(
           alphabetically((x) => x.title),
         ),
       );
     },
     remove: (id: string) => {
-      setNoteTypes((noteTypes) => [
-        ...noteTypes.filter((nt) => nt.uuid !== id),
-      ]);
+      setNoteTypes((noteTypes) => [...noteTypes.filter((nt) => nt.id !== id)]);
     },
     setDefault: (id: string | null) => {
       setDefaultNoteTypeId(id);

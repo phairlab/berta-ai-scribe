@@ -25,7 +25,7 @@ export function useTranscriber({
       controller.abort();
     }
 
-    if (!encounter.recording?.filename) {
+    if (!encounter.recording) {
       onError(UnexpectedError("Recording unavailable"), () =>
         transcribe(encounter),
       );
@@ -35,11 +35,10 @@ export function useTranscriber({
       const abortSignal = controller.signal.current;
 
       try {
-        const audio: File = await webApi.encounters.downloadRecording(
-          encounter.recording.filename,
+        const response = await webApi.tasks.transcribeAudio(
+          encounter.recording.id,
+          abortSignal,
         );
-
-        const response = await webApi.tasks.transcribeAudio(audio, abortSignal);
 
         onTranscript(response.text);
       } catch (e: unknown) {

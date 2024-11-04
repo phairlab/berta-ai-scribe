@@ -114,13 +114,12 @@ def update_note_definition(
             created=modified,
             title=title if title is not None else current_record.title,
             instructions=instructions if instructions is not None else current_record.instructions,
-            model=current_record.instructions,
+            model=current_record.model,
         )
 
         database.add(new_version)
 
         current_record.inactivated = modified
-        current_record.successor = sqid
 
         database.commit()
     except Exception as e:

@@ -77,9 +77,13 @@ export const ApplicationStateProvider = ({
     webApi.sampleRecordings
       .getAll()
       .then((records) => {
-        const sampleRecordings: SampleRecording[] = records.sort(
-          alphabetically((x) => x.filename),
-        );
+        const sampleRecordings: SampleRecording[] = records
+          .sort(alphabetically((x) => x.filename))
+          .map((record) => ({
+            id: record.filename,
+            filename: record.filename,
+            transcript: record.transcript,
+          }));
 
         setSampleRecordings(sampleRecordings);
         setSampleRecordingStatus("Ready");
@@ -106,8 +110,8 @@ export const ApplicationStateProvider = ({
               ? session.details.defaultNoteType
               : undefined;
 
-          const userDefault = noteTypes.find((d) => d.uuid === userDefaultUuid);
-          const builtinDefault = noteTypes.find((d) => d.isDefault);
+          const userDefault = noteTypes.find((d) => d.id === userDefaultUuid);
+          const builtinDefault = noteTypes.find((d) => d.isSystemDefault);
           const fallbackDefault = noteTypes[0];
 
           setDefaultNoteType(userDefault ?? builtinDefault ?? fallbackDefault);
@@ -124,7 +128,7 @@ export const ApplicationStateProvider = ({
       .getAll()
       .then((records) => {
         const encounters: Encounter[] = records
-          .sort(byDate((x) => x.createdAt, "Descending"))
+          .sort(byDate((x) => x.created, "Descending"))
           .map((record) => convert.fromWebApiEncounter(record));
 
         setEncounters(encounters);

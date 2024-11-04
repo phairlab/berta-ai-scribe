@@ -30,28 +30,28 @@ export const create =
 export const update =
   (getAccessToken: () => WebApiToken) =>
   (
-    uuid: string,
+    id: string,
     changes: { title?: string; instructions?: string },
     cancellation?: AbortSignal,
   ): Promise<NoteDefinition> =>
-    httpAction<NoteDefinition>("PATCH", `api/note-definitions/${uuid}`, {
+    httpAction<NoteDefinition>("PATCH", `api/note-definitions/${id}`, {
       data: changes,
-      accessToken: getAccessToken(),
-      signal: cancellation,
-    });
-
-export const discard =
-  (getAccessToken: () => WebApiToken) =>
-  (uuid: string, cancellation?: AbortSignal): Promise<void> =>
-    httpAction<void>("DELETE", `api/note-definitions/${uuid}`, {
       accessToken: getAccessToken(),
       signal: cancellation,
     });
 
 export const setDefault =
   (getAccessToken: () => WebApiToken) =>
-  (uuid: string, cancellation?: AbortSignal): Promise<void> =>
-    httpAction<void>("PATCH", `api/note-definitions/${uuid}/set-default`, {
+  (id: string, cancellation?: AbortSignal): Promise<void> =>
+    httpAction<void>("PATCH", `api/note-definitions/${id}/set-default`, {
+      accessToken: getAccessToken(),
+      signal: cancellation,
+    });
+
+export const discard =
+  (getAccessToken: () => WebApiToken) =>
+  (id: string, cancellation?: AbortSignal): Promise<void> =>
+    httpAction<void>("DELETE", `api/note-definitions/${id}`, {
       accessToken: getAccessToken(),
       signal: cancellation,
     });

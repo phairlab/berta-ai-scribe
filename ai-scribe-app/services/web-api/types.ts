@@ -1,47 +1,42 @@
 export type DraftNote = {
-  uuid?: string;
-  noteDefinitionUuid: string;
-  createdAt: Date;
-  tag: string;
+  id: string;
+  definitionId: string;
+  created: Date;
   title: string;
-  text: string;
-  generationService: string;
-  model: string;
-  timeToGenerate: number;
-  isDiscarded: boolean;
+  content: string;
 };
 
 export type Encounter = {
-  uuid: string;
-  createdAt: Date;
-  title?: string;
+  id: string;
+  created: Date;
+  modified: Date;
+  label?: string;
+  summary?: string;
   recording?: Recording;
   draftNotes: DraftNote[];
 };
 
 export type NoteDefinition = {
-  uuid: string;
-  createdAt: Date;
+  id: string;
+  modified: Date;
   title: string;
   instructions: string;
   isBuiltin: boolean;
-  isDefault: boolean;
-  isDiscarded: boolean;
+  isSystemDefault: boolean;
 };
 
 export type NoteGeneratorOutput = {
   text: string;
-  tag: string;
+  noteId: string;
 };
 
 export type Recording = {
-  filename: string;
-  mediaType: string;
+  id: string;
+  mediaType?: string;
+  fileSize?: number;
   duration?: number;
   waveformPeaks?: number[];
   transcript?: string;
-  transcriptionService?: string;
-  timeToTranscribe?: number;
 };
 
 export type SampleRecording = {

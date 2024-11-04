@@ -10,7 +10,7 @@ from app.config import settings
 
 router = APIRouter()
 
-@router.get("/{recordingId}")
+@router.get("/{recordingId}/download")
 def get_recording_file(
     userSession: useCookieUserSession,
     *,

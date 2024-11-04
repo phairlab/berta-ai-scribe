@@ -10,7 +10,6 @@ class NoteDefinition(BaseModel):
     modified: datetime
     title: str
     instructions: str
-    model: str
     isBuiltin: bool
     isSystemDefault: bool = False
 
@@ -23,7 +22,6 @@ class NoteDefinition(BaseModel):
             modified=db_record.created,
             title=db_record.title,
             instructions=db_record.instructions,
-            model=db_record.model,
             isBuiltin=db_record.username == settings.SYSTEM_USER,
             isSystemDefault=db_record.username == settings.SYSTEM_USER and db_record.title == settings.DEFAULT_NOTE_DEFINITION,
         )

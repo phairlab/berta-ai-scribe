@@ -41,11 +41,11 @@ export const AIScribeOutput = ({
   }
 
   function isRecording(output: AIScribeOutputType): output is Recording {
-    return "filename" in output && "transcript" in output;
+    return "transcript" in output;
   }
 
   function isNote(output: AIScribeOutputType): output is DraftNote {
-    return "tag" in output;
+    return "definitionId" in output;
   }
 
   useEffect(() => {
@@ -56,7 +56,7 @@ export const AIScribeOutput = ({
         : isRecording(activeOutput)
           ? "transcript"
           : isNote(activeOutput)
-            ? notes.find((n) => n.tag === activeOutput.tag)?.tag
+            ? notes.find((n) => n.id === activeOutput.id)?.id
             : undefined;
 
     if (activeTab !== key) {
@@ -70,7 +70,7 @@ export const AIScribeOutput = ({
         ? recording
         : key === "error"
           ? error
-          : notes.find((n) => n.tag === key.toString());
+          : notes.find((n) => n.id === key.toString());
 
     onActiveChanged(output);
   };
@@ -94,7 +94,7 @@ export const AIScribeOutput = ({
           </Tab>
         )}
         {notes.map((note) => (
-          <Tab key={note.tag} title={note.title}>
+          <Tab key={note.id} title={note.title}>
             <NoteCard note={note} showTitle={false} />
           </Tab>
         ))}

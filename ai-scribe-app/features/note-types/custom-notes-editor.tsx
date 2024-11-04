@@ -77,6 +77,7 @@ export const CustomNotesEditor = ({
     if (transcript && editedNoteType.instructions !== undefined) {
       noteGenerator.generateNote(
         editedNoteType as RequiredFields<EditedNoteType, "instructions">,
+        "(TEST)",
         transcript,
       );
     }

@@ -136,7 +136,7 @@ export const AIScribe = () => {
     setAIScribeError(undefined);
 
     const encounterChanged =
-      !activeEncounter || ref.current?.uuid !== activeEncounter.uuid;
+      !activeEncounter || ref.current?.id !== activeEncounter.id;
 
     if (
       encounterChanged &&
@@ -155,10 +155,8 @@ export const AIScribe = () => {
     } else {
       ref.current = activeEncounter;
 
-      if (activeEncounter.recording?.filename) {
-        setAudio(
-          `/api/encounters/recording-files/${activeEncounter.recording.filename}`,
-        );
+      if (activeEncounter.recording?.duration) {
+        setAudio(`/api/recordings/${activeEncounter.recording.id}/download`);
       } else {
         setAudio(undefined);
       }
@@ -190,6 +188,7 @@ export const AIScribe = () => {
     if (canGenerateNote && activeEncounter.draftNotes.length === 0) {
       noteGenerator.generateNote(
         selectedNoteType,
+        activeEncounter.id,
         activeEncounter.recording!.transcript!,
       );
     }
@@ -221,6 +220,7 @@ export const AIScribe = () => {
             canGenerateNote &&
             noteGenerator.generateNote(
               selectedNoteType,
+              activeEncounter.id,
               activeEncounter.recording!.transcript!,
             )
           }

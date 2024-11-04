@@ -1,6 +1,6 @@
 import { ApiRouterDefinition } from "./api-definition";
 import { WebApiToken } from "./authentication";
-import { downloadFile, httpAction } from "./base-queries";
+import { httpAction } from "./base-queries";
 import { DraftNote, Encounter } from "./types";
 
 export const getAll =
@@ -15,17 +15,17 @@ export const create =
   (getAccessToken: () => WebApiToken) =>
   (
     audio: File,
-    createdAt: Date,
-    title?: string,
+    created: Date,
+    label?: string,
     cancellation?: AbortSignal,
   ): Promise<Encounter> => {
     const formData = new FormData();
 
     formData.append("audio", audio);
-    formData.append("createdAt", createdAt.toISOString());
+    formData.append("created", created.toISOString());
 
-    if (title) {
-      formData.append("title", title);
+    if (label) {
+      formData.append("label", label);
     }
 
     return httpAction<Encounter>("POST", "/api/encounters", {
@@ -38,11 +38,11 @@ export const create =
 export const update =
   (getAccessToken: () => WebApiToken) =>
   (
-    uuid: string,
-    changes: { title?: string; transcript?: string },
+    id: string,
+    changes: { label?: string; transcript?: string },
     cancellation?: AbortSignal,
   ): Promise<Encounter> =>
-    httpAction<Encounter>("PATCH", `api/encounters/${uuid}`, {
+    httpAction<Encounter>("PATCH", `api/encounters/${id}`, {
       data: changes,
       accessToken: getAccessToken(),
       signal: cancellation,
@@ -50,55 +50,43 @@ export const update =
 
 export const purgeData =
   (getAccessToken: () => WebApiToken) =>
-  (uuid: string, cancellation?: AbortSignal): Promise<void> =>
-    httpAction<void>("DELETE", `api/encounters/${uuid}`, {
+  (id: string, cancellation?: AbortSignal): Promise<void> =>
+    httpAction<void>("DELETE", `api/encounters/${id}`, {
       accessToken: getAccessToken(),
       signal: cancellation,
     });
 
-export const downloadRecording =
-  (getAccessToken: () => WebApiToken) =>
-  (filename: string, cancellation?: AbortSignal): Promise<File> =>
-    downloadFile(
-      `/api/encounters/recording-files/${filename}`,
-      filename,
-      getAccessToken(),
-      cancellation,
-    );
-
 export const createDraftNote =
   (getAccessToken: () => WebApiToken) =>
   (
-    encounterUuid: string,
-    noteDefinitionUuid: string,
-    noteText: string,
-    noteTag: string,
+    encounterId: string,
+    noteDefinitionId: string,
+    noteId: string,
+    title: string,
+    content: string,
     cancellation?: AbortSignal,
   ): Promise<DraftNote> =>
-    httpAction<DraftNote>(
-      "POST",
-      `api/encounters/${encounterUuid}/draft-notes`,
-      {
-        data: {
-          noteDefinitionUuid: noteDefinitionUuid,
-          noteText: noteText,
-          noteTag: noteTag,
-        },
-        accessToken: getAccessToken(),
-        signal: cancellation,
+    httpAction<DraftNote>("POST", `api/encounters/${encounterId}/draft-notes`, {
+      data: {
+        noteDefinitionId: noteDefinitionId,
+        noteId: noteId,
+        title: title,
+        content: content,
       },
-    );
+      accessToken: getAccessToken(),
+      signal: cancellation,
+    });
 
 export const discardDraftNote =
   (getAccessToken: () => WebApiToken) =>
   (
-    encounterUuid: string,
-    tag: string,
+    encounterId: string,
+    noteId: string,
     cancellation?: AbortSignal,
   ): Promise<void> =>
     httpAction<void>(
       "DELETE",
-      `api/encounters/${encounterUuid}/draft-notes/${tag}`,
+      `api/encounters/${encounterId}/draft-notes/${noteId}`,
       {
         accessToken: getAccessToken(),
         signal: cancellation,
@@ -110,7 +98,6 @@ export const routes = {
   create,
   update,
   purgeData,
-  downloadRecording,
   createDraftNote,
   discardDraftNote,
 } satisfies ApiRouterDefinition;

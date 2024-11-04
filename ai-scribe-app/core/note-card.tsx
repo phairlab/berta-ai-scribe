@@ -10,8 +10,8 @@ type NoteCardProps = {
 
 export const NoteCard = ({ note, showTitle = true }: NoteCardProps) => {
   const copyNote = async () => {
-    if (note.text) {
-      await navigator.clipboard.writeText(note.text);
+    if (note.content) {
+      await navigator.clipboard.writeText(note.content);
     }
   };
 
@@ -23,7 +23,7 @@ export const NoteCard = ({ note, showTitle = true }: NoteCardProps) => {
 
   return (
     <OutputCard controls={controls} title={showTitle && note.title}>
-      {note.text}
+      {note.content}
     </OutputCard>
   );
 };

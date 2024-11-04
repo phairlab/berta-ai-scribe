@@ -5,16 +5,15 @@ import { NoteGeneratorOutput, TranscriberOutput } from "./types";
 
 const transcribeAudio =
   (getAccessToken: () => WebApiToken) =>
-  (audio: File, cancellation?: AbortSignal): Promise<TranscriberOutput> => {
-    const formData = new FormData();
-
-    formData.append("audio", audio);
-
+  (
+    recordingId: string,
+    cancellation?: AbortSignal,
+  ): Promise<TranscriberOutput> => {
     return httpAction<TranscriberOutput>(
       "POST",
       "/api/tasks/transcribe-audio",
       {
-        data: formData,
+        data: recordingId,
         accessToken: getAccessToken(),
         signal: cancellation,
       },

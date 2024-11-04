@@ -8,20 +8,16 @@ export type ValidNoteType =
 
 export function createNote(fields: {
   noteType: ValidNoteType;
-  tag: string;
-  text: string;
+  noteId: string;
+  content: string;
 }): DraftNote {
   const note: DraftNote = setTracking(
     {
-      tag: fields.tag,
-      noteDefinitionUuid: fields.noteType.uuid,
-      createdAt: new Date(),
+      id: fields.noteId,
+      definitionId: fields.noteType.id,
+      created: new Date(),
       title: fields.noteType.title ?? "(Untitled Note Type)",
-      text: fields.text,
-      generationService: "Snowflake Cortex",
-      model: "",
-      timeToGenerate: 0,
-      isDiscarded: false,
+      content: fields.content,
     },
     "Not Persisted",
   );

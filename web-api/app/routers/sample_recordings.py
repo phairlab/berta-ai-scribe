@@ -24,7 +24,7 @@ def list_samples() -> list[sch.SampleRecording]:
     samples = [sch.SampleRecording(filename=f, transcript=transcripts[f]) for f in filenames]
     return samples
 
-@router.get("/{filename}", responses={
+@router.get("/{filename}/download", responses={
     status.HTTP_404_NOT_FOUND: {"description": "Not Found", "model": sch.WebAPIError},
 })
 def download_sample(filename: str) -> FileResponse:

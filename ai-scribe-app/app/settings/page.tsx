@@ -34,14 +34,14 @@ export default function Settings() {
   };
 
   const handleDelete = (noteType: NoteType) => {
-    if (noteType.uuid === editedNoteType.uuid) {
+    if (noteType.id === editedNoteType.id) {
       editNew();
     }
   };
 
   const handleDefaultChanged = (noteType: NoteType | undefined) => {
     if (noteType) {
-      noteTypes.setDefault(noteType.uuid);
+      noteTypes.setDefault(noteType.id);
     }
   };
 
