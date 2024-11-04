@@ -138,6 +138,7 @@ CREATE TABLE draft_notes (
   id VARCHAR(12) NOT NULL,
   encounter_id VARCHAR(12) NOT NULL,
   definition_id VARCHAR(12) NOT NULL,
+  definition_version VARCHAR(12) NOT NULL,
   created TIMESTAMP_LTZ NOT NULL,
   title VARCHAR(100) NOT NULL,
   content VARCHAR NOT NULL,
