@@ -48,15 +48,15 @@ def create_encounter(
     backgroundTasks: BackgroundTasks,
     *, 
     audio: UploadFile, 
-    created: Annotated[datetime, Body()], 
+    created: Annotated[datetime, Body()] = datetime.now(timezone.utc), 
     label: Annotated[str | None, Body()] = None,
 ) -> sch.Encounter:
     """
     Creates and saves a new encounter record.
     """
 
-    encounter_id = db.new_sqid()
-    recording_id = db.new_sqid()
+    encounter_id = db.new_sqid(database)
+    recording_id = db.new_sqid(database)
 
     reformatted_media_type = "audio/mpeg"
 

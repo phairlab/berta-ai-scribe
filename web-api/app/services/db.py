@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from fastapi import Depends
 from sqlalchemy import ForeignKey, ForeignKeyConstraint, text
 from sqlalchemy.orm import Session as SQLAlchemySession, DeclarativeBase, Mapped, mapped_column, relationship
-from snowflake.sqlalchemy import TIMESTAMP_LTZ, VARCHAR, CHAR, ARRAY
+from snowflake.sqlalchemy import TIMESTAMP_LTZ, VARCHAR, CHAR
 from sqids import Sqids
 
 import app.services.data as data
@@ -22,7 +22,7 @@ useDatabase = Annotated[SQLAlchemySession, Depends(get_database_session)]
 
 def new_sqid(database: SQLAlchemySession) -> str:
     id = database.scalars(text("SELECT sqid_sequence.nextval")).one()
-    return sqids.encode(id)
+    return sqids.encode([id])
 
 def sqid_column(primary_key: bool = False):
     return mapped_column(VARCHAR(12), primary_key=primary_key)

@@ -54,7 +54,7 @@ def create_note_definition(
 
     # Create the new note definition and associate to the current user.
     try:
-        sqid = db.new_sqid()
+        sqid = db.new_sqid(database)
 
         record = db.NoteDefinition(
             id=sqid,
@@ -105,7 +105,7 @@ def update_note_definition(
     # Create a new version of the note definition and inactivate the previous.
     try:
         modified = datetime.now(timezone.utc)
-        sqid = db.new_sqid()
+        sqid = db.new_sqid(database)
 
         new_version = db.NoteDefinition(
             id=current_record.id,
