@@ -28,7 +28,7 @@ export const create =
       formData.append("label", label);
     }
 
-    return httpAction<Encounter>("POST", "/api/encounters", {
+    return httpAction<Encounter>("POST", "api/encounters", {
       data: formData,
       accessToken: getAccessToken(),
       signal: cancellation,

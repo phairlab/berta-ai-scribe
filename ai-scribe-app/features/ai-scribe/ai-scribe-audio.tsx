@@ -7,6 +7,7 @@ import { WaitMessageSpinner } from "@/core/wait-message-spinner";
 import { SampleRecordingSelector } from "@/features/sample-recordings/sample-recording-selector";
 
 import { AudioFileBrowseButton } from "./audio-file-browse-button";
+import { AudioRecorder, AudioRecorderControls } from "./audio-recorder";
 import { AudioTrackInfo } from "./audio-track-info";
 import { PlayPauseButton } from "./play-pause-button";
 import { RecordButton } from "./record-button";
@@ -34,7 +35,8 @@ export const AIScribeAudio = ({
   onRecoverRecording,
   onReset,
 }: AIScribeAudioProps) => {
-  const audioControls = useRef<WavesurferWidgetControls | null>(null);
+  const playerControls = useRef<WavesurferWidgetControls | null>(null);
+  const recorderControls = useRef<AudioRecorderControls | null>(null);
   const recordingInProgress = useRef(false);
 
   const [isPlayerInitialized, setIsPlayerInitialized] = useState(false);
@@ -60,18 +62,22 @@ export const AIScribeAudio = ({
   }, [audio]);
 
   const handleAudioPlayerInit = (controls: WavesurferWidgetControls) => {
-    audioControls.current = controls;
+    playerControls.current = controls;
     setIsPlayerInitialized(true);
   };
 
-  const handleRecordingFinished = (recording: File) => {
+  const handleRecordingFinished = (recording: File | null) => {
     if (recordingInProgress.current) {
       setIsRecording(false);
       setIsRecordingPaused(false);
 
-      onAudioFile(recording);
+      if (recording) {
+        onAudioFile(recording);
+      }
     } else {
-      onRecoverRecording(recording);
+      if (recording) {
+        onRecoverRecording(recording);
+      }
     }
   };
 
@@ -79,10 +85,10 @@ export const AIScribeAudio = ({
     setRecordingError(null);
 
     if (isRecording) {
-      audioControls.current?.togglePauseRecording();
+      recorderControls.current?.togglePauseRecording();
     } else {
       try {
-        await audioControls.current?.startRecording();
+        await recorderControls.current?.startRecording();
       } catch (e: unknown) {
         setRecordingError((e as Error).message);
       }
@@ -106,7 +112,7 @@ export const AIScribeAudio = ({
           <PlayPauseButton
             action={isPlaying ? "pause" : "play"}
             isDisabled={isPlayerLoading || isSaving}
-            onClick={audioControls.current?.playPause}
+            onClick={playerControls.current?.playPause}
           />
         ) : (
           <RecordButton
@@ -139,9 +145,17 @@ export const AIScribeAudio = ({
               </div>
             </div>
           )}
+          <AudioRecorder
+            onDestroy={() => (recorderControls.current = null)}
+            onEnded={(audio) => handleRecordingFinished(audio)}
+            onInit={(controls) => (recorderControls.current = controls)}
+            onPaused={() => setIsRecordingPaused(true)}
+            onResumed={() => setIsRecordingPaused(false)}
+            onStarted={() => setIsRecording(true)}
+          />
           <WavesurferWidget
             audioData={audio ?? null}
-            isHidden={(!audio && !isRecording) || isSaving}
+            isHidden={!audio || isRecording || isSaving}
             waveformPeaks={waveformPeaks}
             onDurationChanged={(seconds) => {
               if (duration != seconds) {
@@ -153,13 +167,9 @@ export const AIScribeAudio = ({
             onPause={() => setIsPlaying(false)}
             onPlay={() => setIsPlaying(true)}
             onReady={() => setIsPlayerLoading(false)}
-            onRecordingEnded={(audio) => handleRecordingFinished(audio)}
-            onRecordingPaused={() => setIsRecordingPaused(true)}
-            onRecordingResumed={() => setIsRecordingPaused(false)}
-            onRecordingStarted={() => setIsRecording(true)}
           />
           <div
-            className={`mx-2 ${isPlayerLoading ? "invisible" : ""} ${!audio && !isRecording ? "hidden" : ""}`}
+            className={`mx-2 ${isPlayerLoading ? "invisible" : ""} ${!audio || isRecording ? "hidden" : ""}`}
           >
             <AudioTrackInfo
               audioTitle={audioTitle ?? "Audio Recording"}
@@ -178,7 +188,7 @@ export const AIScribeAudio = ({
       ) : (
         <div className="flex justify-end md:mt-[9px] md:mb-auto">
           {isRecording ? (
-            <Button size="sm" onClick={audioControls.current?.endRecording}>
+            <Button size="sm" onClick={recorderControls.current?.endRecording}>
               Save Recording
             </Button>
           ) : (
