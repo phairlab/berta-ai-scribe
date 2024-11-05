@@ -7,7 +7,7 @@ import { WaitMessageSpinner } from "@/core/wait-message-spinner";
 import { SampleRecordingSelector } from "@/features/sample-recordings/sample-recording-selector";
 
 import { AudioFileBrowseButton } from "./audio-file-browse-button";
-import { AudioRecorder, AudioRecorderControls } from "./audio-recorder";
+import { AudioRecorder } from "./audio-recorder";
 import { AudioTrackInfo } from "./audio-track-info";
 import { PlayPauseButton } from "./play-pause-button";
 import { RecordButton } from "./record-button";
@@ -32,12 +32,9 @@ export const AIScribeAudio = ({
   audioTitle,
   isSaving,
   onAudioFile,
-  onRecoverRecording,
   onReset,
 }: AIScribeAudioProps) => {
   const playerControls = useRef<WavesurferWidgetControls | null>(null);
-  const recorderControls = useRef<AudioRecorderControls | null>(null);
-  const recordingInProgress = useRef(false);
 
   const [isPlayerLoading, setIsPlayerLoading] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -45,12 +42,6 @@ export const AIScribeAudio = ({
   const [isRecordingPaused, setIsRecordingPaused] = useState(false);
   const [recordingError, setRecordingError] = useState<string | null>(null);
   const [duration, setDuration] = useState<number | null>(null);
-
-  useEffect(() => {
-    // Done as a bug fix.
-    // Something was blocking the isRecording value from updating at the normal time.
-    recordingInProgress.current = isRecording;
-  }, [isRecording]);
 
   useEffect(() => {
     setIsRecording(false);
@@ -65,17 +56,11 @@ export const AIScribeAudio = ({
   };
 
   const handleRecordingFinished = (recording: File | null) => {
-    if (recordingInProgress.current) {
-      setIsRecording(false);
-      setIsRecordingPaused(false);
+    setIsRecording(false);
+    setIsRecordingPaused(false);
 
-      if (recording) {
-        onAudioFile(recording);
-      }
-    } else {
-      if (recording) {
-        onRecoverRecording(recording);
-      }
+    if (recording) {
+      onAudioFile(recording);
     }
   };
 
@@ -83,14 +68,16 @@ export const AIScribeAudio = ({
     setRecordingError(null);
 
     if (isRecording) {
-      recorderControls.current?.togglePauseRecording();
+      setIsRecordingPaused(!isRecordingPaused);
     } else {
-      try {
-        await recorderControls.current?.startRecording();
-      } catch (e: unknown) {
-        setRecordingError((e as Error).message);
-      }
+      setIsRecording(true);
     }
+  };
+
+  const endRecording = () => {
+    setRecordingError(null);
+    setIsRecording(false);
+    setIsRecordingPaused(false);
   };
 
   const reset = () => {
@@ -114,7 +101,7 @@ export const AIScribeAudio = ({
           />
         ) : (
           <RecordButton
-            isDisabled={recorderControls.current === null}
+            isDisabled={false}
             isRecording={isRecording}
             isRecordingPaused={isRecordingPaused}
             onClick={toggleRecording}
@@ -152,12 +139,14 @@ export const AIScribeAudio = ({
             </div>
           )}
           <AudioRecorder
-            onDestroy={() => (recorderControls.current = null)}
-            onEnded={(audio) => handleRecordingFinished(audio)}
-            onInit={(controls) => (recorderControls.current = controls)}
-            onPaused={() => setIsRecordingPaused(true)}
-            onResumed={() => setIsRecordingPaused(false)}
-            onStarted={() => setIsRecording(true)}
+            isPaused={isRecordingPaused}
+            isRecording={isRecording}
+            onAudioFinalized={(audio) => handleRecordingFinished(audio)}
+            onError={(error) => {
+              setRecordingError(error.message);
+              setIsRecording(false);
+              setIsRecordingPaused(false);
+            }}
           />
           <WavesurferWidget
             audioData={audio ?? null}
@@ -194,7 +183,7 @@ export const AIScribeAudio = ({
       ) : (
         <div className="flex justify-end md:mt-[9px] md:mb-auto">
           {isRecording ? (
-            <Button size="sm" onClick={recorderControls.current?.endRecording}>
+            <Button size="sm" onClick={endRecording}>
               Save Recording
             </Button>
           ) : (
