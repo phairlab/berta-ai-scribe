@@ -39,7 +39,6 @@ export const AIScribeAudio = ({
   const recorderControls = useRef<AudioRecorderControls | null>(null);
   const recordingInProgress = useRef(false);
 
-  const [isPlayerInitialized, setIsPlayerInitialized] = useState(false);
   const [isPlayerLoading, setIsPlayerLoading] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
@@ -63,7 +62,6 @@ export const AIScribeAudio = ({
 
   const handleAudioPlayerInit = (controls: WavesurferWidgetControls) => {
     playerControls.current = controls;
-    setIsPlayerInitialized(true);
   };
 
   const handleRecordingFinished = (recording: File | null) => {
@@ -116,7 +114,7 @@ export const AIScribeAudio = ({
           />
         ) : (
           <RecordButton
-            isDisabled={!isPlayerInitialized}
+            isDisabled={recorderControls.current === null}
             isRecording={isRecording}
             isRecordingPaused={isRecordingPaused}
             onClick={toggleRecording}
@@ -132,10 +130,18 @@ export const AIScribeAudio = ({
             <div className="w-full h-[70px] flex justify-center items-center border rounded-lg border-zinc-100 dark:border-zinc-900">
               <div className="text-center text-zinc-500 md:mb-2">
                 {recordingError ? (
-                  <span className="text-red-500">
-                    An Error Occurred While <br />
-                    Loading this Audio
-                  </span>
+                  recordingError ===
+                  "Recording is not supported in this browser" ? (
+                    <span className="text-red-500">
+                      Recording is not Supported <br />
+                      in this Browser
+                    </span>
+                  ) : (
+                    <span className="text-red-500">
+                      An Error Occurred While <br />
+                      Attempting to Record
+                    </span>
+                  )
                 ) : (
                   <span>
                     Start Recording or <br />

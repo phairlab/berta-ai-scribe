@@ -32,10 +32,8 @@ export const AudioRecorder = ({
   const stopwatch = useStopwatch();
   const mediaRecorder = useRef<MediaRecorder | null>(null);
 
-  const [isUnsupported, setIsUnsupported] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
 
   useEffect(() => {
@@ -50,28 +48,20 @@ export const AudioRecorder = ({
     };
   }, []);
 
-  const getMicrophonePermission = async () => {
+  async function getMicrophonePermission() {
     if ("MediaRecorder" in window) {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: true,
-          video: false,
-        });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: false,
+      });
 
-        return stream;
-      } catch (ex: unknown) {
-        setError((ex as Error).message);
-
-        return null;
-      }
+      return stream;
     } else {
-      setIsUnsupported(true);
-
-      return null;
+      throw new Error("Recording is not supported in this browser");
     }
-  };
+  }
 
-  const startRecording = async () => {
+  async function startRecording() {
     if (mediaRecorder.current && mediaRecorder.current.state !== "inactive") {
       return;
     }
@@ -98,9 +88,9 @@ export const AudioRecorder = ({
 
     stopwatch.start();
     mediaRecorder.current.start(15000);
-  };
+  }
 
-  const togglePauseRecording = () => {
+  function togglePauseRecording() {
     if (mediaRecorder.current) {
       if (mediaRecorder.current.state === "recording") {
         stopwatch.pause();
@@ -114,9 +104,9 @@ export const AudioRecorder = ({
         onResumed?.();
       }
     }
-  };
+  }
 
-  const endRecording = () => {
+  function endRecording() {
     if (mediaRecorder.current) {
       if (mediaRecorder.current.state !== "inactive") {
         stopwatch.reset();
@@ -133,7 +123,7 @@ export const AudioRecorder = ({
         setIsRecording(false);
       }
     }
-  };
+  }
 
   return (
     <div
@@ -142,23 +132,13 @@ export const AudioRecorder = ({
         !isRecording && "hidden",
       )}
     >
-      {isUnsupported ? (
-        <div className="text-red-500 text-sm flex w-full text-center mt-[10px]">
-          Recording is not supported in this browser.
+      <AnimatedPulse isPulsing={isPaused}>
+        <div className="text-6xl text-red-500 -mt-2">
+          {formatDuration(
+            stopwatch.duration === null ? null : stopwatch.duration / 1000,
+          )}
         </div>
-      ) : error !== null ? (
-        <div className="text-red-500 text-sm flex w-full text-center mt-[10px]">
-          An error occurred while accessing the microphone: {error}
-        </div>
-      ) : (
-        <AnimatedPulse isPulsing={isPaused}>
-          <div className="text-6xl text-red-500 -mt-2">
-            {formatDuration(
-              stopwatch.duration === null ? null : stopwatch.duration / 1000,
-            )}
-          </div>
-        </AnimatedPulse>
-      )}
+      </AnimatedPulse>
     </div>
   );
 };
