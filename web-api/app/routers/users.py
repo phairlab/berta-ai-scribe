@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 from fastapi import APIRouter, Depends
 
 import app.schemas as sch
@@ -15,12 +17,17 @@ def submit_feedback(
     *, 
     feedback: sch.UserFeedback
 ):
+    """
+    Saves new user feedback.
+    """
+    
     try:
         record = db.UserFeedback(
+            id=str(uuid4()),
             username=userSession.username,
             submitted=feedback.submitted,
             details=feedback.details,
-            context="(Not Yet Implemented)",
+            session_id=userSession.sessionId,
         )
 
         database.add(record)

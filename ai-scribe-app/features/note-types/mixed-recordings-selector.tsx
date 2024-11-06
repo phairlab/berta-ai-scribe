@@ -26,18 +26,18 @@ export const MixedRecordingsSelector = ({
   const isLoading = !encounters.isReady || !sampleRecordings.isReady;
 
   const recentEncounters = encounters.list
-    .filter((e) => e.recording.transcript)
+    .filter((e) => e.recording?.transcript)
     .slice(0, 10);
 
   const anyRecentEncounters = recentEncounters.length > 0;
 
-  const handleChange = (filename: string) => {
+  const handleChange = (id: string) => {
     const pooledRecordings = [
       ...sampleRecordings.list,
-      ...recentEncounters.map((e) => e.recording),
+      ...recentEncounters.map((e) => e.recording!),
     ];
 
-    const recording = pooledRecordings.find((r) => r.filename === filename);
+    const recording = pooledRecordings.find((r) => r.id === id);
 
     onRecordingSelected(recording);
   };
@@ -49,7 +49,7 @@ export const MixedRecordingsSelector = ({
       isLoading={isLoading}
       label="Audio Sample"
       labelPlacement="outside"
-      selectedKeys={selectedRecording ? [selectedRecording.filename] : []}
+      selectedKeys={selectedRecording ? [selectedRecording.id] : []}
       selectionMode="single"
       onChange={(e) => handleChange(e.target.value)}
     >
@@ -58,8 +58,8 @@ export const MixedRecordingsSelector = ({
         title="Recent Recordings"
       >
         {recentEncounters.map((encounter) => (
-          <SelectItem key={encounter.recording.filename}>
-            {`${formatDatestring(new Date(encounter.createdAt))}${encounter.title ? ` (${encounter.title.toUpperCase()})` : ""}`}
+          <SelectItem key={encounter.recording!.id}>
+            {`${formatDatestring(new Date(encounter.created))}${encounter.label ? ` (${encounter.label.toUpperCase()})` : ""}`}
           </SelectItem>
         ))}
       </SelectSection>
@@ -67,7 +67,7 @@ export const MixedRecordingsSelector = ({
         title={anyRecentEncounters ? "Sample Recordings" : undefined}
       >
         {sampleRecordings.list.map((sr) => (
-          <SelectItem key={sr.filename}>{sr.filename.split(".")[0]}</SelectItem>
+          <SelectItem key={sr.id}>{sr.filename.split(".")[0]}</SelectItem>
         ))}
       </SelectSection>
     </SafeSelect>

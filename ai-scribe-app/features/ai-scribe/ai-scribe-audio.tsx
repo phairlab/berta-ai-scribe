@@ -2,20 +2,25 @@ import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@nextui-org/button";
 
+import { WaitMessageSpinner } from "@/core/wait-message-spinner";
+
 import { SampleRecordingSelector } from "@/features/sample-recordings/sample-recording-selector";
 
 import { AudioFileBrowseButton } from "./audio-file-browse-button";
+import { AudioRecorder } from "./audio-recorder";
 import { AudioTrackInfo } from "./audio-track-info";
 import { PlayPauseButton } from "./play-pause-button";
 import { RecordButton } from "./record-button";
 import {
-  WavesurferModule,
-  WavesurferModuleControls,
-} from "./wavesurfer-module";
+  WavesurferWidget,
+  WavesurferWidgetControls,
+} from "./wavesurfer-widget";
 
 type AIScribeAudioProps = {
-  audio: string | File | null;
+  audio: string | null;
+  waveformPeaks: number[] | null;
   audioTitle?: string;
+  isSaving: boolean;
   onAudioFile: (audioData: File) => void;
   onRecoverRecording: (audioData: File) => void;
   onReset?: () => void;
@@ -23,27 +28,20 @@ type AIScribeAudioProps = {
 
 export const AIScribeAudio = ({
   audio,
+  waveformPeaks,
   audioTitle,
+  isSaving,
   onAudioFile,
-  onRecoverRecording,
   onReset,
 }: AIScribeAudioProps) => {
-  const audioControls = useRef<WavesurferModuleControls | null>(null);
-  const recordingInProgress = useRef(false);
+  const playerControls = useRef<WavesurferWidgetControls | null>(null);
 
-  const [isPlayerInitialized, setIsPlayerInitialized] = useState(false);
   const [isPlayerLoading, setIsPlayerLoading] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [isRecordingPaused, setIsRecordingPaused] = useState(false);
   const [recordingError, setRecordingError] = useState<string | null>(null);
   const [duration, setDuration] = useState<number | null>(null);
-
-  useEffect(() => {
-    // Done as a bug fix.
-    // Something was blocking the isRecording value from updating at the normal time.
-    recordingInProgress.current = isRecording;
-  }, [isRecording]);
 
   useEffect(() => {
     setIsRecording(false);
@@ -53,19 +51,16 @@ export const AIScribeAudio = ({
     setDuration(null);
   }, [audio]);
 
-  const handleAudioPlayerInit = (controls: WavesurferModuleControls) => {
-    audioControls.current = controls;
-    setIsPlayerInitialized(true);
+  const handleAudioPlayerInit = (controls: WavesurferWidgetControls) => {
+    playerControls.current = controls;
   };
 
-  const handleRecordingFinished = (recording: File) => {
-    if (recordingInProgress.current) {
-      setIsRecording(false);
-      setIsRecordingPaused(false);
+  const handleRecordingFinished = (recording: File | null) => {
+    setIsRecording(false);
+    setIsRecordingPaused(false);
 
+    if (recording) {
       onAudioFile(recording);
-    } else {
-      onRecoverRecording(recording);
     }
   };
 
@@ -73,14 +68,16 @@ export const AIScribeAudio = ({
     setRecordingError(null);
 
     if (isRecording) {
-      audioControls.current?.togglePauseRecording();
+      setIsRecordingPaused(!isRecordingPaused);
     } else {
-      try {
-        await audioControls.current?.startRecording();
-      } catch (e: unknown) {
-        setRecordingError((e as Error).message);
-      }
+      setIsRecording(true);
     }
+  };
+
+  const endRecording = () => {
+    setRecordingError(null);
+    setIsRecording(false);
+    setIsRecordingPaused(false);
   };
 
   const reset = () => {
@@ -96,26 +93,42 @@ export const AIScribeAudio = ({
   return (
     <div className="flex flex-col-reverse md:flex-row gap-2 md:gap-4">
       <div className="flex flex-row gap-2 md:gap-4 justify-center w-full">
-        {audio ? (
+        {audio || isSaving ? (
           <PlayPauseButton
             action={isPlaying ? "pause" : "play"}
-            isDisabled={isPlayerLoading}
-            onClick={audioControls.current?.playPause}
+            isDisabled={isPlayerLoading || isSaving}
+            onClick={playerControls.current?.playPause}
           />
         ) : (
           <RecordButton
-            isDisabled={!isPlayerInitialized}
+            isDisabled={false}
             isRecording={isRecording}
             isRecordingPaused={isRecordingPaused}
             onClick={toggleRecording}
           />
         )}
         <div className="w-full flex flex-col gap-2">
-          {!audio && !isRecording && (
+          {isSaving && (
+            <div className="mt-3">
+              <WaitMessageSpinner>Saving</WaitMessageSpinner>
+            </div>
+          )}
+          {audio === null && !isRecording && !isSaving && (
             <div className="w-full h-[70px] flex justify-center items-center border rounded-lg border-zinc-100 dark:border-zinc-900">
               <div className="text-center text-zinc-500 md:mb-2">
                 {recordingError ? (
-                  <span className="text-red-500">{recordingError}</span>
+                  recordingError ===
+                  "Recording is not supported in this browser" ? (
+                    <span className="text-red-500">
+                      Recording is not Supported <br />
+                      in this Browser
+                    </span>
+                  ) : (
+                    <span className="text-red-500">
+                      An Error Occurred While <br />
+                      Attempting to Record
+                    </span>
+                  )
                 ) : (
                   <span>
                     Start Recording or <br />
@@ -125,9 +138,20 @@ export const AIScribeAudio = ({
               </div>
             </div>
           )}
-          <WavesurferModule
+          <AudioRecorder
+            isPaused={isRecordingPaused}
+            isRecording={isRecording}
+            onAudioFinalized={(audio) => handleRecordingFinished(audio)}
+            onError={(error) => {
+              setRecordingError(error.message);
+              setIsRecording(false);
+              setIsRecordingPaused(false);
+            }}
+          />
+          <WavesurferWidget
             audioData={audio ?? null}
-            isHidden={!audio && !isRecording}
+            isHidden={!audio || isRecording || isSaving}
+            waveformPeaks={waveformPeaks}
             onDurationChanged={(seconds) => {
               if (duration != seconds) {
                 setDuration(seconds);
@@ -138,13 +162,9 @@ export const AIScribeAudio = ({
             onPause={() => setIsPlaying(false)}
             onPlay={() => setIsPlaying(true)}
             onReady={() => setIsPlayerLoading(false)}
-            onRecordingEnded={(audio) => handleRecordingFinished(audio)}
-            onRecordingPaused={() => setIsRecordingPaused(true)}
-            onRecordingResumed={() => setIsRecordingPaused(false)}
-            onRecordingStarted={() => setIsRecording(true)}
           />
           <div
-            className={`mx-2 ${isPlayerLoading ? "invisible" : ""} ${!audio && !isRecording ? "hidden" : ""}`}
+            className={`mx-2 ${isPlayerLoading ? "invisible" : ""} ${!audio || isRecording ? "hidden" : ""}`}
           >
             <AudioTrackInfo
               audioTitle={audioTitle ?? "Audio Recording"}
@@ -155,7 +175,7 @@ export const AIScribeAudio = ({
           </div>
         </div>
       </div>
-      {!audio && !isRecording ? (
+      {audio === null && !isRecording && !isSaving ? (
         <div className="flex flex-row md:flex-col gap-2 md:gap-1 md:h-[70px] justify-end items-center md:items-start">
           <AudioFileBrowseButton onFileSelected={onAudioFile} />
           <SampleRecordingSelector onFileSelected={onAudioFile} />
@@ -163,7 +183,7 @@ export const AIScribeAudio = ({
       ) : (
         <div className="flex justify-end md:mt-[9px] md:mb-auto">
           {isRecording ? (
-            <Button size="sm" onClick={audioControls.current?.endRecording}>
+            <Button size="sm" onClick={endRecording}>
               Save Recording
             </Button>
           ) : (

@@ -5,15 +5,12 @@ export function createEncounter(fields: {
   tempId: string;
   audio: File;
 }): Encounter {
+  const created = new Date();
   const encounter: Encounter = setTracking(
     {
-      uuid: fields.tempId,
-      createdAt: new Date(),
-      recording: {
-        filename: fields.audio.name,
-        mediaType: fields.audio.type,
-        cachedAudio: fields.audio,
-      },
+      id: fields.tempId,
+      created: created,
+      modified: created,
       draftNotes: [],
     },
     "Not Persisted",

@@ -11,13 +11,14 @@ class WebAPIException(Exception):
     name: str = "Unexpected Error"
     source: str = "Server"
     message: str
-    uuid: str = str(uuid4())
+    uuid: str
     retry: bool = False
     status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR
     headers: dict = {}
 
     def __init__(self, message: str):
         super().__init__(message)
+        self.uuid = str(uuid4())
         self.message = message
 
     def __str__(self) -> str:

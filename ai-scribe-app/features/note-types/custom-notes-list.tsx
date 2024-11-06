@@ -29,9 +29,9 @@ export const CustomNotesList = ({
       ) : (
         noteTypes.custom.map((noteType) => (
           <CustomNotesListItem
-            key={noteType.uuid}
+            key={noteType.id}
             canDelete={noteTypes.check.canDiscard(noteType)}
-            isBeingEdited={noteType.uuid === editedNoteType?.uuid}
+            isBeingEdited={noteType.id === editedNoteType?.id}
             noteType={noteType}
             onDelete={() => handleDelete(noteType)}
             onEdit={() => onEdit(noteType)}

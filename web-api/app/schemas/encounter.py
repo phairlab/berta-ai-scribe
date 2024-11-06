@@ -7,20 +7,28 @@ import app.services.db as db
 from .recording import Recording
 from .draft_note import DraftNote
 
+
 class Encounter(BaseModel):
-    uuid: str
-    createdAt: datetime | None
-    title: str | None
+    id: str
+    created: datetime
+    modified: datetime
+    label: str | None
+    summary: str | None
     recording: Recording
     draftNotes: list[DraftNote]
 
     @staticmethod
-    def from_db_record(record: db.Encounter):
+    def from_db_record(db_record: db.Encounter):
         return Encounter(
-            uuid=record.uuid,
-            createdAt=record.created_at,
-            title=record.title,
-            recording=Recording.from_db_record(record.recording),
-            draftNotes=[DraftNote.from_db_record(d) for d in record.draft_notes if not d.is_discarded],
+            id=db_record.id,
+            created=db_record.created,
+            modified=db_record.modified,
+            label=db_record.label,
+            summary=db_record.summary,
+            recording=Recording.from_db_record(db_record.recording),
+            draftNotes=[
+                DraftNote.from_db_record(d)
+                for d in db_record.draft_notes
+                if d.inactivated is None
+            ],
         )
-    

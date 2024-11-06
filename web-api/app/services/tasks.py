@@ -48,10 +48,7 @@ async def transcribe_audio(audio: BinaryIO, filename: str, content_type: str) ->
 
             transcription_output = sch.TranscriptionOutput(
                 transcript=" ".join([s.transcript for s in segments]),
-                transcribedAt=segments[0].transcribedAt,
                 service=segments[0].service,
-                audioDuration=sum([s.audioDuration for s in segments]),
-                timeToGenerate=sum([s.audioDuration for s in segments]),
             )
 
     except (errors.ExternalServiceError, errors.AudioProcessingError) as e:

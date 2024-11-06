@@ -23,26 +23,18 @@ export function useEncounters() {
     if (!encounter) {
       encounters.setActive(null);
     } else {
-      encounters.setActive(encounter.uuid);
+      encounters.setActive(encounter.id);
     }
   };
 
   /** Determines whether the preconditions for {@link canCreate} hold for this encounter. */
-  const canCreate = (encounter: Encounter) =>
-    encounter.recording.cachedAudio !== undefined &&
-    !encounters.exists(encounter.uuid);
+  const canCreate = (encounter: Encounter) => !encounters.exists(encounter.id);
 
   /** Adds a new encounter and persists it. */
-  const create = async (encounter: Encounter) => {
-    if (encounters.exists(encounter.uuid)) {
+  const create = async (encounter: Encounter, audio: File) => {
+    if (encounters.exists(encounter.id)) {
       throw new InvalidOperationError(
         "Saving a new encounter with an ID that already exists",
-      );
-    }
-
-    if (!encounter.recording.cachedAudio) {
-      throw new InvalidOperationError(
-        "Saving a new encounter without audio data",
       );
     }
 
@@ -53,13 +45,13 @@ export function useEncounters() {
     try {
       // Persist the data.
       const persistedRecord = await webApi.encounters.create(
-        encounter.recording.cachedAudio,
-        encounter.createdAt,
+        audio,
+        encounter.created,
       );
 
       // Mutate temp records to update persisted id.
-      encounter.uuid = persistedRecord.uuid;
-      tempRecord.uuid = persistedRecord.uuid;
+      encounter.id = persistedRecord.id;
+      tempRecord.id = persistedRecord.id;
 
       encounters.put(convert.fromWebApiEncounter(persistedRecord));
     } catch (ex: unknown) {
@@ -72,38 +64,38 @@ export function useEncounters() {
 
   /** Determines whether the preconditions for {@link canUpdate} hold for this encounter. */
   const canUpdate = (encounter: Encounter) =>
-    encounters.exists(encounter.uuid) &&
-    encounters.get(encounter.uuid)!.tracking.isPersisted === true &&
-    encounters.get(encounter.uuid)!.tracking.isSaving === false;
+    encounters.exists(encounter.id) &&
+    encounters.get(encounter.id)!.tracking.isPersisted === true &&
+    encounters.get(encounter.id)!.tracking.isSaving === false;
 
   /** Updates data for an existing encounter and persists the changes. */
   const update = async (encounter: Encounter) => {
-    if (!encounters.exists(encounter.uuid)) {
+    if (!encounters.exists(encounter.id)) {
       throw new InvalidOperationError("Updating an unknown encounter");
     }
 
-    if (encounters.get(encounter.uuid)!.tracking.isPersisted === false) {
+    if (encounters.get(encounter.id)!.tracking.isPersisted === false) {
       throw new InvalidOperationError(
         "Saving an encounter that has not yet been persisted",
       );
     }
 
-    if (encounters.get(encounter.uuid)!.tracking.isSaving === true) {
+    if (encounters.get(encounter.id)!.tracking.isSaving === true) {
       throw new InvalidOperationError(
         "Saving an encounter that is currently being saved",
       );
     }
 
     // Determine any changes that should be persisted.
-    const existing = encounters.get(encounter.uuid)!;
+    const existing = encounters.get(encounter.id)!;
     const changes: Partial<{ title: string; transcript: string }> = {};
 
-    if (encounter.title !== existing.title) {
-      changes.title = encounter.title;
+    if (encounter.label !== existing.label) {
+      changes.title = encounter.label;
     }
 
-    if (encounter.recording.transcript !== existing.recording.transcript) {
-      changes.transcript = encounter.recording.transcript;
+    if (encounter.recording?.transcript !== existing.recording?.transcript) {
+      changes.transcript = encounter.recording?.transcript;
     }
 
     // Directly update when no changes need to be persisted.
@@ -115,7 +107,7 @@ export function useEncounters() {
 
       try {
         const persistedRecord = await webApi.encounters.update(
-          encounter.uuid,
+          encounter.id,
           changes,
         );
 
@@ -134,15 +126,19 @@ export function useEncounters() {
     canCreate(encounter) || canUpdate(encounter);
 
   /** Adds or updates and then persists an encounter with the provided data. */
-  const save = async (encounter: Encounter) => {
+  const save = async (encounter: Encounter, audio?: File) => {
     if (encounters.status !== "Ready") {
-      throw new InvalidOperationError(
-        "Saving a new encounter before state ready",
-      );
+      throw new InvalidOperationError("Saving an encounter before state ready");
     }
 
-    if (!encounters.exists(encounter.uuid)) {
-      await create(encounter);
+    if (!encounters.exists(encounter.id)) {
+      if (audio === undefined) {
+        throw new InvalidOperationError(
+          "Saving a new encounter without audio data",
+        );
+      }
+
+      await create(encounter, audio);
     } else {
       await update(encounter);
     }
@@ -150,8 +146,8 @@ export function useEncounters() {
 
   /** Determines whether the preconditions for {@link purge} hold for this encounter. */
   const canPurge = (encounter: Encounter) =>
-    encounters.exists(encounter.uuid) &&
-    encounters.get(encounter.uuid)!.tracking.isPersisted === true;
+    encounters.exists(encounter.id) &&
+    encounters.get(encounter.id)!.tracking.isPersisted === true;
   // encounters.get(encounter.uuid)!.tracking.isSaving === false;
 
   /** Removes the encounter and persists the change. */
@@ -162,11 +158,11 @@ export function useEncounters() {
       );
     }
 
-    if (!encounters.exists(encounter.uuid)) {
+    if (!encounters.exists(encounter.id)) {
       throw new InvalidOperationError("Deleting an unknown encounter");
     }
 
-    if (encounters.get(encounter.uuid)!.tracking.isPersisted === false) {
+    if (encounters.get(encounter.id)!.tracking.isPersisted === false) {
       throw new InvalidOperationError(
         "Deleting an encounter that has not yet been persisted",
       );
@@ -179,11 +175,11 @@ export function useEncounters() {
     // }
 
     // Remove from the list.
-    encounters.remove(encounter.uuid);
+    encounters.remove(encounter.id);
 
     // Persist the chanage.
     try {
-      await webApi.encounters.purgeData(encounter.uuid);
+      await webApi.encounters.purgeData(encounter.id);
     } catch (ex: unknown) {
       // Revert the change on failure.
       // encounters.put(
@@ -198,8 +194,8 @@ export function useEncounters() {
 
   /** Determines whether the preconditions for {@link saveNote} hold for this encounter. */
   const canSaveNote = (encounter: Encounter) =>
-    encounters.exists(encounter.uuid) &&
-    encounters.get(encounter.uuid)!.tracking.isPersisted === true;
+    encounters.exists(encounter.id) &&
+    encounters.get(encounter.id)!.tracking.isPersisted === true;
 
   /** Saves a note to an encounter and persists the change. */
   const saveNote = async (encounter: Encounter, note: DraftNote) => {
@@ -207,7 +203,7 @@ export function useEncounters() {
       throw new InvalidOperationError("Saving note before state ready");
     }
 
-    if (!encounters.exists(encounter.uuid)) {
+    if (!encounters.exists(encounter.id)) {
       throw new InvalidOperationError("Saving note to an unknown encounter");
     }
 
@@ -220,10 +216,10 @@ export function useEncounters() {
     // Update encounter notes.
     const notes = [
       ...encounter.draftNotes.filter(
-        (n) => n.noteDefinitionUuid !== note.noteDefinitionUuid,
+        (n) => n.definitionId !== note.definitionId,
       ),
       setTracking(note, "Persisting"),
-    ].sort(byDate((x) => x.createdAt, "Descending"));
+    ].sort(byDate((x) => x.created, "Descending"));
 
     const updated: Encounter = { ...encounter, draftNotes: notes };
 
@@ -232,22 +228,23 @@ export function useEncounters() {
     try {
       // Persist the change.
       const persistedNote = await webApi.encounters.createDraftNote(
-        encounter.uuid,
-        note.noteDefinitionUuid,
-        note.text,
-        note.tag,
+        encounter.id,
+        note.definitionId,
+        note.id,
+        note.title,
+        note.content,
       );
 
       const notes = [
-        ...updated.draftNotes.filter((n) => n.tag !== note.tag),
+        ...updated.draftNotes.filter((n) => n.id !== note.id),
         convert.fromWebApiDraftNote(persistedNote),
-      ].sort(byDate((x) => x.createdAt, "Descending"));
+      ].sort(byDate((x) => x.created, "Descending"));
 
       encounters.put({ ...updated, draftNotes: notes });
     } catch (ex: unknown) {
       // Report on failure.
       const notes = [
-        ...updated.draftNotes.filter((n) => n.tag !== note.tag),
+        ...updated.draftNotes.filter((n) => n.id !== note.id),
         setTracking(note, "Not Persisted", asApplicationError(ex)),
       ];
 
@@ -257,12 +254,11 @@ export function useEncounters() {
 
   /** Determines whether the preconditions for {@link discardNote} hold for this encounter. */
   const canDiscardNote = (encounter: Encounter, note: DraftNote) =>
-    encounters.exists(encounter.uuid) &&
-    encounters.get(encounter.uuid)!.tracking.isPersisted === true &&
-    encounters
-      .get(encounter.uuid)!
-      .draftNotes.find((n) => n.tag === note.tag) !== undefined &&
-    encounters.get(encounter.uuid)!.draftNotes.find((n) => n.tag === note.tag)!
+    encounters.exists(encounter.id) &&
+    encounters.get(encounter.id)!.tracking.isPersisted === true &&
+    encounters.get(encounter.id)!.draftNotes.find((n) => n.id === note.id) !==
+      undefined &&
+    encounters.get(encounter.id)!.draftNotes.find((n) => n.id === note.id)!
       .tracking.isPersisted === true;
 
   /** Removes the note from the specified encounter */
@@ -271,23 +267,21 @@ export function useEncounters() {
       throw new InvalidOperationError("Discarding note before state ready");
     }
 
-    if (!encounters.exists(encounter.uuid)) {
+    if (!encounters.exists(encounter.id)) {
       throw new InvalidOperationError(
         "Discarding note on an unknown encounter",
       );
     }
 
-    if (encounters.get(encounter.uuid)!.tracking.isPersisted === false) {
+    if (encounters.get(encounter.id)!.tracking.isPersisted === false) {
       throw new InvalidOperationError(
         "Discarding a note from an encounter that is not persisted",
       );
     }
 
     if (
-      encounters
-        .get(encounter.uuid)!
-        .draftNotes.find((n) => n.tag === note.tag)!.tracking.isPersisted ===
-      false
+      encounters.get(encounter.id)!.draftNotes.find((n) => n.id === note.id)!
+        .tracking.isPersisted === false
     ) {
       throw new InvalidOperationError(
         "Discarding a note that has not been persisted",
@@ -295,24 +289,23 @@ export function useEncounters() {
     }
 
     if (
-      encounters
-        .get(encounter.uuid)!
-        .draftNotes.find((n) => n.tag === note.tag) === undefined
+      encounters.get(encounter.id)!.draftNotes.find((n) => n.id === note.id) ===
+      undefined
     ) {
       throw new InvalidOperationError("Discarding an unknown note");
     }
 
     // Remove the note from state and persist the change.
-    const notes = [...encounter.draftNotes.filter((n) => n.tag === note.tag)];
+    const notes = [...encounter.draftNotes.filter((n) => n.id === note.id)];
 
     encounters.put({ ...encounter, draftNotes: notes });
 
     try {
-      await webApi.encounters.discardDraftNote(encounter.uuid, note.tag);
+      await webApi.encounters.discardDraftNote(encounter.id, note.id);
     } catch (ex: unknown) {
       // Revert the change if failed.
       const notes = [
-        ...encounter.draftNotes.filter((n) => n.tag !== note.tag),
+        ...encounter.draftNotes.filter((n) => n.id !== note.id),
         setTracking(note, note.tracking.state, asApplicationError(ex)),
       ];
 

@@ -1,22 +1,24 @@
+import json
+
 from pydantic import BaseModel
 
 import app.services.db as db
 
 class Recording(BaseModel):
-    filename: str
-    mediaType: str
-    duration: int
+    id: str
+    mediaType: str | None
+    fileSize: int | None
+    duration: int | None
+    waveformPeaks: list[float] | None
     transcript: str | None = None
-    transcriptionService: str | None = None
-    timeToTranscribe: int | None = None
 
     @staticmethod
     def from_db_record(record: db.Recording):
         return Recording(
-            filename=record.filename,
+            id=record.id,
             mediaType=record.media_type,
+            fileSize=record.file_size,
             duration=record.duration,
-            transcript=record.transcript,
-            transcriptionService=record.transcription_service,
-            timeToTranscribe=record.time_to_transcribe,
+            waveformPeaks=json.loads(record.waveform_peaks) if record.waveform_peaks is not None else None,
+            transcript=record.transcript
         )

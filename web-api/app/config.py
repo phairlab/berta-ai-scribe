@@ -9,10 +9,10 @@ load_dotenv()
 class Settings(BaseSettings):
     ENVIRONMENT: Literal["production", "development"] = "production"
     APP_NAME: str = "AHS \"Jenkins\" Scribe"
-    APP_VERSION: str = "0.2.4"
+    APP_VERSION: str = "0.3.3"
 
     DEFAULT_AUDIO_FORMAT: str = "mp3"
-    DEFAULT_AUDIO_BITRATE: str = "32k"
+    DEFAULT_AUDIO_BITRATE: str = "96k"
     LOGGING_LEVEL: str = "info"
 
     JWT_ALGORITHM: str = "HS256"
@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     SNOWFLAKE_WAREHOUSE: str
     SNOWFLAKE_USERNAME: str | None = None
 
-    SYSTEM_USER: str = "SYSTEM"
+    SYSTEM_USER: str = "BUILTIN"
     DEFAULT_NOTE_DEFINITION: str = "Full Visit"
     RECORDINGS_FOLDER: str = ".recordings"
 

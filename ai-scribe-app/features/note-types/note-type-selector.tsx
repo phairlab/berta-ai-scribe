@@ -37,8 +37,8 @@ export const NoteTypeSelector = ({
 
   const handleChange = (key: string) => {
     const noteType =
-      customTypes.find((nt) => nt.uuid === key) ??
-      builtinTypes.find((nt) => nt.uuid === key);
+      customTypes.find((nt) => nt.id === key) ??
+      builtinTypes.find((nt) => nt.id === key);
 
     onChange(noteType);
   };
@@ -53,7 +53,7 @@ export const NoteTypeSelector = ({
       label={label}
       labelPlacement={labelPlacement}
       placeholder={placeholder}
-      selectedKeys={selected ? [selected.uuid] : []}
+      selectedKeys={selected ? [selected.id] : []}
       selectionMode="single"
       size="md"
       onChange={(e) => handleChange(e.target.value)}
@@ -63,12 +63,12 @@ export const NoteTypeSelector = ({
         title="Custom Note Types"
       >
         {persistedNoteTypes(customTypes).map((noteType) => (
-          <SelectItem key={noteType.uuid}>{noteType.title}</SelectItem>
+          <SelectItem key={noteType.id}>{noteType.title}</SelectItem>
         ))}
       </SelectSection>
       <SelectSection title={hasCustomNotes ? "Built-in Note Types" : undefined}>
         {persistedNoteTypes(builtinTypes).map((noteType) => (
-          <SelectItem key={noteType.uuid}>{noteType.title}</SelectItem>
+          <SelectItem key={noteType.id}>{noteType.title}</SelectItem>
         ))}
       </SelectSection>
     </SafeSelect>

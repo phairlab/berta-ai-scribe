@@ -21,7 +21,7 @@ export const CustomNotesListItem = ({
   onEdit,
   onDelete,
 }: CustomNotesListItemProps) => (
-  <div key={noteType.uuid} className="flex flex-row gap-2 h-5">
+  <div key={noteType.id} className="flex flex-row gap-2 h-5">
     <div
       className={clsx("basis-full text-start self-stretch w-[300px] ps-2 h-7", {
         "border-s-4 border-blue-500": isBeingEdited,

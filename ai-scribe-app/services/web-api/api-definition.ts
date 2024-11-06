@@ -1,6 +1,7 @@
 import { WebApiToken } from "./authentication";
 import * as encounters from "./encounters";
 import * as noteDefinitions from "./note-definitions";
+import * as recordings from "./recordings";
 import * as sampleRecordings from "./sample-recordings";
 import * as tasks from "./tasks";
 import * as users from "./users";
@@ -78,5 +79,6 @@ export const WebApiDefinition = {
   sampleRecordings: sampleRecordings.routes,
   noteDefinitions: noteDefinitions.routes,
   encounters: encounters.routes,
+  recordings: recordings.routes,
   users: users.routes,
 } satisfies WebApiDefinition;

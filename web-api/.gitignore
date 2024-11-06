@@ -1,5 +1,8 @@
 .recordings/
 
+# audiowaveform executable
+audiowaveform.exe
+
 # From github recommended boilerplate: https://github.com/github/gitignore/blob/main/Python.gitignore
 
 # RSA Keys

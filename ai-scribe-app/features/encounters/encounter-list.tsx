@@ -31,10 +31,10 @@ export const EncounterList = ({
     >
       {encounters.map((encounter: Encounter) => (
         <ListboxItem
-          key={encounter.uuid!}
+          key={encounter.id!}
           className={clsx("h-12 relative", {
             "border-s-4 rounded-s-none border-blue-500 data-[hover=true]:bg-transparent":
-              activeEncounter && encounter.uuid === activeEncounter.uuid,
+              activeEncounter && encounter.id === activeEncounter.id,
           })}
           description={
             encounter.tracking.isSaving && !encounter.tracking.isPersisted ? (
@@ -49,14 +49,14 @@ export const EncounterList = ({
                 />
               </div>
             ) : (
-              <p className="ms-1">{encounter.title?.toUpperCase()}</p>
+              <p className="ms-1">{encounter.label?.toUpperCase()}</p>
             )
           }
-          textValue={encounter.title}
+          textValue={encounter.id}
           onPress={() => onSelected(encounter)}
         >
           <div className="flex flex-row gap-2">
-            <p className="grow">{formatDatestring(encounter.createdAt)}</p>
+            <p className="grow">{formatDatestring(encounter.created)}</p>
             <EncounterDropdown
               encounter={encounter}
               onDelete={() => onDelete(encounter)}

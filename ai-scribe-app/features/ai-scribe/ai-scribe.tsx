@@ -32,7 +32,7 @@ export const AIScribe = () => {
 
   const noteTypes = useNoteTypes();
   const [selectedNoteType, setSelectedNoteType] = useState(noteTypes.default);
-  const [audio, setAudio] = useState<string | File>();
+  const [audio, setAudio] = useState<string>();
   const [activeOutput, setActiveOutput] = useState<AIScribeOutputType>();
 
   const [aiScribeError, setAIScribeError] = useState<AIScribeError>();
@@ -61,7 +61,8 @@ export const AIScribe = () => {
   const canGenerateNote =
     selectedNoteType !== null &&
     activeEncounter !== null &&
-    activeEncounter.recording.transcript &&
+    activeEncounter.recording !== undefined &&
+    (activeEncounter.recording.transcript ?? null) !== null &&
     !noteGenerator.generatingNoteType;
 
   const handleAudioFileGenerated = (audio: File, setActive: boolean) => {
@@ -73,7 +74,7 @@ export const AIScribe = () => {
       audio: audio,
     });
 
-    encounters.save(encounter);
+    encounters.save(encounter, audio);
 
     if (setActive) {
       encounters.setActive(encounter);
@@ -84,6 +85,12 @@ export const AIScribe = () => {
     if (!activeEncounter) {
       throw Error(
         "Invalid Operation: Transcript generated but no active encounter",
+      );
+    }
+
+    if (!activeEncounter.recording) {
+      throw Error(
+        "Invalid Operation: Active encounter has an incomplete data record",
       );
     }
 
@@ -125,10 +132,16 @@ export const AIScribe = () => {
     }
   };
 
-  const handleActiveEncounterChanged = () => {
+  const handleActiveEncounterUpdated = () => {
     setAIScribeError(undefined);
 
-    if (transcriber.isTranscribing || noteGenerator.generatingNoteType) {
+    const encounterChanged =
+      !activeEncounter || ref.current?.id !== activeEncounter.id;
+
+    if (
+      encounterChanged &&
+      (transcriber.isTranscribing || noteGenerator.generatingNoteType)
+    ) {
       suppressNextError.current = true;
       transcriber.abort();
       noteGenerator.abort();
@@ -142,17 +155,15 @@ export const AIScribe = () => {
     } else {
       ref.current = activeEncounter;
 
-      if (!activeEncounter.recording.cachedAudio) {
-        setAudio(
-          `/api/encounters/recording-files/${activeEncounter.recording.filename}`,
-        );
+      if (activeEncounter.recording?.duration) {
+        setAudio(`/api/recordings/${activeEncounter.recording.id}/download`);
       } else {
-        setAudio(activeEncounter.recording.cachedAudio);
+        setAudio(undefined);
       }
 
       if (activeEncounter.draftNotes.length > 0) {
         setActiveOutput(activeEncounter.draftNotes[0]);
-      } else if (activeEncounter.recording.transcript) {
+      } else if (activeEncounter.recording?.transcript) {
         setActiveOutput(activeEncounter.recording);
       } else {
         setActiveOutput(undefined);
@@ -162,15 +173,12 @@ export const AIScribe = () => {
 
   // React to changes in the active encounter's state.
   useEffect(() => {
-    // Reset the UI when the active encounter changes.
-    if (!activeEncounter || ref.current?.uuid !== activeEncounter.uuid) {
-      handleActiveEncounterChanged();
-    }
+    handleActiveEncounterUpdated();
   }, [activeEncounter]);
 
   // Auto-transcribe encounters on audio available.
   useEffect(() => {
-    if (canTranscribe && !activeEncounter.recording.transcript) {
+    if (canTranscribe && !activeEncounter.recording?.transcript) {
       transcriber.transcribe(activeEncounter);
     }
   }, [audio, activeEncounter]);
@@ -180,7 +188,8 @@ export const AIScribe = () => {
     if (canGenerateNote && activeEncounter.draftNotes.length === 0) {
       noteGenerator.generateNote(
         selectedNoteType,
-        activeEncounter.recording.transcript!,
+        activeEncounter.id,
+        activeEncounter.recording!.transcript!,
       );
     }
   }, [selectedNoteType, activeEncounter]);
@@ -189,6 +198,12 @@ export const AIScribe = () => {
     <div className="flex flex-col gap-6">
       <AIScribeAudio
         audio={audio ?? null}
+        isSaving={
+          (activeEncounter?.tracking.isSaving &&
+            !activeEncounter.tracking.isPersisted) ??
+          false
+        }
+        waveformPeaks={activeEncounter?.recording?.waveformPeaks ?? null}
         onAudioFile={(audio) => handleAudioFileGenerated(audio, true)}
         onRecoverRecording={(audio) => handleAudioFileGenerated(audio, false)}
         onReset={() => encounters.setActive(null)}
@@ -205,17 +220,14 @@ export const AIScribe = () => {
             canGenerateNote &&
             noteGenerator.generateNote(
               selectedNoteType,
-              activeEncounter.recording.transcript!,
+              activeEncounter.id,
+              activeEncounter.recording!.transcript!,
             )
           }
         />
-        {audio === undefined && (
+        {activeEncounter === null && (
           <ConsentScript className="text-sm text-justify sm:text-start text-zinc-400 dark:text-zinc-600 w-96 max-w-[80%] mt-8" />
         )}
-        {activeEncounter?.tracking.isSaving &&
-          !activeEncounter.tracking.isPersisted && (
-            <WaitMessageSpinner>Saving</WaitMessageSpinner>
-          )}
         {transcriber.isTranscribing && (
           <WaitMessageSpinner onCancel={transcriber.abort}>
             Transcribing Audio
@@ -229,7 +241,7 @@ export const AIScribe = () => {
         {activeEncounter &&
           (aiScribeError ||
             activeEncounter.draftNotes.length > 0 ||
-            activeEncounter.recording.transcript) && (
+            activeEncounter.recording?.transcript) && (
             <AIScribeOutput
               activeOutput={activeOutput}
               error={aiScribeError}

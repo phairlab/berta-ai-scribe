@@ -5,28 +5,18 @@ from pydantic import BaseModel
 import app.services.db as db
 
 class DraftNote(BaseModel):
-    uuid: str
-    noteDefinitionUuid: str
-    createdAt: datetime
-    tag: str
+    id: str
+    definitionId: str
+    created: datetime
     title: str
-    text: str
-    generationService: str
-    model: str
-    timeToGenerate: int
-    isDiscarded: bool
+    content: str
 
     @staticmethod
-    def from_db_record(record: db.DraftNote):
+    def from_db_record(db_record: db.DraftNote):
         return DraftNote(
-            uuid=record.uuid,
-            noteDefinitionUuid=record.note_definition.uuid,
-            createdAt=record.created_at,
-            tag=record.tag,
-            title=record.title,
-            text=record.text,
-            generationService=record.generation_service,
-            model=record.model,
-            timeToGenerate=record.time_to_generate,
-            isDiscarded=record.is_discarded,
+            id=db_record.id,
+            definitionId=db_record.definition_id,
+            created=db_record.created,
+            title=db_record.title,
+            content=db_record.content
         )

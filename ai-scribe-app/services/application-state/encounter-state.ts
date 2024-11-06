@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useState } from "react";
 
 import { Encounter } from "@/core/types";
 import { byDate } from "@/utility/sorters";
 
 import { LoadingStatus } from "./application-state-context";
 
-type Setter<T> = (state: T) => void;
+type Setter<T> = Dispatch<SetStateAction<T>>;
 
 export type EncounterState = {
   status: LoadingStatus;
@@ -36,7 +36,7 @@ export function useEncounterState(
     const id = activeEncounterId;
 
     if (id) {
-      setActiveEncounter(encounters.find((e) => e.uuid === id) ?? null);
+      setActiveEncounter(encounters.find((e) => e.id === id) ?? null);
     } else {
       setActiveEncounter(null);
     }
@@ -46,7 +46,7 @@ export function useEncounterState(
   useEffect(() => {
     if (activeEncounter) {
       setActiveEncounter(
-        encounters.find((e) => e.uuid === activeEncounter.uuid) ?? null,
+        encounters.find((e) => e.id === activeEncounter.id) ?? null,
       );
     }
   }, [encounters]);
@@ -55,17 +55,17 @@ export function useEncounterState(
     status: status,
     list: encounters,
     activeEncounter: activeEncounter,
-    exists: (id: string) => encounters.some((e) => e.uuid === id),
-    get: (id: string) => encounters.find((e) => e.uuid === id),
+    exists: (id: string) => encounters.some((e) => e.id === id),
+    get: (id: string) => encounters.find((e) => e.id === id),
     put: (data: Encounter) => {
-      setEncounters(
-        [...encounters.filter((e) => e.uuid !== data.uuid), data].sort(
-          byDate((x) => x.createdAt, "Descending"),
+      setEncounters((encounters) =>
+        [...encounters.filter((e) => e.id !== data.id), data].sort(
+          byDate((x) => x.created, "Descending"),
         ),
       );
     },
     remove: (id: string) => {
-      setEncounters([...encounters.filter((e) => e.uuid !== id)]);
+      setEncounters((encounters) => [...encounters.filter((e) => e.id !== id)]);
     },
     setActive: (id: string | null) => {
       setActiveEncounterId(id);

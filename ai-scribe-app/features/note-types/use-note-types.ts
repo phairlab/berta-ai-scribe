@@ -33,11 +33,11 @@ export function useNoteTypes() {
   /** Determines whether the preconditions for {@link create} hold for this note type. */
   const canCreate = (noteType: EditedNoteType) =>
     hasRequiredFields(noteType) &&
-    !noteTypes.list.find((nt) => nt.uuid === noteType.uuid);
+    !noteTypes.list.find((nt) => nt.id === noteType.id);
 
   /** Adds a new note type and persists it. */
   const create = async (noteType: NoteType) => {
-    if (noteTypes.list.find((nt) => nt.uuid === noteType.uuid)) {
+    if (noteTypes.list.find((nt) => nt.id === noteType.id)) {
       throw new InvalidOperationError(
         "Creating a note type with an ID that is already taken",
       );
@@ -54,8 +54,8 @@ export function useNoteTypes() {
       );
 
       // Mutate temp record to update persisted id.
-      noteType.uuid = persistedRecord.uuid;
-      tempRecord.uuid = persistedRecord.uuid;
+      noteType.id = persistedRecord.id;
+      tempRecord.id = persistedRecord.id;
 
       noteTypes.put(convert.fromWebApiNoteType(persistedRecord));
     } catch (ex: unknown) {
@@ -69,23 +69,23 @@ export function useNoteTypes() {
   /** Determines whether the preconditions for {@link update} hold for this note type. */
   const canUpdate = (noteType: EditedNoteType) =>
     hasRequiredFields(noteType) &&
-    noteTypes.exists(noteType.uuid) &&
-    noteTypes.get(noteType.uuid)!.tracking.isPersisted === true &&
-    noteTypes.get(noteType.uuid)!.tracking.isSaving === false;
+    noteTypes.exists(noteType.id) &&
+    noteTypes.get(noteType.id)!.tracking.isPersisted === true &&
+    noteTypes.get(noteType.id)!.tracking.isSaving === false;
 
   /** Updates the data for an existing note type and persists the changes. */
   const update = async (noteType: NoteType) => {
-    if (!noteTypes.exists(noteType.uuid)) {
+    if (!noteTypes.exists(noteType.id)) {
       throw new InvalidOperationError("Saving an unknown note type");
     }
 
-    if (noteTypes.get(noteType.uuid)!.tracking.isPersisted === false) {
+    if (noteTypes.get(noteType.id)!.tracking.isPersisted === false) {
       throw new InvalidOperationError(
         "Saving a note type that has not yet been persisted",
       );
     }
 
-    if (noteTypes.get(noteType.uuid)!.tracking.isSaving === true) {
+    if (noteTypes.get(noteType.id)!.tracking.isSaving === true) {
       throw new InvalidOperationError(
         "Saving a note type that is currently being saved",
       );
@@ -94,13 +94,10 @@ export function useNoteTypes() {
     noteTypes.put(setTracking(noteType, "Synchronizing"));
 
     try {
-      const persistedRecord = await webApi.noteDefinitions.update(
-        noteType.uuid,
-        {
-          title: noteType.title,
-          instructions: noteType.instructions,
-        },
-      );
+      const persistedRecord = await webApi.noteDefinitions.update(noteType.id, {
+        title: noteType.title,
+        instructions: noteType.instructions,
+      });
 
       noteTypes.put(convert.fromWebApiNoteType(persistedRecord));
     } catch (ex: unknown) {
@@ -127,7 +124,7 @@ export function useNoteTypes() {
       );
     }
 
-    if (!noteTypes.exists(noteType.uuid)) {
+    if (!noteTypes.exists(noteType.id)) {
       await create(noteType);
     } else {
       await update(noteType);
@@ -136,10 +133,10 @@ export function useNoteTypes() {
 
   /** Determines whether the preconditions for {@link discard} hold for this note type. */
   const canDiscard = (noteType: NoteType) =>
-    noteTypes.exists(noteType.uuid) &&
-    noteTypes.get(noteType.uuid)!.tracking.isPersisted === true &&
-    noteTypes.get(noteType.uuid)!.tracking.isSaving === false &&
-    noteTypes.get(noteType.uuid)!.isBuiltin === false;
+    noteTypes.exists(noteType.id) &&
+    noteTypes.get(noteType.id)!.tracking.isPersisted === true &&
+    noteTypes.get(noteType.id)!.tracking.isSaving === false &&
+    noteTypes.get(noteType.id)!.isBuiltin === false;
 
   /** Removes a note type and persists the change. */
   const discard = async (noteType: NoteType) => {
@@ -149,30 +146,30 @@ export function useNoteTypes() {
       );
     }
 
-    if (!noteTypes.exists(noteType.uuid)) {
+    if (!noteTypes.exists(noteType.id)) {
       throw new InvalidOperationError("Deleting an unknown note type");
     }
 
-    if (noteTypes.get(noteType.uuid)!.tracking.isPersisted === false) {
+    if (noteTypes.get(noteType.id)!.tracking.isPersisted === false) {
       throw new InvalidOperationError(
         "Deleting a note type that is not persisted",
       );
     }
 
-    if (noteTypes.get(noteType.uuid)!.tracking.isSaving === true) {
+    if (noteTypes.get(noteType.id)!.tracking.isSaving === true) {
       throw new InvalidOperationError(
         "Deleting a note type that is currently being saved",
       );
     }
 
-    if (noteTypes.get(noteType.uuid)!.isBuiltin === true) {
+    if (noteTypes.get(noteType.id)!.isBuiltin === true) {
       throw new InvalidOperationError("Deleting a built-in note type");
     }
 
-    noteTypes.remove(noteType.uuid);
+    noteTypes.remove(noteType.id);
 
     try {
-      await webApi.noteDefinitions.discard(noteType.uuid);
+      await webApi.noteDefinitions.discard(noteType.id);
     } catch (ex: unknown) {
       // Revert the state change on failure.
       noteTypes.put(

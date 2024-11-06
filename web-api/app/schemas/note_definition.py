@@ -6,22 +6,22 @@ import app.services.db as db
 from app.config import settings
 
 class NoteDefinition(BaseModel):
-    uuid: str
-    createdAt: datetime
+    id: str
+    modified: datetime
     title: str
     instructions: str
     isBuiltin: bool
-    isDefault: bool = False
-    isDiscarded: bool = False
+    isSystemDefault: bool = False
 
     @staticmethod
-    def from_db_record(record: db.NoteDefinition):
+    def from_db_record(db_record: db.NoteDefinition):
+        # Each db record is a version of the definition,
+        # so its created datetime represents a modification.
         return NoteDefinition(
-            uuid=record.uuid,
-            createdAt=record.created_at,
-            title=record.title,
-            instructions=record.instructions,
-            isBuiltin=record.username == settings.SYSTEM_USER,
-            isDefault=record.username == settings.SYSTEM_USER and record.title == settings.DEFAULT_NOTE_DEFINITION,
-            isDiscarded=record.is_discarded,
+            id=db_record.id,
+            modified=db_record.created,
+            title=db_record.title,
+            instructions=db_record.instructions,
+            isBuiltin=db_record.username == settings.SYSTEM_USER,
+            isSystemDefault=db_record.username == settings.SYSTEM_USER and db_record.title == settings.DEFAULT_NOTE_DEFINITION,
         )
