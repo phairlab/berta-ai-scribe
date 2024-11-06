@@ -10,9 +10,9 @@ import { alphabetically, byDate } from "@/utility/sorters";
 
 import {
   ApplicationStateContext,
-  LoadingStatus,
+  InitializationState,
 } from "./application-state-context";
-import { useEncounterState } from "./encounter-state";
+import { EncounterLoadState, useEncounterState } from "./encounter-state";
 import { useNoteTypeState } from "./note-type-state";
 import { useSampleRecordingState } from "./sample-recording-state";
 
@@ -31,7 +31,7 @@ export const ApplicationStateProvider = ({
     [],
   );
   const [sampleRecordingStatus, setSampleRecordingStatus] =
-    useState<LoadingStatus>("Uninitialized");
+    useState<InitializationState>("Uninitialized");
   const sampleRecordingState = useSampleRecordingState(
     sampleRecordingStatus,
     sampleRecordings,
@@ -40,7 +40,7 @@ export const ApplicationStateProvider = ({
   const [noteTypes, setNoteTypes] = useState<NoteType[]>([]);
   const [defaultNoteType, setDefaultNoteType] = useState<NoteType | null>(null);
   const [noteTypeStatus, setNoteTypeStatus] =
-    useState<LoadingStatus>("Uninitialized");
+    useState<InitializationState>("Uninitialized");
   const noteTypeState = useNoteTypeState(
     noteTypeStatus,
     noteTypes,
@@ -50,16 +50,20 @@ export const ApplicationStateProvider = ({
   );
 
   const [encounters, setEncounters] = useState<Encounter[]>([]);
+  const [encounterLoadState, setEncounterLoadState] =
+    useState<EncounterLoadState>("All Fetched");
   const [activeEncounter, setActiveEncounter] = useState<Encounter | null>(
     null,
   );
   const [encounterStatus, setEncounterStatus] =
-    useState<LoadingStatus>("Uninitialized");
+    useState<InitializationState>("Uninitialized");
   const encounterState = useEncounterState(
     encounterStatus,
     encounters,
+    encounterLoadState,
     activeEncounter,
     setEncounters,
+    setEncounterLoadState,
     setActiveEncounter,
   );
 
@@ -124,14 +128,18 @@ export const ApplicationStateProvider = ({
       });
 
     setEncounterStatus("Loading");
+    setEncounterLoadState("Fetching More");
     webApi.encounters
       .getAll()
-      .then((records) => {
-        const encounters: Encounter[] = records
+      .then((page) => {
+        const encounters: Encounter[] = page.data
           .sort(byDate((x) => x.created, "Descending"))
           .map((record) => convert.fromWebApiEncounter(record));
 
         setEncounters(encounters);
+        setEncounterLoadState(
+          page.isLastPage ? "All Fetched" : "Partially Fetched",
+        );
         setEncounterStatus("Ready");
       })
       .catch(() => {

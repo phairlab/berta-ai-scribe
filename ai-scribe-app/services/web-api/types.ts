@@ -1,3 +1,8 @@
+export type DataPage<T> = {
+  data: T[];
+  isLastPage: boolean;
+};
+
 export type DraftNote = {
   id: string;
   definitionId: string;

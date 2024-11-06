@@ -1,28 +1,38 @@
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 
-import { Encounter } from "@/core/types";
+import { Encounter, EncounterDataPage } from "@/core/types";
+import * as convert from "@/utility/converters";
 import { byDate } from "@/utility/sorters";
 
-import { LoadingStatus } from "./application-state-context";
+import { InitializationState } from "./application-state-context";
 
 type Setter<T> = Dispatch<SetStateAction<T>>;
+export type EncounterLoadState =
+  | "Fetching More"
+  | "Partially Fetched"
+  | "All Fetched";
 
 export type EncounterState = {
-  status: LoadingStatus;
+  status: InitializationState;
   list: Encounter[];
+  loadState: EncounterLoadState;
   activeEncounter: Encounter | null;
   exists: (id: string) => boolean;
   get: (id: string) => Encounter | undefined;
   put: (data: Encounter) => void;
   remove: (id: string) => void;
+  setPageLoading: () => void;
+  loadPage: (page: EncounterDataPage) => void;
   setActive: (id: string | null) => void;
 };
 
 export function useEncounterState(
-  status: LoadingStatus,
+  status: InitializationState,
   encounters: Encounter[],
+  loadState: EncounterLoadState,
   activeEncounter: Encounter | null,
   setEncounters: Setter<Encounter[]>,
+  setLoadState: Setter<EncounterLoadState>,
   setActiveEncounter: Setter<Encounter | null>,
 ) {
   const [activeEncounterId, setActiveEncounterId] = useState<string | null>(
@@ -54,6 +64,7 @@ export function useEncounterState(
   return {
     status: status,
     list: encounters,
+    loadState: loadState,
     activeEncounter: activeEncounter,
     exists: (id: string) => encounters.some((e) => e.id === id),
     get: (id: string) => encounters.find((e) => e.id === id),
@@ -66,6 +77,21 @@ export function useEncounterState(
     },
     remove: (id: string) => {
       setEncounters((encounters) => [...encounters.filter((e) => e.id !== id)]);
+    },
+    setPageLoading: () => {
+      setLoadState("Fetching More");
+    },
+    loadPage: (page: EncounterDataPage) => {
+      const moreEncounters: Encounter[] = page.data
+        .sort(byDate((x) => x.created, "Descending"))
+        .map((record) => convert.fromWebApiEncounter(record));
+
+      setEncounters((encounters) =>
+        [...encounters, ...moreEncounters].sort(
+          byDate((x) => x.created, "Descending"),
+        ),
+      );
+      setLoadState(page.isLastPage ? "All Fetched" : "Partially Fetched");
     },
     setActive: (id: string | null) => {
       setActiveEncounterId(id);

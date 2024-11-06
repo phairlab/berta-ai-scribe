@@ -1,14 +1,21 @@
 import { ApiRouterDefinition } from "./api-definition";
 import { WebApiToken } from "./authentication";
 import { httpAction } from "./base-queries";
-import { DraftNote, Encounter } from "./types";
+import { DataPage, DraftNote, Encounter } from "./types";
 
 export const getAll =
   (getAccessToken: () => WebApiToken) =>
-  (earlierThan?: Date, cancellation?: AbortSignal): Promise<Encounter[]> =>
-    httpAction<Encounter[]>("GET", "api/encounters", {
+  (
+    earlierThan?: Date,
+    cancellation?: AbortSignal,
+  ): Promise<DataPage<Encounter>> =>
+    httpAction<DataPage<Encounter>>("GET", "api/encounters", {
       accessToken: getAccessToken(),
-      query: { earlierThan: earlierThan?.toISOString() },
+      query: {
+        earlierThan: earlierThan
+          ? new Date(earlierThan).toISOString()
+          : undefined,
+      },
       signal: cancellation,
     });
 

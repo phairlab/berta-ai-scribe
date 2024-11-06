@@ -25,7 +25,7 @@ def get_encounters(
     database: useDatabase,
     *,
     earlierThan: datetime | None = None,
-) -> list[sch.Encounter]:
+) -> sch.DataPage[sch.Encounter]:
     """
     Gets all saved encounters for the current user.
     """
@@ -44,15 +44,19 @@ def get_encounters(
             db.Encounter.inactivated.is_(None),
         ) \
         .order_by(db.Encounter.created.desc()) \
-        .limit(settings.ENCOUNTERS_PAGE_SIZE) \
+        .limit(settings.ENCOUNTERS_PAGE_SIZE + 1) \
         .options(
             selectinload(db.Encounter.recording),
             selectinload(db.Encounter.draft_notes),
         )
     
     records = database.execute(get_encounters_batch).scalars().all()
-    
-    return [sch.Encounter.from_db_record(r) for r in records]
+    encounters = [sch.Encounter.from_db_record(r) for r in records]
+
+    return sch.DataPage[sch.Encounter](
+        data=encounters[:settings.ENCOUNTERS_PAGE_SIZE],
+        isLastPage=len(encounters) <= settings.ENCOUNTERS_PAGE_SIZE
+    )
 
 @router.post("")
 def create_encounter(

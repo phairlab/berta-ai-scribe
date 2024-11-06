@@ -1,6 +1,6 @@
 import { SampleRecording } from "@/core/types";
 
-import { LoadingStatus } from "./application-state-context";
+import { InitializationState } from "./application-state-context";
 
 export type SampleRecordingState = {
   status: "Uninitialized" | "Loading" | "Ready" | "Failed";
@@ -8,7 +8,7 @@ export type SampleRecordingState = {
 };
 
 export function useSampleRecordingState(
-  status: LoadingStatus,
+  status: InitializationState,
   sampleRecordings: SampleRecording[],
 ) {
   return {
