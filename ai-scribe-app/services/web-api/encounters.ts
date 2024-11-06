@@ -5,9 +5,10 @@ import { DraftNote, Encounter } from "./types";
 
 export const getAll =
   (getAccessToken: () => WebApiToken) =>
-  (cancellation?: AbortSignal): Promise<Encounter[]> =>
+  (earlierThan?: Date, cancellation?: AbortSignal): Promise<Encounter[]> =>
     httpAction<Encounter[]>("GET", "api/encounters", {
       accessToken: getAccessToken(),
+      query: { earlierThan: earlierThan?.toISOString() },
       signal: cancellation,
     });
 
