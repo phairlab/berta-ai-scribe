@@ -20,24 +20,37 @@ from app.config import settings
 router = APIRouter(dependencies=[Depends(authenticate_user)])
 
 @router.get("")
-def get_encounters(userSession: useUserSession, database: useDatabase) -> list[sch.Encounter]:
+def get_encounters(
+    userSession: useUserSession,
+    database: useDatabase,
+    *,
+    earlierThan: datetime | None = None,
+) -> list[sch.Encounter]:
     """
     Gets all saved encounters for the current user.
     """
 
     # Fetch the encounter records for the current user.
-    get_encounters = select(db.Encounter) \
+    get_encounters_batch = select(db.Encounter)
+    
+    if (earlierThan is not None):
+        get_encounters_batch = get_encounters_batch.where(
+            db.Encounter.created < earlierThan
+        )
+    
+    get_encounters_batch = get_encounters_batch \
         .where(
             db.Encounter.username == userSession.username,
             db.Encounter.inactivated.is_(None),
         ) \
         .order_by(db.Encounter.created.desc()) \
+        .limit(settings.ENCOUNTERS_PAGE_SIZE) \
         .options(
             selectinload(db.Encounter.recording),
             selectinload(db.Encounter.draft_notes),
         )
     
-    records = database.execute(get_encounters).scalars().all()
+    records = database.execute(get_encounters_batch).scalars().all()
     
     return [sch.Encounter.from_db_record(r) for r in records]
 

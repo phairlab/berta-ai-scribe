@@ -38,6 +38,8 @@ class Settings(BaseSettings):
     GENERATIVE_AI_MODEL: str = "gpt-4o"
     TRANSCRIPTION_SERVICE: Literal["OPENAI", "LOCAL_WHISPER"] = "OPENAI"
     LOCAL_WHISPER_SERVICE_URL: str | None = None
+    
+    ENCOUNTERS_PAGE_SIZE: int = 15
 
     model_config = SettingsConfigDict(env_file='.env', case_sensitive=True)    
 
