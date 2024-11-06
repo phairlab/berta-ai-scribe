@@ -18,6 +18,19 @@ export function useEncounters() {
 
   const encounters = applicationState.encounters;
 
+  const loadMore = async () => {
+    if (encounters.loadState === "Partially Fetched") {
+      encounters.setPageLoading();
+
+      const earliestLoaded =
+        encounters.list.toSorted(byDate((e) => e.created))[0] ?? undefined;
+
+      const page = await webApi.encounters.getAll(earliestLoaded?.created);
+
+      encounters.loadPage(page);
+    }
+  };
+
   /** Sets the indicated encounter as active.  A null value unsets it. */
   const setActive = (encounter: Encounter | null) => {
     if (!encounter) {
@@ -315,8 +328,11 @@ export function useEncounters() {
 
   return {
     isReady: encounters.status === "Ready",
+    isLoading: encounters.loadState === "Fetching More",
+    canLoadMore: encounters.loadState === "Partially Fetched",
     list: encounters.list,
     activeEncounter: encounters.activeEncounter,
+    loadMore,
     setActive,
     save,
     purge,

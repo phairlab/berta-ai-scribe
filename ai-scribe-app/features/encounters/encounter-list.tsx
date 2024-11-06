@@ -7,6 +7,7 @@ import { Progress } from "@nextui-org/progress";
 import { ScrollShadow } from "@nextui-org/scroll-shadow";
 
 import { Encounter } from "@/core/types";
+import { WaitMessageSpinner } from "@/core/wait-message-spinner";
 import { formatDatestring } from "@/utility/formatters";
 
 import { EncounterDropdown } from "./encounter-dropdown";
@@ -14,6 +15,9 @@ import { EncounterDropdown } from "./encounter-dropdown";
 type EncounterListProps = {
   encounters: Encounter[];
   activeEncounter: Encounter | null;
+  isLoading: boolean;
+  canLoadMore: boolean;
+  loadMore: () => void;
   onSelected: (encounter: Encounter) => void;
   onDelete: (encounter: Encounter) => void;
 };
@@ -21,6 +25,9 @@ type EncounterListProps = {
 export const EncounterList = ({
   encounters,
   activeEncounter,
+  isLoading,
+  canLoadMore,
+  loadMore,
   onSelected,
   onDelete,
 }: EncounterListProps) => (
@@ -68,6 +75,28 @@ export const EncounterList = ({
           </div>
         </ListboxItem>
       ))}
+    </Listbox>
+    <Listbox
+      aria-label="List containing a placeholder for saved recordings"
+      disabledKeys={canLoadMore && !isLoading ? [] : ["load-more"]}
+    >
+      <ListboxItem
+        key="load-more"
+        className="data-[hover=true]:bg-transparent"
+        textValue=" "
+        onPress={loadMore}
+      >
+        {isLoading ? (
+          <WaitMessageSpinner size="sm">Loading</WaitMessageSpinner>
+        ) : !canLoadMore ? (
+          <div className="text-sm text-zinc-500 text-center">
+            All Recordings <br />
+            Loaded
+          </div>
+        ) : (
+          <div className="text-blue-500 text-center">Load More</div>
+        )}
+      </ListboxItem>
     </Listbox>
   </ScrollShadow>
 );

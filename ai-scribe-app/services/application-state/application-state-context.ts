@@ -4,7 +4,11 @@ import { EncounterState } from "./encounter-state";
 import { NoteTypeState } from "./note-type-state";
 import { SampleRecordingState } from "./sample-recording-state";
 
-export type LoadingStatus = "Uninitialized" | "Loading" | "Ready" | "Failed";
+export type InitializationState =
+  | "Uninitialized"
+  | "Loading"
+  | "Ready"
+  | "Failed";
 
 export type ApplicationState = {
   sampleRecordings: SampleRecordingState;
@@ -31,11 +35,14 @@ const nullNoteTypeState: NoteTypeState = {
 const nullEncounterState: EncounterState = {
   status: "Uninitialized",
   list: [],
+  loadState: "All Fetched",
   activeEncounter: null,
   exists: () => false,
   get: () => void {},
   put: () => void {},
   remove: () => void {},
+  setPageLoading: () => void {},
+  loadPage: () => void {},
   setActive: () => void {},
 };
 

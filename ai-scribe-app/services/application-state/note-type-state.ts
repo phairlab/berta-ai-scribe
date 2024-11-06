@@ -3,12 +3,12 @@ import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import { NoteType } from "@/core/types";
 import { alphabetically } from "@/utility/sorters";
 
-import { LoadingStatus } from "./application-state-context";
+import { InitializationState } from "./application-state-context";
 
 type Setter<T> = Dispatch<SetStateAction<T>>;
 
 export type NoteTypeState = {
-  status: LoadingStatus;
+  status: InitializationState;
   list: NoteType[];
   default: NoteType | null;
   exists: (id: string) => boolean;
@@ -19,7 +19,7 @@ export type NoteTypeState = {
 };
 
 export function useNoteTypeState(
-  status: LoadingStatus,
+  status: InitializationState,
   noteTypes: NoteType[],
   defaultNoteType: NoteType | null,
   setNoteTypes: Setter<NoteType[]>,

@@ -29,7 +29,6 @@ export const EncounterNavigator = ({
     <>
       <Listbox
         aria-label="List containing the new recording option"
-        // disabledKeys={!activeEncounter ? ["new"] : []}
         itemClasses={{ title: "font-semibold" }}
       >
         <ListboxItem
@@ -67,7 +66,10 @@ export const EncounterNavigator = ({
       ) : (
         <EncounterList
           activeEncounter={activeEncounter}
+          canLoadMore={encounters.canLoadMore}
           encounters={encounters.list}
+          isLoading={encounters.isLoading}
+          loadMore={encounters.loadMore}
           onDelete={(encounter) => encounters.purge(encounter)}
           onSelected={selectEncounter}
         />

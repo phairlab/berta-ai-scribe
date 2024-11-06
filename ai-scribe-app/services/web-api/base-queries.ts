@@ -8,6 +8,7 @@ export async function httpAction<T>(
   path: string,
   parameters?: Partial<{
     accessToken: string;
+    query: { [name: string]: string | undefined };
     data: FormData | Object;
     signal: AbortSignal;
   }>,
@@ -29,6 +30,23 @@ export async function httpAction<T>(
       };
     }
 
+    let fullPath = path;
+
+    if (parameters?.query) {
+      const searchParameters = new URLSearchParams(
+        Object.fromEntries(
+          Object.entries(parameters.query).filter(
+            ([_, value]) => value !== undefined,
+          ) as [string, string][],
+        ),
+      );
+      const queryString = searchParameters.toString();
+
+      if (queryString.length > 0) {
+        fullPath = `${fullPath}?${queryString}`;
+      }
+    }
+
     let body: BodyInit | undefined;
 
     if (parameters?.data) {
@@ -45,7 +63,7 @@ export async function httpAction<T>(
       body: body,
     };
 
-    const response = await fetch(path, init);
+    const response = await fetch(fullPath, init);
 
     try {
       const data: T =
