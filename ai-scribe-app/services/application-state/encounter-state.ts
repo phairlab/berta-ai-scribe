@@ -91,7 +91,11 @@ export function useEncounterState(
           byDate((x) => x.created, "Descending"),
         ),
       );
-      setLoadState(page.isLastPage ? "All Fetched" : "Partially Fetched");
+      setTimeout(
+        () =>
+          setLoadState(page.isLastPage ? "All Fetched" : "Partially Fetched"),
+        0,
+      );
     },
     setActive: (id: string | null) => {
       setActiveEncounterId(id);

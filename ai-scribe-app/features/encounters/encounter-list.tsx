@@ -80,9 +80,14 @@ export const EncounterList = ({
       aria-label="List containing a placeholder for saved recordings"
       disabledKeys={canLoadMore && !isLoading ? [] : ["load-more"]}
     >
-      <ListboxItem key="load-more" textValue=" " onPress={loadMore}>
+      <ListboxItem
+        key="load-more"
+        className="data-[hover=true]:bg-transparent"
+        textValue=" "
+        onPress={loadMore}
+      >
         {isLoading ? (
-          <WaitMessageSpinner size="xs">Loading</WaitMessageSpinner>
+          <WaitMessageSpinner size="sm">Loading</WaitMessageSpinner>
         ) : !canLoadMore ? (
           <div className="text-sm text-zinc-500 text-center">
             All Recordings <br />
