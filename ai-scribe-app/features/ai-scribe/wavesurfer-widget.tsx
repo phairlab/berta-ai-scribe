@@ -10,6 +10,8 @@ import Wavesurfer, { WaveSurferOptions } from "wavesurfer.js/dist/wavesurfer";
 
 import { useTheme } from "next-themes";
 
+import { Progress } from "@nextui-org/progress";
+
 import { headerNames } from "@/config/keys";
 import { useAccessToken } from "@/services/session-management/use-access-token";
 import { tailwindColors } from "@/utility/constants";
@@ -189,6 +191,22 @@ export const WavesurferWidget = ({
           {error}
         </div>
       )}
+      <div
+        className={clsx([
+          "z-10 absolute flex w-full justify-center mt-[22px] transition-opacity duration-500 ease-in-out",
+          !!error || isReady ? "hidden opacity-0" : "opacity-100",
+        ])}
+      >
+        <div className="flex flex-row gap-2 items-center justify-start w-[80%]">
+          <Progress
+            aria-label="Loading"
+            className="mt-1"
+            classNames={{ indicator: "bg-zinc-400 dark:bg-zinc-600" }}
+            isIndeterminate={true}
+            size="sm"
+          />
+        </div>
+      </div>
       <div
         className={clsx([
           {
