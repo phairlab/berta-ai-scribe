@@ -84,7 +84,7 @@ async def redoc_html():
     )
 
 @app.post("/transcribe-audio", response_model=Transcript)
-async def transcribe_audio(audio: UploadFile):
+def transcribe_audio(audio: UploadFile):
     try:
        transcript = transcription.transcribe_audio(audio.file, filename=audio.filename)
 
