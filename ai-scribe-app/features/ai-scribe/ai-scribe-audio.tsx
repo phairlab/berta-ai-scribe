@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
+import clsx from "clsx";
+
 import { Button } from "@nextui-org/button";
 
 import { WaitMessageSpinner } from "@/core/wait-message-spinner";
@@ -174,7 +176,11 @@ export const AIScribeAudio = ({
             onReady={() => setIsPlayerLoading(false)}
           />
           <div
-            className={`mx-2 ${isPlayerLoading ? "invisible" : ""} ${!audio || isRecording ? "hidden" : ""}`}
+            className={clsx(
+              "mx-2 transition-opacity duration-500 ease-in-out",
+              isPlayerLoading ? "invisible opacity-0" : "opacity-100",
+              (!audio || isRecording) && "hidden",
+            )}
           >
             <AudioTrackInfo
               audioTitle={audioTitle ?? "Audio Recording"}

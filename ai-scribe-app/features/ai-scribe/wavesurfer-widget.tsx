@@ -10,8 +10,6 @@ import Wavesurfer, { WaveSurferOptions } from "wavesurfer.js/dist/wavesurfer";
 
 import { useTheme } from "next-themes";
 
-import { Progress } from "@nextui-org/progress";
-
 import { headerNames } from "@/config/keys";
 import { useAccessToken } from "@/services/session-management/use-access-token";
 import { tailwindColors } from "@/utility/constants";
@@ -53,7 +51,6 @@ export const WavesurferWidget = ({
   const [loadedAudio, setLoadedAudio] = useState<string | Blob | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isReady, setIsReady] = useState(false);
-  const [percentLoaded, setPercentLoaded] = useState<number>(0);
   const [error, setError] = useState<string>();
   const [durationMs, setDurationMs] = useState<number | null>(null);
 
@@ -97,14 +94,10 @@ export const WavesurferWidget = ({
 
     setDurationMs(seconds * 1000);
 
-    setIsReady(true);
-    onReady?.();
-  };
-
-  const handleLoading = (_: Wavesurfer, percent: number) => {
-    if (loadedAudio) {
-      setPercentLoaded(percent);
-    }
+    setTimeout(() => {
+      setIsReady(true);
+      onReady?.();
+    }, 0);
   };
 
   const handleError = (_: Wavesurfer, error: Error) => {
@@ -121,7 +114,6 @@ export const WavesurferWidget = ({
       setIsReady(false);
       setDurationMs(null);
       setError(undefined);
-      setPercentLoaded(0);
       onLoading?.();
 
       if (audioData) {
@@ -191,38 +183,15 @@ export const WavesurferWidget = ({
       )}
       <div
         className={clsx([
-          "-z-10 absolute flex w-full justify-center mt-[22px] transition-opacity ease-in-out",
-          !!error || isReady || !loadedAudio ? "opacity-0" : "opacity-100",
+          {
+            "pointer-events-none": !error && (!loadedAudio || !isReady),
+            hidden: !!error,
+          },
+          "transition-opacity duration-500 ease-in-out",
+          isReady ? "opacity-100" : "opacity-0",
+          (!isReady || audioData == null || waveformPeaks === null) &&
+            "invisible",
         ])}
-      >
-        <div className="flex flex-row gap-2 items-center justify-start w-[80%]">
-          <Progress
-            aria-label="Loading"
-            className="mt-1"
-            classNames={{
-              indicator:
-                percentLoaded === 0
-                  ? "bg-zinc-400 dark:bg-zinc-600"
-                  : "bg-blue-500",
-            }}
-            isIndeterminate={percentLoaded === 0}
-            size="sm"
-            value={percentLoaded}
-          />
-        </div>
-      </div>
-      <div
-        // className={clsx([
-        //   {
-        //     "pointer-events-none": !error && (!loadedAudio || !isReady),
-        //     hidden: !!error,
-        //   },
-        //   "transition-opacity ease-in-out",
-        //   isReady ? "opacity-100" : "opacity-0 invisible",
-        // ])}
-        className={clsx({
-          invisible: audioData == null || waveformPeaks === null,
-        })}
       >
         <WavesurferPlayer
           autoplay={false}
@@ -231,7 +200,6 @@ export const WavesurferWidget = ({
           url={NO_AUDIO_URL}
           onError={handleError}
           onInit={handleInit}
-          onLoading={handleLoading}
           onPause={() => onPause?.()}
           onPlay={() => onPlay?.()}
           onReady={handleReady}
