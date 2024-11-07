@@ -108,28 +108,20 @@ export function useEncounters() {
     }
 
     if (encounter.recording?.transcript !== existing.recording?.transcript) {
-      changes.transcript = encounter.recording?.transcript;
+      changes.transcript = encounter.recording?.transcript ?? undefined;
     }
 
     // Directly update when no changes need to be persisted.
     if (Object.keys(changes).length === 0) {
       encounters.put(setTracking(encounter, "Synchronized"));
     } else {
-      // Otherwise update and persist changes.
-      encounters.put(setTracking(encounter, "Synchronizing"));
+      // Otherwise update and silently persist changes.
+      encounters.put(setTracking(encounter, "Synchronized"));
 
       try {
-        const persistedRecord = await webApi.encounters.update(
-          encounter.id,
-          changes,
-        );
-
-        encounters.put(convert.fromWebApiEncounter(persistedRecord));
+        void (await webApi.encounters.update(encounter.id, changes));
       } catch (ex: unknown) {
-        // Report on failure.
-        encounters.put(
-          setTracking(encounter, "Locally Modified", asApplicationError(ex)),
-        );
+        // Fail silent.
       }
     }
   };
@@ -257,7 +249,11 @@ export function useEncounters() {
         convert.fromWebApiDraftNote(persistedNote),
       ].sort(byDate((x) => x.created, "Descending"));
 
-      encounters.put({ ...updated, draftNotes: notes });
+      const currentEncounter = encounters.get(encounter.id);
+
+      if (currentEncounter) {
+        encounters.put({ ...currentEncounter, draftNotes: notes });
+      }
     } catch (ex: unknown) {
       // Report on failure.
       const notes = [
@@ -265,7 +261,11 @@ export function useEncounters() {
         setTracking(note, "Not Persisted", asApplicationError(ex)),
       ];
 
-      encounters.put({ ...updated, draftNotes: notes });
+      const currentEncounter = encounters.get(encounter.id);
+
+      if (currentEncounter) {
+        encounters.put({ ...updated, draftNotes: notes });
+      }
     }
   };
 
