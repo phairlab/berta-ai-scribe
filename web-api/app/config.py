@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_SECRET: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int
 
-    OPENAI_API_KEY: str
+    OPENAI_API_KEY: str = ""
 
     SNOWFLAKE_TOKEN_PATH: str = "/snowflake/session/token"
     SNOWFLAKE_ACCOUNT: str
