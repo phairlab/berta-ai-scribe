@@ -1,5 +1,4 @@
 import { Button } from "@nextui-org/button";
-import { Code } from "@nextui-org/code";
 
 import { ApplicationError } from "@/utility/errors";
 
@@ -7,18 +6,7 @@ import { OutputCard } from "./output-card";
 
 const whisperOfflineMessage = (
   <div className="flex flex-col">
-    <p>
-      The transcription service is currently offline. To restart the serivice,
-      run the following commands in Snowflake, using the RL_TEAM_JENKINS role:
-    </p>
-    <Code>USE DATABASE DB_TEAM_JENKINS;</Code>
-    <Code>USE SCHEMA JENKINS_PROD;</Code>
-    <Code>ALTER SERVICE whisper_service RESUME;</Code>
-    <p>
-      The service can take a few minutes to restart. To view the current status,
-      execute the following command:
-    </p>
-    <Code>DESCRIBE SERVICE whisper_service;</Code>
+    <p>The transcription service is currently offline.</p>
   </div>
 );
 
