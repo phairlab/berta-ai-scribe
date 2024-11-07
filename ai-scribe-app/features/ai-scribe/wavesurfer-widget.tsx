@@ -19,7 +19,7 @@ export type WavesurferWidgetControls = {
 };
 
 type WavesurferWidgetProps = {
-  audioData: string | null;
+  audioSource: string | null;
   waveformPeaks: number[] | null;
   isHidden: boolean;
   onInit?: (controls: WavesurferWidgetControls) => void;
@@ -31,7 +31,7 @@ type WavesurferWidgetProps = {
 };
 
 export const WavesurferWidget = ({
-  audioData,
+  audioSource,
   waveformPeaks,
   isHidden,
   onInit,
@@ -48,7 +48,7 @@ export const WavesurferWidget = ({
   const accessToken = useAccessToken();
   const wavesurfer = useRef<Wavesurfer | null>(null);
 
-  const [loadedAudio, setLoadedAudio] = useState<string | Blob | null>(null);
+  const [loadedAudio, setLoadedAudio] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string>();
@@ -108,7 +108,7 @@ export const WavesurferWidget = ({
 
   // Handle changes to audio source.
   useEffect(() => {
-    if (isInitialized && audioData !== loadedAudio) {
+    if (isInitialized && audioSource !== loadedAudio) {
       wavesurfer.current?.stop();
 
       setIsReady(false);
@@ -116,13 +116,21 @@ export const WavesurferWidget = ({
       setError(undefined);
       onLoading?.();
 
-      if (audioData) {
-        wavesurfer.current?.load(audioData, [waveformPeaks ?? [0]]);
+      if (audioSource) {
+        wavesurfer.current?.load(audioSource, [waveformPeaks ?? [0]]);
       }
 
-      setLoadedAudio(audioData);
+      setLoadedAudio(audioSource);
     }
-  }, [audioData, isInitialized]);
+  }, [audioSource, isInitialized]);
+
+  useEffect(() => {
+    if (loadedAudio) {
+      wavesurfer.current?.load(loadedAudio, [waveformPeaks ?? [0]]);
+    } else {
+      wavesurfer.current?.load(NO_AUDIO_URL, [[0]]);
+    }
+  }, [loadedAudio]);
 
   // Handle changes to Wavesurfer options.
   useEffect(() => {
@@ -189,7 +197,7 @@ export const WavesurferWidget = ({
           },
           "transition-opacity duration-500 ease-in-out",
           isReady ? "opacity-100" : "opacity-0",
-          (!isReady || audioData == null || waveformPeaks === null) &&
+          (!isReady || audioSource == null || waveformPeaks === null) &&
             "invisible",
         ])}
       >

@@ -161,7 +161,7 @@ export const AIScribeAudio = ({
             }}
           />
           <WavesurferWidget
-            audioData={audio ?? null}
+            audioSource={audio ?? null}
             isHidden={!audio || isRecording || isSaving}
             waveformPeaks={waveformPeaks}
             onDurationChanged={(seconds) => {
