@@ -21,13 +21,24 @@ export const TranscriptCard = ({
   };
 
   const controls = (
-    <Button color="default" isDisabled={isEmptyTranscript} size="sm" onClick={copyNote}>
+    <Button
+      color="default"
+      isDisabled={isEmptyTranscript}
+      size="sm"
+      onClick={copyNote}
+    >
       Copy
     </Button>
   );
 
   return (
-    <OutputCard controls={controls} title={showTitle && "Transcript" || isEmptyTranscript && "[Transcript Empty]"}>
+    <OutputCard
+      controls={controls}
+      title={
+        (showTitle && "Transcript") ||
+        (isEmptyTranscript && "[Transcript Empty]")
+      }
+    >
       {recording.transcript}
     </OutputCard>
   );

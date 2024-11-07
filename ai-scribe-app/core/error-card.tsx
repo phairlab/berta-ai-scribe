@@ -64,7 +64,10 @@ export const ErrorCard = ({
       {error.message && (
         <div className="flex flex-col gap-3 text-sm font-mono">
           {error.errorId && (
-            <div><span>Error ID: </span>{error.errorId}</div>
+            <div>
+              <span>Error ID: </span>
+              {error.errorId}
+            </div>
           )}
           <div>
             {isWhisperOfflineError ? whisperOfflineMessage : error.message}

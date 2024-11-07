@@ -194,7 +194,11 @@ export const AIScribe = () => {
 
   // Auto-transcribe encounters on audio available.
   useEffect(() => {
-    if (canTranscribe && activeEncounter.recording && activeEncounter.recording.transcript === null) {
+    if (
+      canTranscribe &&
+      activeEncounter.recording &&
+      activeEncounter.recording.transcript === null
+    ) {
       transcriber.transcribe(activeEncounter);
     }
   }, [activeEncounter]);
@@ -281,7 +285,8 @@ export const AIScribe = () => {
         {activeEncounter &&
           (aiScribeError ||
             activeEncounter.draftNotes.length > 0 ||
-            (activeEncounter.recording && activeEncounter.recording.transcript !== null)) && (
+            (activeEncounter.recording &&
+              activeEncounter.recording.transcript !== null)) && (
             <AIScribeOutput
               activeOutput={activeOutput}
               error={aiScribeError}
