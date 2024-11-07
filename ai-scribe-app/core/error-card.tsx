@@ -25,7 +25,7 @@ const whisperOfflineMessage = (
 type ErrorCardProps = {
   error: ApplicationError;
   canDismiss?: boolean | undefined;
-  retryAction?: () => void;
+  retryAction?: (() => void) | null;
   onDismiss?: () => void;
 };
 
@@ -44,11 +44,13 @@ export const ErrorCard = ({
       {isWhisperOfflineError ? "Transcription Service Offline" : error.name}
     </span>
   );
-  const controls = retryAction && (
+  const controls = (
     <>
-      <Button color="default" size="sm" onClick={retryAction}>
-        Retry
-      </Button>
+      {retryAction && (
+        <Button color="default" size="sm" onClick={retryAction}>
+          Retry
+        </Button>
+      )}
       {canDismiss && (
         <Button color="default" size="sm" onClick={onDismiss}>
           Dismiss

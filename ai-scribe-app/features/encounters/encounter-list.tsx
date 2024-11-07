@@ -44,7 +44,12 @@ export const EncounterList = ({
               activeEncounter && encounter.id === activeEncounter.id,
           })}
           description={
-            encounter.tracking.isSaving && !encounter.tracking.isPersisted ? (
+            !encounter.tracking.isPersisted && encounter.tracking.hasError ? (
+              <p className="ms-1 text-red-500 font-semibold">
+                ERROR - NOT SAVED
+              </p>
+            ) : encounter.tracking.isSaving &&
+              !encounter.tracking.isPersisted ? (
               <div className="flex flex-row gap-2 items-center justify-start ms-1 w-24">
                 <p className="text-xs">Saving</p>
                 <Progress

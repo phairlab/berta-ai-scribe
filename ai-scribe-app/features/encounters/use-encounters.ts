@@ -45,7 +45,7 @@ export function useEncounters() {
 
   /** Adds a new encounter and persists it. */
   const create = async (encounter: Encounter, audio: File) => {
-    if (encounters.exists(encounter.id)) {
+    if (encounters.get(encounter.id)?.tracking.isPersisted === true) {
       throw new InvalidOperationError(
         "Saving a new encounter with an ID that already exists",
       );
@@ -144,7 +144,11 @@ export function useEncounters() {
       throw new InvalidOperationError("Saving an encounter before state ready");
     }
 
-    if (!encounters.exists(encounter.id)) {
+    if (encounter.tracking.isSaving === true) {
+      throw new InvalidOperationError("Encounter is already being saved");
+    }
+
+    if (!encounter.tracking.isPersisted) {
       if (audio === undefined) {
         throw new InvalidOperationError(
           "Saving a new encounter without audio data",
