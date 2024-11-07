@@ -70,7 +70,7 @@ def compute_peaks(audio: BinaryIO) -> list[float]:
     normalized_peaks: list[float] = []
 
     for x in peaks:
-        normalized_peaks.append(round(x / max_val, digits))
+        normalized_peaks.append(round(x / max_val if max_val != 0 else x, digits))
 
     return normalized_peaks
 
