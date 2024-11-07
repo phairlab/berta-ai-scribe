@@ -53,7 +53,6 @@ export const AIScribe = () => {
   });
 
   const canTranscribe =
-    audio !== undefined &&
     activeEncounter !== null &&
     activeEncounter.tracking.isPersisted &&
     !transcriber.isTranscribing;
@@ -62,7 +61,8 @@ export const AIScribe = () => {
     selectedNoteType !== null &&
     activeEncounter !== null &&
     activeEncounter.recording !== undefined &&
-    (activeEncounter.recording.transcript ?? null) !== null &&
+    activeEncounter.recording.transcript !== null &&
+    activeEncounter.recording.transcript !== "" &&
     !noteGenerator.generatingNoteType;
 
   const handleAudioFileGenerated = (audio: File, setActive: boolean) => {
@@ -194,10 +194,10 @@ export const AIScribe = () => {
 
   // Auto-transcribe encounters on audio available.
   useEffect(() => {
-    if (canTranscribe && !activeEncounter.recording?.transcript) {
+    if (canTranscribe && activeEncounter.recording && activeEncounter.recording.transcript === null) {
       transcriber.transcribe(activeEncounter);
     }
-  }, [audio, activeEncounter]);
+  }, [activeEncounter]);
 
   // Auto-generate first note on transcript available.
   useEffect(() => {
@@ -281,7 +281,7 @@ export const AIScribe = () => {
         {activeEncounter &&
           (aiScribeError ||
             activeEncounter.draftNotes.length > 0 ||
-            activeEncounter.recording?.transcript) && (
+            (activeEncounter.recording && activeEncounter.recording.transcript !== null)) && (
             <AIScribeOutput
               activeOutput={activeOutput}
               error={aiScribeError}

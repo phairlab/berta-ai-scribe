@@ -37,11 +37,11 @@ export type NoteGeneratorOutput = {
 
 export type Recording = {
   id: string;
-  mediaType?: string;
-  fileSize?: number;
-  duration?: number;
-  waveformPeaks?: number[];
-  transcript?: string;
+  mediaType: string | null;
+  fileSize: number | null;
+  duration: number | null;
+  waveformPeaks: number[] | null;
+  transcript: string | null;
 };
 
 export type SampleRecording = {

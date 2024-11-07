@@ -103,7 +103,7 @@ export const AIScribeOutput = ({
             <NoteCard note={note} showTitle={false} />
           </Tab>
         ))}
-        {recording?.transcript && (
+        {recording !== undefined && recording.transcript !== null && (
           <Tab key="transcript" title="Transcript">
             <TranscriptCard recording={recording} showTitle={false} />
           </Tab>
