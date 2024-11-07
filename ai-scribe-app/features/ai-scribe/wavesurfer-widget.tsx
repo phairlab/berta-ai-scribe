@@ -195,7 +195,7 @@ export const WavesurferWidget = ({
             "pointer-events-none": !error && (!loadedAudio || !isReady),
             hidden: !!error,
           },
-          "transition-opacity duration-500 ease-in-out",
+          "transition-opacity duration-250 ease-in-out",
           isReady ? "opacity-100" : "opacity-0",
           (!isReady || audioSource == null || waveformPeaks === null) &&
             "invisible",

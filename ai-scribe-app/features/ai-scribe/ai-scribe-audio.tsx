@@ -177,7 +177,7 @@ export const AIScribeAudio = ({
           />
           <div
             className={clsx(
-              "mx-2 transition-opacity duration-500 ease-in-out",
+              "mx-2 transition-opacity duration-250 ease-in-out",
               isPlayerLoading ? "invisible opacity-0" : "opacity-100",
               (!audio || isRecording) && "hidden",
             )}
