@@ -134,6 +134,7 @@ async function executeHttpAction<T>(
             if (
               response.status >= 400 &&
               response.status < 500 &&
+              response.status !== 405 &&
               response.status !== 429
             ) {
               // Fatal errors.

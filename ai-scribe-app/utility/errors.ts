@@ -7,6 +7,7 @@ export class InvalidOperationError extends Error {
 
 /** Details of an error encountered during use of the application. */
 export type ApplicationError = {
+  errorId?: string;
   name: string;
   message: string;
   fatal?: boolean;

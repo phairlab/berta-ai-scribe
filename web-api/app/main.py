@@ -135,6 +135,7 @@ async def webapi_exception_handler(request: Request, exc: WebAPIException):
         status_code=exc.status_code,
         content=jsonable_encoder(WebAPIError(
             detail=WebAPIErrorDetail(
+                errorId=exc.uuid,
                 name=exc.name,
                 message=exc.message,
                 fatal=exc.fatal,
@@ -211,6 +212,7 @@ async def webapi_exception_handler(request: Request, exc: Exception):
         status_code=error.status_code,
         content=jsonable_encoder(WebAPIError(
             detail=WebAPIErrorDetail(
+                errorId=error.uuid,
                 name=error.name,
                 message=error.message,
                 fatal=error.fatal,
