@@ -40,6 +40,7 @@ export const create =
       data: formData,
       accessToken: getAccessToken(),
       signal: cancellation,
+      retries: [500, 1000, 2000],
     });
   };
 

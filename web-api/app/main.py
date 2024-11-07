@@ -112,7 +112,7 @@ async def lifespan(_: FastAPI):
 # Create the app
 app = FastAPI(lifespan=lifespan, title=f"{settings.APP_NAME} API", version=settings.APP_VERSION, docs_url=None, redoc_url=None)
 
-# Exception handlers
+# Exception Handler: Basic Errors
 @app.exception_handler(WebAPIException)
 async def webapi_exception_handler(request: Request, exc: WebAPIException):
     stack_trace = " ".join(traceback.TracebackException.from_exception(exc).format())
@@ -137,7 +137,7 @@ async def webapi_exception_handler(request: Request, exc: WebAPIException):
             detail=WebAPIErrorDetail(
                 name=exc.name,
                 message=exc.message,
-                retry=exc.retry,
+                fatal=exc.fatal,
             ),
         )),
         headers=exc.headers,
@@ -153,6 +153,7 @@ async def webapi_exception_handler(request: Request, exc: WebAPIException):
         )
     )
 
+# Exception Handler: Validation Errors
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     stack_trace = " ".join(traceback.TracebackException.from_exception(exc).format())
@@ -185,6 +186,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         )
     )
 
+# Exception Handler: Fallback / Unexpected Errors
 @app.exception_handler(Exception)
 async def webapi_exception_handler(request: Request, exc: Exception):
     stack_trace = " ".join(traceback.TracebackException.from_exception(exc).format())
@@ -211,7 +213,7 @@ async def webapi_exception_handler(request: Request, exc: Exception):
             detail=WebAPIErrorDetail(
                 name=error.name,
                 message=error.message,
-                retry=error.retry,
+                fatal=error.fatal,
             ),
         )),
         headers=error.headers,
