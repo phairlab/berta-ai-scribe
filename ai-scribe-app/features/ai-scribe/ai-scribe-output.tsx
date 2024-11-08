@@ -9,10 +9,10 @@ import { DraftNote, Recording } from "@/core/types";
 import { ApplicationError, isApplicationError } from "@/utility/errors";
 
 export type AIScribeError = {
-  name: string;
+  name: string | null;
   content: ApplicationError;
   canDismiss: boolean;
-  retry: () => void;
+  retry: (() => void) | null;
 };
 
 export type AIScribeOutputType = Recording | DraftNote | AIScribeError;
@@ -84,7 +84,12 @@ export const AIScribeOutput = ({
         onSelectionChange={handleSelectionChange}
       >
         {error && (
-          <Tab key="error" className="text-red-500" title={`${error.name}`}>
+          <Tab
+            key="error"
+            title={
+              error.name ? `ERROR DETAILS: ${error.name}` : "ERROR DETAILS"
+            }
+          >
             <ErrorCard
               canDismiss={error.canDismiss}
               error={error.content}
@@ -98,7 +103,7 @@ export const AIScribeOutput = ({
             <NoteCard note={note} showTitle={false} />
           </Tab>
         ))}
-        {recording?.transcript && (
+        {recording !== undefined && recording.transcript !== null && (
           <Tab key="transcript" title="Transcript">
             <TranscriptCard recording={recording} showTitle={false} />
           </Tab>

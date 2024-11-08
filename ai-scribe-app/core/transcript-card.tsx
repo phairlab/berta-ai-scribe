@@ -12,6 +12,8 @@ export const TranscriptCard = ({
   recording,
   showTitle = true,
 }: TranscriptCardProps) => {
+  const isEmptyTranscript = recording.transcript === "";
+
   const copyNote = async () => {
     if (recording.transcript) {
       await navigator.clipboard.writeText(recording.transcript);
@@ -19,13 +21,24 @@ export const TranscriptCard = ({
   };
 
   const controls = (
-    <Button color="default" size="sm" onClick={copyNote}>
+    <Button
+      color="default"
+      isDisabled={isEmptyTranscript}
+      size="sm"
+      onClick={copyNote}
+    >
       Copy
     </Button>
   );
 
   return (
-    <OutputCard controls={controls} title={showTitle && "Transcript"}>
+    <OutputCard
+      controls={controls}
+      title={
+        (showTitle && "Transcript") ||
+        (isEmptyTranscript && "[Transcript Empty]")
+      }
+    >
       {recording.transcript}
     </OutputCard>
   );

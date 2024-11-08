@@ -12,7 +12,7 @@ class WebAPIException(Exception):
     source: str = "Server"
     message: str
     uuid: str
-    retry: bool = False
+    fatal: bool = False
     status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR
     headers: dict = {}
 
@@ -32,6 +32,7 @@ class BadRequest(WebAPIException):
     """
     name = "Bad Request"
     status_code = status.HTTP_400_BAD_REQUEST
+    fatal = True
 
 class Unauthorized(WebAPIException):
     """
@@ -42,6 +43,7 @@ class Unauthorized(WebAPIException):
     name = "Unauthorized"
     status_code = status.HTTP_401_UNAUTHORIZED
     headers = { "WWW-Authenticate": "Bearer" }
+    fatal = True
 
 class Forbidden(WebAPIException):
     """
@@ -51,6 +53,7 @@ class Forbidden(WebAPIException):
     """
     name = "Unauthorized"
     status_code = status.HTTP_403_FORBIDDEN
+    fatal = True
 
 class NotFound(WebAPIException):
     """
@@ -60,6 +63,7 @@ class NotFound(WebAPIException):
     """
     name = "Not Found"
     status_code = status.HTTP_404_NOT_FOUND
+    fatal = True
 
 class UnsupportedAudioFormat(WebAPIException):
     """
@@ -69,6 +73,7 @@ class UnsupportedAudioFormat(WebAPIException):
     """
     name = "Unsupported File Type"
     status_code = status.HTTP_415_UNSUPPORTED_MEDIA_TYPE
+    fatal = True
 
 class AudioProcessingError(WebAPIException):
     """
@@ -78,6 +83,7 @@ class AudioProcessingError(WebAPIException):
     """
     name = "Audio Processing Error"
     status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+    fatal = True
 
 class DatabaseError(WebAPIException):
     """
@@ -88,6 +94,7 @@ class DatabaseError(WebAPIException):
     name = "Database Error"
     source = "Database"
     status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+    fatal = False
 
 class ExternalServiceError(WebAPIException):
     """
@@ -96,6 +103,7 @@ class ExternalServiceError(WebAPIException):
     - **HTTP Status Code:** 502 Bad Gateway
     """
     status_code = status.HTTP_502_BAD_GATEWAY
+    fatal = True
 
     def __init__(self, source: str, message: str):
         super().__init__(message)
@@ -110,7 +118,7 @@ class ExternalServiceInterruption(ExternalServiceError):
     - **HTTP Status Code:** 503 Service Unavailable
     """
     name = "External Service Unavailable"
-    retry = True
+    fatal = False
     status_code = status.HTTP_503_SERVICE_UNAVAILABLE
 
 class ExternalServiceTimeout(ExternalServiceError):
@@ -118,8 +126,7 @@ class ExternalServiceTimeout(ExternalServiceError):
     Represents an error that occurred due to a timeout on an external service.
 
     - **HTTP Status Code:** 504 Gateway Timeout
-    - **Client Should Retry:** True.  The client should wait and then retry the request.
     """
     name = "External Service Timeout"
-    retry = True
+    fatal = False
     status_code = status.HTTP_504_GATEWAY_TIMEOUT

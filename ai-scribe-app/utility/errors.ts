@@ -7,9 +7,10 @@ export class InvalidOperationError extends Error {
 
 /** Details of an error encountered during use of the application. */
 export type ApplicationError = {
+  errorId?: string;
   name: string;
   message: string;
-  retry?: boolean;
+  fatal?: boolean;
 };
 
 /** Details of a validation issue from a web service request. */
@@ -65,34 +66,44 @@ export function asApplicationError(error: unknown): ApplicationError {
   }
 }
 
+export function isFatal(ex: unknown): boolean {
+  return (ex as ApplicationError)?.fatal ?? false;
+}
+
 export const UnexpectedError = (errorMessage: string): ApplicationError => ({
   name: "Unexpected Error",
   message: errorMessage,
-  retry: true,
+  fatal: false,
 });
 
 export const ConfigurationError = (errorMessage: string): ApplicationError => ({
   name: "Configuration Error",
   message: errorMessage,
-  retry: false,
+  fatal: true,
 });
 
 export const BadRequest = (errorMessage: string): ApplicationError => ({
   name: "Bad Request",
   message: errorMessage,
-  retry: false,
+  fatal: true,
 });
 
 export const BadResponse = (errorMessage: string): ApplicationError => ({
   name: "Bad Response",
   message: errorMessage,
-  retry: true,
+  fatal: false,
+});
+
+export const RequestRejected = (errorMessage: string): ApplicationError => ({
+  name: "Request Rejected",
+  message: errorMessage,
+  fatal: true,
 });
 
 export const ServerError = (errorMessage: string): ApplicationError => ({
   name: "Server Error",
   message: errorMessage,
-  retry: false,
+  fatal: false,
 });
 
 export const ValidationError = (
@@ -100,23 +111,23 @@ export const ValidationError = (
 ): ApplicationError => ({
   name: "Validation Error",
   message: JSON.stringify(errors),
-  retry: false,
+  fatal: true,
 });
 
 export const ServerUnresponsiveError: ApplicationError = {
   name: "Server Unavailable",
   message: "The server is currently not responding.",
-  retry: true,
+  fatal: false,
 };
 
 export const TimeoutError: ApplicationError = {
   name: "Server Timed Out",
   message: "The request timed out.",
-  retry: true,
+  fatal: false,
 };
 
 export const RequestAborted: ApplicationError = {
-  name: "Request Aborted",
-  message: "The request was aborted.",
-  retry: false,
+  name: "Cancelled",
+  message: "The request was cancelled.",
+  fatal: true,
 };

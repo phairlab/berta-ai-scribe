@@ -12,6 +12,7 @@ export function createEncounter(fields: {
       created: created,
       modified: created,
       draftNotes: [],
+      unsavedAudio: fields.audio,
     },
     "Not Persisted",
   ) satisfies Encounter;

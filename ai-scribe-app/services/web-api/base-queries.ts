@@ -11,6 +11,42 @@ export async function httpAction<T>(
     query: { [name: string]: string | undefined };
     data: FormData | Object;
     signal: AbortSignal;
+    retries: number[];
+  }>,
+): Promise<T> {
+  let retries = parameters?.retries ?? [];
+
+  while (true) {
+    try {
+      return await executeHttpAction<T>(method, path, parameters);
+    } catch (ex: unknown) {
+      // Verify any retries remaining.
+      if (retries.length === 0) {
+        throw ex;
+      }
+
+      // Verify the error is not fatal.
+      if (Errors.isFatal(ex)) {
+        throw ex;
+      }
+
+      // Wait the prescribed delay before retrying.
+      const [delay, ...remaining] = retries;
+
+      retries = remaining;
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+  }
+}
+
+async function executeHttpAction<T>(
+  method: HttpMethod,
+  path: string,
+  parameters?: Partial<{
+    accessToken: string;
+    query: { [name: string]: string | undefined };
+    data: FormData | Object;
+    signal: AbortSignal;
   }>,
 ): Promise<T> {
   try {
@@ -90,11 +126,23 @@ export async function httpAction<T>(
             throw data.detail;
           } else {
             // Handle real web API errors that are not in the normal form.
-            throw Errors.ServerError(
+            const errorMessage =
               typeof data.detail === "string"
                 ? data.detail
-                : JSON.stringify(data.detail),
-            );
+                : JSON.stringify(data.detail);
+
+            if (
+              response.status >= 400 &&
+              response.status < 500 &&
+              response.status !== 405 &&
+              response.status !== 429
+            ) {
+              // Fatal errors.
+              throw Errors.RequestRejected(errorMessage);
+            } else {
+              // Potentially retriable errors.
+              throw Errors.ServerError(errorMessage);
+            }
           }
         } else {
           // Handle cases where an error is emitted in an unexpected format, for example a severe Internal Server Error.

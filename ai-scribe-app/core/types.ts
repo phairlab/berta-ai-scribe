@@ -11,6 +11,7 @@ export type EncounterDataPage = WebApiTypes.DataPage<WebApiTypes.Encounter>;
 export type Encounter = WithTracking<
   Omit<WebApiTypes.Encounter, "draftNotes"> & {
     draftNotes: DraftNote[];
+    unsavedAudio?: File;
   }
 >;
 

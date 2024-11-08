@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useRef, useState } from "react";
 
 import clsx from "clsx";
@@ -5,6 +7,8 @@ import clsx from "clsx";
 import { AnimatedPulse } from "@/core/animated-pulse";
 import { formatDuration } from "@/utility/formatters";
 import { useStopwatch } from "@/utility/use-stopwatch";
+
+const RECORDER_CHUNK_DURATION_MS = 1000;
 
 type AudioRecorderProps = {
   isRecording: boolean;
@@ -103,7 +107,7 @@ export const AudioRecorder = ({
     };
 
     stopwatch.start();
-    mediaRecorder.current.start(200);
+    mediaRecorder.current.start(RECORDER_CHUNK_DURATION_MS);
   }
 
   function endRecording() {

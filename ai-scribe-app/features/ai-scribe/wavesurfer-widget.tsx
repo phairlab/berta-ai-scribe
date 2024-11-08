@@ -21,7 +21,7 @@ export type WavesurferWidgetControls = {
 };
 
 type WavesurferWidgetProps = {
-  audioData: string | null;
+  audioSource: string | null;
   waveformPeaks: number[] | null;
   isHidden: boolean;
   onInit?: (controls: WavesurferWidgetControls) => void;
@@ -33,7 +33,7 @@ type WavesurferWidgetProps = {
 };
 
 export const WavesurferWidget = ({
-  audioData,
+  audioSource,
   waveformPeaks,
   isHidden,
   onInit,
@@ -50,10 +50,9 @@ export const WavesurferWidget = ({
   const accessToken = useAccessToken();
   const wavesurfer = useRef<Wavesurfer | null>(null);
 
-  const [loadedAudio, setLoadedAudio] = useState<string | Blob | null>(null);
+  const [loadedAudio, setLoadedAudio] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isReady, setIsReady] = useState(false);
-  const [percentLoaded, setPercentLoaded] = useState<number>(0);
   const [error, setError] = useState<string>();
   const [durationMs, setDurationMs] = useState<number | null>(null);
 
@@ -97,14 +96,10 @@ export const WavesurferWidget = ({
 
     setDurationMs(seconds * 1000);
 
-    setIsReady(true);
-    onReady?.();
-  };
-
-  const handleLoading = (_: Wavesurfer, percent: number) => {
-    if (loadedAudio) {
-      setPercentLoaded(percent);
-    }
+    setTimeout(() => {
+      setIsReady(true);
+      onReady?.();
+    }, 0);
   };
 
   const handleError = (_: Wavesurfer, error: Error) => {
@@ -115,22 +110,29 @@ export const WavesurferWidget = ({
 
   // Handle changes to audio source.
   useEffect(() => {
-    if (isInitialized && audioData !== loadedAudio) {
+    if (isInitialized && audioSource !== loadedAudio) {
       wavesurfer.current?.stop();
 
       setIsReady(false);
       setDurationMs(null);
       setError(undefined);
-      setPercentLoaded(0);
       onLoading?.();
 
-      if (audioData) {
-        wavesurfer.current?.load(audioData, [waveformPeaks ?? [0]]);
+      if (audioSource) {
+        wavesurfer.current?.load(audioSource, [waveformPeaks ?? [0]]);
       }
 
-      setLoadedAudio(audioData);
+      setLoadedAudio(audioSource);
     }
-  }, [audioData, isInitialized]);
+  }, [audioSource, isInitialized]);
+
+  useEffect(() => {
+    if (loadedAudio) {
+      wavesurfer.current?.load(loadedAudio, [waveformPeaks ?? [0]]);
+    } else {
+      wavesurfer.current?.load(NO_AUDIO_URL, [[0]]);
+    }
+  }, [loadedAudio]);
 
   // Handle changes to Wavesurfer options.
   useEffect(() => {
@@ -191,38 +193,31 @@ export const WavesurferWidget = ({
       )}
       <div
         className={clsx([
-          "-z-10 absolute flex w-full justify-center mt-[22px] transition-opacity ease-in-out",
-          !!error || isReady || !loadedAudio ? "opacity-0" : "opacity-100",
+          "z-10 absolute flex w-full justify-center mt-[22px] transition-opacity duration-500 ease-in-out",
+          !!error || isReady ? "hidden opacity-0" : "opacity-100",
         ])}
       >
         <div className="flex flex-row gap-2 items-center justify-start w-[80%]">
           <Progress
             aria-label="Loading"
             className="mt-1"
-            classNames={{
-              indicator:
-                percentLoaded === 0
-                  ? "bg-zinc-400 dark:bg-zinc-600"
-                  : "bg-blue-500",
-            }}
-            isIndeterminate={percentLoaded === 0}
+            classNames={{ indicator: "bg-zinc-400 dark:bg-zinc-600" }}
+            isIndeterminate={true}
             size="sm"
-            value={percentLoaded}
           />
         </div>
       </div>
       <div
-        // className={clsx([
-        //   {
-        //     "pointer-events-none": !error && (!loadedAudio || !isReady),
-        //     hidden: !!error,
-        //   },
-        //   "transition-opacity ease-in-out",
-        //   isReady ? "opacity-100" : "opacity-0 invisible",
-        // ])}
-        className={clsx({
-          invisible: audioData == null || waveformPeaks === null,
-        })}
+        className={clsx([
+          {
+            "pointer-events-none": !error && (!loadedAudio || !isReady),
+            hidden: !!error,
+          },
+          "transition-opacity duration-250 ease-in-out",
+          isReady ? "opacity-100" : "opacity-0",
+          (!isReady || audioSource == null || waveformPeaks === null) &&
+            "invisible",
+        ])}
       >
         <WavesurferPlayer
           autoplay={false}
@@ -231,7 +226,6 @@ export const WavesurferWidget = ({
           url={NO_AUDIO_URL}
           onError={handleError}
           onInit={handleInit}
-          onLoading={handleLoading}
           onPause={() => onPause?.()}
           onPlay={() => onPlay?.()}
           onReady={handleReady}

@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
+import clsx from "clsx";
+
 import { Button } from "@nextui-org/button";
 
 import { WaitMessageSpinner } from "@/core/wait-message-spinner";
@@ -21,6 +23,7 @@ type AIScribeAudioProps = {
   waveformPeaks: number[] | null;
   audioTitle?: string;
   isSaving: boolean;
+  isSaveFailed: boolean;
   onAudioFile: (audioData: File) => void;
   onRecoverRecording: (audioData: File) => void;
   onReset?: () => void;
@@ -31,6 +34,7 @@ export const AIScribeAudio = ({
   waveformPeaks,
   audioTitle,
   isSaving,
+  isSaveFailed,
   onAudioFile,
   onReset,
 }: AIScribeAudioProps) => {
@@ -93,10 +97,10 @@ export const AIScribeAudio = ({
   return (
     <div className="flex flex-col-reverse md:flex-row gap-2 md:gap-4">
       <div className="flex flex-row gap-2 md:gap-4 justify-center w-full">
-        {audio || isSaving ? (
+        {audio || isSaving || isSaveFailed ? (
           <PlayPauseButton
             action={isPlaying ? "pause" : "play"}
-            isDisabled={isPlayerLoading || isSaving}
+            isDisabled={isPlayerLoading || isSaving || isSaveFailed}
             onClick={playerControls.current?.playPause}
           />
         ) : (
@@ -108,12 +112,20 @@ export const AIScribeAudio = ({
           />
         )}
         <div className="w-full flex flex-col gap-2">
+          {isSaveFailed && (
+            <div className="w-full h-[70px] flex justify-center items-center border rounded-lg border-zinc-100 dark:border-zinc-900">
+              <span className="text-red-500 text-center font-semibold">
+                An Error Occurred While <br />
+                Saving the Recording
+              </span>
+            </div>
+          )}
           {isSaving && (
             <div className="mt-3">
               <WaitMessageSpinner>Saving</WaitMessageSpinner>
             </div>
           )}
-          {audio === null && !isRecording && !isSaving && (
+          {audio === null && !isRecording && !isSaving && !isSaveFailed && (
             <div className="w-full h-[70px] flex justify-center items-center border rounded-lg border-zinc-100 dark:border-zinc-900">
               <div className="text-center text-zinc-500 md:mb-2">
                 {recordingError ? (
@@ -149,7 +161,7 @@ export const AIScribeAudio = ({
             }}
           />
           <WavesurferWidget
-            audioData={audio ?? null}
+            audioSource={audio ?? null}
             isHidden={!audio || isRecording || isSaving}
             waveformPeaks={waveformPeaks}
             onDurationChanged={(seconds) => {
@@ -164,7 +176,11 @@ export const AIScribeAudio = ({
             onReady={() => setIsPlayerLoading(false)}
           />
           <div
-            className={`mx-2 ${isPlayerLoading ? "invisible" : ""} ${!audio || isRecording ? "hidden" : ""}`}
+            className={clsx(
+              "mx-2 transition-opacity duration-250 ease-in-out",
+              isPlayerLoading ? "invisible opacity-0" : "opacity-100",
+              (!audio || isRecording) && "hidden",
+            )}
           >
             <AudioTrackInfo
               audioTitle={audioTitle ?? "Audio Recording"}
@@ -175,7 +191,7 @@ export const AIScribeAudio = ({
           </div>
         </div>
       </div>
-      {audio === null && !isRecording && !isSaving ? (
+      {audio === null && !isRecording && !isSaving && !isSaveFailed ? (
         <div className="flex flex-row md:flex-col gap-2 md:gap-1 md:h-[70px] justify-end items-center md:items-start">
           <AudioFileBrowseButton onFileSelected={onAudioFile} />
           <SampleRecordingSelector onFileSelected={onAudioFile} />

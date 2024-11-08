@@ -9,7 +9,7 @@ load_dotenv()
 class Settings(BaseSettings):
     ENVIRONMENT: Literal["production", "development"] = "production"
     APP_NAME: str = "AHS \"Jenkins\" Scribe"
-    APP_VERSION: str = "0.3.3"
+    APP_VERSION: str = "0.4.1"
 
     DEFAULT_AUDIO_FORMAT: str = "mp3"
     DEFAULT_AUDIO_BITRATE: str = "96k"
@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_SECRET: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int
 
-    OPENAI_API_KEY: str
+    OPENAI_API_KEY: str = ""
 
     SNOWFLAKE_TOKEN_PATH: str = "/snowflake/session/token"
     SNOWFLAKE_ACCOUNT: str
