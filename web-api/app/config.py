@@ -9,7 +9,7 @@ load_dotenv()
 class Settings(BaseSettings):
     ENVIRONMENT: Literal["production", "development"] = "production"
     APP_NAME: str = "AHS \"Jenkins\" Scribe"
-    APP_VERSION: str = "0.3.3"
+    APP_VERSION: str = "0.4.1"
 
     DEFAULT_AUDIO_FORMAT: str = "mp3"
     DEFAULT_AUDIO_BITRATE: str = "96k"
