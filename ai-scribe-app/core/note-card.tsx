@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import Markdown from "react-markdown";
+
 import { Button } from "@nextui-org/button";
 
 import { OutputCard } from "./output-card";
@@ -23,7 +26,24 @@ export const NoteCard = ({ note, showTitle = true }: NoteCardProps) => {
 
   return (
     <OutputCard controls={controls} title={showTitle && note.title}>
-      {note.content}
+      <Markdown
+        className="flex flex-col gap-3 leading-normal m-0 p-0"
+        components={{
+          ul({ node, ...rest }) {
+            return (
+              <ul
+                className="list-['-_'] list-outside text-red-500 flex flex-col gap-1 ms-3"
+                {...rest}
+              />
+            );
+          },
+          // li({ node, ...rest }) {
+          //   return <li className="leading-normal" {...rest} />;
+          // },
+        }}
+      >
+        {note.content}
+      </Markdown>
     </OutputCard>
   );
 };
