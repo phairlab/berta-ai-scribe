@@ -7,7 +7,7 @@ import shortUUID from "short-uuid";
 import { Divider } from "@nextui-org/divider";
 
 import { ConsentScript } from "@/core/consent-script";
-import { DraftNote, Encounter } from "@/core/types";
+import { AudioSource, DraftNote, Encounter } from "@/core/types";
 import { WaitMessageSpinner } from "@/core/wait-message-spinner";
 import { useNoteGenerator } from "@/services/note-generation/use-note-generator";
 import { useTranscriber } from "@/services/transcription/use-transcriber";
@@ -32,7 +32,7 @@ export const AIScribe = () => {
 
   const noteTypes = useNoteTypes();
   const [selectedNoteType, setSelectedNoteType] = useState(noteTypes.default);
-  const [audio, setAudio] = useState<string>();
+  const [audioSource, setAudioSource] = useState<AudioSource | null>(null);
   const [activeOutput, setActiveOutput] = useState<AIScribeOutputType>();
 
   const [aiScribeError, setAIScribeError] = useState<AIScribeError>();
@@ -165,16 +165,21 @@ export const AIScribe = () => {
 
     if (!activeEncounter) {
       ref.current = null;
-      setAudio(undefined);
+      setAudioSource(null);
       setActiveOutput(undefined);
       setSelectedNoteType(noteTypes.default);
     } else {
       ref.current = activeEncounter;
 
       if (activeEncounter.recording?.duration) {
-        setAudio(`/api/recordings/${activeEncounter.recording.id}/download`);
+        setAudioSource({
+          title: activeEncounter.id,
+          url: `/api/recordings/${activeEncounter.recording.id}/download`,
+          waveformPeaks: activeEncounter.recording.waveformPeaks,
+          duration: activeEncounter.recording.duration,
+        });
       } else {
-        setAudio(undefined);
+        setAudioSource(null);
       }
 
       if (activeEncounter.draftNotes.length > 0) {
@@ -217,7 +222,7 @@ export const AIScribe = () => {
   return (
     <div className="flex flex-col gap-6">
       <AIScribeAudio
-        audio={audio ?? null}
+        audioSource={audioSource}
         isSaveFailed={
           activeEncounter?.tracking.isPersisted === false &&
           activeEncounter?.tracking.hasError === true
@@ -227,7 +232,6 @@ export const AIScribe = () => {
             !activeEncounter.tracking.isPersisted) ??
           false
         }
-        waveformPeaks={activeEncounter?.recording?.waveformPeaks ?? null}
         onAudioFile={(audio) => handleAudioFileGenerated(audio, true)}
         onRecoverRecording={(audio) => handleAudioFileGenerated(audio, false)}
         onReset={() => encounters.setActive(null)}

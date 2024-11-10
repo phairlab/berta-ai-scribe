@@ -4,6 +4,7 @@ import clsx from "clsx";
 
 import { Button } from "@nextui-org/button";
 
+import { AudioSource } from "@/core/types";
 import { WaitMessageSpinner } from "@/core/wait-message-spinner";
 
 import { SampleRecordingSelector } from "@/features/sample-recordings/sample-recording-selector";
@@ -19,9 +20,7 @@ import {
 } from "./wavesurfer-widget";
 
 type AIScribeAudioProps = {
-  audio: string | null;
-  waveformPeaks: number[] | null;
-  audioTitle?: string;
+  audioSource: AudioSource | null;
   isSaving: boolean;
   isSaveFailed: boolean;
   onAudioFile: (audioData: File) => void;
@@ -30,9 +29,7 @@ type AIScribeAudioProps = {
 };
 
 export const AIScribeAudio = ({
-  audio,
-  waveformPeaks,
-  audioTitle,
+  audioSource,
   isSaving,
   isSaveFailed,
   onAudioFile,
@@ -45,15 +42,13 @@ export const AIScribeAudio = ({
   const [isRecording, setIsRecording] = useState(false);
   const [isRecordingPaused, setIsRecordingPaused] = useState(false);
   const [recordingError, setRecordingError] = useState<string | null>(null);
-  const [duration, setDuration] = useState<number | null>(null);
 
   useEffect(() => {
     setIsRecording(false);
     setIsRecordingPaused(false);
     setRecordingError(null);
     setIsPlaying(false);
-    setDuration(null);
-  }, [audio]);
+  }, [audioSource]);
 
   const handleAudioPlayerInit = (controls: WavesurferWidgetControls) => {
     playerControls.current = controls;
@@ -89,7 +84,6 @@ export const AIScribeAudio = ({
     setIsRecordingPaused(false);
     setRecordingError(null);
     setIsPlaying(false);
-    setDuration(null);
 
     onReset?.();
   };
@@ -97,7 +91,7 @@ export const AIScribeAudio = ({
   return (
     <div className="flex flex-col-reverse md:flex-row gap-2 md:gap-4">
       <div className="flex flex-row gap-2 md:gap-4 justify-center w-full">
-        {audio || isSaving || isSaveFailed ? (
+        {audioSource || isSaving || isSaveFailed ? (
           <PlayPauseButton
             action={isPlaying ? "pause" : "play"}
             isDisabled={isPlayerLoading || isSaving || isSaveFailed}
@@ -125,31 +119,34 @@ export const AIScribeAudio = ({
               <WaitMessageSpinner>Saving</WaitMessageSpinner>
             </div>
           )}
-          {audio === null && !isRecording && !isSaving && !isSaveFailed && (
-            <div className="w-full h-[70px] flex justify-center items-center border rounded-lg border-zinc-100 dark:border-zinc-900">
-              <div className="text-center text-zinc-500 md:mb-2">
-                {recordingError ? (
-                  recordingError ===
-                  "Recording is not supported in this browser" ? (
-                    <span className="text-red-500">
-                      Recording is not Supported <br />
-                      in this Browser
-                    </span>
+          {audioSource === null &&
+            !isRecording &&
+            !isSaving &&
+            !isSaveFailed && (
+              <div className="w-full h-[70px] flex justify-center items-center border rounded-lg border-zinc-100 dark:border-zinc-900">
+                <div className="text-center text-zinc-500 md:mb-2">
+                  {recordingError ? (
+                    recordingError ===
+                    "Recording is not supported in this browser" ? (
+                      <span className="text-red-500">
+                        Recording is not Supported <br />
+                        in this Browser
+                      </span>
+                    ) : (
+                      <span className="text-red-500">
+                        An Error Occurred While <br />
+                        Attempting to Record
+                      </span>
+                    )
                   ) : (
-                    <span className="text-red-500">
-                      An Error Occurred While <br />
-                      Attempting to Record
+                    <span>
+                      Start Recording or <br />
+                      Select a File
                     </span>
-                  )
-                ) : (
-                  <span>
-                    Start Recording or <br />
-                    Select a File
-                  </span>
-                )}
+                  )}
+                </div>
               </div>
-            </div>
-          )}
+            )}
           <AudioRecorder
             isPaused={isRecordingPaused}
             isRecording={isRecording}
@@ -161,14 +158,8 @@ export const AIScribeAudio = ({
             }}
           />
           <WavesurferWidget
-            audioSource={audio ?? null}
-            isHidden={!audio || isRecording || isSaving}
-            waveformPeaks={waveformPeaks}
-            onDurationChanged={(seconds) => {
-              if (duration != seconds) {
-                setDuration(seconds);
-              }
-            }}
+            audioSource={audioSource ?? null}
+            isHidden={!audioSource || isRecording || isSaving}
             onInit={handleAudioPlayerInit}
             onLoading={() => setIsPlayerLoading(true)}
             onPause={() => setIsPlaying(false)}
@@ -179,19 +170,19 @@ export const AIScribeAudio = ({
             className={clsx(
               "mx-2 transition-opacity duration-250 ease-in-out",
               isPlayerLoading ? "invisible opacity-0" : "opacity-100",
-              (!audio || isRecording) && "hidden",
+              (!audioSource || isRecording) && "hidden",
             )}
           >
             <AudioTrackInfo
-              audioTitle={audioTitle ?? "Audio Recording"}
-              duration={duration}
+              audioTitle={audioSource ? audioSource.title : "Audio Recording"}
+              duration={audioSource ? audioSource.duration / 1000 : null}
               isRecording={isRecording}
               isRecordingPaused={isRecordingPaused}
             />
           </div>
         </div>
       </div>
-      {audio === null && !isRecording && !isSaving && !isSaveFailed ? (
+      {audioSource === null && !isRecording && !isSaving && !isSaveFailed ? (
         <div className="flex flex-row md:flex-col gap-2 md:gap-1 md:h-[70px] justify-end items-center md:items-start">
           <AudioFileBrowseButton onFileSelected={onAudioFile} />
           <SampleRecordingSelector onFileSelected={onAudioFile} />
