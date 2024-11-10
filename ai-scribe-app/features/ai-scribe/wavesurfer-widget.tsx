@@ -12,8 +12,7 @@ import { useTheme } from "next-themes";
 
 import { Progress } from "@nextui-org/progress";
 
-import { headerNames } from "@/config/keys";
-import { useAccessToken } from "@/services/session-management/use-access-token";
+import { AudioSource } from "@/core/types";
 import { tailwindColors } from "@/utility/constants";
 
 export type WavesurferWidgetControls = {
@@ -21,11 +20,9 @@ export type WavesurferWidgetControls = {
 };
 
 type WavesurferWidgetProps = {
-  audioSource: string | null;
-  waveformPeaks: number[] | null;
+  audioSource: AudioSource | null;
   isHidden: boolean;
   onInit?: (controls: WavesurferWidgetControls) => void;
-  onDurationChanged?: (seconds: number | null) => void;
   onLoading?: () => void;
   onReady?: () => void;
   onPlay?: () => void;
@@ -34,10 +31,8 @@ type WavesurferWidgetProps = {
 
 export const WavesurferWidget = ({
   audioSource,
-  waveformPeaks,
   isHidden,
   onInit,
-  onDurationChanged,
   onLoading,
   onReady,
   onPlay,
@@ -47,14 +42,12 @@ export const WavesurferWidget = ({
   const PLAYER_HEIGHT = 70;
 
   const { theme } = useTheme();
-  const accessToken = useAccessToken();
   const wavesurfer = useRef<Wavesurfer | null>(null);
 
-  const [loadedAudio, setLoadedAudio] = useState<string | null>(null);
+  const [loadedAudio, setLoadedAudio] = useState<AudioSource | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string>();
-  const [durationMs, setDurationMs] = useState<number | null>(null);
 
   const [options, setOptions] = useState<Partial<WaveSurferOptions>>({
     barRadius: 100,
@@ -68,12 +61,6 @@ export const WavesurferWidget = ({
     cursorColor: tailwindColors["zinc-500"],
     fillParent: true,
     interact: false,
-    fetchParams: {
-      credentials: "include",
-      headers: {
-        [headerNames.JenkinsAuthorization]: `Bearer ${accessToken}`,
-      },
-    },
   });
 
   const handleInit = async (ws: Wavesurfer) => {
@@ -88,13 +75,11 @@ export const WavesurferWidget = ({
     );
   };
 
-  const handleReady = (_: Wavesurfer, seconds: number) => {
+  const handleReady = (_: Wavesurfer, _seconds: number) => {
     if (!isInitialized) {
       setIsInitialized(true);
       onInit?.({ playPause });
     }
-
-    setDurationMs(seconds * 1000);
 
     setTimeout(() => {
       setIsReady(true);
@@ -108,38 +93,38 @@ export const WavesurferWidget = ({
     }
   };
 
-  // Handle changes to audio source.
+  // React to requested change to audio source.
   useEffect(() => {
-    if (isInitialized && audioSource !== loadedAudio) {
+    if (isInitialized && audioSource?.url !== loadedAudio?.url) {
       wavesurfer.current?.stop();
 
       setIsReady(false);
-      setDurationMs(null);
       setError(undefined);
       onLoading?.();
-
-      if (audioSource) {
-        wavesurfer.current?.load(audioSource, [waveformPeaks ?? [0]]);
-      }
 
       setLoadedAudio(audioSource);
     }
   }, [audioSource, isInitialized]);
 
+  // React to accepted change in audio source.
   useEffect(() => {
     if (loadedAudio) {
-      wavesurfer.current?.load(loadedAudio, [waveformPeaks ?? [0]]);
+      wavesurfer.current?.load(
+        loadedAudio.url,
+        [loadedAudio.waveformPeaks ?? [0]],
+        loadedAudio.duration / 1000,
+      );
     } else {
-      wavesurfer.current?.load(NO_AUDIO_URL, [[0]]);
+      wavesurfer.current?.load(NO_AUDIO_URL, [[0]], 0);
     }
   }, [loadedAudio]);
 
-  // Handle changes to Wavesurfer options.
+  // React to changes to Wavesurfer options.
   useEffect(() => {
     wavesurfer.current?.setOptions(options);
   }, [options]);
 
-  // Handle changes to player interactive state.
+  // React to changes to player interactive state.
   useEffect(() => {
     setOptions({
       ...options,
@@ -147,19 +132,7 @@ export const WavesurferWidget = ({
     });
   }, [isReady]);
 
-  // Handle changes to the access token.
-  useEffect(() => {
-    setOptions({
-      ...options,
-      fetchParams: {
-        headers: {
-          [headerNames.JenkinsAuthorization]: `Bearer ${accessToken}`,
-        },
-      },
-    });
-  }, [accessToken]);
-
-  // Handle changes to player display colors.
+  // React to theme changes.
   useEffect(() => {
     setOptions({
       ...options,
@@ -170,10 +143,6 @@ export const WavesurferWidget = ({
       waveColor: tailwindColors["blue-400"],
     });
   }, [theme]);
-
-  useEffect(() => {
-    onDurationChanged?.(durationMs ? Math.trunc(durationMs / 1000) : null);
-  }, [durationMs]);
 
   const playPause = () => {
     wavesurfer.current?.playPause();
@@ -215,13 +184,16 @@ export const WavesurferWidget = ({
           },
           "transition-opacity duration-250 ease-in-out",
           isReady ? "opacity-100" : "opacity-0",
-          (!isReady || audioSource == null || waveformPeaks === null) &&
+          (!isReady ||
+            audioSource == null ||
+            audioSource.waveformPeaks === null) &&
             "invisible",
         ])}
       >
         <WavesurferPlayer
           autoplay={false}
           backend="MediaElement"
+          duration={0}
           height={PLAYER_HEIGHT}
           url={NO_AUDIO_URL}
           onError={handleError}
