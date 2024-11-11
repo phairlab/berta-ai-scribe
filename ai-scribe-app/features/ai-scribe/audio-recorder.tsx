@@ -8,6 +8,8 @@ import { AnimatedPulse } from "@/core/animated-pulse";
 import { formatDuration } from "@/utility/formatters";
 import { useStopwatch } from "@/utility/use-stopwatch";
 
+import { AudioLevel } from "./audio-level";
+
 const RECORDER_CHUNK_DURATION_MS = 1000;
 
 type AudioRecorderProps = {
@@ -25,6 +27,7 @@ export const AudioRecorder = ({
 }: AudioRecorderProps) => {
   const stopwatch = useStopwatch();
   const mediaRecorder = useRef<MediaRecorder | null>(null);
+  const [stream, setStream] = useState<MediaStream | null>(null);
   const [isRecordingReady, setIsRecordingReady] = useState(false);
   const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
 
@@ -92,6 +95,8 @@ export const AudioRecorder = ({
   async function startRecording() {
     const stream = await getMicrophonePermission();
 
+    setStream(stream);
+
     if (stream === null) {
       return;
     }
@@ -113,23 +118,29 @@ export const AudioRecorder = ({
   function endRecording() {
     mediaRecorder.current?.stop();
     stopwatch.reset();
+    setStream(null);
     setIsRecordingReady(true);
   }
 
   return (
     <div
       className={clsx(
-        "w-full min-h-[70px] flex justify-center items-center border rounded-lg border-zinc-100 dark:border-zinc-900",
+        "flex flex-row gap-5 justify-center items-center",
+        "relative w-full min-h-[70px]",
+        "border rounded-lg border-zinc-100 dark:border-zinc-900",
         !isRecording && "hidden",
       )}
     >
       <AnimatedPulse isPulsing={isPaused}>
-        <div className="text-6xl text-red-500 -mt-2">
+        <div className="text-6xl text-red-500">
           {formatDuration(
             stopwatch.duration === null ? null : stopwatch.duration / 1000,
           )}
         </div>
       </AnimatedPulse>
+      <div className="absolute right-1">
+        <AudioLevel leds={12} stream={stream} />
+      </div>
     </div>
   );
 };
