@@ -132,7 +132,7 @@ export const AudioRecorder = ({
       )}
     >
       <AnimatedPulse isPulsing={isPaused}>
-        <div className="text-6xl text-red-500 -mt-2">
+        <div className="text-6xl text-red-500">
           {formatDuration(
             stopwatch.duration === null ? null : stopwatch.duration / 1000,
           )}
