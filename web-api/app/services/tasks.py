@@ -68,7 +68,7 @@ MARKDOWN_FORMATTING_DIRECTIVE = """
 Format your responses in markdown, using level one headings for section headers (e.g. # Header) and bullets only.
 Use dashes (-) for bullets.
 Replace all characters that are part of the content and not meant for formatting with their escaped variants, for example
-replace asterisks with \* and replace # with \#, but not where these are used for headings or bold or italics.
+replace "* = can't miss" with "\* = can't miss" so that the * is escaped.
 Do not include an overall header for the entire response, only individual section headers are required.
 """
 
@@ -76,7 +76,7 @@ def generate_note(model: str, instructions: str, transcript: str, output_type: s
     # Configure prompt messages.
     messages = [
         {"role": "system", "content": instructions},
-        {"role": "system", "content": PLAINTEXT_FORMATTING_DIRECTIVE if output_type == "Markdown" else MARKDOWN_FORMATTING_DIRECTIVE},
+        {"role": "system", "content": MARKDOWN_FORMATTING_DIRECTIVE if output_type == "Markdown" else PLAINTEXT_FORMATTING_DIRECTIVE},
         {"role": "user", "content": transcript}
     ]
 
