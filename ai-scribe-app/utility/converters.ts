@@ -1,3 +1,5 @@
+import { marked } from "marked";
+
 import { DraftNote, Encounter, NoteType } from "@/core/types";
 import * as WebApiTypes from "@/services/web-api/types";
 
@@ -34,4 +36,36 @@ export function fromWebApiEncounter(record: WebApiTypes.Encounter) {
  */
 export function fromWebApiDraftNote(record: WebApiTypes.DraftNote) {
   return setTracking(record, "Synchronized") as DraftNote;
+}
+
+function plainTextMarkdownRenderer() {
+  const render = new marked.Renderer();
+
+  render.link = ({ href, title }) => `[${title}] (${href})`;
+
+  render.paragraph = ({ tokens }) => `${tokens.map((t) => t.raw).join()}\n`;
+
+  render.heading = ({ tokens }) => `\n${tokens.map((t) => t.raw).join()}\n`;
+
+  render.list = (token) =>
+    token.items
+      .map((item, index) => `${token.ordered ? index + 1 : "-"} ${item.text}`)
+      .join("\n") + "\n";
+
+  render.em = ({ tokens }) => `${tokens.map((t) => t.raw).join()}\n`;
+  render.strong = ({ tokens }) => `${tokens.map((t) => t.raw).join()}\n`;
+
+  return render;
+}
+
+/** Converts a markdown string to equivalent plain text. */
+export function toPlainTextFromMarkdown(markdown: string) {
+  const plainText = marked(markdown, {
+    renderer: plainTextMarkdownRenderer(),
+  }) as string;
+
+  return plainText
+    .trim()
+    .replace(/\\[\\`*_{}\[\]<>()#+-.!|]/g, (escaped) => escaped.substring(1))
+    .replace(/\n{3}/g, "\n\n");
 }

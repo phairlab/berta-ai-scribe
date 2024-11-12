@@ -1,33 +1,16 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { useEffect, useRef, useState } from "react";
 
-import { marked } from "marked";
 import Markdown from "react-markdown";
 
 import { Button } from "@nextui-org/button";
 import { SelectItem } from "@nextui-org/select";
 
+import * as convert from "@/utility/converters";
+
 import { OutputCard } from "./output-card";
 import { SafeSelect } from "./safe-select";
 import { DraftNote } from "./types";
-
-function plainTextRenderer() {
-  const render = new marked.Renderer();
-
-  render.link = ({ href, title, tokens }) => href;
-  render.paragraph = ({ tokens }) => tokens.map((t) => t.raw).join() + "\n";
-  render.heading = ({ tokens, depth }) =>
-    "\n" + tokens.map((t) => t.raw).join() + "\n";
-  render.list = (token) =>
-    token.items
-      .map(
-        (item, index) =>
-          (token.ordered ? ` ${index + 1}. ` : " - ") + item.text,
-      )
-      .join("\n") + "\n";
-
-  return render;
-}
 
 type DisplayFormat = "Rich Text" | "Markdown" | "Plain Text";
 
@@ -61,30 +44,21 @@ export const MarkdownNoteCard = ({
   const canCopyRichText =
     plainText !== null &&
     markdown !== null &&
-    (ClipboardItem.supports("text/html") ||
-      ClipboardItem.supports("text/markdown"));
+    (ClipboardItem?.supports("text/html") ||
+      ClipboardItem?.supports("text/markdown"));
 
   const canCopy =
     (displayFormat === "Rich Text" && canCopyRichText) ||
     (displayFormat === "Markdown" && canCopyMarkdown) ||
     (displayFormat === "Plain Text" && canCopyPlainText);
 
-  function markdownToPlainText(markdown: string) {
-    const plainText = marked(markdown, {
-      renderer: plainTextRenderer(),
-    }) as string;
-
-    return plainText
-      .trim()
-      .replace(/\\\*/g, "*")
-      .replace(/\n?<</gm, "\n\n<<")
-      .replace(/\n\n\n/g, "\n\n");
-  }
+  const convertToPlainText = (markdown: string) =>
+    convert.toPlainTextFromMarkdown(markdown).replace(/\n?<</g, "\n\n<<");
 
   useEffect(() => {
     if (note) {
       const markdown = note.content;
-      const plainText = markdownToPlainText(markdown);
+      const plainText = convertToPlainText(markdown);
 
       setMarkdown(markdown);
       setPlainText(plainText);
@@ -98,19 +72,21 @@ export const MarkdownNoteCard = ({
     if (displayFormat === "Rich Text" && canCopyRichText) {
       // Include HTML data if supported.
       const htmlData = markdownNodeRef.current &&
-        ClipboardItem.supports("text/html") && {
-          "text/html": markdownNodeRef.current.innerHTML,
+        ClipboardItem?.supports("text/html") && {
+          "text/html": new Blob([markdownNodeRef.current.innerHTML], {
+            type: "text/html",
+          }),
         };
 
       // Include Markdown data if supported.
       const markdownData = markdown &&
-        ClipboardItem.supports("text/markdown") && {
-          "text/markdown": markdown,
+        ClipboardItem?.supports("text/markdown") && {
+          "text/markdown": new Blob([markdown], { type: "text/markdown" }),
         };
 
       // Include plain text data.
       const plainTextData = plainText && {
-        "text/plain": plainText,
+        "text/plain": new Blob([plainText], { type: "text/plain" }),
       };
 
       const data = new ClipboardItem({
