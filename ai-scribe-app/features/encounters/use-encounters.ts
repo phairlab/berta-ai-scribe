@@ -242,6 +242,7 @@ export function useEncounters() {
         note.id,
         note.title,
         note.content,
+        note.outputType,
       );
 
       const notes = [

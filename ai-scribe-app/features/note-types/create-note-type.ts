@@ -10,6 +10,7 @@ export function createNoteType(): EditedNoteType {
       modified: new Date(),
       isBuiltin: false,
       isSystemDefault: false,
+      outputType: "Markdown",
     },
     "Not Persisted",
   );

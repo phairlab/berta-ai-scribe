@@ -18,6 +18,7 @@ export function createNote(fields: {
       created: new Date(),
       title: fields.noteType.title ?? "(Untitled Note Type)",
       content: fields.content,
+      outputType: fields.noteType.outputType,
     },
     "Not Persisted",
   );

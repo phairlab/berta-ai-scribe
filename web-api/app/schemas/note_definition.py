@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel
 
@@ -12,6 +13,7 @@ class NoteDefinition(BaseModel):
     instructions: str
     isBuiltin: bool
     isSystemDefault: bool = False
+    outputType: Literal["Plain Text", "Markdown"]
 
     @staticmethod
     def from_db_record(db_record: db.NoteDefinition):
@@ -24,4 +26,5 @@ class NoteDefinition(BaseModel):
             instructions=db_record.instructions,
             isBuiltin=db_record.username == settings.SYSTEM_USER,
             isSystemDefault=db_record.username == settings.SYSTEM_USER and db_record.title == settings.DEFAULT_NOTE_DEFINITION,
+            outputType=db_record.output_type,
         )

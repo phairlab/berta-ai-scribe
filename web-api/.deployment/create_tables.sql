@@ -105,6 +105,7 @@ CREATE TABLE note_definitions (
   instructions VARCHAR NOT NULL,
   model VARCHAR(50),
   inactivated TIMESTAMP_LTZ,
+  output_type VARCHAR(50) NOT NULL DEFAULT 'Plain Text',
   PRIMARY KEY (id, version) RELY,
   FOREIGN KEY (username) REFERENCES users (username) RELY
 );
@@ -143,6 +144,7 @@ CREATE TABLE draft_notes (
   title VARCHAR(100) NOT NULL,
   content VARCHAR NOT NULL,
   inactivated TIMESTAMP_LTZ,
+  output_type VARCHAR(50) NOT NULL DEFAULT 'Plain Text',
   PRIMARY KEY (id) RELY,
   FOREIGN KEY (encounter_id) REFERENCES encounters (id) RELY,
   FOREIGN KEY (definition_id, definition_version) REFERENCES note_definitions (id, version) RELY

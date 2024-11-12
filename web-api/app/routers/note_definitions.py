@@ -64,6 +64,7 @@ def create_note_definition(
             title=title,
             instructions=instructions,
             model=gen_ai_model,
+            output_type="Markdown",
         )
 
         database.add(record)
