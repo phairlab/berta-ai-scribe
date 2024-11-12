@@ -1,10 +1,16 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
+import { useEffect, useRef, useState } from "react";
+
 import Markdown from "react-markdown";
 
 import { Button } from "@nextui-org/button";
+import { SelectItem } from "@nextui-org/select";
 
 import { OutputCard } from "./output-card";
+import { SafeSelect } from "./safe-select";
 import { DraftNote } from "./types";
+
+type DisplayFormat = "Rich Text" | "Markdown" | "Plain Text";
 
 type NoteCardProps = {
   note: DraftNote;
@@ -12,38 +18,138 @@ type NoteCardProps = {
 };
 
 export const NoteCard = ({ note, showTitle = true }: NoteCardProps) => {
+  const markdownNodeRef = useRef<HTMLDivElement | null>(null);
+  const [markdown, setMarkdown] = useState<string | null>(null);
+  const [plainText, setPlainText] = useState<string | null>(null);
+  const [displayFormat, setDisplayFormat] =
+    useState<DisplayFormat>("Rich Text");
+
+  const canCopyPlainText = plainText !== null;
+  const canCopyMarkdown = markdown !== null;
+  const canCopyRichText =
+    plainText !== null &&
+    markdown !== null &&
+    (ClipboardItem.supports("text/html") ||
+      ClipboardItem.supports("text/markdown"));
+
+  const canCopy =
+    (displayFormat === "Rich Text" && canCopyRichText) ||
+    (displayFormat === "Markdown" && canCopyMarkdown) ||
+    (displayFormat === "Plain Text" && canCopyPlainText);
+
+  useEffect(() => {
+    if (note) {
+      setMarkdown(note.content);
+      setPlainText(note.content);
+    } else {
+      setMarkdown(null);
+      setPlainText(null);
+    }
+  }, [note]);
+
   const copyNote = async () => {
-    if (note.content) {
-      await navigator.clipboard.writeText(note.content);
+    if (displayFormat === "Rich Text" && canCopyRichText) {
+      // Include HTML data if supported.
+      const htmlData = markdownNodeRef.current &&
+        ClipboardItem.supports("text/html") && {
+          "text/html": markdownNodeRef.current.innerHTML,
+        };
+
+      // Include Markdown data if supported.
+      const markdownData = markdown &&
+        ClipboardItem.supports("text/markdown") && {
+          "text/markdown": markdown,
+        };
+
+      // Include plain text data.
+      const plainTextData = plainText && {
+        "text/plain": plainText,
+      };
+
+      const data = new ClipboardItem({
+        ...htmlData,
+        ...markdownData,
+        ...plainTextData,
+      });
+
+      await navigator.clipboard.write([data]);
+    } else if (displayFormat === "Markdown" && canCopyMarkdown) {
+      await navigator.clipboard.writeText(markdown);
+    } else if (displayFormat === "Plain Text" && canCopyPlainText) {
+      await navigator.clipboard.writeText(plainText);
     }
   };
 
   const controls = (
-    <Button color="default" size="sm" onClick={copyNote}>
-      Copy
-    </Button>
+    <>
+      <SafeSelect
+        aria-label="Display Format Selector"
+        className="w-32"
+        selectedKeys={[displayFormat]}
+        selectionMode="single"
+        size="sm"
+        onChange={(e) => setDisplayFormat(e.target.value as DisplayFormat)}
+      >
+        <SelectItem key="Rich Text">Formatted</SelectItem>
+        <SelectItem key="Plain Text">Plain Text</SelectItem>
+        <SelectItem key="Markdown">Markdown</SelectItem>
+      </SafeSelect>
+      <Button
+        color="default"
+        isDisabled={!canCopy}
+        size="sm"
+        onClick={copyNote}
+      >
+        Copy
+      </Button>
+    </>
   );
 
   return (
     <OutputCard controls={controls} title={showTitle && note.title}>
-      <Markdown
-        className="flex flex-col gap-3 leading-normal m-0 p-0"
-        components={{
-          ul({ node, ...rest }) {
-            return (
-              <ul
-                className="list-['-_'] list-outside text-red-500 flex flex-col gap-1 ms-3"
-                {...rest}
-              />
-            );
-          },
-          // li({ node, ...rest }) {
-          //   return <li className="leading-normal" {...rest} />;
-          // },
-        }}
-      >
-        {note.content}
-      </Markdown>
+      {displayFormat === "Plain Text" ? (
+        plainText
+      ) : displayFormat === "Markdown" ? (
+        markdown
+      ) : (
+        <div ref={markdownNodeRef}>
+          <Markdown
+            className="flex flex-col gap-1 leading-normal p-0"
+            components={{
+              h1({ node, ...rest }) {
+                return (
+                  // eslint-disable-next-line jsx-a11y/heading-has-content
+                  <h1 className="font-semibold mt-3 first:mt-0" {...rest} />
+                );
+              },
+              h2({ node, ...rest }) {
+                return (
+                  // eslint-disable-next-line jsx-a11y/heading-has-content
+                  <h2 className="italic" {...rest} />
+                );
+              },
+              ul({ node, ...rest }) {
+                return (
+                  <ul
+                    className="list-['-_'] list-outside flex flex-col ms-3"
+                    {...rest}
+                  />
+                );
+              },
+              ol({ node, ...rest }) {
+                return (
+                  <ul
+                    className="list-decimal list-outside flex flex-col ms-6"
+                    {...rest}
+                  />
+                );
+              },
+            }}
+          >
+            {markdown}
+          </Markdown>
+        </div>
+      )}
     </OutputCard>
   );
 };
