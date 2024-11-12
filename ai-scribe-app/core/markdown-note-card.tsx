@@ -108,6 +108,7 @@ export const MarkdownNoteCard = ({
       <SafeSelect
         aria-label="Display Format Selector"
         className="w-32"
+        disallowEmptySelection={true}
         selectedKeys={[displayFormat]}
         selectionMode="single"
         size="sm"
