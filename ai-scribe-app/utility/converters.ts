@@ -41,7 +41,7 @@ export function fromWebApiDraftNote(record: WebApiTypes.DraftNote) {
 function plainTextMarkdownRenderer() {
   const render = new marked.Renderer();
 
-  render.link = ({ href, title }) => `[${title}] (${href})`;
+  render.link = ({ href, title }) => `Link: [${title} (${href})]`;
 
   render.paragraph = ({ tokens }) => `${tokens.map((t) => t.raw).join()}\n`;
 
@@ -54,6 +54,8 @@ function plainTextMarkdownRenderer() {
 
   render.em = ({ tokens }) => `${tokens.map((t) => t.raw).join()}\n`;
   render.strong = ({ tokens }) => `${tokens.map((t) => t.raw).join()}\n`;
+
+  render.br = () => "\n";
 
   return render;
 }
