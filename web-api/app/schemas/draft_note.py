@@ -1,9 +1,9 @@
 from datetime import datetime
-from typing import Literal
 
 from pydantic import BaseModel
 
 import app.services.db as db
+from .note_output_types import NoteOutputType
 
 class DraftNote(BaseModel):
     id: str
@@ -11,7 +11,7 @@ class DraftNote(BaseModel):
     created: datetime
     title: str
     content: str
-    outputType: Literal["Plain Text", "Markdown"]
+    outputType: NoteOutputType
 
     @staticmethod
     def from_db_record(db_record: db.DraftNote):

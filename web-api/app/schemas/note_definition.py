@@ -1,10 +1,10 @@
 from datetime import datetime
-from typing import Literal
 
 from pydantic import BaseModel
 
 import app.services.db as db
 from app.config import settings
+from .note_output_types import NoteOutputType
 
 class NoteDefinition(BaseModel):
     id: str
@@ -13,7 +13,7 @@ class NoteDefinition(BaseModel):
     instructions: str
     isBuiltin: bool
     isSystemDefault: bool = False
-    outputType: Literal["Plain Text", "Markdown"]
+    outputType: NoteOutputType
 
     @staticmethod
     def from_db_record(db_record: db.NoteDefinition):

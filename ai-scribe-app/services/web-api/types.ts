@@ -1,4 +1,4 @@
-export type OutputType = "Plain Text" | "Markdown";
+export type NoteOutputType = "Plain Text" | "Markdown";
 
 export type DataPage<T> = {
   data: T[];
@@ -11,7 +11,7 @@ export type DraftNote = {
   created: Date;
   title: string;
   content: string;
-  outputType: OutputType;
+  outputType: NoteOutputType;
 };
 
 export type Encounter = {
@@ -31,7 +31,7 @@ export type NoteDefinition = {
   instructions: string;
   isBuiltin: boolean;
   isSystemDefault: boolean;
-  outputType: OutputType;
+  outputType: NoteOutputType;
 };
 
 export type NoteGeneratorOutput = {

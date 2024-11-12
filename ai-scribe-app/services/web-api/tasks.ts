@@ -1,7 +1,7 @@
 import { ApiRouterDefinition } from "./api-definition";
 import { WebApiToken } from "./authentication";
 import { httpAction } from "./base-queries";
-import { NoteGeneratorOutput, TranscriberOutput } from "./types";
+import { NoteGeneratorOutput, NoteOutputType, TranscriberOutput } from "./types";
 
 const transcribeAudio =
   (getAccessToken: () => WebApiToken) =>
@@ -25,10 +25,15 @@ const generateDraftNote =
   (
     instructions: string,
     transcript: string,
+    outputType: NoteOutputType,
     cancellation?: AbortSignal,
   ): Promise<NoteGeneratorOutput> =>
     httpAction<NoteGeneratorOutput>("POST", "/api/tasks/generate-draft-note", {
-      data: { instructions: instructions, transcript: transcript },
+      data: {
+        instructions: instructions,
+        transcript: transcript,
+        outputType: outputType,
+      },
       accessToken: getAccessToken(),
       signal: cancellation,
     });

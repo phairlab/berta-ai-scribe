@@ -41,6 +41,7 @@ export function useNoteGenerator({
       const response = await webApi.tasks.generateDraftNote(
         noteType.instructions,
         transcript,
+        noteType.outputType,
         abortSignal,
       );
 

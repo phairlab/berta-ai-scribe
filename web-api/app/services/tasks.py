@@ -56,17 +56,27 @@ async def transcribe_audio(audio: BinaryIO, filename: str, content_type: str) ->
     
     return transcription_output
 
-def generate_note(model: str, instructions: str, transcript: str) -> sch.GenerationOutput:    
+PLAINTEXT_FORMATTING_DIRECTIVE = """
+Format your response in plain text without using any markdown syntax.
+Don't surround titles or subheadings with any special characters.
+Don't include a blank line after any headings or subheadings, the content should follow on the next line,
+but include blank lines elsewhere as appropriate.
+Do not include an overall header for the entire response, only individual section headers are required.
+"""
+
+MARKDOWN_FORMATTING_DIRECTIVE = """
+Format your responses in markdown, using level one headings for section headers (e.g. # Header) and bullets only.
+Use dashes (-) for bullets.
+Replace all characters that are part of the content and not meant for formatting with their escaped variants, for example
+replace asterisks with \* and replace # with \#, but not where these are used for headings or bold or italics.
+Do not include an overall header for the entire response, only individual section headers are required.
+"""
+
+def generate_note(model: str, instructions: str, transcript: str, output_type: sch.NoteOutputType = "Markdown") -> sch.GenerationOutput:    
     # Configure prompt messages.
     messages = [
         {"role": "system", "content": instructions},
-        {"role": "system", "content": """
-         Format your responses in markdown, using level one headings for section headers (e.g. # Header) and bullets only.
-         Use dashes (-) for bullets.
-         Replace all characters that are part of the content and not meant for formatting with their escaped variants, for example
-         replace asterisks with \* and replace # with \#, but not where these are used for headings or bold or italics.
-         Do not include an overall header for the entire response, only individual section headers are required.
-         """},
+        {"role": "system", "content": PLAINTEXT_FORMATTING_DIRECTIVE if output_type == "Markdown" else MARKDOWN_FORMATTING_DIRECTIVE},
         {"role": "user", "content": transcript}
     ]
 

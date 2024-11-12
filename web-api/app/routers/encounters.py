@@ -1,6 +1,6 @@
 import json
 from datetime import datetime, timezone
-from typing import Annotated, Literal
+from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, UploadFile, Depends, Body
 from sqlalchemy import select, and_, or_
@@ -275,7 +275,7 @@ def create_draft_note(
     noteId: Annotated[str, Body()],
     title: Annotated[str, Body()],
     content: Annotated[str, Body()],
-    outputType: Annotated[Literal["Plain Text", "Markdown"], Body()],
+    outputType: Annotated[sch.NoteOutputType, Body()],
 ) -> sch.DraftNote:
     """
     Creates and saves a new draft note to the encounter record for this user.
