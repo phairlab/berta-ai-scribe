@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { useEffect, useRef, useState } from "react";
 
+import { marked } from "marked";
 import Markdown from "react-markdown";
 
 import { Button } from "@nextui-org/button";
@@ -9,6 +10,24 @@ import { SelectItem } from "@nextui-org/select";
 import { OutputCard } from "./output-card";
 import { SafeSelect } from "./safe-select";
 import { DraftNote } from "./types";
+
+function plainTextRenderer() {
+  const render = new marked.Renderer();
+
+  render.link = ({ href, title, tokens }) => href;
+  render.paragraph = ({ tokens }) => tokens.map((t) => t.raw).join() + "\n";
+  render.heading = ({ tokens, depth }) =>
+    "\n" + tokens.map((t) => t.raw).join() + "\n";
+  render.list = (token) =>
+    token.items
+      .map(
+        (item, index) =>
+          (token.ordered ? ` ${index + 1}. ` : " - ") + item.text,
+      )
+      .join("\n") + "\n";
+
+  return render;
+}
 
 type DisplayFormat = "Rich Text" | "Markdown" | "Plain Text";
 
@@ -50,10 +69,25 @@ export const MarkdownNoteCard = ({
     (displayFormat === "Markdown" && canCopyMarkdown) ||
     (displayFormat === "Plain Text" && canCopyPlainText);
 
+  function markdownToPlainText(markdown: string) {
+    const plainText = marked(markdown, {
+      renderer: plainTextRenderer(),
+    }) as string;
+
+    return plainText
+      .trim()
+      .replace(/\\\*/g, "*")
+      .replace(/\n?<</gm, "\n\n<<")
+      .replace(/\n\n\n/g, "\n\n");
+  }
+
   useEffect(() => {
     if (note) {
-      setMarkdown(note.content);
-      setPlainText(note.content);
+      const markdown = note.content;
+      const plainText = markdownToPlainText(markdown);
+
+      setMarkdown(markdown);
+      setPlainText(plainText);
     } else {
       setMarkdown(null);
       setPlainText(null);
