@@ -49,7 +49,10 @@ function plainTextMarkdownRenderer() {
 
   render.list = (token) =>
     token.items
-      .map((item, index) => `${token.ordered ? index + 1 : "-"} ${item.text}`)
+      .map(
+        (item, index) =>
+          `${token.ordered ? `${index + 1}.` : "-"} ${item.text}`,
+      )
       .join("\n") + "\n";
 
   render.em = ({ tokens }) => `${tokens.map((t) => t.raw).join()}\n`;

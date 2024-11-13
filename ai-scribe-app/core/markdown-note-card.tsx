@@ -39,21 +39,12 @@ export const MarkdownNoteCard = ({
   const [displayFormat, setDisplayFormat] =
     useState<DisplayFormat>("Rich Text");
 
-  const canCopyPlainText = plainText !== null;
-  const canCopyMarkdown = markdown !== null;
-  const canCopyRichText =
-    plainText !== null &&
-    markdown !== null &&
-    (ClipboardItem?.supports("text/html") ||
-      ClipboardItem?.supports("text/markdown"));
+  const convertToPlainText = (markdown: string) => {
+    let plainText = convert.toPlainTextFromMarkdown(markdown);
+    //.replace(/\n?<</g, "\n\n<<")
 
-  const canCopy =
-    (displayFormat === "Rich Text" && canCopyRichText) ||
-    (displayFormat === "Markdown" && canCopyMarkdown) ||
-    (displayFormat === "Plain Text" && canCopyPlainText);
-
-  const convertToPlainText = (markdown: string) =>
-    convert.toPlainTextFromMarkdown(markdown).replace(/\n?<</g, "\n\n<<");
+    return plainText;
+  };
 
   useEffect(() => {
     if (note) {
@@ -69,36 +60,52 @@ export const MarkdownNoteCard = ({
   }, [note]);
 
   const copyNote = async () => {
-    if (displayFormat === "Rich Text" && canCopyRichText) {
-      // Include HTML data if supported.
-      const htmlData = markdownNodeRef.current &&
-        ClipboardItem?.supports("text/html") && {
-          "text/html": new Blob([markdownNodeRef.current.innerHTML], {
-            type: "text/html",
-          }),
-        };
+    if (displayFormat === "Rich Text" && markdownNodeRef.current !== null) {
+      try {
+        const htmlFragment = markdownNodeRef.current.innerHTML;
 
-      // Include Markdown data if supported.
-      const markdownData = markdown &&
-        ClipboardItem?.supports("text/markdown") && {
-          "text/markdown": new Blob([markdown], { type: "text/markdown" }),
-        };
+        // Include HTML data if supported.
+        const htmlData = ClipboardItem?.supports("text/html")
+          ? {
+              "text/html": new Blob([htmlFragment], {
+                type: "text/html",
+              }),
+            }
+          : undefined;
 
-      // Include plain text data.
-      const plainTextData = plainText && {
-        "text/plain": new Blob([plainText], { type: "text/plain" }),
-      };
+        // Include Markdown data if supported.
+        const markdownData =
+          ClipboardItem?.supports("text/markdown") && markdown
+            ? {
+                "text/markdown": new Blob([markdown], {
+                  type: "text/markdown",
+                }),
+              }
+            : undefined;
 
-      const data = new ClipboardItem({
-        ...htmlData,
-        ...markdownData,
-        ...plainTextData,
-      });
+        // Include plain text data.
+        const plainTextData = plainText
+          ? {
+              "text/plain": new Blob([plainText], { type: "text/plain" }),
+            }
+          : undefined;
 
-      await navigator.clipboard.write([data]);
-    } else if (displayFormat === "Markdown" && canCopyMarkdown) {
+        const data = new ClipboardItem({
+          ...htmlData,
+          ...markdownData,
+          ...plainTextData,
+        });
+
+        await navigator.clipboard.write([data]);
+      } catch {
+        // Fallback to copying plain text.
+        if (plainText !== null) {
+          await navigator.clipboard.writeText(plainText);
+        }
+      }
+    } else if (displayFormat === "Markdown" && markdown !== null) {
       await navigator.clipboard.writeText(markdown);
-    } else if (displayFormat === "Plain Text" && canCopyPlainText) {
+    } else if (plainText !== null) {
       await navigator.clipboard.writeText(plainText);
     }
   };
@@ -118,12 +125,7 @@ export const MarkdownNoteCard = ({
         <SelectItem key="Plain Text">Plain Text</SelectItem>
         <SelectItem key="Markdown">Markdown</SelectItem>
       </SafeSelect>
-      <Button
-        color="default"
-        isDisabled={!canCopy}
-        size="sm"
-        onClick={copyNote}
-      >
+      <Button color="default" size="sm" onClick={copyNote}>
         Copy
       </Button>
     </>
