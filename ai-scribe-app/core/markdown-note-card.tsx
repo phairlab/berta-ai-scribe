@@ -41,7 +41,6 @@ export const MarkdownNoteCard = ({
 
   const convertToPlainText = (markdown: string) => {
     let plainText = convert.toPlainTextFromMarkdown(markdown);
-    //.replace(/\n?<</g, "\n\n<<")
 
     return plainText;
   };
