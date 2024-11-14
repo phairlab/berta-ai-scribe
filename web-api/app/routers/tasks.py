@@ -84,12 +84,13 @@ def generate_draft_note(
     backgroundTasks: BackgroundTasks,
     *, 
     instructions: Annotated[str, Body()], 
-    transcript: Annotated[str, Body()]
+    transcript: Annotated[str, Body()],
+    outputType: Annotated[sch.NoteOutputType, Body()],
 ) -> sch.GenerationResponse:
     # Get the stream of note segments.
     try:
         noteId = new_sqid(database)
-        generation_output = tasks.generate_note(settings.GENERATIVE_AI_MODEL, instructions, transcript)
+        generation_output = tasks.generate_note(settings.GENERATIVE_AI_MODEL, instructions, transcript, outputType)
         backgroundTasks.add_task(
             log_generation,
             database,

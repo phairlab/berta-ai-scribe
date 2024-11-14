@@ -1,6 +1,9 @@
+import { marked } from "marked";
+
 import { DraftNote, Encounter, NoteType } from "@/core/types";
 import * as WebApiTypes from "@/services/web-api/types";
 
+import { plainTextRenderer } from "./markdown";
 import { byDate } from "./sorters";
 import { setTracking } from "./tracking";
 
@@ -34,4 +37,16 @@ export function fromWebApiEncounter(record: WebApiTypes.Encounter) {
  */
 export function fromWebApiDraftNote(record: WebApiTypes.DraftNote) {
   return setTracking(record, "Synchronized") as DraftNote;
+}
+
+/** Converts a markdown string to equivalent plain text. */
+export function fromMarkdownToPlainText(markdown: string) {
+  const plainText = marked(markdown, {
+    renderer: plainTextRenderer(),
+  }) as string;
+
+  return plainText
+    .replace(/\\([\\`*_{}\[\]<>()#+-.!|])/g, "$1") // Unescape special characters
+    .replace(/\n+\n\n/g, "\n\n") // Condense multi blank lines
+    .trim();
 }

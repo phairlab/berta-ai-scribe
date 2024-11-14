@@ -275,6 +275,7 @@ def create_draft_note(
     noteId: Annotated[str, Body()],
     title: Annotated[str, Body()],
     content: Annotated[str, Body()],
+    outputType: Annotated[sch.NoteOutputType, Body()],
 ) -> sch.DraftNote:
     """
     Creates and saves a new draft note to the encounter record for this user.
@@ -331,6 +332,7 @@ def create_draft_note(
             created=saved,
             title=title,
             content=content,
+            output_type=outputType,
         )
 
         encounter.draft_notes.append(new_note)

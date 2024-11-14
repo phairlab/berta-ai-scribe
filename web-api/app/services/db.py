@@ -136,6 +136,7 @@ class NoteDefinition(JenkinsDatabase):
     instructions: Mapped[str]
     model: Mapped[str]
     inactivated: Mapped[datetime | None] = mapped_column(TIMESTAMP_LTZ)
+    output_type: Mapped[str] = mapped_column(VARCHAR(50))
 
     user: Mapped["User"] = relationship(back_populates="note_definitions")
 
@@ -179,6 +180,7 @@ class DraftNote(JenkinsDatabase):
     title: Mapped[str] = mapped_column(VARCHAR(100))
     content: Mapped[str]
     inactivated: Mapped[datetime | None] = mapped_column(TIMESTAMP_LTZ)
+    output_type: Mapped[str] = mapped_column(VARCHAR(50))
 
     __table_args__ = (
         ForeignKeyConstraint(

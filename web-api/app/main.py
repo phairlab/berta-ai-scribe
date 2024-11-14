@@ -38,7 +38,7 @@ log_dateformat = "%H:%M:%S"
 logging.basicConfig(level=logging.INFO, format=log_format, datefmt=log_dateformat)
 
 logging_level = settings.LOGGING_LEVEL.upper()
-match logging_level:
+match logging_level.upper():
     case "TRACE":
         snowflake_level = logging.DEBUG
         sqlalchemy_level = logging.DEBUG

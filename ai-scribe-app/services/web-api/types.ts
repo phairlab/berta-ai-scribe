@@ -1,3 +1,5 @@
+export type NoteOutputType = "Plain Text" | "Markdown";
+
 export type DataPage<T> = {
   data: T[];
   isLastPage: boolean;
@@ -9,6 +11,7 @@ export type DraftNote = {
   created: Date;
   title: string;
   content: string;
+  outputType: NoteOutputType;
 };
 
 export type Encounter = {
@@ -28,6 +31,7 @@ export type NoteDefinition = {
   instructions: string;
   isBuiltin: boolean;
   isSystemDefault: boolean;
+  outputType: NoteOutputType;
 };
 
 export type NoteGeneratorOutput = {

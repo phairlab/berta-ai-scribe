@@ -1,29 +1,16 @@
-import { Button } from "@nextui-org/button";
-
-import { OutputCard } from "./output-card";
+import { MarkdownNoteCard } from "./markdown-note-card";
+import { PlainTextNoteCard } from "./plain-text-note-card";
 import { DraftNote } from "./types";
 
 type NoteCardProps = {
   note: DraftNote;
   showTitle?: boolean;
+  showRawOutput?: boolean;
 };
 
-export const NoteCard = ({ note, showTitle = true }: NoteCardProps) => {
-  const copyNote = async () => {
-    if (note.content) {
-      await navigator.clipboard.writeText(note.content);
-    }
-  };
-
-  const controls = (
-    <Button color="default" size="sm" onClick={copyNote}>
-      Copy
-    </Button>
+export const NoteCard = (props: NoteCardProps) =>
+  props.note.outputType === "Markdown" ? (
+    <MarkdownNoteCard {...props} />
+  ) : (
+    <PlainTextNoteCard {...props} />
   );
-
-  return (
-    <OutputCard controls={controls} title={showTitle && note.title}>
-      {note.content}
-    </OutputCard>
-  );
-};

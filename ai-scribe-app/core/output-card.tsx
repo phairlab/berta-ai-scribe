@@ -13,7 +13,7 @@ export const OutputCard = ({ title, controls, children }: OutputCardProps) => (
   <Card radius="sm" shadow="sm">
     <CardHeader className="flex flex-row gap-4 justify-between items-center">
       <div className="text-lg font-semibold">{title}</div>
-      <div className="flex flex-row gap-2">{controls}</div>
+      <div className="flex flex-row items-center gap-2">{controls}</div>
     </CardHeader>
     <Divider />
     <CardBody>
