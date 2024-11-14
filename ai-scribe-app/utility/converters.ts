@@ -3,6 +3,7 @@ import { marked } from "marked";
 import { DraftNote, Encounter, NoteType } from "@/core/types";
 import * as WebApiTypes from "@/services/web-api/types";
 
+import { plainTextRenderer } from "./markdown";
 import { byDate } from "./sorters";
 import { setTracking } from "./tracking";
 
@@ -38,39 +39,14 @@ export function fromWebApiDraftNote(record: WebApiTypes.DraftNote) {
   return setTracking(record, "Synchronized") as DraftNote;
 }
 
-function plainTextMarkdownRenderer() {
-  const render = new marked.Renderer();
-
-  render.link = ({ href, title }) => `Link: [${title} (${href})]`;
-
-  render.paragraph = ({ tokens }) => `${tokens.map((t) => t.raw).join()}\n`;
-
-  render.heading = ({ tokens }) => `\n${tokens.map((t) => t.raw).join()}\n`;
-
-  render.list = (token) =>
-    token.items
-      .map(
-        (item, index) =>
-          `${token.ordered ? `${index + 1}.` : "-"} ${item.text}`,
-      )
-      .join("\n") + "\n";
-
-  render.em = ({ tokens }) => `${tokens.map((t) => t.raw).join()}\n`;
-  render.strong = ({ tokens }) => `${tokens.map((t) => t.raw).join()}\n`;
-
-  render.br = () => "\n";
-
-  return render;
-}
-
 /** Converts a markdown string to equivalent plain text. */
-export function toPlainTextFromMarkdown(markdown: string) {
+export function fromMarkdownToPlainText(markdown: string) {
   const plainText = marked(markdown, {
-    renderer: plainTextMarkdownRenderer(),
+    renderer: plainTextRenderer(),
   }) as string;
 
   return plainText
-    .trim()
-    .replace(/\\[\\`*_{}\[\]<>()#+-.!|]/g, (escaped) => escaped.substring(1))
-    .replace(/\n{3}/g, "\n\n");
+    .replace(/\\([\\`*_{}\[\]<>()#+-.!|])/g, "$1") // Unescape special characters
+    .replace(/\n+\n\n/g, "\n\n") // Condense multi blank lines
+    .trim();
 }

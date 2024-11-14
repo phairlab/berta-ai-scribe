@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Markdown from "react-markdown";
 
 import { Button } from "@nextui-org/button";
+import { Divider } from "@nextui-org/divider";
 import { SelectItem } from "@nextui-org/select";
 
 import * as convert from "@/utility/converters";
@@ -27,11 +28,13 @@ declare var ClipboardItem: {
 type MarkdownNoteCardProps = {
   note: DraftNote;
   showTitle?: boolean;
+  showRawOutput?: boolean;
 };
 
 export const MarkdownNoteCard = ({
   note,
   showTitle = true,
+  showRawOutput = true,
 }: MarkdownNoteCardProps) => {
   const markdownNodeRef = useRef<HTMLDivElement | null>(null);
   const [markdown, setMarkdown] = useState<string | null>(null);
@@ -39,15 +42,27 @@ export const MarkdownNoteCard = ({
   const [displayFormat, setDisplayFormat] =
     useState<DisplayFormat>("Rich Text");
 
+  let outputTypes = [
+    { key: "Rich Text", label: "Formatted" },
+    { key: "Plain Text", label: "Plain Text" },
+  ];
+
+  if (showRawOutput) {
+    outputTypes = [...outputTypes, { key: "Markdown", label: "Markdown" }];
+  }
+
   const convertToPlainText = (markdown: string) => {
-    let plainText = convert.toPlainTextFromMarkdown(markdown);
+    let plainText = convert.fromMarkdownToPlainText(markdown);
 
     return plainText;
   };
 
   useEffect(() => {
     if (note) {
-      const markdown = note.content;
+      const markdown = note.content
+        .replace(/^###.*###\n/g, "")
+        .replace(/^( *)(\* )/gm, "$1\\* ");
+
       const plainText = convertToPlainText(markdown);
 
       setMarkdown(markdown);
@@ -97,7 +112,7 @@ export const MarkdownNoteCard = ({
 
         await navigator.clipboard.write([data]);
       } catch {
-        // Fallback to copying plain text.
+        // Fallback to copying the plain text only.
         if (plainText !== null) {
           await navigator.clipboard.writeText(plainText);
         }
@@ -115,14 +130,13 @@ export const MarkdownNoteCard = ({
         aria-label="Display Format Selector"
         className="w-32"
         disallowEmptySelection={true}
+        items={outputTypes}
         selectedKeys={[displayFormat]}
         selectionMode="single"
         size="sm"
         onChange={(e) => setDisplayFormat(e.target.value as DisplayFormat)}
       >
-        <SelectItem key="Rich Text">Formatted</SelectItem>
-        <SelectItem key="Plain Text">Plain Text</SelectItem>
-        <SelectItem key="Markdown">Markdown</SelectItem>
+        {(item) => <SelectItem key={item.key}>{item.label}</SelectItem>}
       </SafeSelect>
       <Button color="default" size="sm" onClick={copyNote}>
         Copy
@@ -144,7 +158,7 @@ export const MarkdownNoteCard = ({
               h1({ node, ...rest }) {
                 return (
                   // eslint-disable-next-line jsx-a11y/heading-has-content
-                  <h1 className="font-semibold mt-3 first:mt-0" {...rest} />
+                  <h1 className="font-semibold" {...rest} />
                 );
               },
               h2({ node, ...rest }) {
@@ -153,10 +167,13 @@ export const MarkdownNoteCard = ({
                   <h2 className="italic" {...rest} />
                 );
               },
+              p({ node, ...rest }) {
+                return <p className="mb-4 last:mb-0" {...rest} />;
+              },
               ul({ node, ...rest }) {
                 return (
                   <ul
-                    className="list-['-_'] list-outside flex flex-col ms-3"
+                    className="list-['-_'] list-outside flex flex-col ps-3 mb-4 last:mb-0"
                     {...rest}
                   />
                 );
@@ -164,10 +181,13 @@ export const MarkdownNoteCard = ({
               ol({ node, ...rest }) {
                 return (
                   <ul
-                    className="list-decimal list-outside flex flex-col ms-6"
+                    className="list-decimal list-outside flex flex-col ps-6 ms-3 mb-4 last:mb-0"
                     {...rest}
                   />
                 );
+              },
+              hr({ node, ...rest }) {
+                return <Divider className="mx-auto w-[98%]" />;
               },
             }}
           >

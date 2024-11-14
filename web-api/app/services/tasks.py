@@ -57,18 +57,20 @@ async def transcribe_audio(audio: BinaryIO, filename: str, content_type: str) ->
     return transcription_output
 
 PLAINTEXT_FORMATTING_DIRECTIVE = """
-Format your response in plain text without using any markdown syntax.
-Don't surround titles or subheadings with any special characters.
-Don't include a blank line after any headings or subheadings, the content should follow on the next line,
-but include blank lines elsewhere as appropriate.
-Do not include an overall header for the entire response, only individual section headers are required.
+### RESPONSE FORMATTING INSTRUCTIONS ###
+You are very good at precisely following formatting instructions.
+Format your response in plain text.
+DO NOT surround titles or subheadings with any special characters.
+DO NOT include an overall header for the entire response, only individual section headers are required.
+After a heading or subheading, the content should follow on the immediate next line.
 """.strip()
 
 MARKDOWN_FORMATTING_DIRECTIVE = """
-Format your responses in markdown, using level one headings for section headers (e.g. # Header) and bullets only.
-Use dashes (-) for bullets.
-Replace all characters that are part of the content and not meant for formatting with their escaped variants, for example
-replace "* = can't miss" with "\* = can't miss" so that the * is escaped.
+### RESPONSE FORMATTING INSTRUCTIONS ###
+You are very good at precisely following formatting instructions.
+Format your response in markdown, using level one headings for section headers (e.g. # Header) and bullets only.
+Use dashes (-) for bullets, and don't nest bullets with other bullet list items.
+Escape characters that could be misinterpreted as markdown by inserting a backslash before them.
 Do not include an overall header for the entire response, only individual section headers are required.
 """.strip()
 
@@ -76,8 +78,8 @@ def generate_note(model: str, instructions: str, transcript: str, output_type: s
     # Configure prompt messages.
     messages = [
         {"role": "system", "content": MARKDOWN_FORMATTING_DIRECTIVE if output_type == "Markdown" else PLAINTEXT_FORMATTING_DIRECTIVE},
-        {"role": "system", "content": instructions},
-        {"role": "user", "content": transcript}
+        {"role": "system", "content": f"### GENERAL INSTRUCTIONS ###\n{instructions}"},
+        {"role": "user", "content": f"### TRANSCRIPT ###\n{transcript}"}
     ]
 
     # Return the draft note segments.

@@ -26,7 +26,7 @@ export const PlainTextNoteCard = ({
 
   return (
     <OutputCard controls={controls} title={showTitle && note.title}>
-      {note.content}
+      {note.content.replace(/^###.*###\n/g, "")}
     </OutputCard>
   );
 };
