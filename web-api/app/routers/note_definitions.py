@@ -116,6 +116,7 @@ def update_note_definition(
             title=title if title is not None else current_record.title,
             instructions=instructions if instructions is not None else current_record.instructions,
             model=current_record.model,
+            output_type=current_record.output_type,
         )
 
         database.add(new_version)
