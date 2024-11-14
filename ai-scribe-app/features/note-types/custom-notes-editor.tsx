@@ -66,7 +66,6 @@ export const CustomNotesEditor = ({
   };
 
   const canTest =
-    editedNoteType.title &&
     editedNoteType.instructions &&
     recording &&
     !noteGenerator.generatingNoteType;
@@ -165,7 +164,9 @@ export const CustomNotesEditor = ({
           </WaitMessageSpinner>
         )}
         {error && <ErrorCard error={error} />}
-        {draftNote && <NoteCard note={draftNote} />}
+        {draftNote && (
+          <NoteCard note={draftNote} showRawOutput={true} showTitle={false} />
+        )}
       </div>
     </>
   );

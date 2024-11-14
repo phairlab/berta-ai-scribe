@@ -34,7 +34,7 @@ type MarkdownNoteCardProps = {
 export const MarkdownNoteCard = ({
   note,
   showTitle = true,
-  showRawOutput = true,
+  showRawOutput = false,
 }: MarkdownNoteCardProps) => {
   const markdownNodeRef = useRef<HTMLDivElement | null>(null);
   const [markdown, setMarkdown] = useState<string | null>(null);
