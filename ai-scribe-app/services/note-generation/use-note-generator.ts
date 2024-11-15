@@ -59,12 +59,13 @@ export function useNoteGenerator({
         ].join(" ");
 
         if (noteType.outputType === "Markdown") {
+          // If markdown, escape < and >, and add italics directive around the footer.
           noteFooter = `\n\n*\<\<${noteFooter}\>\>*`;
         } else {
+          // Plaintext footer.
           noteFooter = `\n\n<<${noteFooter}>>`;
         }
 
-        draftNote.content = draftNote.content.replace(/^###.*###\n/g, "");
         draftNote.content += noteFooter;
       }
 
