@@ -64,7 +64,7 @@ After a heading or subheading line, the section content should follow on the imm
 MARKDOWN_FORMATTING_DIRECTIVE = """
 You are very good at precisely following formatting instructions.
 Format your response in markdown, using level one headings for section headers (e.g. # Header) and bullets only.
-Use dashes (-) for bullets, and don't nest bullets with other bullet list items.
+Don't use asterisks for list items.
 Escape characters that could be misinterpreted as markdown by inserting a backslash before them.
 Do not include an overall header for the entire response, only individual section headers are required.
 """.strip()
