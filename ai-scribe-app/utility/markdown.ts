@@ -10,7 +10,7 @@ export function plainTextRenderer() {
 
   render.checkbox = ({ checked }) => `[${checked ? "X" : " "}]`;
 
-  render.code = ({ text }) => text;
+  render.code = ({ text }) => `\`\`\`\n${text}\n\`\`\``;
 
   render.codespan = ({ text }) => `\`${text}\``;
 
@@ -27,7 +27,7 @@ export function plainTextRenderer() {
   render.image = ({ href, title, text }) =>
     `Image: ${text} [${title} (${href})]`;
 
-  render.link = ({ href, title }) => `Link: [${title} (${href})]`;
+  render.link = ({ href, title }) => `[${title}](${href})`;
 
   render.list = (token) =>
     token.items
@@ -48,9 +48,7 @@ export function plainTextRenderer() {
 
   render.strong = ({ tokens }) => `${tokens.map((t) => t.raw).join("")}`;
 
-  render.tablecell = (token) => `| ${token.text}`;
-
-  render.tablerow = ({ text }) => `${text}\n`;
+  render.table = (token) => token.raw;
 
   render.text = (token) => token.text;
 

@@ -59,9 +59,8 @@ export const MarkdownNoteCard = ({
 
   useEffect(() => {
     if (note) {
-      const markdown = note.content
-        .replace(/^###.*###\n/g, "")
-        .replace(/^( *)(\* )/gm, "$1\\* ");
+      // Prevent asterisks from being interpreted as bullets by escaping them.
+      const markdown = note.content.replace(/^( *)(\* )/gm, "$1\\* ");
 
       const plainText = convertToPlainText(markdown);
 
@@ -170,6 +169,17 @@ export const MarkdownNoteCard = ({
               p({ node, ...rest }) {
                 return <p className="mb-4 last:mb-0" {...rest} />;
               },
+              blockquote({ node, ...rest }) {
+                return (
+                  <blockquote
+                    className="[&>p]:my-0 py-1 ms-4 ps-3 border-s-1 flex flex-col gap-4"
+                    {...rest}
+                  />
+                );
+              },
+              pre({ node, ...rest }) {
+                return <pre className="text-sm" {...rest} />;
+              },
               ul({ node, ...rest }) {
                 return (
                   <ul
@@ -189,7 +199,24 @@ export const MarkdownNoteCard = ({
               hr({ node, ...rest }) {
                 return <Divider className="mx-auto w-[98%]" />;
               },
+              a({ node, href, title, children, ...rest }) {
+                return (
+                  <span {...rest}>
+                    {children && children !== href
+                      ? `[${children}](${href}${title ? ` "${title}"` : ""})`
+                      : `<${href}>`}
+                  </span>
+                );
+              },
+              img({ node, src, title, alt, ...rest }) {
+                return (
+                  <span {...rest}>
+                    {`![${alt}](${src}${title ? ` "${title}"` : ""})`}
+                  </span>
+                );
+              },
             }}
+            skipHtml={true}
           >
             {markdown}
           </Markdown>

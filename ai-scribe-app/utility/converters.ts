@@ -46,6 +46,8 @@ export function fromMarkdownToPlainText(markdown: string) {
   }) as string;
 
   return plainText
+    .replace(/\<(.+)( .+)?\>(.*)\<\/\1\>/, "$3") // Remove HTML tag pairs
+    .replace(/\<(.+ )\/\>/, "") // Remove HTML singleton tags
     .replace(/\\([\\`*_{}\[\]<>()#+-.!|])/g, "$1") // Unescape special characters
     .replace(/\n+\n\n/g, "\n\n") // Condense multi blank lines
     .trim();
