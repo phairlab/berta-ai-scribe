@@ -34,7 +34,7 @@ type MarkdownNoteCardProps = {
 export const MarkdownNoteCard = ({
   note,
   showTitle = true,
-  showRawOutput = false,
+  showRawOutput = true,
 }: MarkdownNoteCardProps) => {
   const markdownNodeRef = useRef<HTMLDivElement | null>(null);
   const [markdown, setMarkdown] = useState<string | null>(null);
@@ -59,9 +59,7 @@ export const MarkdownNoteCard = ({
 
   useEffect(() => {
     if (note) {
-      // Prevent asterisks from being interpreted as bullets by escaping them.
-      const markdown = note.content.replace(/^( *)(\* )/gm, "$1\\* ");
-
+      const markdown = note.content;
       const plainText = convertToPlainText(markdown);
 
       setMarkdown(markdown);

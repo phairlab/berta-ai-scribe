@@ -58,14 +58,19 @@ export function useNoteGenerator({
         ].join(" ");
 
         if (noteType.outputType === "Markdown") {
-          // If markdown, escape < and >, and add italics directive around the footer.
-          noteFooter = `\n\n*\\<\\<${noteFooter}\\>\\>*`;
+          // Escape any asterisks that are not part of matched pairs.
+          // Insert a newline before asterisks that begin a line to ensure they are
+          // not treated as new paragraphs.
+          draftNote.content = draftNote.content
+            .replace(/(?<!\*.*)\*(?!.*\*)/gm, "\\* ")
+            .replace(/^\\\*.*/gm, "\n$&");
+
+          // For the footer, escape < and >, and set to italic.
+          draftNote.content += `\n\n*\\<\\<${noteFooter}\\>\\>*`;
         } else {
           // Plaintext footer.
-          noteFooter = `\n\n<<${noteFooter}>>`;
+          draftNote.content += `\n\n<<${noteFooter}>>`;
         }
-
-        draftNote.content += noteFooter;
       }
 
       onGenerated(draftNote);
