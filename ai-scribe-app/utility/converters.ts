@@ -46,6 +46,8 @@ export function fromMarkdownToPlainText(markdown: string) {
   }) as string;
 
   return plainText
+    .replace(/(_+)(.*)\1/g, "$2") // Remove balanced underline pairs
+    .replace(/(\*+)(.*)\1/g, "$2") // Remove balanced asterisk pairs
     .replace(/\<(.+)( .+)?\>(.*)\<\/\1\>/, "$3") // Remove HTML tag pairs
     .replace(/\<(.+ )\/\>/, "") // Remove HTML singleton tags
     .replace(/\\([\\`*_{}\[\]<>()#+-.!|])/g, "$1") // Unescape special characters

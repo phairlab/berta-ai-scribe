@@ -58,11 +58,10 @@ export function useNoteGenerator({
         ].join(" ");
 
         if (noteType.outputType === "Markdown") {
-          // Escape any asterisks that are not part of matched pairs.
-          // Insert a newline before asterisks that begin a line to ensure they are
-          // not treated as new paragraphs.
+          // Escape any * or + characters in the output.
+          // Add an extra newline before any * characters at the start of a line.
           draftNote.content = draftNote.content
-            .replace(/(?<!\*.*)\*(?!.*\*)/gm, "\\* ")
+            .replace(/[^\\]([\*+])/g, "\\$1 ")
             .replace(/^\\\*.*/gm, "\n$&");
 
           // For the footer, escape < and >, and set to italic.

@@ -39,12 +39,7 @@ export function plainTextRenderer() {
 
   render.listitem = (item) => ` - ${item.text}`;
 
-  render.paragraph = ({ tokens }) =>
-    `${tokens
-      .map((t) => t.raw)
-      .join("")
-      .replace(/(_+)(.*)\1/g, "$2") // Remove balanced underline pairs
-      .replace(/(\*+)(.*)\1/g, "$2")}\n\n`; // Remove balanced asterisk pairs
+  render.paragraph = ({ tokens }) => `${tokens.map((t) => t.raw).join("")}\n\n`;
 
   render.strong = ({ tokens }) => `${tokens.map((t) => t.raw).join("")}`;
 
