@@ -202,7 +202,7 @@ export const MarkdownNoteCard = ({
                   />
                 );
               },
-              hr({ node, ...rest }) {
+              hr() {
                 return <Divider className="mx-auto w-[98%]" />;
               },
               a({ node, href, title, children, ...rest }) {
