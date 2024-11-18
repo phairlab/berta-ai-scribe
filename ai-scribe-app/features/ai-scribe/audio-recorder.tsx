@@ -10,8 +10,6 @@ import { useStopwatch } from "@/utility/use-stopwatch";
 
 import { AudioLevel } from "./audio-level";
 
-const RECORDER_CHUNK_DURATION_MS = 1000;
-
 type AudioRecorderProps = {
   isRecording: boolean;
   isPaused: boolean;
@@ -112,7 +110,7 @@ export const AudioRecorder = ({
     };
 
     stopwatch.start();
-    mediaRecorder.current.start(RECORDER_CHUNK_DURATION_MS);
+    mediaRecorder.current.start();
   }
 
   function endRecording() {
