@@ -53,19 +53,23 @@ export function useNoteGenerator({
 
       if (includeFooter) {
         let noteFooter = [
-          "Generated in part by the AHS Jenkins Scribe with patient consent.",
-          `Note ID: ${encounterId}-${draftNote.id}.`,
-        ].join(" ");
+          "Generated in part by the AHS Jenkins Scribe, with patient consent.",
+          `Note ID: ${encounterId}-${draftNote.id}`,
+        ]
+          .map((line) => `<<${line}>>`)
+          .join("\n");
 
         if (noteType.outputType === "Markdown") {
-          // Escape any * or + characters in the output.
+          // Handle encoded *, +, and # characters.
           // Add an extra newline before any * characters at the start of a line.
           draftNote.content = draftNote.content
-            .replace(/[^\\]([\*+])/g, "\\$1 ")
+            .replace(/\$\$\$\$/g, "\\#")
+            .replace(/\$\$\$/g, "\\+")
+            .replace(/\$\$/g, "\\*")
             .replace(/^\\\*.*/gm, "\n$&");
 
           // For the footer, escape < and >, and set to italic.
-          draftNote.content += `\n\n*\\<\\<${noteFooter}\\>\\>*`;
+          draftNote.content += `\n\n${noteFooter.replace(/^<<(.*)>>$/gm, "*\\<\\<$1\\>\\>*")}`;
         } else {
           // Plaintext footer.
           draftNote.content += `\n\n<<${noteFooter}>>`;
