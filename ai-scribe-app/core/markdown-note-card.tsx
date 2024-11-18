@@ -197,7 +197,7 @@ export const MarkdownNoteCard = ({
               ol({ node, ...rest }) {
                 return (
                   <ul
-                    className="list-decimal list-outside flex flex-col ps-3 mt-4 first:mt-0"
+                    className="list-decimal list-outside flex flex-col ps-6 mt-4 first:mt-0"
                     {...rest}
                   />
                 );
