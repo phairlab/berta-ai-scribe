@@ -155,17 +155,25 @@ export const MarkdownNoteCard = ({
               h1({ node, ...rest }) {
                 return (
                   // eslint-disable-next-line jsx-a11y/heading-has-content
-                  <h1 className="font-semibold" {...rest} />
+                  <h1
+                    className="font-semibold mt-4 first:mt-0 [&+*]:mt-0"
+                    {...rest}
+                  />
                 );
               },
               h2({ node, ...rest }) {
                 return (
                   // eslint-disable-next-line jsx-a11y/heading-has-content
-                  <h2 className="italic" {...rest} />
+                  <h2 className="italic mt-4 first:mt-0 [&+*]:mt-0" {...rest} />
                 );
               },
               p({ node, ...rest }) {
-                return <p className="mb-4 last:mb-0" {...rest} />;
+                return (
+                  <p
+                    className="mt-4 first:mt-0 [&+ul]:mt-0 [&+ol]:mt-0"
+                    {...rest}
+                  />
+                );
               },
               blockquote({ node, ...rest }) {
                 return (
@@ -181,7 +189,7 @@ export const MarkdownNoteCard = ({
               ul({ node, ...rest }) {
                 return (
                   <ul
-                    className="list-['-_'] list-outside flex flex-col ps-3 mb-4 last:mb-0"
+                    className="list-['-_'] list-outside flex flex-col ps-3 mt-4 first:mt-0"
                     {...rest}
                   />
                 );
@@ -189,12 +197,12 @@ export const MarkdownNoteCard = ({
               ol({ node, ...rest }) {
                 return (
                   <ul
-                    className="list-decimal list-outside flex flex-col ps-3 ms-3 mb-4 last:mb-0"
+                    className="list-decimal list-outside flex flex-col ps-6 mt-4 first:mt-0"
                     {...rest}
                   />
                 );
               },
-              hr({ node, ...rest }) {
+              hr() {
                 return <Divider className="mx-auto w-[98%]" />;
               },
               a({ node, href, title, children, ...rest }) {

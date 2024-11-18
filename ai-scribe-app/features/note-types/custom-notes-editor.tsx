@@ -157,7 +157,7 @@ export const CustomNotesEditor = ({
           </Button>
         </div>
       </div>
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4 w-full">
         {noteGenerator.generatingNoteType && (
           <WaitMessageSpinner onCancel={noteGenerator.abort}>
             Generating Note: {noteGenerator.generatingNoteType.title}

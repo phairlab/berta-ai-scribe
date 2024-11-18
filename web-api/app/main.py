@@ -78,21 +78,22 @@ for logger_name in ["snowflake.connector", "snowflake.connector.connection", "sn
 async def lifespan(_: FastAPI):
     # On startup, for development environments simulate the snowflake mounted stage.
     if settings.ENVIRONMENT == "development":
-        if os.path.isdir(settings.RECORDINGS_FOLDER):
-            try:
-                shutil.rmtree(settings.RECORDINGS_FOLDER)
-            except:
-                pass
+        # if os.path.isdir(settings.RECORDINGS_FOLDER):
+        #     try:
+        #         shutil.rmtree(settings.RECORDINGS_FOLDER)
+        #     except:
+        #         pass
 
-        os.mkdir(settings.RECORDINGS_FOLDER)
-        with SQLAlchemySession(data.db_engine) as database, data.get_snowflake_session() as snowflake_session:
-            for user in database.query(db.User).all():
-                if not os.path.isdir(Path(settings.RECORDINGS_FOLDER, user.username)):
-                    os.mkdir(Path(settings.RECORDINGS_FOLDER, user.username))
-                try:
-                    snowflake_session.file.get(f"@RECORDING_FILES/{user.username}",f"{settings.RECORDINGS_FOLDER}/{user.username}")
-                except:
-                    pass
+        if not os.path.isdir(settings.RECORDINGS_FOLDER):
+            os.mkdir(settings.RECORDINGS_FOLDER)
+            with SQLAlchemySession(data.db_engine) as database, data.get_snowflake_session() as snowflake_session:
+                for user in database.query(db.User).all():
+                    if not os.path.isdir(Path(settings.RECORDINGS_FOLDER, user.username)):
+                        os.mkdir(Path(settings.RECORDINGS_FOLDER, user.username))
+                    try:
+                        snowflake_session.file.get(f"@RECORDING_FILES/{user.username}",f"{settings.RECORDINGS_FOLDER}/{user.username}")
+                    except:
+                        pass
     
     yield
 
@@ -103,11 +104,11 @@ async def lifespan(_: FastAPI):
         pass
 
     # On shutdown, cleanup the simulated mounted stage
-    if settings.ENVIRONMENT == "development":
-        try:
-            shutil.rmtree(settings.RECORDINGS_FOLDER)
-        except:
-            pass
+    # if settings.ENVIRONMENT == "development":
+    #     try:
+    #         shutil.rmtree(settings.RECORDINGS_FOLDER)
+    #     except:
+    #         pass
 
 # Create the app
 app = FastAPI(lifespan=lifespan, title=f"{settings.APP_NAME} API", version=settings.APP_VERSION, docs_url=None, redoc_url=None)

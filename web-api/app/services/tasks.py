@@ -1,3 +1,4 @@
+import re
 from typing import BinaryIO
 from pathlib import Path
 
@@ -56,26 +57,42 @@ async def transcribe_audio(audio: BinaryIO, filename: str, content_type: str) ->
     
     return transcription_output
 
-PLAINTEXT_FORMATTING_DIRECTIVE = """
+PLAINTEXT_NOTE_SYSTEM_PROMPT = """
 Format your responses plain text only, do not include any markdown syntax.
 After a heading or subheading line, the section content should follow on the immediate next line.
 """.strip()
 
-MARKDOWN_FORMATTING_DIRECTIVE = """
-You are very good at precisely following formatting instructions.
-Format your response in markdown, using level one headings for section headers (e.g. # Header) and bullets only.
-Don't use asterisks for list items.
-Escape characters that could be misinterpreted as markdown by inserting a backslash before them.
-Do not include an overall header for the entire response, only individual section headers are required.
+MARKDOWN_NOTE_SYSTEM_PROMPT = """
+You are a specialist at reading audio transcripts and precisely following instructions for summarizing them in the correct format.
+You will be given the audio transcript as AUDIO_TRANSCRIPT and the instructions as SUMMARY_INSTRUCTIONS.
+You only ever include facts in your response when they are directly supported by AUDIO_TRANSCRIPT.
+When you state any facts, you state them simply without preamble.
+Do not add footnotes unless explicitly asked in SUMMARY_INSTRUCTIONS.
+Format all responses as follows:
+- Include section headers, paragraphs, numbered lists, and un-numbered lists in your response as appropriate.
+- Do not include an overall header, only section headers.
+- Format section headers like this: `# Header`.
+- Format numbered lists like this: `1. List item`.
+- Format un-numbered lists with a dash, like this: `- List item`.
 """.strip()
 
-def generate_note(model: str, instructions: str, transcript: str, output_type: sch.NoteOutputType = "Markdown") -> sch.GenerationOutput:    
+def generate_note(model: str, instructions: str, transcript: str, output_type: sch.NoteOutputType = "Markdown") -> sch.GenerationOutput:
     # Configure prompt messages.
-    messages = [
-        {"role": "system", "content": MARKDOWN_FORMATTING_DIRECTIVE if output_type == "Markdown" else PLAINTEXT_FORMATTING_DIRECTIVE},
-        {"role": "system", "content": instructions},
-        {"role": "user", "content": transcript}
-    ]
+    if output_type == "Markdown":
+        instructions = instructions.replace("*", "$$")
+        instructions = instructions.replace("+", "$$$")
+        instructions = instructions.replace("#", "$$$$")
+        messages = [
+            {"role": "system", "content": MARKDOWN_NOTE_SYSTEM_PROMPT},
+            {"role": "user", "content": f"SUMMARY_INSTRUCTIONS:\n\"\"\"{instructions}\n\"\"\""},
+            {"role": "user", "content": f"AUDIO_TRANSCRIPT:\n\"\"\"{transcript}\n\"\"\""},
+        ]
+    else:
+        messages = [
+            {"role": "system", "content": PLAINTEXT_NOTE_SYSTEM_PROMPT},
+            {"role": "user", "content": instructions},
+            {"role": "user", "content": transcript},
+        ]
 
     # Return the draft note segments.
     try:

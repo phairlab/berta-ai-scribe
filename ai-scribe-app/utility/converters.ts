@@ -46,9 +46,13 @@ export function fromMarkdownToPlainText(markdown: string) {
   }) as string;
 
   return plainText
-    .replace(/\<(.+)( .+)?\>(.*)\<\/\1\>/, "$3") // Remove HTML tag pairs
-    .replace(/\<(.+ )\/\>/, "") // Remove HTML singleton tags
+    .replace(/(_+)(.*)\1/g, "$2") // Remove balanced underline pairs
+    .replace(/(\*+)(.*)\1/g, "$2") // Remove balanced asterisk pairs
+    .replace(/\<(.+)( .+)?\>(.*)\<\/\1\>/g, "$3") // Remove HTML tag pairs
+    .replace(/\<(.+ )\/\>/g, "") // Remove HTML singleton tags
     .replace(/\\([\\`*_{}\[\]<>()#+-.!|])/g, "$1") // Unescape special characters
-    .replace(/\n+\n\n/g, "\n\n") // Condense multi blank lines
+    .replace(/\n+\n\n/g, "\n\n") // Condense multi-row blank lines
+    .replace(/\n\n(- .*)/g, "\n$1") // Remove blank lines before bullet lists
+    .replace(/\n\n(1\. .*)/g, "\n$1") // Remove blank lines before numeric lists
     .trim();
 }
