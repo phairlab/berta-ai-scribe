@@ -2,7 +2,7 @@ import os
 
 from snowflake.snowpark import Session as SnowflakeSession
 from snowflake.sqlalchemy import URL
-from sqlalchemy import Engine as SQLAlchemyEngine, event, create_engine
+from sqlalchemy import Engine as SQLAlchemyEngine, event as sqlalchemy_event, create_engine as create_sqlalchemy_engine
 
 from app.config import settings
 
@@ -39,7 +39,7 @@ def create_engine() -> SQLAlchemyEngine:
             cache_column_metadata=True,
         )
 
-    return create_engine(
+    return create_sqlalchemy_engine(
         engine_url,
         pool_pre_ping=True,
         pool_size=0,
@@ -49,7 +49,7 @@ def create_engine() -> SQLAlchemyEngine:
 
 db_engine: SQLAlchemyEngine = create_engine()
 
-@event.listens_for(db_engine, "do_connect")
+@sqlalchemy_event.listens_for(db_engine, "do_connect")
 def provide_token(dialect, conn_rec, cargs, cparams):
     if is_spcs_oauth():
         cparams["token"] = get_spcs_login_token()
