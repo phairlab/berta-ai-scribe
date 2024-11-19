@@ -41,7 +41,6 @@ def decode_token(token: str, verify_expiry: bool = True) -> WebAPISession:
             username=payload["username"],
             sessionId=payload["sessionId"],
             rights=payload.get("rights") or [],
-            defaultNoteType=payload.get("defaultNoteType"),
         )
     except jwt.ExpiredSignatureError:
         raise Unauthorized("Credentials expired")
@@ -56,13 +55,13 @@ async def get_snowflake_context_user(sf_context_current_user: Annotated[str | No
 
 useSnowflakeContextUser = Annotated[str, Depends(get_snowflake_context_user)]
     
-async def authenticate_user(credentials: useCredentials) -> WebAPISession:
+async def authenticate_session(credentials: useCredentials) -> WebAPISession:
     token = credentials.credentials
     session = decode_token(token)
 
     return session
 
-useUserSession = Annotated[WebAPISession, Depends(authenticate_user)]
+useUserSession = Annotated[WebAPISession, Depends(authenticate_session)]
 
 async def authenticate_session_cookie(jenkins_session: Annotated[str, Cookie()]) -> WebAPISession:
     session = decode_token(jenkins_session)

@@ -76,6 +76,8 @@ export const ApplicationStateProvider = ({
 
   /** Performs pre-fetching of application data. */
   async function prefetch() {
+    const getUserInfo = webApi.user.getInfo();
+
     // Prefetch sample recordings.
     setSampleRecordingStatus("Loading");
     webApi.sampleRecordings
@@ -98,9 +100,8 @@ export const ApplicationStateProvider = ({
 
     // Note Types
     setNoteTypeStatus("Loading");
-    webApi.noteDefinitions
-      .getAll()
-      .then((records) => {
+    Promise.all([getUserInfo, webApi.noteDefinitions.getAll()])
+      .then(([userInfo, records]) => {
         const noteTypes: NoteType[] = records
           .sort(alphabetically((x) => x.title))
           .map((record) => convert.fromWebApiNoteType(record));
@@ -109,12 +110,9 @@ export const ApplicationStateProvider = ({
 
         // Derive current user's default note type.
         if (noteTypes.length > 0) {
-          const userDefaultUuid =
-            session.state === "Authenticated"
-              ? session.details.defaultNoteType
-              : undefined;
-
-          const userDefault = noteTypes.find((d) => d.id === userDefaultUuid);
+          const userDefault = noteTypes.find(
+            (d) => d.id === userInfo.defaultNoteType,
+          );
           const builtinDefault = noteTypes.find((d) => d.isSystemDefault);
           const fallbackDefault = noteTypes[0];
 

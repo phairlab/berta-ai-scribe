@@ -2,17 +2,17 @@ from typing import Annotated
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, Body
-from sqlalchemy import select, and_, or_
+from sqlalchemy import select, or_
 from sqlalchemy.exc import NoResultFound
 
 import app.schemas as sch
 import app.services.db as db
 import app.services.error_handling as errors
-from app.services.security import authenticate_user, useUserSession
+from app.services.security import authenticate_session, useUserSession
 from app.services.db import useDatabase
 from app.config import settings
 
-router = APIRouter(dependencies=[Depends(authenticate_user)])
+router = APIRouter(dependencies=[Depends(authenticate_session)])
 
 @router.get("")
 def get_note_definitions(userSession: useUserSession, database: useDatabase) -> list[sch.NoteDefinition]:
@@ -129,20 +129,6 @@ def update_note_definition(
     
     # Return the updated record.
     return sch.NoteDefinition.from_db_record(new_version)
-
-@router.patch("/{id}/set-default")
-def set_default_note_type(userSession: useUserSession, database: useDatabase, *, id: str):
-    """
-    Sets an existing note definition as the default for the current user.
-    """
-
-    try:
-        user = database.get_one(db.User, userSession.username)
-    except NoResultFound:
-        raise errors.BadRequest("User is not registered.")
-    
-    user.default_note = id
-    database.commit()
     
 @router.delete("/{id}")
 def delete_note_definition(userSession: useUserSession, database: useDatabase, *, id: str):

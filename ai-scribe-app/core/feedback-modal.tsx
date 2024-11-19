@@ -35,7 +35,7 @@ export const FeedbackModal = ({
 
   const handleSubmit = () => {
     if (feedbackText) {
-      webApi.users.submitFeedback(new Date(), feedbackText);
+      webApi.user.submitFeedback(new Date(), feedbackText);
       onClose();
     }
   };

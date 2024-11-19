@@ -1,6 +1,5 @@
 import os
 import json
-import shutil
 import logging
 import traceback
 from datetime import datetime, timezone
@@ -26,7 +25,7 @@ from app.services.error_handling import WebAPIException
 from app.services.measurement import ExecutionTimer
 from app.services.logging import WebAPILogger, RequestMetrics
 from app.services.security import decode_token, WebAPISession
-from app.routers import authorization, tasks, sample_recordings, encounters, recordings, note_definitions, users
+from app.routers import authorization, tasks, sample_recordings, encounters, recordings, note_definitions, user
 from app.schemas import SimpleMessage, WebAPIError, WebAPIErrorDetail
 
 # ----------------------------------
@@ -177,7 +176,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 # Exception Handler: Fallback / Unexpected Errors
 @app.exception_handler(Exception)
-async def webapi_exception_handler(request: Request, exc: Exception):
+async def fallback_exception_handler(request: Request, exc: Exception):
     stack_trace = " ".join(traceback.TracebackException.from_exception(exc).format())
 
     try:
@@ -346,7 +345,7 @@ app.include_router(sample_recordings.router, prefix="/sample-recordings", tags=[
 app.include_router(encounters.router, prefix="/encounters", tags=["Encounters"])
 app.include_router(recordings.router, prefix="/recordings", tags=["Recordings"])
 app.include_router(note_definitions.router, prefix="/note-definitions", tags=["Note Definitions"])
-app.include_router(users.router, prefix="/users", tags=["Users"])
+app.include_router(user.router, prefix="/user", tags=["Users"])
 
 # ----------------------------------
 # FALLBACK

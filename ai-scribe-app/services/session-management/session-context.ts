@@ -4,7 +4,6 @@ export type UserSessionData = {
   username: string;
   sessionId?: string;
   rights: string[];
-  defaultNoteType?: string;
 };
 
 export type AuthenticationState =

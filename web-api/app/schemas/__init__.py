@@ -12,6 +12,7 @@ from .text_response import *
 from .token import *
 from .transcription_output import *
 from .user_feedback import *
+from .user_info import *
 from .web_api_error_detail import *
 from .web_api_error import *
 from .web_api_session import *

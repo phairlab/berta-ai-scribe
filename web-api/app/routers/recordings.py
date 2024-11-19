@@ -1,16 +1,16 @@
 import os
 from pathlib import Path
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from fastapi.responses import FileResponse
 
 import app.services.error_handling as errors
-from app.services.security import useCookieUserSession
+from app.services.security import authenticate_session_cookie, useCookieUserSession
 from app.config import settings
 
 router = APIRouter()
 
-@router.get("/{recordingId}/download")
+@router.get("/{recordingId}/download", dependencies=[Depends(authenticate_session_cookie)])
 def get_recording_file(
     userSession: useCookieUserSession,
     *,

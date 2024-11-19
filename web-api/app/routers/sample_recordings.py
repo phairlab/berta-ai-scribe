@@ -7,9 +7,9 @@ from fastapi.responses import FileResponse
 
 import app.schemas as sch
 import app.services.error_handling as errors
-from app.services.security import authenticate_user
+from app.services.security import authenticate_session
 
-router = APIRouter(dependencies=[Depends(authenticate_user)])
+router = APIRouter(dependencies=[Depends(authenticate_session)])
 
 SAMPLES_DIRECTORY = ".sample-recordings"
 

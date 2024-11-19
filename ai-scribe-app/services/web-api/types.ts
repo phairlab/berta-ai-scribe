@@ -60,3 +60,8 @@ export type TextResponse = {
 export type TranscriberOutput = {
   text: string;
 };
+
+export type UserInfo = {
+  username: string;
+  defaultNoteType?: string;
+};

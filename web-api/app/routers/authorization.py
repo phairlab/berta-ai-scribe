@@ -1,7 +1,6 @@
 import uuid
 
 from fastapi import APIRouter, BackgroundTasks, Response
-from sqlalchemy import select
 from sqlalchemy.exc import NoResultFound
 
 import app.schemas as sch
@@ -49,7 +48,7 @@ def authenticate_snowflake_user(
 
     # Create a user session.
     session_id = str(uuid.uuid4())
-    user_session = sch.WebAPISession(username=user.username, sessionId=session_id, rights=[], defaultNoteType=user.default_note)
+    user_session = sch.WebAPISession(username=user.username, sessionId=session_id, rights=[])
     
     # Generate and return an access token.
     token = create_access_token(user_session)

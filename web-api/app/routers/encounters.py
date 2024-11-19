@@ -13,11 +13,11 @@ import app.services.error_handling as errors
 from app.services.audio_processing import reformat_audio, compute_peaks
 from app.services.measurement import get_file_size, ExecutionTimer
 from app.services.logging import log_audio_conversion
-from app.services.security import authenticate_user, useUserSession
+from app.services.security import authenticate_session, useUserSession
 from app.services.db import useDatabase
 from app.config import settings
 
-router = APIRouter(dependencies=[Depends(authenticate_user)])
+router = APIRouter(dependencies=[Depends(authenticate_session)])
 
 @router.get("")
 def get_encounters(
@@ -336,6 +336,7 @@ def create_draft_note(
         )
 
         encounter.draft_notes.append(new_note)
+        encounter.modified = saved
         database.commit()
 
         return sch.DraftNote.from_db_record(new_note)
@@ -367,7 +368,8 @@ def delete_draft_note(
                         db.Encounter.inactivated.is_(None),
                     )
                 )
-            )
+            ) \
+            .options(selectinload(db.DraftNote.encounter))
         
         draft_note = database.execute(get_note).scalar_one()
     except NoResultFound:
@@ -375,7 +377,9 @@ def delete_draft_note(
     
     # Delete the draft note.
     try:
-        draft_note.inactivated = datetime.now(timezone.utc)
+        inactivated = datetime.now(timezone.utc)
+        draft_note.inactivated = inactivated
+        draft_note.encounter.modified = inactivated
         database.commit()
     except Exception as e:
         raise errors.DatabaseError(str(e))

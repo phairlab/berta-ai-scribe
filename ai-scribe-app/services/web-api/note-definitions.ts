@@ -40,14 +40,6 @@ export const update =
       signal: cancellation,
     });
 
-export const setDefault =
-  (getAccessToken: () => WebApiToken) =>
-  (id: string, cancellation?: AbortSignal): Promise<void> =>
-    httpAction<void>("PATCH", `api/note-definitions/${id}/set-default`, {
-      accessToken: getAccessToken(),
-      signal: cancellation,
-    });
-
 export const discard =
   (getAccessToken: () => WebApiToken) =>
   (id: string, cancellation?: AbortSignal): Promise<void> =>
@@ -61,5 +53,4 @@ export const routes = {
   create,
   update,
   discard,
-  setDefault,
 } satisfies ApiRouterDefinition;
