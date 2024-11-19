@@ -16,7 +16,7 @@ def get_spcs_login_token() -> str | None:
     else:
         return None
 
-def create_snowflake_engine() -> SQLAlchemyEngine:
+def create_engine() -> SQLAlchemyEngine:
     if is_spcs_oauth():
         engine_url = URL(
             host=settings.SNOWFLAKE_HOST,
@@ -47,13 +47,13 @@ def create_snowflake_engine() -> SQLAlchemyEngine:
         hide_parameters=(settings.ENVIRONMENT != "development")
     )
 
-db_engine: SQLAlchemyEngine = create_snowflake_engine()
+db_engine: SQLAlchemyEngine = create_engine()
 
 @event.listens_for(db_engine, "do_connect")
 def provide_token(dialect, conn_rec, cargs, cparams):
     if is_spcs_oauth():
         cparams["token"] = get_spcs_login_token()
 
-def get_snowflake_session() -> SnowflakeSession:
+def start_session() -> SnowflakeSession:
     return SnowflakeSession.builder.configs({"connection": db_engine.raw_connection()}).create()
 

@@ -18,7 +18,7 @@ from starlette.background import BackgroundTask
 from snowflake.connector.secret_detector import SecretDetector
 from sqlalchemy.orm import Session as SQLAlchemySession
 
-import app.services.data as data
+import app.services.snowflake as snowflake
 import app.services.db as db
 from app.services.logging import log_error, log_request
 from app.config import settings
@@ -78,15 +78,9 @@ for logger_name in ["snowflake.connector", "snowflake.connector.connection", "sn
 async def lifespan(_: FastAPI):
     # On startup, for development environments simulate the snowflake mounted stage.
     if settings.ENVIRONMENT == "development":
-        # if os.path.isdir(settings.RECORDINGS_FOLDER):
-        #     try:
-        #         shutil.rmtree(settings.RECORDINGS_FOLDER)
-        #     except:
-        #         pass
-
         if not os.path.isdir(settings.RECORDINGS_FOLDER):
             os.mkdir(settings.RECORDINGS_FOLDER)
-            with SQLAlchemySession(data.db_engine) as database, data.get_snowflake_session() as snowflake_session:
+            with SQLAlchemySession(snowflake.db_engine) as database, snowflake.start_session() as snowflake_session:
                 for user in database.query(db.User).all():
                     if not os.path.isdir(Path(settings.RECORDINGS_FOLDER, user.username)):
                         os.mkdir(Path(settings.RECORDINGS_FOLDER, user.username))
@@ -99,16 +93,9 @@ async def lifespan(_: FastAPI):
 
     # On shutdown, gracefully clean up the database engine.
     try:
-        data.db_engine.dispose()
+        snowflake.db_engine.dispose()
     except:
         pass
-
-    # On shutdown, cleanup the simulated mounted stage
-    # if settings.ENVIRONMENT == "development":
-    #     try:
-    #         shutil.rmtree(settings.RECORDINGS_FOLDER)
-    #     except:
-    #         pass
 
 # Create the app
 app = FastAPI(lifespan=lifespan, title=f"{settings.APP_NAME} API", version=settings.APP_VERSION, docs_url=None, redoc_url=None)

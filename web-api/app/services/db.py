@@ -9,13 +9,13 @@ from sqlalchemy.orm import Session as SQLAlchemySession, DeclarativeBase, Mapped
 from snowflake.sqlalchemy import TIMESTAMP_LTZ, VARCHAR, CHAR
 from sqids import Sqids
 
-import app.services.data as data
+import app.services.snowflake as snowflake
 from app.config import settings
 
 sqids = Sqids(alphabet='ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890')
 
 def get_database_session() -> Iterator[SQLAlchemySession]:
-    with SQLAlchemySession(data.db_engine) as database:
+    with SQLAlchemySession(snowflake.db_engine) as database:
         yield database
 
 useDatabase = Annotated[SQLAlchemySession, Depends(get_database_session)]
@@ -221,7 +221,7 @@ def persist_recording(file: BinaryIO, username: str, filename: str) -> None:
     """Saves a user's recording file directly to the Snowflake stage."""
 
     try:
-        with data.get_snowflake_session() as snowflakeSession:
+        with snowflake.start_session() as snowflakeSession:
             snowflakeSession.file.put_stream(file, f"@RECORDING_FILES/{username}/{filename}", auto_compress=False)
     finally:
         file.close()
@@ -229,11 +229,11 @@ def persist_recording(file: BinaryIO, username: str, filename: str) -> None:
 def retrieve_recording(username: str, filename: str) -> BinaryIO:
     """Retrieves a user's recording file directly from the Snowflake stage."""
 
-    with data.get_snowflake_session() as snowflakeSession:
+    with snowflake.start_session() as snowflakeSession:
         return snowflakeSession.file.get_stream(f"@RECORDING_FILES/{username}/{filename}")
 
 def purge_recording(username: str, filename: str) -> None:
     """Deletes a user's recording file directly from the Snowflake stage."""
 
-    with SQLAlchemySession(data.db_engine) as session:
+    with SQLAlchemySession(snowflake.db_engine) as session:
         session.execute(text("REMOVE :stage_path;"), { "stage_path": f"@RECORDING_FILES/{username}/{filename}" })

@@ -8,7 +8,7 @@ from fastapi import Depends, Header
 from pydantic import BaseModel
 from sqlalchemy.orm import Session as SQLAlchemySession
 
-import app.services.data as data
+import app.services.snowflake as snowflake
 import app.services.db as db
 from app.config import settings
 from app.schemas import WebAPISession
@@ -108,7 +108,7 @@ def log_error(
     )
 
     try:
-        with SQLAlchemySession(data.db_engine) as database:
+        with SQLAlchemySession(snowflake.db_engine) as database:
             database.add(error_record)
             database.commit()
     except Exception as e:
@@ -139,7 +139,7 @@ def log_request(
     )
 
     try:
-        with SQLAlchemySession(data.db_engine) as database:
+        with SQLAlchemySession(snowflake.db_engine) as database:
             database.add(request_record)
             database.commit()
     except Exception as e:
