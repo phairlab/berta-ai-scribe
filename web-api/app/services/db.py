@@ -109,7 +109,8 @@ class User(JenkinsDatabase):
     __tablename__ = "users"
 
     username: Mapped[str] = mapped_column(VARCHAR(255), primary_key=True)
-    registered: Mapped[datetime] = mapped_column(TIMESTAMP_LTZ, default=datetime.now(timezone.utc))
+    registered: Mapped[datetime] = mapped_column(TIMESTAMP_LTZ, default_factory=lambda: datetime.now(timezone.utc))
+    updated: Mapped[datetime] = mapped_column(TIMESTAMP_LTZ, default_factory=lambda: datetime.now(timezone.utc))
     default_note: Mapped[str | None] = sqid_column()
 
     encounters: Mapped[list["Encounter"]] = relationship(back_populates="user")

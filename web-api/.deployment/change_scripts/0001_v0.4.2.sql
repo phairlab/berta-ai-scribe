@@ -130,3 +130,31 @@ I will give you a full text transcript of the encounter in a separate prompt.  T
 
 -- v0.4.2-1
 
+-- Add 'updated' field to users table using swap method.
+CREATE TABLE users_1 (
+  username VARCHAR(255) NOT NULL,
+  registered TIMESTAMP_LTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated TIMESTAMP_LTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  default_note VARCHAR(12),
+  PRIMARY KEY (username) RELY
+);
+
+INSERT INTO users_1 (username, registered, updated, default_note)
+SELECT username, registered, registered, default_note FROM users;
+
+ALTER TABLE users SWAP WITH users_1;
+
+DROP TABLE users_1;
+
+-- Fix 'registered' column, use time of first request to backfill.
+UPDATE users u
+SET u.registered = x.first_request
+    ,u.updated = x.first_request
+FROM (
+    SELECT s.username, MIN(r.requested) AS first_request
+    FROM session_log s
+    INNER JOIN request_log r
+        ON r.session_id = s.session_id
+    GROUP BY s.username
+) x
+WHERE u.username = x.username;
