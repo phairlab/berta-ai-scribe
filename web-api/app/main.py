@@ -47,15 +47,15 @@ else:
     logging.basicConfig(level=LOGGING_LEVEL)
 
 # Configure logging for external libraries.
-uvicorn_level = LOGGING_LEVEL + 1 if LOGGING_LEVEL < logging.INFO else max(LOGGING_LEVEL, logging.WARNING)
+uvicorn_level = LOGGING_LEVEL + 1 if LOGGING_LEVEL <= logging.DEBUG else max(LOGGING_LEVEL, logging.WARNING)
 logging.getLogger("httpx").disabled = True
 logging.getLogger("uvicorn.access").setLevel(uvicorn_level)
 
-sqlalchemy_level = LOGGING_LEVEL + 1 if LOGGING_LEVEL < logging.WARNING else LOGGING_LEVEL
+sqlalchemy_level = LOGGING_LEVEL + 1 if LOGGING_LEVEL <= logging.INFO else LOGGING_LEVEL
 logging.getLogger("sqlalchemy.engine").setLevel(sqlalchemy_level)
 logging.getLogger("sqlalchemy.pool").setLevel(sqlalchemy_level)
 
-snowflake_level = LOGGING_LEVEL + 1 if LOGGING_LEVEL < logging.WARNING else LOGGING_LEVEL
+snowflake_level = LOGGING_LEVEL + 1 if LOGGING_LEVEL <= logging.INFO else LOGGING_LEVEL
 logging.getLogger("snowflake.connector.cursor").disabled = True
 for logger_name in ["snowflake.connector", "snowflake.connector.connection", "snowflake.snowpark.session", "botocore", "boto3"]:
     logger = logging.getLogger(logger_name)
@@ -98,6 +98,11 @@ app = FastAPI(
 )
 
 # ----------------------------------
+# STATIC FILES
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# ----------------------------------
 # OPENAPI DOCS
 
 # Active in development only.
@@ -129,7 +134,7 @@ if settings.ENVIRONMENT == "development":
 # ----------------------------------
 # EXCEPTION HANDLERS
 
-# Exception Handler: Basic Errors
+# Basic Errors
 @app.exception_handler(WebAPIException)
 async def webapi_exception_handler(request: Request, exc: WebAPIException):
     stack_trace = " ".join(traceback.TracebackException.from_exception(exc).format())
@@ -161,7 +166,7 @@ async def webapi_exception_handler(request: Request, exc: WebAPIException):
         )
     )
 
-# Exception Handler: Validation Errors
+# Validation Errors
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     stack_trace = " ".join(traceback.TracebackException.from_exception(exc).format())
@@ -190,7 +195,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         )
     )
 
-# Exception Handler: Fallback / Unexpected Errors
+# Fallback / Unexpected Errors
 @app.exception_handler(Exception)
 async def fallback_exception_handler(request: Request, exc: Exception):
     stack_trace = " ".join(traceback.TracebackException.from_exception(exc).format())
@@ -223,9 +228,6 @@ async def fallback_exception_handler(request: Request, exc: Exception):
             error_id=error.uuid, request_id=request_id, session=session
         )
     )
-
-# Configure static files
-app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # ----------------------------------
 # MIDDLEWARE
