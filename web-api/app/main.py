@@ -25,8 +25,11 @@ from app.services.error_handling import WebAPIException
 from app.services.measurement import ExecutionTimer
 from app.services.logging import WebAPILogger, RequestMetrics
 from app.services.security import decode_token, WebAPISession
-from app.routers import authorization, tasks, sample_recordings, encounters, recordings, note_definitions, user
 from app.schemas import SimpleMessage, WebAPIError, WebAPIErrorDetail
+from app.routers import (
+    authorization, encounters, monitor, note_definitions, 
+    recordings, sample_recordings, tasks, user
+)
 
 # ----------------------------------
 # LOGGING CONFIG
@@ -88,7 +91,43 @@ async def lifespan(_: FastAPI):
         pass
 
 # Create the app
-app = FastAPI(lifespan=lifespan, title=f"{settings.APP_NAME} API", version=settings.APP_VERSION, docs_url=None, redoc_url=None)
+app = FastAPI(
+    lifespan=lifespan, title=f"{settings.APP_NAME} API", version=settings.APP_VERSION,
+    root_path="/api", root_path_in_servers=False,
+    docs_url=None, redoc_url=None,
+)
+
+# ----------------------------------
+# OPENAPI DOCS
+
+# Active in development only.
+if settings.ENVIRONMENT == "development":
+    @app.get("/docs", include_in_schema=False)
+    async def custom_swagger_ui_html():
+        return get_swagger_ui_html(
+            openapi_url=app.openapi_url,
+            title=f"{app.title} - Swagger UI",
+            swagger_favicon_url="static/favicon.ico",
+            oauth2_redirect_url=app.swagger_ui_oauth2_redirect_url,
+            swagger_js_url="static/swagger-ui-bundle.js",
+            swagger_css_url="static/swagger-ui.css",
+        )
+
+    @app.get(app.swagger_ui_oauth2_redirect_url, include_in_schema=False)
+    async def swagger_ui_redirect():
+        return get_swagger_ui_oauth2_redirect_html()
+
+    @app.get("/redoc", include_in_schema=False)
+    async def redoc_html():
+        return get_redoc_html(
+            openapi_url=app.openapi_url,
+            title=f"{app.title} - ReDoc",
+            redoc_favicon_url="static/favicon.ico",
+            redoc_js_url="static/redoc.standalone.js"
+        )
+
+# ----------------------------------
+# EXCEPTION HANDLERS
 
 # Exception Handler: Basic Errors
 @app.exception_handler(WebAPIException)
@@ -267,39 +306,15 @@ async def favicon():
 async def health_check():
     return {"message": "Ready"}
 
-# Configure self-hosted docs
-@app.get("/docs", include_in_schema=False)
-async def custom_swagger_ui_html():
-    return get_swagger_ui_html(
-        openapi_url=app.openapi_url,
-        title=f"{app.title} - Swagger UI",
-        swagger_favicon_url="static/favicon.ico",
-        oauth2_redirect_url=app.swagger_ui_oauth2_redirect_url,
-        swagger_js_url="static/swagger-ui-bundle.js",
-        swagger_css_url="static/swagger-ui.css",
-    )
-
-@app.get(app.swagger_ui_oauth2_redirect_url, include_in_schema=False)
-async def swagger_ui_redirect():
-    return get_swagger_ui_oauth2_redirect_html()
-
-@app.get("/redoc", include_in_schema=False)
-async def redoc_html():
-    return get_redoc_html(
-        openapi_url=app.openapi_url,
-        title=f"{app.title} - ReDoc",
-        redoc_favicon_url="static/favicon.ico",
-        redoc_js_url="static/redoc.standalone.js"
-    )
-
 # API routers
 app.include_router(authorization.router, tags=["Authorization"])
+app.include_router(user.router, prefix="/user", tags=["User"])
 app.include_router(tasks.router, prefix="/tasks", tags=["Tasks"])
-app.include_router(sample_recordings.router, prefix="/sample-recordings", tags=["Sample Recordings"])
+app.include_router(note_definitions.router, prefix="/note-definitions", tags=["Note Definitions"])
+app.include_router(sample_recordings.router, prefix="/sample-recordings", tags=["Recordings"])
 app.include_router(encounters.router, prefix="/encounters", tags=["Encounters"])
 app.include_router(recordings.router, prefix="/recordings", tags=["Recordings"])
-app.include_router(note_definitions.router, prefix="/note-definitions", tags=["Note Definitions"])
-app.include_router(user.router, prefix="/user", tags=["Users"])
+app.include_router(monitor.router, prefix="/monitor", tags=["Monitoring"])
 
 # ----------------------------------
 # FALLBACK
