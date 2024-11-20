@@ -12,13 +12,13 @@ from app.services.db import useDatabase
 
 router = APIRouter(dependencies=[Depends(authenticate_session)])
 
-@router.get("/check-app-data")
+@router.get("/check-data-changes")
 def get_updates(
     userSession: useUserSession,
     database: useDatabase,
     *,
     laterThan: datetime
-):
+) -> sch.DataChanges:
     """
     Gets all updates for the current user after the specified date
     that occurred in a different session.
@@ -37,6 +37,7 @@ def get_updates(
     except Exception as exc:
         raise errors.DatabaseError(str(exc))
 
+    # Check for new encounters.
     created_encounter_ids = [{x.entity_id for x in updates if x.entity_type == "ENCOUNTER" and x.change_type == "CREATED"}]
 
     if any(created_encounter_ids):
@@ -53,7 +54,8 @@ def get_updates(
         except Exception as exc:
             raise errors.DatabaseError(str(exc))
     
-    return sch.AppDataUpdate(
+    # Return the changes.
+    return sch.DataChanges(
         newEncounters=new_encounters or []
     )
     

@@ -27,7 +27,7 @@ def get_user_info(userSession: useUserSession, database: useDatabase):
     
     return sch.UserInfo(username=user.username, defaultNoteType=user.default_note)
 
-@router.put("/default-note-type")
+@router.put("/default-note-type", tags=["Note Definitions"])
 def set_default_note_type(
     userSession: useUserSession,
     database: useDatabase,
@@ -46,7 +46,7 @@ def set_default_note_type(
     user.updated = datetime.now(timezone.utc)
     database.commit()
 
-@router.post("/feedback")
+@router.post("/feedback", tags=["Feedback"])
 def submit_feedback(
     userSession: useUserSession, 
     database: useDatabase, 

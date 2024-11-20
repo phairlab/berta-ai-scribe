@@ -2,5 +2,5 @@ from pydantic import BaseModel
 
 from .encounter import Encounter
 
-class AppDataUpdate(BaseModel):
+class DataChanges(BaseModel):
     newEncounters: list[Encounter]
