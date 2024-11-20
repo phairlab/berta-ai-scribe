@@ -76,17 +76,16 @@ for logger_name in ["snowflake.connector", "snowflake.connector.connection", "sn
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     # On startup, for development environments simulate the snowflake mounted stage.
-    if settings.ENVIRONMENT == "development":
-        if not os.path.isdir(settings.RECORDINGS_FOLDER):
-            os.mkdir(settings.RECORDINGS_FOLDER)
-            with SQLAlchemySession(snowflake.db_engine) as database, snowflake.start_session() as snowflake_session:
-                for user in database.query(db.User).all():
-                    if not os.path.isdir(Path(settings.RECORDINGS_FOLDER, user.username)):
-                        os.mkdir(Path(settings.RECORDINGS_FOLDER, user.username))
-                    try:
-                        snowflake_session.file.get(f"@RECORDING_FILES/{user.username}",f"{settings.RECORDINGS_FOLDER}/{user.username}")
-                    except:
-                        pass
+    if settings.ENVIRONMENT == "development" and not os.path.isdir(settings.RECORDINGS_FOLDER):
+        os.mkdir(settings.RECORDINGS_FOLDER)
+        with SQLAlchemySession(snowflake.db_engine) as database, snowflake.start_session() as snowflake_session:
+            for user in database.query(db.User).all():
+                if not os.path.isdir(Path(settings.RECORDINGS_FOLDER, user.username)):
+                    os.mkdir(Path(settings.RECORDINGS_FOLDER, user.username))
+                try:
+                    snowflake_session.file.get(f"@RECORDING_FILES/{user.username}",f"{settings.RECORDINGS_FOLDER}/{user.username}")
+                except:
+                    pass
     
     yield
 
@@ -121,23 +120,13 @@ async def webapi_exception_handler(request: Request, exc: WebAPIException):
     return JSONResponse(
         status_code=exc.status_code,
         content=jsonable_encoder(WebAPIError(
-            detail=WebAPIErrorDetail(
-                errorId=exc.uuid,
-                name=exc.name,
-                message=exc.message,
-                fatal=exc.fatal,
-            ),
+            detail=WebAPIErrorDetail(errorId=exc.uuid, name=exc.name, message=exc.message, fatal=exc.fatal),
         )),
         headers=exc.headers,
         background=BackgroundTask(
             log_error,
-            datetime.now(timezone.utc),
-            exc.name,
-            exc.message,
-            stack_trace,
-            error_id=exc.uuid,
-            request_id=request_id,
-            session=session,
+            datetime.now(timezone.utc), exc.name, exc.message, stack_trace, 
+            error_id=exc.uuid, request_id=request_id, session=session,
         )
     )
 
@@ -165,12 +154,8 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         content=jsonable_encoder({ "detail": exc.errors(), "body": json.dumps(exc.body, default=str) }),
         background=BackgroundTask(
             log_error,
-            datetime.now(timezone.utc),
-            "Validation Error",
-            str(exc),
-            stack_trace,
-            request_id=request_id,
-            session=session
+            datetime.now(timezone.utc), "Validation Error", str(exc), stack_trace,
+            request_id=request_id, session=session
         )
     )
 
@@ -198,23 +183,13 @@ async def fallback_exception_handler(request: Request, exc: Exception):
     return JSONResponse(
         status_code=error.status_code,
         content=jsonable_encoder(WebAPIError(
-            detail=WebAPIErrorDetail(
-                errorId=error.uuid,
-                name=error.name,
-                message=error.message,
-                fatal=error.fatal,
-            ),
+            detail=WebAPIErrorDetail(errorId=error.uuid, name=error.name, message=error.message, fatal=error.fatal),
         )),
         headers=error.headers,
         background=BackgroundTask(
             log_error,
-            datetime.now(timezone.utc),
-            "Internal Server Error",
-            str(exc),
-            stack_trace,
-            error_id=error.uuid,
-            request_id=request_id,
-            session=session
+            datetime.now(timezone.utc), "Internal Server Error", str(exc), stack_trace,
+            error_id=error.uuid, request_id=request_id, session=session
         )
     )
 
@@ -257,24 +232,14 @@ async def request_logging_middleware(request: Request, call_next):
         return response
 
     log.request(
-        metrics = RequestMetrics(
-            url=request.url.path,
-            method=request.method,
-            status_code=int(response.status_code),
-            duration=timer.elapsed_ms,
-        ),
+        metrics = RequestMetrics(url=request.url.path, method=request.method, status_code=int(response.status_code), duration=timer.elapsed_ms),
         session = session
     )
 
     background_log_request = BackgroundTask(
         log_request,
-        request_id,
-        requested_at,
-        request.url.path,
-        request.method,
-        int(response.status_code),
-        timer.elapsed_ms,
-        session=session,
+        request_id, requested_at, request.url.path, request.method, int(response.status_code),
+        timer.elapsed_ms, session=session,
     )
         
     if response.status_code >= 400:
@@ -285,11 +250,8 @@ async def request_logging_middleware(request: Request, call_next):
         log.error(response_body, session)
         
         return Response(
-            content=response_body, 
-            status_code=response.status_code, 
-            headers=dict(response.headers), 
-            media_type=response.media_type,
-            background=background_log_request
+            content=response_body, status_code=response.status_code, headers=dict(response.headers),
+            media_type=response.media_type, background=background_log_request
         )
 
     response.background = background_log_request

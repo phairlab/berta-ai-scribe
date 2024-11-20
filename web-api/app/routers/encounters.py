@@ -12,7 +12,7 @@ import app.services.db as db
 import app.services.error_handling as errors
 from app.services.audio_processing import reformat_audio, compute_peaks
 from app.services.measurement import get_file_size, ExecutionTimer
-from app.services.logging import log_audio_conversion, record_app_data_change
+from app.services.logging import log_audio_conversion, log_data_change
 from app.services.security import authenticate_session, useUserSession
 from app.services.db import useDatabase
 from app.config import settings
@@ -139,7 +139,7 @@ def create_encounter(
     
     # Record the change.
     backgroundTasks.add_task(
-        record_app_data_change,
+        log_data_change,
         database, userSession, created, "ENCOUNTER", "CREATED", entity_id=encounter_id,
     )
 
