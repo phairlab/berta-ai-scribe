@@ -12,7 +12,7 @@ import app.services.db as db
 import app.services.error_handling as errors
 from app.services.audio_processing import reformat_audio, compute_peaks
 from app.services.measurement import get_file_size, ExecutionTimer
-from app.services.logging import log_audio_conversion
+from app.services.logging import log_audio_conversion, record_app_data_change
 from app.services.security import authenticate_session, useUserSession
 from app.services.db import useDatabase
 from app.config import settings
@@ -87,15 +87,8 @@ def create_encounter(
 
         backgroundTasks.add_task(
             log_audio_conversion,
-            database,
-            recording_id,
-            timer.started_at,
-            timer.elapsed_ms,
-            audio.content_type,
-            audio.size,
-            reformatted_media_type,
-            reformatted_file_size,
-            session=userSession,
+            database, recording_id, timer.started_at, timer.elapsed_ms, audio.content_type, audio.size,
+            reformatted_media_type, reformatted_file_size, session=userSession,
         )
 
         # Compute waveform peaks.
@@ -105,33 +98,22 @@ def create_encounter(
 
         backgroundTasks.add_task(
             log_audio_conversion,
-            database,
-            recording_id,
-            timer.started_at,
-            timer.elapsed_ms,
-            audio.content_type,
-            audio.size,
-            error_id=audio_error.uuid,
-            session=userSession,
+            database, recording_id, timer.started_at, timer.elapsed_ms, audio.content_type, audio.size,
+            error_id=audio_error.uuid, session=userSession,
         )
 
         raise audio_error
 
     # Create the encounter record and associate it to the current user.
     try:
+        recording = db.Recording(
+            id=recording_id, media_type=reformatted_media_type, file_size=reformatted_file_size,
+            duration=duration, waveform_peaks=json.dumps(peaks)
+        )
+
         encounter = db.Encounter(
-            id=encounter_id,
-            username=userSession.username,
-            created=created,
-            modified=created,
-            label=(label or encounter_id),
-            recording=db.Recording(
-                id=recording_id,
-                media_type=reformatted_media_type,
-                file_size=reformatted_file_size,
-                duration=duration,
-                waveform_peaks=json.dumps(peaks)
-            ),
+            id=encounter_id, username=userSession.username, created=created, modified=created,
+            label=(label or encounter_id), recording=recording,
         )
         
         database.add(encounter)
@@ -149,14 +131,19 @@ def create_encounter(
             # This operation will close the file once completed.
             backgroundTasks.add_task(
                 db.persist_recording,
-                reformatted,
-                userSession.username,
-                filename
+                reformatted, userSession.username, filename,
             )
     finally:
         if settings.ENVIRONMENT != "development":
             reformatted.close()
     
+    # Record the change.
+    backgroundTasks.add_task(
+        record_app_data_change,
+        database, userSession, created, "ENCOUNTER", "CREATED", entity_id=encounter_id,
+    )
+
+    # Return the created encounter.
     return sch.Encounter.from_db_record(encounter)
 
 @router.patch("/{encounterId}")
@@ -325,14 +312,8 @@ def create_draft_note(
             active_note.inactivated = saved
 
         new_note = db.DraftNote(
-            id=noteId,
-            encounter_id=encounter.id,
-            definition_id=note_definition.id,
-            definition_version=note_definition.version,
-            created=saved,
-            title=title,
-            content=content,
-            output_type=outputType,
+            id=noteId, encounter_id=encounter.id, definition_id=note_definition.id, definition_version=note_definition.version,
+            created=saved, title=title, content=content, output_type=outputType,
         )
 
         encounter.draft_notes.append(new_note)

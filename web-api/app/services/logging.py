@@ -246,3 +246,31 @@ def log_generation(
     except Exception as e:
         message = f"Failed to save generation log: {str(generation_task)}; Error: {str(e)}"
         log.warning(message, session)
+
+def record_app_data_change(
+    database: db.SQLAlchemySession,
+    session: WebAPISession,
+    changed: datetime,
+    entity_type: db.DataEntityType,
+    change_type: db.DataChangeType,
+    *,
+    entity_id: str | None = None,
+    details: str | None = None,
+):
+    change_record = db.DataChangeRecord(
+        changed=changed,
+        username=session.username,
+        session_id=session.sessionId,
+        entity_type=entity_type,
+        entity_id=entity_id,
+        change_type=change_type,
+        details=details,
+    )
+
+    try:
+        database.add(change_record)
+        database.commit()
+    except Exception as exc:
+        message = f"Failed to save app data change record: {str(change_record)}; Error: {str(exc)}"
+        log.warning(message, session)
+
