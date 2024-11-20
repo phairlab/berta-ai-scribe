@@ -1,9 +1,9 @@
 from typing import Generic, TypeVar
 
-import pydantic.generics
+from pydantic import BaseModel
 
 T = TypeVar("T")
 
-class DataPage(pydantic.generics.GenericModel, Generic[T]):
+class DataPage(BaseModel, Generic[T]):
     data: list[T]
     isLastPage: bool
