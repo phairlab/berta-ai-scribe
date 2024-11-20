@@ -31,36 +31,28 @@ from app.schemas import SimpleMessage, WebAPIError, WebAPIErrorDetail
 # ----------------------------------
 # LOGGING CONFIG
 
-# Configure app logging
-log_format = "[%(asctime)s] %(levelname)s: [%(name)s] %(message)s"
-log_dateformat = "%H:%M:%S"
-logging.basicConfig(level=logging.INFO, format=log_format, datefmt=log_dateformat)
+LOGGING_LEVEL = logging.getLevelNamesMapping()[settings.LOGGING_LEVEL.upper()]
 
-logging_level = settings.LOGGING_LEVEL.upper()
-match logging_level.upper():
-    case "TRACE":
-        snowflake_level = logging.DEBUG
-        sqlalchemy_level = logging.DEBUG
-        uvicorn_level = logging.DEBUG
-    case "DEBUG":
-        snowflake_level = logging.INFO
-        sqlalchemy_level = logging.INFO
-        uvicorn_level = logging.WARNING
-    case "INFO":
-        snowflake_level = logging.WARNING if settings.ENVIRONMENT == "development" else logging.WARNING
-        sqlalchemy_level = logging.WARNING if settings.ENVIRONMENT == "development" else logging.WARNING
-        uvicorn_level = logging.WARNING
-    case _:
-        snowflake_level = logging.getLevelNamesMapping()[logging_level]
-        sqlalchemy_level = logging.getLevelNamesMapping()[logging_level]
-        uvicorn_level = logging.getLevelNamesMapping()[logging_level]
+# Configure basic logging.
+if settings.ENVIRONMENT == "development":
+    # Use a custom log format during development.
+    log_format = "[%(asctime)s] %(levelname)s: [%(name)s] %(message)s"
+    log_dateformat = "%H:%M:%S"
+    logging.basicConfig(level=LOGGING_LEVEL, format=log_format, datefmt=log_dateformat)
+else:
+    # Use the standard log format for production.
+    logging.basicConfig(level=LOGGING_LEVEL)
 
+# Configure logging for external libraries.
+uvicorn_level = LOGGING_LEVEL + 1 if LOGGING_LEVEL < logging.INFO else max(LOGGING_LEVEL, logging.WARNING)
 logging.getLogger("httpx").disabled = True
 logging.getLogger("uvicorn.access").setLevel(uvicorn_level)
 
+sqlalchemy_level = LOGGING_LEVEL + 1 if LOGGING_LEVEL < logging.WARNING else LOGGING_LEVEL
 logging.getLogger("sqlalchemy.engine").setLevel(sqlalchemy_level)
 logging.getLogger("sqlalchemy.pool").setLevel(sqlalchemy_level)
 
+snowflake_level = LOGGING_LEVEL + 1 if LOGGING_LEVEL < logging.WARNING else LOGGING_LEVEL
 logging.getLogger("snowflake.connector.cursor").disabled = True
 for logger_name in ["snowflake.connector", "snowflake.connector.connection", "snowflake.snowpark.session", "botocore", "boto3"]:
     logger = logging.getLogger(logger_name)
