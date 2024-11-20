@@ -27,7 +27,7 @@ from app.services.logging import WebAPILogger, RequestMetrics
 from app.services.security import decode_token, WebAPISession
 from app.schemas import SimpleMessage, WebAPIError, WebAPIErrorDetail
 from app.routers import (
-    authorization, encounters, monitor, note_definitions, 
+    authorization, encounters, monitoring, note_definitions, 
     recordings, sample_recordings, tasks, user
 )
 
@@ -316,7 +316,7 @@ app.include_router(note_definitions.router, prefix="/note-definitions", tags=["N
 app.include_router(sample_recordings.router, prefix="/sample-recordings", tags=["Recordings"])
 app.include_router(encounters.router, prefix="/encounters", tags=["Encounters"])
 app.include_router(recordings.router, prefix="/recordings", tags=["Recordings"])
-app.include_router(monitor.router, prefix="/monitor", tags=["Monitoring"])
+app.include_router(monitoring.router, prefix="/monitoring", tags=["Monitoring"])
 
 # ----------------------------------
 # FALLBACK
