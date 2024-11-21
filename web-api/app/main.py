@@ -261,7 +261,10 @@ async def request_logging_middleware(request: Request, call_next):
     with ExecutionTimer() as timer:
         response: Response = await call_next(request)
 
-    if request.url.path == "/healthcheck" and response.status_code < 300:
+    if request.url.path == "/healthcheck" and response.status_code < 400:
+        return response
+    
+    if request.url.path.startswith("/monitoring/") and response.status_code < 400:
         return response
 
     log.request(

@@ -17,7 +17,7 @@ def get_updates(
     userSession: useUserSession,
     database: useDatabase,
     *,
-    laterThan: datetime
+    cutoff: datetime
 ) -> sch.DataChanges:
     """
     Gets all updates for the current user after the specified date
@@ -27,7 +27,7 @@ def get_updates(
     # Identify any updates.
     get_updates = select(db.DataChangeRecord) \
         .where(
-            db.DataChangeRecord.changed > laterThan,
+            db.DataChangeRecord.logged > cutoff,
             db.DataChangeRecord.username == userSession.username,
             db.DataChangeRecord.session_id != userSession.sessionId
         )
@@ -38,7 +38,7 @@ def get_updates(
         raise errors.DatabaseError(str(exc))
 
     # Check for new encounters.
-    created_encounter_ids = [{x.entity_id for x in updates if x.entity_type == "ENCOUNTER" and x.change_type == "CREATED"}]
+    created_encounter_ids = list({x.entity_id for x in updates if x.entity_type == "ENCOUNTER" and x.change_type == "CREATED"})
 
     if any(created_encounter_ids):
         get_new_encounters = select(db.Encounter) \
@@ -53,9 +53,12 @@ def get_updates(
             new_encounters = database.execute(get_new_encounters).scalars().all()
         except Exception as exc:
             raise errors.DatabaseError(str(exc))
+    else:
+        new_encounters = []
     
     # Return the changes.
     return sch.DataChanges(
-        newEncounters=new_encounters or []
+        lastUpdate=max(u.logged for u in updates) if any(updates) else cutoff,
+        newEncounters=[sch.Encounter.from_db_record(e) for e in new_encounters]
     )
     

@@ -146,7 +146,7 @@ ALTER TABLE users SWAP WITH users_1;
 
 DROP TABLE users_1;
 
--- Fix 'registered' column, use time of first request to backfill.
+-- Fix 'registered' column of users table, use time of first request to backfill.
 UPDATE users u
 SET u.registered = x.first_request
     ,u.updated = x.first_request
@@ -160,14 +160,16 @@ FROM (
 WHERE u.username = x.username;
 
 -- Add app data change tracking table.
+CREATE SEQUENCE data_change_ids NOORDER;
+
 CREATE TABLE data_changes (
-  id INTEGER NOT NULL IDENTITY NOORDER,
+  id INTEGER NOT NULL DEFAULT data_change_ids.nextval,
+  logged TIMESTAMP_LTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   changed TIMESTAMP_LTZ NOT NULL,
   username VARCHAR(255) NOT NULL,
   session_id CHAR(36) NOT NULL,
   entity_type VARCHAR(255) NOT NULL,
   entity_id VARCHAR(12),
   change_type VARCHAR(50) NOT NULL,
-  details VARCHAR,
   PRIMARY KEY (id) RELY
 );

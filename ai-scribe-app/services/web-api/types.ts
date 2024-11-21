@@ -1,5 +1,10 @@
 export type NoteOutputType = "Plain Text" | "Markdown";
 
+export type DataChanges = {
+  lastUpdate: Date;
+  newEncounters: Encounter[];
+};
+
 export type DataPage<T> = {
   data: T[];
   isLastPage: boolean;

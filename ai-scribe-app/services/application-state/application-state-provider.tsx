@@ -7,6 +7,7 @@ import { useSession } from "@/services/session-management/use-session";
 import { useWebApi } from "@/services/web-api/use-web-api";
 import * as convert from "@/utility/converters";
 import { alphabetically, byDate } from "@/utility/sorters";
+import { useAbortController } from "@/utility/use-abort-controller";
 
 import {
   ApplicationStateContext,
@@ -15,6 +16,7 @@ import {
 import { EncounterLoadState, useEncounterState } from "./encounter-state";
 import { useNoteTypeState } from "./note-type-state";
 import { useSampleRecordingState } from "./sample-recording-state";
+import { useUpdateMonitor } from "./use-update-monitor";
 
 type ApplicationStateProviderProps = {
   children: ReactNode;
@@ -25,6 +27,7 @@ export const ApplicationStateProvider = ({
 }: ApplicationStateProviderProps) => {
   const webApi = useWebApi();
   const session = useSession();
+  const abortController = useAbortController();
 
   // Reactive state slices with default values.
   const [sampleRecordings, setSampleRecordings] = useState<SampleRecording[]>(
@@ -67,21 +70,35 @@ export const ApplicationStateProvider = ({
     setActiveEncounter,
   );
 
+  const applicationState = {
+    sampleRecordings: sampleRecordingState,
+    noteTypes: noteTypeState,
+    encounters: encounterState,
+  };
+
+  const monitor = useUpdateMonitor(applicationState);
+
   // On successful authentication, prefetch data.
   useEffect(() => {
     if (session.state === "Authenticated") {
-      prefetch();
+      prefetch(abortController.signal.current).then(() =>
+        monitor.start(abortController.signal.current),
+      );
+
+      return () => abortController.abort();
     }
+
+    return;
   }, [session]);
 
   /** Performs pre-fetching of application data. */
-  async function prefetch() {
-    const getUserInfo = webApi.user.getInfo();
+  async function prefetch(abortSignal: AbortSignal) {
+    const getUserInfo = webApi.user.getInfo(abortSignal);
 
     // Prefetch sample recordings.
     setSampleRecordingStatus("Loading");
     webApi.sampleRecordings
-      .getAll()
+      .getAll(abortSignal)
       .then((records) => {
         const sampleRecordings: SampleRecording[] = records
           .sort(alphabetically((x) => x.filename))
@@ -100,7 +117,7 @@ export const ApplicationStateProvider = ({
 
     // Note Types
     setNoteTypeStatus("Loading");
-    Promise.all([getUserInfo, webApi.noteDefinitions.getAll()])
+    Promise.all([getUserInfo, webApi.noteDefinitions.getAll(abortSignal)])
       .then(([userInfo, records]) => {
         const noteTypes: NoteType[] = records
           .sort(alphabetically((x) => x.title))
@@ -128,7 +145,7 @@ export const ApplicationStateProvider = ({
     setEncounterStatus("Loading");
     setEncounterLoadState("Fetching More");
     webApi.encounters
-      .getAll()
+      .getAll(null, abortSignal)
       .then((page) => {
         const encounters: Encounter[] = page.data
           .sort(byDate((x) => x.created, "Descending"))
@@ -146,13 +163,7 @@ export const ApplicationStateProvider = ({
   }
 
   return (
-    <ApplicationStateContext.Provider
-      value={{
-        sampleRecordings: sampleRecordingState,
-        noteTypes: noteTypeState,
-        encounters: encounterState,
-      }}
-    >
+    <ApplicationStateContext.Provider value={applicationState}>
       {children}
     </ApplicationStateContext.Provider>
   );

@@ -185,14 +185,13 @@ def log_generation(
 def log_data_change(
     database: db.SQLAlchemySession, session: WebAPISession, changed: datetime,
     entity_type: db.DataEntityType, change_type: db.DataChangeType,
-    *, entity_id: str | None = None, details: str | None = None,
+    *, entity_id: str | None = None
 ):
     """Records a change to an app entity to the databse."""
 
     change_record = db.DataChangeRecord(
         changed=changed, username=session.username, session_id=session.sessionId,
         entity_type=entity_type, entity_id=entity_id, change_type=change_type,
-        details=details,
     )
 
     try:

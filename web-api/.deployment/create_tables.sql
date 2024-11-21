@@ -151,14 +151,16 @@ CREATE TABLE draft_notes (
   FOREIGN KEY (definition_id, definition_version) REFERENCES note_definitions (id, version) RELY
 );
 
+CREATE SEQUENCE data_change_ids NOORDER;
+
 CREATE TABLE data_changes (
-  id INTEGER NOT NULL IDENTITY NOORDER,
+  id INTEGER NOT NULL DEFAULT data_change_ids.nextval,
+  logged TIMESTAMP_LTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   changed TIMESTAMP_LTZ NOT NULL,
   username VARCHAR(255) NOT NULL,
   session_id CHAR(36) NOT NULL,
   entity_type VARCHAR(255) NOT NULL,
   entity_id VARCHAR(12),
   change_type VARCHAR(50) NOT NULL,
-  details VARCHAR,
   PRIMARY KEY (id) RELY
 );
