@@ -5,7 +5,7 @@ import * as convert from "@/utility/converters";
 
 import { ApplicationState } from "./application-state-context";
 
-const MONITOR_INTERVAL_MS = 5000;
+const MONITOR_INTERVAL_MS = 15000;
 
 export function useUpdateMonitor(applicationState: ApplicationState) {
   const webApi = useWebApi();
@@ -61,12 +61,14 @@ export function useUpdateMonitor(applicationState: ApplicationState) {
           abortSignal.current,
         );
 
-        // Incorporate updates.
-        changes.newEncounters.forEach((e) => {
-          applicationState.encounters.put(convert.fromWebApiEncounter(e));
-        });
+        if (changes) {
+          // Incorporate updates.
+          changes.encounters.created.forEach((e) => {
+            applicationState.encounters.put(convert.fromWebApiEncounter(e));
+          });
 
-        cutoff.current = changes.lastUpdate;
+          cutoff.current = changes.lastUpdate;
+        }
       } catch {
         // If error, skip this cycle.
       }

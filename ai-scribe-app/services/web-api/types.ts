@@ -1,8 +1,16 @@
 export type NoteOutputType = "Plain Text" | "Markdown";
 
+export type ChangedEntities<T> = {
+  created: T[];
+  modified: T[];
+  removed: T[];
+};
+
 export type DataChanges = {
   lastUpdate: Date;
-  newEncounters: Encounter[];
+  userInfo: UserInfo | null;
+  noteDefinitions: ChangedEntities<NoteDefinition>;
+  encounters: ChangedEntities<Encounter>;
 };
 
 export type DataPage<T> = {
@@ -68,5 +76,6 @@ export type TranscriberOutput = {
 
 export type UserInfo = {
   username: string;
+  updated: Date;
   defaultNoteType?: string;
 };

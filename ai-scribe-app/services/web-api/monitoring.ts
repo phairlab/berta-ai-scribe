@@ -5,8 +5,8 @@ import { DataChanges } from "./types";
 
 const checkDataChanges =
   (getAccessToken: () => WebApiToken) =>
-  (cutoff: Date, cancellation?: AbortSignal): Promise<DataChanges> =>
-    httpAction<DataChanges>("GET", "api/monitoring/check-data-changes", {
+  (cutoff: Date, cancellation?: AbortSignal): Promise<DataChanges | null> =>
+    httpAction<DataChanges | null>("GET", "api/monitoring/check-data-changes", {
       query: { cutoff: new Date(cutoff).toISOString() },
       accessToken: getAccessToken(),
       signal: cancellation,

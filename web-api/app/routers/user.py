@@ -26,7 +26,7 @@ def get_user_info(userSession: useUserSession, database: useDatabase):
     except NoResultFound:
         raise errors.BadRequest("User is not registered")
     
-    return sch.UserInfo(username=user.username, defaultNoteType=user.default_note)
+    return sch.UserInfo.from_db_record(user)
 
 @router.put("/default-note-type", tags=["Note Definitions"])
 def set_default_note_type(
