@@ -201,7 +201,7 @@ class DraftNote(JenkinsDatabase):
 # ----------------------------------
 # CHANGE TRACKING
 
-DataEntityType = Literal["USER_INFO", "NOTE_DEFINITION", "ENCOUNTER"]
+DataEntityType = Literal["USER", "NOTE DEFINITION", "ENCOUNTER"]
 DataChangeType = Literal["CREATED", "MODIFIED", "REMOVED"]
 
 class DataChangeRecord(JenkinsDatabase):

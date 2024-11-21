@@ -148,10 +148,11 @@ def create_encounter(
 
 @router.patch("/{encounterId}")
 def update_encounter(
-    userSession: useUserSession, 
-    database: useDatabase, 
+    userSession: useUserSession,
+    database: useDatabase,
+    backgroundTasks: BackgroundTasks,
     *, 
-    encounterId: str, 
+    encounterId: str,
     label: Annotated[str | None, Body()] = None,
     transcript: Annotated[str | None, Body()] = None,
 ) -> sch.Encounter:
@@ -185,15 +186,22 @@ def update_encounter(
         database.commit()
     except Exception as e:
         raise errors.DatabaseError(str(e))
+    
+    # Record the change.
+    backgroundTasks.add_task(
+        log_data_change,
+        database, userSession, encounter.modified, "ENCOUNTER", "MODIFIED", entity_id=encounter.id,
+    )
 
     # Return the updated encounter.
     return sch.Encounter.from_db_record(encounter)
     
 @router.delete("/{encounterId}")
 def delete_encounter(
-    userSession: useUserSession, 
+    userSession: useUserSession,
     database: useDatabase,
-    *, 
+    backgroundTasks: BackgroundTasks,
+    *,
     encounterId: str
 ):
     """
@@ -249,13 +257,20 @@ def delete_encounter(
         encounter.purged = deleted
 
         database.commit()
+
+        # Record the change.
+        backgroundTasks.add_task(
+            log_data_change,
+            database, userSession, deleted, "ENCOUNTER", "REMOVED", entity_id=encounterId,
+        )
     except Exception as e:
         raise errors.DatabaseError(str(e))
 
 @router.post("/{encounterId}/draft-notes")
 def create_draft_note(
-    userSession: useUserSession, 
-    database: useDatabase, 
+    userSession: useUserSession,
+    database: useDatabase,
+    backgroundTasks: BackgroundTasks,
     *, 
     encounterId: str,
     noteDefinitionId: Annotated[str, Body()],
@@ -320,6 +335,12 @@ def create_draft_note(
         encounter.modified = saved
         database.commit()
 
+        # Record the change.
+        backgroundTasks.add_task(
+            log_data_change,
+            database, userSession, encounter.modified, "ENCOUNTER", "MODIFIED", entity_id=encounter.id,
+        )
+
         return sch.DraftNote.from_db_record(new_note)
     except Exception as e:
         raise errors.DatabaseError(str(e))
@@ -328,6 +349,7 @@ def create_draft_note(
 def delete_draft_note(
     userSession: useUserSession,
     database: useDatabase,
+    backgroundTasks: BackgroundTasks,
     *,
     encounterId: str,
     noteId: str
@@ -361,6 +383,13 @@ def delete_draft_note(
         inactivated = datetime.now(timezone.utc)
         draft_note.inactivated = inactivated
         draft_note.encounter.modified = inactivated
+
         database.commit()
+
+        # Record the change.
+        backgroundTasks.add_task(
+            log_data_change,
+            database, userSession, inactivated, "ENCOUNTER", "MODIFIED", entity_id=encounterId,
+        )
     except Exception as e:
         raise errors.DatabaseError(str(e))

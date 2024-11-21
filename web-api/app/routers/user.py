@@ -2,7 +2,7 @@ from typing import Annotated
 from uuid import uuid4
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Body, Depends
+from fastapi import APIRouter, BackgroundTasks, Body, Depends
 from sqlalchemy.exc import NoResultFound
 
 import app.schemas as sch
@@ -10,6 +10,7 @@ import app.services.db as db
 import app.services.error_handling as errors
 from app.services.db import useDatabase
 from app.services.security import authenticate_session, useUserSession
+from app.services.logging import log_data_change
 
 router = APIRouter(dependencies=[Depends(authenticate_session)])
 
@@ -31,6 +32,7 @@ def get_user_info(userSession: useUserSession, database: useDatabase):
 def set_default_note_type(
     userSession: useUserSession,
     database: useDatabase,
+    backgroundTasks: BackgroundTasks,
     *,
     id: Annotated[str, Body()]):
     """
@@ -45,6 +47,12 @@ def set_default_note_type(
     user.default_note = id
     user.updated = datetime.now(timezone.utc)
     database.commit()
+
+    # Record the change.
+    backgroundTasks.add_task(
+        log_data_change,
+        database, userSession, user.updated, "USER", "MODIFIED", entity_id=user.username,
+    )
 
 @router.post("/feedback", tags=["Feedback"])
 def submit_feedback(

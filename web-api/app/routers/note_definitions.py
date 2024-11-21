@@ -1,7 +1,7 @@
 from typing import Annotated
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, Body
+from fastapi import APIRouter, BackgroundTasks, Depends, Body
 from sqlalchemy import select, or_
 from sqlalchemy.exc import NoResultFound
 
@@ -10,6 +10,7 @@ import app.services.db as db
 import app.services.error_handling as errors
 from app.services.security import authenticate_session, useUserSession
 from app.services.db import useDatabase
+from app.services.logging import log_data_change
 from app.config import settings
 
 router = APIRouter(dependencies=[Depends(authenticate_session)])
@@ -38,10 +39,11 @@ def get_note_definitions(userSession: useUserSession, database: useDatabase) -> 
 
 @router.post("")
 def create_note_definition(
-    userSession: useUserSession, 
-    database: useDatabase, 
+    userSession: useUserSession,
+    database: useDatabase,
+    backgroundTasks: BackgroundTasks,
     *,
-    title: Annotated[str, Body()], 
+    title: Annotated[str, Body()],
     instructions: Annotated[str, Body()]
 ) -> sch.NoteDefinition:
     """
@@ -54,35 +56,39 @@ def create_note_definition(
 
     # Create the new note definition and associate to the current user.
     try:
+        created = datetime.now(timezone.utc)
         sqid = db.new_sqid(database)
 
         record = db.NoteDefinition(
-            id=sqid,
-            version=sqid,
-            username=userSession.username,
-            created=datetime.now(timezone.utc),
-            title=title,
-            instructions=instructions,
-            model=gen_ai_model,
-            output_type="Markdown",
+            id=sqid, version=sqid, username=userSession.username,
+            created=created,
+            title=title, instructions=instructions,
+            model=gen_ai_model, output_type="Markdown",
         )
 
         database.add(record)
         database.commit()
+    
+        # Record the change.
+        backgroundTasks.add_task(
+            log_data_change,
+            database, userSession, created, "NOTE DEFINITION", "CREATED", entity_id=sqid,
+        )
     except Exception as e:
         raise errors.DatabaseError(str(e))
-    
+
     # Return the new note definition.
     return sch.NoteDefinition.from_db_record(record)
 
 @router.patch("/{id}")
 def update_note_definition(
-    userSession: useUserSession, 
-    database: useDatabase, 
+    userSession: useUserSession,
+    database: useDatabase,
+    backgroundTasks: BackgroundTasks,
     *, 
-    id: str, 
+    id: str,
     title: Annotated[str | None, Body()] = None,
-    instructions: Annotated[str | None, Body()] = None
+    instructions: Annotated[str | None, Body()] = None,
 ) -> sch.NoteDefinition:
     """
     Applies updates to an existing custom note definition for the current user.
@@ -124,6 +130,12 @@ def update_note_definition(
         current_record.inactivated = modified
 
         database.commit()
+    
+        # Record the changes.
+        backgroundTasks.add_task(
+            log_data_change,
+            database, userSession, modified, "NOTE DEFINITION", "MODIFIED", entity_id=current_record.id,
+        )
     except Exception as e:
         raise errors.DatabaseError(str(e))
     
@@ -131,7 +143,13 @@ def update_note_definition(
     return sch.NoteDefinition.from_db_record(new_version)
     
 @router.delete("/{id}")
-def delete_note_definition(userSession: useUserSession, database: useDatabase, *, id: str):
+def delete_note_definition(
+    userSession: useUserSession,
+    database: useDatabase,
+    backgroundTasks: BackgroundTasks,
+    *,
+    id: str
+):
     """
     Deletes a custom note definition.
     This operation sets the note as inactivated and prevents it from being included
@@ -156,5 +174,11 @@ def delete_note_definition(userSession: useUserSession, database: useDatabase, *
 
     try:
         database.commit()
+
+        # Record the changes.
+        backgroundTasks.add_task(
+            log_data_change,
+            database, userSession, record.inactivated, "NOTE DEFINITION", "REMOVED", entity_id=record.id,
+        )
     except Exception as e:
         raise errors.DatabaseError(str(e))
