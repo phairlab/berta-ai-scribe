@@ -1,8 +1,10 @@
 import { PropsWithChildren, use, useEffect, useMemo, useRef } from "react";
 
+import { Encounter } from "@/core/types";
+import * as webApiTypes from "@/services/web-api/types";
 import { useWebApi } from "@/services/web-api/use-web-api";
 import * as convert from "@/utility/converters";
-import { WithTracking } from "@/utility/tracking";
+import { setTracking, WithTracking } from "@/utility/tracking";
 import { useAbortController } from "@/utility/use-abort-controller";
 
 import { ApplicationStateContext } from "./application-state-context";
@@ -189,11 +191,34 @@ export const ExternalStateMonitor = ({ children }: PropsWithChildren) => {
             await whenSaved(
               () => encounters.current.get(modified.id),
               (previous) => {
-                if (
+                // Get the distinct set of notes from both previous and modified encounters.
+                const notes = Object.values(
+                  [...previous.draftNotes, ...modified.draftNotes].reduce(
+                    (notes, note) => ({ ...notes, [note.id]: note }),
+                    {} as { [key: string]: webApiTypes.DraftNote },
+                  ),
+                );
+
+                const isNewer =
                   new Date(previous.modified).getTime() <
-                  new Date(modified.modified).getTime()
-                ) {
-                  encounters.current.put(convert.fromWebApiEncounter(modified));
+                  new Date(modified.modified).getTime();
+
+                // Take the newer version of the encounter, but update
+                // with the combined set of notes.
+                if (isNewer) {
+                  encounters.current.put(
+                    convert.fromWebApiEncounter({
+                      ...modified,
+                      draftNotes: notes,
+                    }),
+                  );
+                } else {
+                  encounters.current.put(
+                    setTracking(
+                      { ...previous, draftNotes: notes } as Encounter,
+                      "Synchronized",
+                    ),
+                  );
                 }
               },
             );
