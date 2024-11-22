@@ -62,7 +62,7 @@ for logger_name in ["snowflake.connector", "snowflake.connector.connection", "sn
     logger.setLevel(snowflake_level)
     for handler in logger.handlers:
         # Prevent secrets from leaking into logs
-        handler.setFormatter(SecretDetector(None, log_dateformat))
+        handler.setFormatter(SecretDetector())
 
 # ----------------------------------
 # WEB SETUP
