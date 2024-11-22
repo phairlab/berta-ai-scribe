@@ -10,7 +10,7 @@ import { useAbortController } from "@/utility/use-abort-controller";
 
 import { ApplicationStateContext } from "./application-state-context";
 
-const MONITOR_INTERVAL_MS = 15000;
+const MONITOR_INTERVAL_MS = 10000;
 const DEFERRAL_MS = 500;
 
 export const ExternalStateMonitor = ({ children }: PropsWithChildren) => {
