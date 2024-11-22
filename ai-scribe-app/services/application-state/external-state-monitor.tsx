@@ -4,6 +4,7 @@ import { Encounter } from "@/core/types";
 import * as webApiTypes from "@/services/web-api/types";
 import { useWebApi } from "@/services/web-api/use-web-api";
 import * as convert from "@/utility/converters";
+import { byDate } from "@/utility/sorters";
 import { setTracking, WithTracking } from "@/utility/tracking";
 import { useAbortController } from "@/utility/use-abort-controller";
 
@@ -193,10 +194,12 @@ export const ExternalStateMonitor = ({ children }: PropsWithChildren) => {
               (previous) => {
                 // Get the distinct set of notes from both previous and modified encounters.
                 const notes = Object.values(
-                  [...previous.draftNotes, ...modified.draftNotes].reduce(
-                    (notes, note) => ({ ...notes, [note.id]: note }),
-                    {} as { [key: string]: webApiTypes.DraftNote },
-                  ),
+                  [...previous.draftNotes, ...modified.draftNotes]
+                    .sort(byDate((n) => new Date(n.created)))
+                    .reduce(
+                      (notes, note) => ({ ...notes, [note.id]: note }),
+                      {} as { [key: string]: webApiTypes.DraftNote },
+                    ),
                 );
 
                 const isNewer =
