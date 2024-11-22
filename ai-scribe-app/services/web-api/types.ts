@@ -7,7 +7,7 @@ export type ChangedEntities<T> = {
 };
 
 export type DataChanges = {
-  lastUpdate: Date;
+  lastUpdate: string;
   userInfo: UserInfo | null;
   noteDefinitions: ChangedEntities<NoteDefinition>;
   encounters: ChangedEntities<Encounter>;
@@ -21,7 +21,7 @@ export type DataPage<T> = {
 export type DraftNote = {
   id: string;
   definitionId: string;
-  created: Date;
+  created: string;
   title: string;
   content: string;
   outputType: NoteOutputType;
@@ -29,8 +29,8 @@ export type DraftNote = {
 
 export type Encounter = {
   id: string;
-  created: Date;
-  modified: Date;
+  created: string;
+  modified: string;
   label?: string;
   summary?: string;
   recording?: Recording;
@@ -39,7 +39,7 @@ export type Encounter = {
 
 export type NoteDefinition = {
   id: string;
-  modified: Date;
+  modified: string;
   title: string;
   instructions: string;
   isBuiltin: boolean;
@@ -76,6 +76,6 @@ export type TranscriberOutput = {
 
 export type UserInfo = {
   username: string;
-  updated: Date;
+  updated: string;
   defaultNoteType?: string;
 };

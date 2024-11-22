@@ -23,9 +23,12 @@ export function useEncounters() {
       encounters.setPageLoading();
 
       const earliestLoaded =
-        encounters.list.toSorted(byDate((e) => e.created))[0] ?? undefined;
+        encounters.list.toSorted(byDate((e) => new Date(e.created)))[0] ??
+        undefined;
 
-      const page = await webApi.encounters.getAll(earliestLoaded?.created);
+      const page = await webApi.encounters.getAll(
+        earliestLoaded ? new Date(earliestLoaded.created) : null,
+      );
 
       encounters.loadPage(page);
     }
@@ -59,7 +62,7 @@ export function useEncounters() {
       // Persist the data.
       const persistedRecord = await webApi.encounters.create(
         audio,
-        encounter.created,
+        new Date(encounter.created),
       );
 
       // Mutate temp records to update persisted id.
@@ -228,7 +231,7 @@ export function useEncounters() {
         (n) => n.definitionId !== note.definitionId,
       ),
       setTracking(note, "Persisting"),
-    ].sort(byDate((x) => x.created, "Descending"));
+    ].sort(byDate((x) => new Date(x.created), "Descending"));
 
     const updated: Encounter = { ...encounter, draftNotes: notes };
 
@@ -248,7 +251,7 @@ export function useEncounters() {
       const notes = [
         ...updated.draftNotes.filter((n) => n.id !== note.id),
         convert.fromWebApiDraftNote(persistedNote),
-      ].sort(byDate((x) => x.created, "Descending"));
+      ].sort(byDate((x) => new Date(x.created), "Descending"));
 
       const currentEncounter = encounters.get(encounter.id);
 

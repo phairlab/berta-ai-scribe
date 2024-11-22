@@ -57,7 +57,7 @@ def get_updates(
     # Check for changed note definitions.
     created_note_definition_ids = {x.entity_id for x in updates if x.entity_type == "NOTE DEFINITION" and x.change_type == "CREATED"}
     modified_note_definition_ids = {x.entity_id for x in updates if x.entity_type == "NOTE DEFINITION" and x.change_type == "MODIFIED"}
-    removed_note_definition_ids = {x.entity_id for x in updates if x.entity_type == "NOTE DEFINITION" and x.change_type == "REMVOED"}
+    removed_note_definition_ids = {x.entity_id for x in updates if x.entity_type == "NOTE DEFINITION" and x.change_type == "REMOVED"}
 
     note_definition_ids = set.union(created_note_definition_ids, modified_note_definition_ids, removed_note_definition_ids)
     has_changes = has_changes or any(note_definition_ids)
@@ -77,7 +77,7 @@ def get_updates(
     # Check for changed encounters.
     created_encounter_ids = {x.entity_id for x in updates if x.entity_type == "ENCOUNTER" and x.change_type == "CREATED"}
     modified_encounter_ids = {x.entity_id for x in updates if x.entity_type == "ENCOUNTER" and x.change_type == "MODIFIED"}
-    removed_encounter_ids = {x.entity_id for x in updates if x.entity_type == "ENCOUNTER" and x.change_type == "REMVOED"}
+    removed_encounter_ids = {x.entity_id for x in updates if x.entity_type == "ENCOUNTER" and x.change_type == "REMOVED"}
 
     encounter_ids = set.union(created_encounter_ids, modified_encounter_ids, removed_encounter_ids)
     has_changes = has_changes or any(encounter_ids)

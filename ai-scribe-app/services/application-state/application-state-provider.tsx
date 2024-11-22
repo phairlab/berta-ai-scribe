@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useEffect, useState } from "react";
+import { PropsWithChildren, useEffect, useState } from "react";
 
 import { Encounter, NoteType, SampleRecording } from "@/core/types";
 import { useSession } from "@/services/session-management/use-session";
@@ -14,22 +14,16 @@ import {
   InitializationState,
 } from "./application-state-context";
 import { EncounterLoadState, useEncounterState } from "./encounter-state";
+import { ExternalStateMonitor } from "./external-state-monitor";
 import { useNoteTypeState } from "./note-type-state";
 import { useSampleRecordingState } from "./sample-recording-state";
-import { useUpdateMonitor } from "./use-update-monitor";
 
-type ApplicationStateProviderProps = {
-  children: ReactNode;
-};
-
-export const ApplicationStateProvider = ({
-  children,
-}: ApplicationStateProviderProps) => {
+export const ApplicationStateProvider = ({ children }: PropsWithChildren) => {
   const webApi = useWebApi();
   const session = useSession();
   const abortController = useAbortController();
 
-  // Reactive state slices with default values.
+  // Configure state slices.
   const [sampleRecordings, setSampleRecordings] = useState<SampleRecording[]>(
     [],
   );
@@ -70,21 +64,19 @@ export const ApplicationStateProvider = ({
     setActiveEncounter,
   );
 
+  // Build components into application state.
   const applicationState = {
     sampleRecordings: sampleRecordingState,
     noteTypes: noteTypeState,
     encounters: encounterState,
   };
 
-  const monitor = useUpdateMonitor(applicationState);
-
   // On successful authentication, prefetch data.
   useEffect(() => {
     if (session.state === "Authenticated") {
-      prefetch(abortController.signal.current).then(() =>
-        monitor.start(abortController.signal.current),
-      );
+      prefetch(abortController.signal.current);
 
+      // Abort prefetch on unmount.
       return () => abortController.abort();
     }
 
@@ -148,7 +140,7 @@ export const ApplicationStateProvider = ({
       .getAll(null, abortSignal)
       .then((page) => {
         const encounters: Encounter[] = page.data
-          .sort(byDate((x) => x.created, "Descending"))
+          .sort(byDate((x) => new Date(x.created), "Descending"))
           .map((record) => convert.fromWebApiEncounter(record));
 
         setEncounters(encounters);
@@ -164,7 +156,7 @@ export const ApplicationStateProvider = ({
 
   return (
     <ApplicationStateContext.Provider value={applicationState}>
-      {children}
+      <ExternalStateMonitor>{children}</ExternalStateMonitor>
     </ApplicationStateContext.Provider>
   );
 };

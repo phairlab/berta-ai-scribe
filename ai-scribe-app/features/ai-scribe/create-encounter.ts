@@ -9,8 +9,8 @@ export function createEncounter(fields: {
   const encounter: Encounter = setTracking(
     {
       id: fields.tempId,
-      created: created,
-      modified: created,
+      created: created.toISOString(),
+      modified: created.toISOString(),
       draftNotes: [],
       unsavedAudio: fields.audio,
     },

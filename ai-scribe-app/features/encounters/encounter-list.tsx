@@ -68,7 +68,9 @@ export const EncounterList = ({
           onPress={() => onSelected(encounter)}
         >
           <div className="flex flex-row gap-2">
-            <p className="grow">{formatDatestring(encounter.created)}</p>
+            <p className="grow">
+              {formatDatestring(new Date(encounter.created))}
+            </p>
             <EncounterDropdown
               encounter={encounter}
               onDelete={() => onDelete(encounter)}

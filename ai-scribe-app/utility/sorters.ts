@@ -15,5 +15,5 @@ export function byDate<T>(
 ) {
   return (a: T, b: T): number =>
     (direction === "Descending" ? -1 : 1) *
-    (new Date(field(a)).getTime() - new Date(field(b)).getTime());
+    (field(a).getTime() - field(b).getTime());
 }

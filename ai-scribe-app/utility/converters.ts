@@ -25,7 +25,7 @@ export function fromWebApiEncounter(record: WebApiTypes.Encounter) {
       ...record,
       draftNotes: record.draftNotes
         .map((n) => fromWebApiDraftNote(n))
-        .sort(byDate((x) => x.created, "Descending")),
+        .sort(byDate((x) => new Date(x.created), "Descending")),
     },
     "Synchronized",
   ) as Encounter;
