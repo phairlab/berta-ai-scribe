@@ -10,7 +10,7 @@ import { useAbortController } from "@/utility/use-abort-controller";
 
 import { ApplicationStateContext } from "./application-state-context";
 
-const MONITOR_INTERVAL_MS = 5000;
+const MONITOR_INTERVAL_MS = 15000;
 const DEFERRAL_MS = 500;
 
 export const ExternalStateMonitor = ({ children }: PropsWithChildren) => {
@@ -133,6 +133,14 @@ export const ExternalStateMonitor = ({ children }: PropsWithChildren) => {
           // until that existing record is saved and settled, and
           // only applied if the imported version is more current
           // than the existing one.
+
+          // MODIFIED USER INFO
+          if (changes.userInfo && changes.userInfo.defaultNoteType) {
+            noteTypes.current.setDefault(
+              changes.userInfo.defaultNoteType,
+              new Date(changes.userInfo.updated),
+            );
+          }
 
           // NEW NOTE DEFINITIONS
           for (const created of changes.noteDefinitions.created) {

@@ -160,7 +160,7 @@ CREATE TABLE data_changes (
   username VARCHAR(255) NOT NULL,
   session_id CHAR(36) NOT NULL,
   entity_type VARCHAR(255) NOT NULL,
-  entity_id VARCHAR(12),
+  entity_id VARCHAR(255),
   change_type VARCHAR(50) NOT NULL,
   PRIMARY KEY (id) RELY
 );

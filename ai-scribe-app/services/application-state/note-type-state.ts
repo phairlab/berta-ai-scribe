@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 
 import { NoteType } from "@/core/types";
 import { alphabetically } from "@/utility/sorters";
@@ -15,7 +15,7 @@ export type NoteTypeState = {
   get: (id: string) => NoteType | undefined;
   put: (data: NoteType) => void;
   remove: (id: string) => void;
-  setDefault: (id: string | null) => void;
+  setDefault: (id: string | null, effectiveAt?: Date) => void;
 };
 
 export function useNoteTypeState(
@@ -28,6 +28,7 @@ export function useNoteTypeState(
   const [defaultNoteTypeId, setDefaultNoteTypeId] = useState<string | null>(
     null,
   );
+  const defaultUpdated = useRef<Date>(new Date());
 
   // Set the default note type on the next render.
   // This allows it to be set at the same time as the note type is added
@@ -84,8 +85,11 @@ export function useNoteTypeState(
         }
       }
     },
-    setDefault: (id: string | null) => {
-      setDefaultNoteTypeId(id);
+    setDefault: (id: string | null, effectiveAt: Date = new Date()) => {
+      if (effectiveAt.getTime() > defaultUpdated.current.getTime()) {
+        defaultUpdated.current = effectiveAt;
+        setDefaultNoteTypeId(id);
+      }
     },
   } satisfies NoteTypeState;
 }
