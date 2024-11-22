@@ -12,12 +12,12 @@ import app.services.db as db
 import app.services.error_handling as errors
 from app.services.audio_processing import reformat_audio, compute_peaks
 from app.services.measurement import get_file_size, ExecutionTimer
-from app.services.logging import log_audio_conversion
-from app.services.security import authenticate_user, useUserSession
+from app.services.logging import log_audio_conversion, log_data_change
+from app.services.security import authenticate_session, useUserSession
 from app.services.db import useDatabase
 from app.config import settings
 
-router = APIRouter(dependencies=[Depends(authenticate_user)])
+router = APIRouter(dependencies=[Depends(authenticate_session)])
 
 @router.get("")
 def get_encounters(
@@ -87,15 +87,8 @@ def create_encounter(
 
         backgroundTasks.add_task(
             log_audio_conversion,
-            database,
-            recording_id,
-            timer.started_at,
-            timer.elapsed_ms,
-            audio.content_type,
-            audio.size,
-            reformatted_media_type,
-            reformatted_file_size,
-            session=userSession,
+            database, recording_id, timer.started_at, timer.elapsed_ms, audio.content_type, audio.size,
+            reformatted_media_type, reformatted_file_size, session=userSession,
         )
 
         # Compute waveform peaks.
@@ -105,33 +98,22 @@ def create_encounter(
 
         backgroundTasks.add_task(
             log_audio_conversion,
-            database,
-            recording_id,
-            timer.started_at,
-            timer.elapsed_ms,
-            audio.content_type,
-            audio.size,
-            error_id=audio_error.uuid,
-            session=userSession,
+            database, recording_id, timer.started_at, timer.elapsed_ms, audio.content_type, audio.size,
+            error_id=audio_error.uuid, session=userSession,
         )
 
         raise audio_error
 
     # Create the encounter record and associate it to the current user.
     try:
+        recording = db.Recording(
+            id=recording_id, media_type=reformatted_media_type, file_size=reformatted_file_size,
+            duration=duration, waveform_peaks=json.dumps(peaks)
+        )
+
         encounter = db.Encounter(
-            id=encounter_id,
-            username=userSession.username,
-            created=created,
-            modified=created,
-            label=(label or encounter_id),
-            recording=db.Recording(
-                id=recording_id,
-                media_type=reformatted_media_type,
-                file_size=reformatted_file_size,
-                duration=duration,
-                waveform_peaks=json.dumps(peaks)
-            ),
+            id=encounter_id, username=userSession.username, created=created, modified=created,
+            label=(label or encounter_id), recording=recording,
         )
         
         database.add(encounter)
@@ -149,22 +131,28 @@ def create_encounter(
             # This operation will close the file once completed.
             backgroundTasks.add_task(
                 db.persist_recording,
-                reformatted,
-                userSession.username,
-                filename
+                reformatted, userSession.username, filename,
             )
     finally:
         if settings.ENVIRONMENT != "development":
             reformatted.close()
     
+    # Record the change.
+    backgroundTasks.add_task(
+        log_data_change,
+        database, userSession, created, "ENCOUNTER", "CREATED", entity_id=encounter_id,
+    )
+
+    # Return the created encounter.
     return sch.Encounter.from_db_record(encounter)
 
 @router.patch("/{encounterId}")
 def update_encounter(
-    userSession: useUserSession, 
-    database: useDatabase, 
+    userSession: useUserSession,
+    database: useDatabase,
+    backgroundTasks: BackgroundTasks,
     *, 
-    encounterId: str, 
+    encounterId: str,
     label: Annotated[str | None, Body()] = None,
     transcript: Annotated[str | None, Body()] = None,
 ) -> sch.Encounter:
@@ -198,15 +186,22 @@ def update_encounter(
         database.commit()
     except Exception as e:
         raise errors.DatabaseError(str(e))
+    
+    # Record the change.
+    backgroundTasks.add_task(
+        log_data_change,
+        database, userSession, encounter.modified, "ENCOUNTER", "MODIFIED", entity_id=encounter.id,
+    )
 
     # Return the updated encounter.
     return sch.Encounter.from_db_record(encounter)
     
 @router.delete("/{encounterId}")
 def delete_encounter(
-    userSession: useUserSession, 
+    userSession: useUserSession,
     database: useDatabase,
-    *, 
+    backgroundTasks: BackgroundTasks,
+    *,
     encounterId: str
 ):
     """
@@ -262,13 +257,20 @@ def delete_encounter(
         encounter.purged = deleted
 
         database.commit()
+
+        # Record the change.
+        backgroundTasks.add_task(
+            log_data_change,
+            database, userSession, deleted, "ENCOUNTER", "REMOVED", entity_id=encounterId,
+        )
     except Exception as e:
         raise errors.DatabaseError(str(e))
 
 @router.post("/{encounterId}/draft-notes")
 def create_draft_note(
-    userSession: useUserSession, 
-    database: useDatabase, 
+    userSession: useUserSession,
+    database: useDatabase,
+    backgroundTasks: BackgroundTasks,
     *, 
     encounterId: str,
     noteDefinitionId: Annotated[str, Body()],
@@ -325,18 +327,19 @@ def create_draft_note(
             active_note.inactivated = saved
 
         new_note = db.DraftNote(
-            id=noteId,
-            encounter_id=encounter.id,
-            definition_id=note_definition.id,
-            definition_version=note_definition.version,
-            created=saved,
-            title=title,
-            content=content,
-            output_type=outputType,
+            id=noteId, encounter_id=encounter.id, definition_id=note_definition.id, definition_version=note_definition.version,
+            created=saved, title=title, content=content, output_type=outputType,
         )
 
         encounter.draft_notes.append(new_note)
+        encounter.modified = saved
         database.commit()
+
+        # Record the change.
+        backgroundTasks.add_task(
+            log_data_change,
+            database, userSession, encounter.modified, "ENCOUNTER", "MODIFIED", entity_id=encounter.id,
+        )
 
         return sch.DraftNote.from_db_record(new_note)
     except Exception as e:
@@ -346,6 +349,7 @@ def create_draft_note(
 def delete_draft_note(
     userSession: useUserSession,
     database: useDatabase,
+    backgroundTasks: BackgroundTasks,
     *,
     encounterId: str,
     noteId: str
@@ -367,7 +371,8 @@ def delete_draft_note(
                         db.Encounter.inactivated.is_(None),
                     )
                 )
-            )
+            ) \
+            .options(selectinload(db.DraftNote.encounter))
         
         draft_note = database.execute(get_note).scalar_one()
     except NoResultFound:
@@ -375,7 +380,16 @@ def delete_draft_note(
     
     # Delete the draft note.
     try:
-        draft_note.inactivated = datetime.now(timezone.utc)
+        inactivated = datetime.now(timezone.utc)
+        draft_note.inactivated = inactivated
+        draft_note.encounter.modified = inactivated
+
         database.commit()
+
+        # Record the change.
+        backgroundTasks.add_task(
+            log_data_change,
+            database, userSession, inactivated, "ENCOUNTER", "MODIFIED", entity_id=encounterId,
+        )
     except Exception as e:
         raise errors.DatabaseError(str(e))

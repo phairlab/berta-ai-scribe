@@ -1,23 +1,17 @@
 import { ApiRouterDefinition } from "./api-definition";
 import { WebApiToken } from "./authentication";
 import { httpAction } from "./base-queries";
+import { DataChanges } from "./types";
 
-const submitFeedback =
+const checkDataChanges =
   (getAccessToken: () => WebApiToken) =>
-  (
-    submitted: Date,
-    details: string,
-    cancellation?: AbortSignal,
-  ): Promise<void> =>
-    httpAction<void>("POST", "api/users/current/submit-feedback", {
-      data: {
-        submitted: submitted.toISOString(),
-        details: details,
-      },
+  (cutoff: Date, cancellation?: AbortSignal): Promise<DataChanges | null> =>
+    httpAction<DataChanges | null>("GET", "api/monitoring/check-data-changes", {
+      query: { cutoff: new Date(cutoff).toISOString() },
       accessToken: getAccessToken(),
       signal: cancellation,
     });
 
 export const routes = {
-  submitFeedback,
+  checkDataChanges,
 } satisfies ApiRouterDefinition;

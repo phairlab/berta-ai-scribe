@@ -8,7 +8,7 @@ from fastapi import Depends, Header
 from pydantic import BaseModel
 from sqlalchemy.orm import Session as SQLAlchemySession
 
-import app.services.data as data
+import app.services.snowflake as snowflake
 import app.services.db as db
 from app.config import settings
 from app.schemas import WebAPISession
@@ -64,20 +64,11 @@ useRequestId = Annotated[str, Depends(get_request_id)]
 
 log = WebAPILogger(__name__)
 
-def log_session(
-    database: db.SQLAlchemySession,
-    session: WebAPISession, 
-    user_agent: str,
-):
+def log_session(database: db.SQLAlchemySession, session: WebAPISession, user_agent: str):
     """Records the initiation of a user session to the database."""
 
     try:
-        session_record = db.SessionRecord(
-            session_id=session.sessionId,
-            username=session.username,
-            started=datetime.now(timezone.utc),
-            user_agent=user_agent,
-        )
+        session_record = db.SessionRecord(session_id=session.sessionId, username=session.username, started=datetime.now(timezone.utc), user_agent=user_agent)
 
         database.add(session_record)
         database.commit()
@@ -86,29 +77,19 @@ def log_session(
         log.warning(message, session)
 
 def log_error(
-    occurred: datetime,
-    name: str, 
-    message: str,
-    stack_trace: str,
-    *,
-    error_id: str | None = None,
-    request_id: str | None = None,
-    session: WebAPISession | None = None,
+    occurred: datetime, name: str,  message: str, stack_trace: str,
+    *, error_id: str | None = None, request_id: str | None = None, session: WebAPISession | None = None,
 ):
     """Saves the record of an exception."""
     
     error_record = db.ErrorRecord(
         error_id=error_id if error_id is not None else str(uuid4()),
-        occurred=occurred,
-        name=name,
-        message=message,
-        stack_trace=stack_trace,
-        request_id=request_id,
-        session_id=session.sessionId if session is not None else None,
+        occurred=occurred, name=name, message=message, stack_trace=stack_trace,
+        request_id=request_id, session_id=session.sessionId if session is not None else None,
     )
 
     try:
-        with SQLAlchemySession(data.db_engine) as database:
+        with SQLAlchemySession(snowflake.db_engine) as database:
             database.add(error_record)
             database.commit()
     except Exception as e:
@@ -116,30 +97,20 @@ def log_error(
         log.warning(message, session)
 
 def log_request(
-    request_id: str | None,
-    requested: datetime,
-    url: str,
-    method: str,
-    status_code: int,
-    duration: int,
-    *,
-    session: WebAPISession | None = None
+    request_id: str | None, requested: datetime, url: str, method: str, status_code: int, duration: int,
+    *, session: WebAPISession | None = None
 ):
     """Saves the record of a request."""
 
     request_record = db.RequestRecord(
         request_id=request_id if request_id is not None else str(uuid4()),
-        requested=requested,
-        url=url,
-        method=method,
-        status_code=status_code,
+        requested=requested, url=url, method=method, status_code=status_code,
         status_text=http_responses.get(status_code) or "Unknown",
-        duration=duration,
-        session_id=session.sessionId if session is not None else None,
+        duration=duration, session_id=session.sessionId if session is not None else None,
     )
 
     try:
-        with SQLAlchemySession(data.db_engine) as database:
+        with SQLAlchemySession(snowflake.db_engine) as database:
             database.add(request_record)
             database.commit()
     except Exception as e:
@@ -147,31 +118,23 @@ def log_request(
         log.warning(message, session)
 
 def log_audio_conversion(
-    database: db.SQLAlchemySession,
-    recording_id: str,
-    started: datetime,
-    time: int,
+    database: db.SQLAlchemySession, recording_id: str, started: datetime, time: int,
     original_media_type: str | None,
     original_file_size: str | None,
     converted_media_type: str | None,
     converted_file_size: str | None,
     *,
-    error_id: str | None = None,
-    session: WebAPISession | None = None,
+    error_id: str | None = None, session: WebAPISession | None = None,
 ):
     """Saves a record of an audio conversion task."""
 
     audio_conversion_task = db.AudioConversionTask(
-        task_id=str(uuid4()),
-        recording_id=recording_id,
-        started=started,
-        time=time,
+        task_id=str(uuid4()), recording_id=recording_id, started=started, time=time,
         original_media_type=original_media_type,
         original_file_size=original_file_size,
         converted_media_type=converted_media_type,
         converted_file_size=converted_file_size,
-        error_id=error_id,
-        session_id=session.sessionId if session is not None else None,
+        error_id=error_id, session_id=session.sessionId if session is not None else None,
     )
 
     try:
@@ -182,25 +145,14 @@ def log_audio_conversion(
         log.warning(message, session)
 
 def log_transcription(
-    database: db.SQLAlchemySession,
-    recording_id: str,
-    started: datetime,
-    time: int,
-    service: str,
-    *,
-    error_id: str | None = None,
-    session: WebAPISession | None = None,
+    database: db.SQLAlchemySession, recording_id: str, started: datetime, time: int, service: str,
+    *, error_id: str | None = None, session: WebAPISession | None = None,
 ):
     """Saves a record of a transcription task."""
 
     transcription_task = db.TranscriptionTask(
-        task_id=str(uuid4()),
-        recording_id=recording_id,
-        started=started,
-        time=time,
-        service=service,
-        error_id=error_id,
-        session_id=session.sessionId if session is not None else None,
+        task_id=str(uuid4()), recording_id=recording_id, started=started, time=time, service=service,
+        error_id=error_id, session_id=session.sessionId if session is not None else None,
     )
 
     try:
@@ -211,33 +163,16 @@ def log_transcription(
         log.warning(message, session)
 
 def log_generation(
-    database: db.SQLAlchemySession,
-    record_id: str,
-    task_type: str,
-    started: datetime,
-    time: int,
-    service: str,
-    model: str,
-    completion_tokens: int,
-    prompt_tokens: int,
-    *,
-    error_id: str | None = None,
-    session: WebAPISession | None = None,
+    database: db.SQLAlchemySession, record_id: str, task_type: str, started: datetime,
+    time: int, service: str, model: str, completion_tokens: int, prompt_tokens: int,
+    *, error_id: str | None = None, session: WebAPISession | None = None,
 ):
     """Saves a record of a generative AI task."""
 
     generation_task = db.GenerationTask(
-        task_id=str(uuid4()),
-        record_id=record_id,
-        task_type=task_type,
-        started=started,
-        time=time,
-        service=service,
-        model=model,
-        completion_tokens=completion_tokens,
-        prompt_tokens=prompt_tokens,
-        error_id=error_id,
-        session_id=session.sessionId if session is not None else None,
+        task_id=str(uuid4()), record_id=record_id, task_type=task_type, started=started,
+        time=time, service=service, model=model, completion_tokens=completion_tokens, prompt_tokens=prompt_tokens,
+        error_id=error_id, session_id=session.sessionId if session is not None else None,
     )
 
     try:
@@ -246,3 +181,23 @@ def log_generation(
     except Exception as e:
         message = f"Failed to save generation log: {str(generation_task)}; Error: {str(e)}"
         log.warning(message, session)
+
+def log_data_change(
+    database: db.SQLAlchemySession, session: WebAPISession, changed: datetime,
+    entity_type: db.DataEntityType, change_type: db.DataChangeType,
+    *, entity_id: str | None = None
+):
+    """Records a change to an app entity to the databse."""
+
+    change_record = db.DataChangeRecord(
+        changed=changed, username=session.username, session_id=session.sessionId,
+        entity_type=entity_type, entity_id=entity_id, change_type=change_type,
+    )
+
+    try:
+        database.add(change_record)
+        database.commit()
+    except Exception as exc:
+        message = f"Failed to save app data change record: {str(change_record)}; Error: {str(exc)}"
+        log.warning(message, session)
+

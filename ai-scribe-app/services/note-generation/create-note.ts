@@ -15,7 +15,7 @@ export function createNote(fields: {
     {
       id: fields.noteId,
       definitionId: fields.noteType.id,
-      created: new Date(),
+      created: new Date().toISOString(),
       title: fields.noteType.title ?? "(Untitled Note Type)",
       content: fields.content,
       outputType: fields.noteType.outputType,

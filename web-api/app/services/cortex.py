@@ -1,9 +1,9 @@
 import json
 
-import snowflake.cortex
+import snowflake.cortex as snowflake_cortex
 from snowflake.cortex._complete import ConversationMessage
 
-import app.services.data as data
+import app.services.snowflake as snowflake
 from app.schemas import GenerationOutput
 from app.services.measurement import ExecutionTimer
 from app.services.error_handling import ExternalServiceError
@@ -12,8 +12,8 @@ SERVICE_NAME = "Snowflake Cortex"
 
 def complete(model: str, messages: str | list[ConversationMessage]) -> GenerationOutput:
     try:
-        with data.get_snowflake_session() as snowflakeSession, ExecutionTimer() as timer:
-            stream = snowflake.cortex.Complete(model, messages, session=snowflakeSession, options={ "temperature": 0 }, stream=True)
+        with snowflake.start_session() as snowflakeSession, ExecutionTimer() as timer:
+            stream = snowflake_cortex.Complete(model, messages, session=snowflakeSession, options={ "temperature": 0 }, stream=True)
 
             text = ""
             for update in stream:

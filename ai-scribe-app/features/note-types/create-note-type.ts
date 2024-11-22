@@ -7,7 +7,7 @@ export function createNoteType(): EditedNoteType {
   const noteType: EditedNoteType = setTracking(
     {
       id: shortUUID.generate(),
-      modified: new Date(),
+      modified: new Date().toISOString(),
       isBuiltin: false,
       isSystemDefault: false,
       outputType: "Markdown",

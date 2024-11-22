@@ -21,7 +21,7 @@ export function useNoteTypes() {
   const setDefault = (id: string) => {
     if (noteTypes.exists(id)) {
       noteTypes.setDefault(id);
-      webApi.noteDefinitions.setDefault(id);
+      webApi.user.setDefaultNoteType(id);
     }
   };
 

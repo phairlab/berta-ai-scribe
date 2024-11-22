@@ -1,10 +1,11 @@
 import { WebApiToken } from "./authentication";
 import * as encounters from "./encounters";
+import * as monitoring from "./monitoring";
 import * as noteDefinitions from "./note-definitions";
 import * as recordings from "./recordings";
 import * as sampleRecordings from "./sample-recordings";
 import * as tasks from "./tasks";
-import * as users from "./users";
+import * as user from "./user";
 
 export type ApiRouterDefinition = {
   [action: string]: (
@@ -75,10 +76,11 @@ export function buildApi<Definition extends WebApiDefinition>(
 }
 
 export const WebApiDefinition = {
-  tasks: tasks.routes,
-  sampleRecordings: sampleRecordings.routes,
-  noteDefinitions: noteDefinitions.routes,
   encounters: encounters.routes,
+  monitoring: monitoring.routes,
+  noteDefinitions: noteDefinitions.routes,
   recordings: recordings.routes,
-  users: users.routes,
+  sampleRecordings: sampleRecordings.routes,
+  tasks: tasks.routes,
+  user: user.routes,
 } satisfies WebApiDefinition;

@@ -6,7 +6,7 @@ import { DataPage, DraftNote, Encounter, NoteOutputType } from "./types";
 export const getAll =
   (getAccessToken: () => WebApiToken) =>
   (
-    earlierThan?: Date,
+    earlierThan: Date | null = null,
     cancellation?: AbortSignal,
   ): Promise<DataPage<Encounter>> =>
     httpAction<DataPage<Encounter>>("GET", "api/encounters", {

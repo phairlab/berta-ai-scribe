@@ -1,5 +1,18 @@
 export type NoteOutputType = "Plain Text" | "Markdown";
 
+export type ChangedEntities<T> = {
+  created: T[];
+  modified: T[];
+  removed: T[];
+};
+
+export type DataChanges = {
+  lastUpdate: string;
+  userInfo: UserInfo | null;
+  noteDefinitions: ChangedEntities<NoteDefinition>;
+  encounters: ChangedEntities<Encounter>;
+};
+
 export type DataPage<T> = {
   data: T[];
   isLastPage: boolean;
@@ -8,7 +21,7 @@ export type DataPage<T> = {
 export type DraftNote = {
   id: string;
   definitionId: string;
-  created: Date;
+  created: string;
   title: string;
   content: string;
   outputType: NoteOutputType;
@@ -16,8 +29,8 @@ export type DraftNote = {
 
 export type Encounter = {
   id: string;
-  created: Date;
-  modified: Date;
+  created: string;
+  modified: string;
   label?: string;
   summary?: string;
   recording?: Recording;
@@ -26,7 +39,7 @@ export type Encounter = {
 
 export type NoteDefinition = {
   id: string;
-  modified: Date;
+  modified: string;
   title: string;
   instructions: string;
   isBuiltin: boolean;
@@ -59,4 +72,10 @@ export type TextResponse = {
 
 export type TranscriberOutput = {
   text: string;
+};
+
+export type UserInfo = {
+  username: string;
+  updated: string;
+  defaultNoteType?: string;
 };

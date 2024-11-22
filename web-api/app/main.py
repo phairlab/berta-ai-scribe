@@ -1,6 +1,5 @@
 import os
 import json
-import shutil
 import logging
 import traceback
 from datetime import datetime, timezone
@@ -18,7 +17,7 @@ from starlette.background import BackgroundTask
 from snowflake.connector.secret_detector import SecretDetector
 from sqlalchemy.orm import Session as SQLAlchemySession
 
-import app.services.data as data
+import app.services.snowflake as snowflake
 import app.services.db as db
 from app.services.logging import log_error, log_request
 from app.config import settings
@@ -26,49 +25,44 @@ from app.services.error_handling import WebAPIException
 from app.services.measurement import ExecutionTimer
 from app.services.logging import WebAPILogger, RequestMetrics
 from app.services.security import decode_token, WebAPISession
-from app.routers import authorization, tasks, sample_recordings, encounters, recordings, note_definitions, users
 from app.schemas import SimpleMessage, WebAPIError, WebAPIErrorDetail
+from app.routers import (
+    authorization, encounters, monitoring, note_definitions, 
+    recordings, sample_recordings, tasks, user
+)
 
 # ----------------------------------
 # LOGGING CONFIG
 
-# Configure app logging
-log_format = "[%(asctime)s] %(levelname)s: [%(name)s] %(message)s"
-log_dateformat = "%H:%M:%S"
-logging.basicConfig(level=logging.INFO, format=log_format, datefmt=log_dateformat)
+LOGGING_LEVEL = logging.getLevelNamesMapping()[settings.LOGGING_LEVEL.upper()]
 
-logging_level = settings.LOGGING_LEVEL.upper()
-match logging_level.upper():
-    case "TRACE":
-        snowflake_level = logging.DEBUG
-        sqlalchemy_level = logging.DEBUG
-        uvicorn_level = logging.DEBUG
-    case "DEBUG":
-        snowflake_level = logging.INFO
-        sqlalchemy_level = logging.INFO
-        uvicorn_level = logging.WARNING
-    case "INFO":
-        snowflake_level = logging.WARNING if settings.ENVIRONMENT == "development" else logging.WARNING
-        sqlalchemy_level = logging.WARNING if settings.ENVIRONMENT == "development" else logging.WARNING
-        uvicorn_level = logging.WARNING
-    case _:
-        snowflake_level = logging.getLevelNamesMapping()[logging_level]
-        sqlalchemy_level = logging.getLevelNamesMapping()[logging_level]
-        uvicorn_level = logging.getLevelNamesMapping()[logging_level]
+# Configure basic logging.
+if settings.ENVIRONMENT == "development":
+    # Use a custom log format during development.
+    log_format = "[%(asctime)s] %(levelname)s: [%(name)s] %(message)s"
+    log_dateformat = "%H:%M:%S"
+    logging.basicConfig(level=LOGGING_LEVEL, format=log_format, datefmt=log_dateformat)
+else:
+    # Use the standard log format for production.
+    logging.basicConfig(level=LOGGING_LEVEL)
 
+# Configure logging for external libraries.
+uvicorn_level = LOGGING_LEVEL + 1 if LOGGING_LEVEL <= logging.DEBUG else max(LOGGING_LEVEL, logging.WARNING)
 logging.getLogger("httpx").disabled = True
 logging.getLogger("uvicorn.access").setLevel(uvicorn_level)
 
+sqlalchemy_level = LOGGING_LEVEL + 1 if LOGGING_LEVEL <= logging.INFO else LOGGING_LEVEL
 logging.getLogger("sqlalchemy.engine").setLevel(sqlalchemy_level)
 logging.getLogger("sqlalchemy.pool").setLevel(sqlalchemy_level)
 
+snowflake_level = LOGGING_LEVEL + 1 if LOGGING_LEVEL <= logging.INFO else LOGGING_LEVEL
 logging.getLogger("snowflake.connector.cursor").disabled = True
 for logger_name in ["snowflake.connector", "snowflake.connector.connection", "snowflake.snowpark.session", "botocore", "boto3"]:
     logger = logging.getLogger(logger_name)
     logger.setLevel(snowflake_level)
     for handler in logger.handlers:
         # Prevent secrets from leaking into logs
-        handler.setFormatter(SecretDetector(log_format, log_dateformat))
+        handler.setFormatter(SecretDetector())
 
 # ----------------------------------
 # WEB SETUP
@@ -77,43 +71,70 @@ for logger_name in ["snowflake.connector", "snowflake.connector.connection", "sn
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     # On startup, for development environments simulate the snowflake mounted stage.
-    if settings.ENVIRONMENT == "development":
-        # if os.path.isdir(settings.RECORDINGS_FOLDER):
-        #     try:
-        #         shutil.rmtree(settings.RECORDINGS_FOLDER)
-        #     except:
-        #         pass
-
-        if not os.path.isdir(settings.RECORDINGS_FOLDER):
-            os.mkdir(settings.RECORDINGS_FOLDER)
-            with SQLAlchemySession(data.db_engine) as database, data.get_snowflake_session() as snowflake_session:
-                for user in database.query(db.User).all():
-                    if not os.path.isdir(Path(settings.RECORDINGS_FOLDER, user.username)):
-                        os.mkdir(Path(settings.RECORDINGS_FOLDER, user.username))
-                    try:
-                        snowflake_session.file.get(f"@RECORDING_FILES/{user.username}",f"{settings.RECORDINGS_FOLDER}/{user.username}")
-                    except:
-                        pass
+    if settings.ENVIRONMENT == "development" and not os.path.isdir(settings.RECORDINGS_FOLDER):
+        os.mkdir(settings.RECORDINGS_FOLDER)
+        with SQLAlchemySession(snowflake.db_engine) as database, snowflake.start_session() as snowflake_session:
+            for user in database.query(db.User).all():
+                if not os.path.isdir(Path(settings.RECORDINGS_FOLDER, user.username)):
+                    os.mkdir(Path(settings.RECORDINGS_FOLDER, user.username))
+                try:
+                    snowflake_session.file.get(f"@RECORDING_FILES/{user.username}",f"{settings.RECORDINGS_FOLDER}/{user.username}")
+                except:
+                    pass
     
     yield
 
     # On shutdown, gracefully clean up the database engine.
     try:
-        data.db_engine.dispose()
+        snowflake.db_engine.dispose()
     except:
         pass
 
-    # On shutdown, cleanup the simulated mounted stage
-    # if settings.ENVIRONMENT == "development":
-    #     try:
-    #         shutil.rmtree(settings.RECORDINGS_FOLDER)
-    #     except:
-    #         pass
-
 # Create the app
-app = FastAPI(lifespan=lifespan, title=f"{settings.APP_NAME} API", version=settings.APP_VERSION, docs_url=None, redoc_url=None)
+app = FastAPI(
+    lifespan=lifespan, title=f"{settings.APP_NAME} API", version=settings.APP_VERSION,
+    root_path="/api", root_path_in_servers=False,
+    docs_url=None, redoc_url=None,
+)
 
-# Exception Handler: Basic Errors
+# ----------------------------------
+# STATIC FILES
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# ----------------------------------
+# OPENAPI DOCS
+
+# Active in development only.
+if settings.ENVIRONMENT == "development":
+    @app.get("/docs", include_in_schema=False)
+    async def custom_swagger_ui_html():
+        return get_swagger_ui_html(
+            openapi_url=app.openapi_url,
+            title=f"{app.title} - Swagger UI",
+            swagger_favicon_url="static/favicon.ico",
+            oauth2_redirect_url=app.swagger_ui_oauth2_redirect_url,
+            swagger_js_url="static/swagger-ui-bundle.js",
+            swagger_css_url="static/swagger-ui.css",
+        )
+
+    @app.get(app.swagger_ui_oauth2_redirect_url, include_in_schema=False)
+    async def swagger_ui_redirect():
+        return get_swagger_ui_oauth2_redirect_html()
+
+    @app.get("/redoc", include_in_schema=False)
+    async def redoc_html():
+        return get_redoc_html(
+            openapi_url=app.openapi_url,
+            title=f"{app.title} - ReDoc",
+            redoc_favicon_url="static/favicon.ico",
+            redoc_js_url="static/redoc.standalone.js"
+        )
+
+# ----------------------------------
+# EXCEPTION HANDLERS
+
+# Basic Errors
 @app.exception_handler(WebAPIException)
 async def webapi_exception_handler(request: Request, exc: WebAPIException):
     stack_trace = " ".join(traceback.TracebackException.from_exception(exc).format())
@@ -135,27 +156,17 @@ async def webapi_exception_handler(request: Request, exc: WebAPIException):
     return JSONResponse(
         status_code=exc.status_code,
         content=jsonable_encoder(WebAPIError(
-            detail=WebAPIErrorDetail(
-                errorId=exc.uuid,
-                name=exc.name,
-                message=exc.message,
-                fatal=exc.fatal,
-            ),
+            detail=WebAPIErrorDetail(errorId=exc.uuid, name=exc.name, message=exc.message, fatal=exc.fatal),
         )),
         headers=exc.headers,
         background=BackgroundTask(
             log_error,
-            datetime.now(timezone.utc),
-            exc.name,
-            exc.message,
-            stack_trace,
-            error_id=exc.uuid,
-            request_id=request_id,
-            session=session,
+            datetime.now(timezone.utc), exc.name, exc.message, stack_trace, 
+            error_id=exc.uuid, request_id=request_id, session=session,
         )
     )
 
-# Exception Handler: Validation Errors
+# Validation Errors
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     stack_trace = " ".join(traceback.TracebackException.from_exception(exc).format())
@@ -179,18 +190,14 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         content=jsonable_encoder({ "detail": exc.errors(), "body": json.dumps(exc.body, default=str) }),
         background=BackgroundTask(
             log_error,
-            datetime.now(timezone.utc),
-            "Validation Error",
-            str(exc),
-            stack_trace,
-            request_id=request_id,
-            session=session
+            datetime.now(timezone.utc), "Validation Error", str(exc), stack_trace,
+            request_id=request_id, session=session
         )
     )
 
-# Exception Handler: Fallback / Unexpected Errors
+# Fallback / Unexpected Errors
 @app.exception_handler(Exception)
-async def webapi_exception_handler(request: Request, exc: Exception):
+async def fallback_exception_handler(request: Request, exc: Exception):
     stack_trace = " ".join(traceback.TracebackException.from_exception(exc).format())
 
     try:
@@ -212,28 +219,15 @@ async def webapi_exception_handler(request: Request, exc: Exception):
     return JSONResponse(
         status_code=error.status_code,
         content=jsonable_encoder(WebAPIError(
-            detail=WebAPIErrorDetail(
-                errorId=error.uuid,
-                name=error.name,
-                message=error.message,
-                fatal=error.fatal,
-            ),
+            detail=WebAPIErrorDetail(errorId=error.uuid, name=error.name, message=error.message, fatal=error.fatal),
         )),
         headers=error.headers,
         background=BackgroundTask(
             log_error,
-            datetime.now(timezone.utc),
-            "Internal Server Error",
-            str(exc),
-            stack_trace,
-            error_id=error.uuid,
-            request_id=request_id,
-            session=session
+            datetime.now(timezone.utc), "Internal Server Error", str(exc), stack_trace,
+            error_id=error.uuid, request_id=request_id, session=session
         )
     )
-
-# Configure static files
-app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # ----------------------------------
 # MIDDLEWARE
@@ -267,28 +261,21 @@ async def request_logging_middleware(request: Request, call_next):
     with ExecutionTimer() as timer:
         response: Response = await call_next(request)
 
-    if request.url.path == "/healthcheck" and response.status_code < 300:
+    if request.url.path == "/healthcheck" and response.status_code < 400:
+        return response
+    
+    if request.url.path.startswith("/monitoring/") and response.status_code < 400:
         return response
 
     log.request(
-        metrics = RequestMetrics(
-            url=request.url.path,
-            method=request.method,
-            status_code=int(response.status_code),
-            duration=timer.elapsed_ms,
-        ),
+        metrics = RequestMetrics(url=request.url.path, method=request.method, status_code=int(response.status_code), duration=timer.elapsed_ms),
         session = session
     )
 
     background_log_request = BackgroundTask(
         log_request,
-        request_id,
-        requested_at,
-        request.url.path,
-        request.method,
-        int(response.status_code),
-        timer.elapsed_ms,
-        session=session,
+        request_id, requested_at, request.url.path, request.method, int(response.status_code),
+        timer.elapsed_ms, session=session,
     )
         
     if response.status_code >= 400:
@@ -299,11 +286,8 @@ async def request_logging_middleware(request: Request, call_next):
         log.error(response_body, session)
         
         return Response(
-            content=response_body, 
-            status_code=response.status_code, 
-            headers=dict(response.headers), 
-            media_type=response.media_type,
-            background=background_log_request
+            content=response_body, status_code=response.status_code, headers=dict(response.headers),
+            media_type=response.media_type, background=background_log_request
         )
 
     response.background = background_log_request
@@ -327,39 +311,15 @@ async def favicon():
 async def health_check():
     return {"message": "Ready"}
 
-# Configure self-hosted docs
-@app.get("/docs", include_in_schema=False)
-async def custom_swagger_ui_html():
-    return get_swagger_ui_html(
-        openapi_url=app.openapi_url,
-        title=f"{app.title} - Swagger UI",
-        swagger_favicon_url="static/favicon.ico",
-        oauth2_redirect_url=app.swagger_ui_oauth2_redirect_url,
-        swagger_js_url="static/swagger-ui-bundle.js",
-        swagger_css_url="static/swagger-ui.css",
-    )
-
-@app.get(app.swagger_ui_oauth2_redirect_url, include_in_schema=False)
-async def swagger_ui_redirect():
-    return get_swagger_ui_oauth2_redirect_html()
-
-@app.get("/redoc", include_in_schema=False)
-async def redoc_html():
-    return get_redoc_html(
-        openapi_url=app.openapi_url,
-        title=f"{app.title} - ReDoc",
-        redoc_favicon_url="static/favicon.ico",
-        redoc_js_url="static/redoc.standalone.js"
-    )
-
 # API routers
 app.include_router(authorization.router, tags=["Authorization"])
+app.include_router(user.router, prefix="/user", tags=["User"])
 app.include_router(tasks.router, prefix="/tasks", tags=["Tasks"])
-app.include_router(sample_recordings.router, prefix="/sample-recordings", tags=["Sample Recordings"])
+app.include_router(note_definitions.router, prefix="/note-definitions", tags=["Note Definitions"])
+app.include_router(sample_recordings.router, prefix="/sample-recordings", tags=["Recordings"])
 app.include_router(encounters.router, prefix="/encounters", tags=["Encounters"])
 app.include_router(recordings.router, prefix="/recordings", tags=["Recordings"])
-app.include_router(note_definitions.router, prefix="/note-definitions", tags=["Note Definitions"])
-app.include_router(users.router, prefix="/users", tags=["Users"])
+app.include_router(monitoring.router, prefix="/monitoring", tags=["Monitoring"])
 
 # ----------------------------------
 # FALLBACK

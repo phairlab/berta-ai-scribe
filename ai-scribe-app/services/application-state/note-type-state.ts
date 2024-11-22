@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 
 import { NoteType } from "@/core/types";
 import { alphabetically } from "@/utility/sorters";
@@ -15,7 +15,7 @@ export type NoteTypeState = {
   get: (id: string) => NoteType | undefined;
   put: (data: NoteType) => void;
   remove: (id: string) => void;
-  setDefault: (id: string) => void;
+  setDefault: (id: string | null, effectiveAt?: Date) => void;
 };
 
 export function useNoteTypeState(
@@ -28,17 +28,20 @@ export function useNoteTypeState(
   const [defaultNoteTypeId, setDefaultNoteTypeId] = useState<string | null>(
     null,
   );
+  const defaultUpdated = useRef<Date>(new Date());
 
   // Set the default note type on the next render.
   // This allows it to be set at the same time as the note type is added
   // and still find it in the list.
   useEffect(() => {
-    const id = defaultNoteTypeId;
+    if (defaultNoteTypeId !== defaultNoteType?.id) {
+      const id = defaultNoteTypeId;
 
-    if (defaultNoteType) {
-      setDefaultNoteType(noteTypes.find((nt) => nt.id === id) ?? null);
-    } else {
-      setDefaultNoteType(null);
+      if (defaultNoteType) {
+        setDefaultNoteType(noteTypes.find((nt) => nt.id === id) ?? null);
+      } else {
+        setDefaultNoteType(null);
+      }
     }
   }, [defaultNoteTypeId]);
 
@@ -66,9 +69,27 @@ export function useNoteTypeState(
     },
     remove: (id: string) => {
       setNoteTypes((noteTypes) => [...noteTypes.filter((nt) => nt.id !== id)]);
+
+      // Handle case where the user default was just removed.
+      // Must be updated immediately to ensure previous is not searched in list.
+      if (defaultNoteType && defaultNoteType.id === id) {
+        if (noteTypes.length > 0) {
+          const builtinDefault = noteTypes.find((d) => d.isSystemDefault);
+          const fallbackDefault = noteTypes[0];
+
+          setDefaultNoteTypeId(builtinDefault?.id ?? fallbackDefault.id);
+          setDefaultNoteType(builtinDefault ?? fallbackDefault);
+        } else {
+          setDefaultNoteTypeId(null);
+          setDefaultNoteType(null);
+        }
+      }
     },
-    setDefault: (id: string | null) => {
-      setDefaultNoteTypeId(id);
+    setDefault: (id: string | null, effectiveAt: Date = new Date()) => {
+      if (effectiveAt.getTime() > defaultUpdated.current.getTime()) {
+        defaultUpdated.current = effectiveAt;
+        setDefaultNoteTypeId(id);
+      }
     },
   } satisfies NoteTypeState;
 }

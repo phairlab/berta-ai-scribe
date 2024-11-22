@@ -1,21 +1,21 @@
 import os
 from pathlib import Path
-from typing import Annotated, Any, BinaryIO, Generator, Iterator
+from typing import Annotated, Any, BinaryIO, Generator, Iterator, Literal
 from datetime import datetime, timezone
 
 from fastapi import Depends
-from sqlalchemy import ForeignKey, ForeignKeyConstraint, text
+from sqlalchemy import ForeignKey, ForeignKeyConstraint, Sequence, text
 from sqlalchemy.orm import Session as SQLAlchemySession, DeclarativeBase, Mapped, mapped_column, relationship
-from snowflake.sqlalchemy import TIMESTAMP_LTZ, VARCHAR, CHAR
+from snowflake.sqlalchemy import TIMESTAMP_LTZ, VARCHAR, CHAR, INTEGER
 from sqids import Sqids
 
-import app.services.data as data
+import app.services.snowflake as snowflake
 from app.config import settings
 
 sqids = Sqids(alphabet='ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890')
 
 def get_database_session() -> Iterator[SQLAlchemySession]:
-    with SQLAlchemySession(data.db_engine) as database:
+    with SQLAlchemySession(snowflake.db_engine) as database:
         yield database
 
 useDatabase = Annotated[SQLAlchemySession, Depends(get_database_session)]
@@ -23,6 +23,9 @@ useDatabase = Annotated[SQLAlchemySession, Depends(get_database_session)]
 def new_sqid(database: SQLAlchemySession) -> str:
     id = database.scalars(text("SELECT sqid_sequence.nextval")).one()
     return sqids.encode([id])
+
+def autoid_column(sequence: str):
+    return mapped_column(INTEGER, Sequence(sequence), primary_key=True)
 
 def sqid_column(primary_key: bool = False):
     return mapped_column(VARCHAR(12), primary_key=primary_key)
@@ -33,6 +36,9 @@ def uuid_column(primary_key: bool = False):
 
 class JenkinsDatabase(DeclarativeBase):
     pass
+
+# ----------------------------------
+# TABLE ENTITIES
 
 class SessionRecord(JenkinsDatabase):
     __tablename__ = "session_log"
@@ -109,7 +115,8 @@ class User(JenkinsDatabase):
     __tablename__ = "users"
 
     username: Mapped[str] = mapped_column(VARCHAR(255), primary_key=True)
-    registered: Mapped[datetime] = mapped_column(TIMESTAMP_LTZ, default=datetime.now(timezone.utc))
+    registered: Mapped[datetime] = mapped_column(TIMESTAMP_LTZ, default=lambda: datetime.now(timezone.utc))
+    updated: Mapped[datetime] = mapped_column(TIMESTAMP_LTZ, default=lambda: datetime.now(timezone.utc))
     default_note: Mapped[str | None] = sqid_column()
 
     encounters: Mapped[list["Encounter"]] = relationship(back_populates="user")
@@ -191,6 +198,27 @@ class DraftNote(JenkinsDatabase):
     encounter: Mapped["Encounter"] = relationship(back_populates="draft_notes")
     note_definition: Mapped["NoteDefinition"] = relationship()
 
+# ----------------------------------
+# CHANGE TRACKING
+
+DataEntityType = Literal["USER", "NOTE DEFINITION", "ENCOUNTER"]
+DataChangeType = Literal["CREATED", "MODIFIED", "REMOVED"]
+
+class DataChangeRecord(JenkinsDatabase):
+    __tablename__ = "data_changes"
+
+    id: Mapped[int] = autoid_column("data_change_ids")
+    logged: Mapped[datetime] = mapped_column(TIMESTAMP_LTZ, server_default="CURRENT_TIMESTAMP")
+    changed: Mapped[datetime] = mapped_column(TIMESTAMP_LTZ)
+    username: Mapped[str] = mapped_column(VARCHAR(255))
+    session_id: Mapped[str] = uuid_column()
+    entity_type: Mapped[DataEntityType] = mapped_column(VARCHAR(255))
+    entity_id: Mapped[str | None] = sqid_column()
+    change_type: Mapped[DataChangeType] = mapped_column(VARCHAR(50))
+
+# ----------------------------------
+# FILE OPERATIONS
+
 def save_recording(file: BinaryIO, username: str, filename: str) -> None:
     """Writes a file to a user's recordings folder."""
 
@@ -220,7 +248,7 @@ def persist_recording(file: BinaryIO, username: str, filename: str) -> None:
     """Saves a user's recording file directly to the Snowflake stage."""
 
     try:
-        with data.get_snowflake_session() as snowflakeSession:
+        with snowflake.start_session() as snowflakeSession:
             snowflakeSession.file.put_stream(file, f"@RECORDING_FILES/{username}/{filename}", auto_compress=False)
     finally:
         file.close()
@@ -228,11 +256,11 @@ def persist_recording(file: BinaryIO, username: str, filename: str) -> None:
 def retrieve_recording(username: str, filename: str) -> BinaryIO:
     """Retrieves a user's recording file directly from the Snowflake stage."""
 
-    with data.get_snowflake_session() as snowflakeSession:
+    with snowflake.start_session() as snowflakeSession:
         return snowflakeSession.file.get_stream(f"@RECORDING_FILES/{username}/{filename}")
 
 def purge_recording(username: str, filename: str) -> None:
     """Deletes a user's recording file directly from the Snowflake stage."""
 
-    with SQLAlchemySession(data.db_engine) as session:
+    with SQLAlchemySession(snowflake.db_engine) as session:
         session.execute(text("REMOVE :stage_path;"), { "stage_path": f"@RECORDING_FILES/{username}/{filename}" })

@@ -24,22 +24,6 @@ export const AuthenticationProvider = ({
     state: "Unauthenticated",
   });
 
-  // function recoverSession(): UserSession | null {
-  //   const token = sessionStorage.getItem(sessionKeys.AccessToken);
-
-  //   if (token) {
-  //     const sessionData = jwtDecode<UserSessionData>(token);
-
-  //     return {
-  //       state: "Authenticated",
-  //       accessToken: token,
-  //       details: sessionData,
-  //     };
-  //   }
-
-  //   return null;
-  // }
-
   const startSession = async () => {
     setSession({ state: "Authenticating" });
 
@@ -70,14 +54,6 @@ export const AuthenticationProvider = ({
   // On load, initiate a session.
   useEffect(() => {
     if (session.state === "Unauthenticated") {
-      // const recoveredSession = recoverSession();
-
-      // if (recoveredSession) {
-      //   setSession(recoveredSession);
-      // } else {
-      //   startSession();
-      // }
-
       startSession();
     }
   }, []);

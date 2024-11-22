@@ -71,7 +71,7 @@ export function useEncounterState(
     put: (data: Encounter) => {
       setEncounters((encounters) =>
         [...encounters.filter((e) => e.id !== data.id), data].sort(
-          byDate((x) => x.created, "Descending"),
+          byDate((x) => new Date(x.created), "Descending"),
         ),
       );
     },
@@ -83,12 +83,12 @@ export function useEncounterState(
     },
     loadPage: (page: EncounterDataPage) => {
       const moreEncounters: Encounter[] = page.data
-        .sort(byDate((x) => x.created, "Descending"))
+        .sort(byDate((x) => new Date(x.created), "Descending"))
         .map((record) => convert.fromWebApiEncounter(record));
 
       setEncounters((encounters) =>
         [...encounters, ...moreEncounters].sort(
-          byDate((x) => x.created, "Descending"),
+          byDate((x) => new Date(x.created), "Descending"),
         ),
       );
       setTimeout(

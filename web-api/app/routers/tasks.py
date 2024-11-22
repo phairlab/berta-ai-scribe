@@ -3,18 +3,18 @@ from pathlib import Path
 
 from fastapi import APIRouter, Depends, Body, status, BackgroundTasks
 
-import app.services.tasks as tasks
 import app.services.error_handling as errors
 import app.schemas as sch
+import app.tasks as tasks
 from app.services.db import new_sqid, useDatabase
-from app.services.security import authenticate_user, useUserSession
+from app.services.security import authenticate_session, useUserSession
 from app.services.logging import WebAPILogger, log_transcription, log_generation
 from app.services.measurement import ExecutionTimer
 from app.config import settings
 
 log = WebAPILogger(__name__)
 
-router = APIRouter(dependencies=[Depends(authenticate_user)], responses={
+router = APIRouter(dependencies=[Depends(authenticate_session)], responses={
     status.HTTP_500_INTERNAL_SERVER_ERROR: {"description": "Internal Server Error", "model": sch.WebAPIError},
     status.HTTP_502_BAD_GATEWAY: {"description": "External Service Error", "model": sch.WebAPIError},
     status.HTTP_503_SERVICE_UNAVAILABLE: {"description": "External Service Unavailable", "model": sch.WebAPIError},
