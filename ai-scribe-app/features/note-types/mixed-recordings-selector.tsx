@@ -4,7 +4,7 @@ import { SelectItem, SelectSection } from "@nextui-org/select";
 
 import { SafeSelect } from "@/core/safe-select";
 import { Recording, SampleRecording } from "@/core/types";
-import { formatDatestring } from "@/utility/formatters";
+import { formatDatetime } from "@/utility/formatters";
 
 import { useEncounters } from "@/features/encounters/use-encounters";
 import { useSampleRecordings } from "@/features/sample-recordings/use-sample-recordings";
@@ -59,7 +59,7 @@ export const MixedRecordingsSelector = ({
       >
         {recentEncounters.map((encounter) => (
           <SelectItem key={encounter.recording!.id}>
-            {`${formatDatestring(new Date(encounter.created))}${encounter.label ? ` (${encounter.label.toUpperCase()})` : ""}`}
+            {`${formatDatetime(new Date(encounter.created))}${encounter.label ? ` (${encounter.label.toUpperCase()})` : ""}`}
           </SelectItem>
         ))}
       </SelectSection>

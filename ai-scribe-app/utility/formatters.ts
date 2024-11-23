@@ -18,10 +18,14 @@ export function formatDisplayName(username: string) {
   return username.split("@")[0];
 }
 
-export function formatDatestring(date: Date) {
-  date = new Date(date);
+export function formatDate(date: Date) {
   const formattedDate = `${date.getFullYear()}-${("0" + date.getMonth()).slice(-2)}-${("0" + (date.getDate() + 1)).slice(-2)}`;
+
+  return formattedDate;
+}
+
+export function formatDatetime(date: Date) {
   const formattedTime = `${("0" + date.getHours()).slice(-2)}:${("0" + date.getMinutes()).slice(-2)}`;
 
-  return `${formattedDate} ${formattedTime}`;
+  return `${formatDate(date)} ${formattedTime}`;
 }

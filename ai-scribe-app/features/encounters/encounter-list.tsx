@@ -8,7 +8,7 @@ import { ScrollShadow } from "@nextui-org/scroll-shadow";
 
 import { Encounter } from "@/core/types";
 import { WaitMessageSpinner } from "@/core/wait-message-spinner";
-import { formatDatestring } from "@/utility/formatters";
+import { formatDatetime } from "@/utility/formatters";
 
 import { EncounterDropdown } from "./encounter-dropdown";
 
@@ -69,7 +69,7 @@ export const EncounterList = ({
         >
           <div className="flex flex-row gap-2">
             <p className="grow">
-              {formatDatestring(new Date(encounter.created))}
+              {formatDatetime(new Date(encounter.created))}
             </p>
             <EncounterDropdown
               encounter={encounter}
