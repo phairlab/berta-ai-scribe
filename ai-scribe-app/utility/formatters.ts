@@ -24,8 +24,12 @@ export function formatDate(date: Date) {
   return formattedDate;
 }
 
-export function formatDatetime(date: Date) {
+export function formatTime(date: Date) {
   const formattedTime = `${("0" + date.getHours()).slice(-2)}:${("0" + date.getMinutes()).slice(-2)}`;
 
-  return `${formatDate(date)} ${formattedTime}`;
+  return formattedTime;
+}
+
+export function formatDatetime(date: Date) {
+  return `${formatDate(date)} ${formatTime(date)}`;
 }
