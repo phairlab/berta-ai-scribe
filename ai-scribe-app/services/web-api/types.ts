@@ -32,7 +32,7 @@ export type Encounter = {
   created: string;
   modified: string;
   label: string | null;
-  summary: string | null;
+  autolabel: string | null;
   recording?: Recording;
   draftNotes: DraftNote[];
 };

@@ -13,7 +13,7 @@ class Encounter(BaseModel):
     created: datetime
     modified: datetime
     label: str | None
-    summary: str | None
+    autolabel: str | None
     recording: Recording
     draftNotes: list[DraftNote]
 
@@ -24,7 +24,7 @@ class Encounter(BaseModel):
             created=db_record.created,
             modified=db_record.modified,
             label=db_record.label,
-            summary=db_record.summary,
+            autolabel=db_record.autolabel,
             recording=Recording.from_db_record(db_record.recording),
             draftNotes=[
                 DraftNote.from_db_record(d)

@@ -155,7 +155,7 @@ class Encounter(JenkinsDatabase):
     created: Mapped[datetime] = mapped_column(TIMESTAMP_LTZ)
     modified: Mapped[datetime] = mapped_column(TIMESTAMP_LTZ)
     label: Mapped[str | None] = mapped_column(VARCHAR(100))
-    summary: Mapped[str | None] = mapped_column(VARCHAR(500))
+    autolabel: Mapped[str | None] = mapped_column(VARCHAR(100))
     inactivated: Mapped[datetime | None] = mapped_column(TIMESTAMP_LTZ)
     purged: Mapped[datetime | None] = mapped_column(TIMESTAMP_LTZ)
 
