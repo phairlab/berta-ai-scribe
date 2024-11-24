@@ -15,8 +15,7 @@ import {
 import { ScrollShadow } from "@nextui-org/scroll-shadow";
 
 import { sessionKeys } from "@/config/keys";
-
-import { ConsentScript } from "./consent-script";
+import { ConsentScript } from "@/core/consent-script";
 
 export const TermsOfUse = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();

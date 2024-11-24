@@ -4,10 +4,9 @@ import clsx from "clsx";
 
 import { Button } from "@nextui-org/button";
 
+import { SampleRecordingSelector } from "@/core/sample-recording-selector";
 import { AudioSource } from "@/core/types";
 import { WaitMessageSpinner } from "@/core/wait-message-spinner";
-
-import { SampleRecordingSelector } from "@/features/sample-recordings/sample-recording-selector";
 
 import { AudioFileBrowseButton } from "./audio-file-browse-button";
 import { AudioRecorder } from "./audio-recorder";

@@ -2,7 +2,7 @@ import { Button } from "@nextui-org/button";
 
 import { NoteType } from "@/core/types";
 
-import { NoteTypeSelector } from "@/features/custom-note-types/note-type-selector";
+import { NoteTypeSelector } from "@/core/note-type-selector";
 import { useNoteTypes } from "@/services/application-state/use-note-types";
 
 type AIScribeControlsProps = {

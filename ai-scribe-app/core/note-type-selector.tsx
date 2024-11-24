@@ -4,7 +4,7 @@ import clsx from "clsx";
 
 import { SelectItem, SelectSection } from "@nextui-org/select";
 
-import { SafeSelect } from "@/core/safe-select";
+import { MobileCompatibleSelect } from "@/core/mobile-compatible-select";
 import { NoteType } from "@/core/types";
 
 type NoteTypeSelectorProps = {
@@ -44,7 +44,7 @@ export const NoteTypeSelector = ({
   };
 
   return (
-    <SafeSelect
+    <MobileCompatibleSelect
       aria-label="Select a Note Type"
       className={className}
       disallowEmptySelection={true}
@@ -71,6 +71,6 @@ export const NoteTypeSelector = ({
           <SelectItem key={noteType.id}>{noteType.title}</SelectItem>
         ))}
       </SelectSection>
-    </SafeSelect>
+    </MobileCompatibleSelect>
   );
 };

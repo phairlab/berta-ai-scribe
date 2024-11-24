@@ -2,7 +2,7 @@ import { useState } from "react";
 
 import { Select, SelectProps } from "@nextui-org/select";
 
-type SafeSelectProps<T extends object> = Omit<
+type MobileCompatibleSelectProps<T extends object> = Omit<
   SelectProps<T>,
   "isOpen" | "onOpenChange"
 >;
@@ -13,10 +13,10 @@ type SafeSelectProps<T extends object> = Omit<
  * to immediately close.  This version prevents closing the popover
  * within 0.5 seconds of opening it.
  */
-export const SafeSelect = <T extends object>({
+export const MobileCompatibleSelect = <T extends object>({
   children,
   ...props
-}: SafeSelectProps<T>) => {
+}: MobileCompatibleSelectProps<T>) => {
   const [isSelectOpen, setIsSelectOpen] = useState(false);
   const [canCloseSelect, setCanCloseSelect] = useState(false);
 

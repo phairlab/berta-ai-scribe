@@ -5,11 +5,11 @@ import { use } from "react";
 import { Divider } from "@nextui-org/divider";
 import { Progress } from "@nextui-org/progress";
 
-import { TermsOfUse } from "@/core/terms-of-use";
 import { ApplicationStateContext } from "@/services/application-state/application-state-context";
 
 import { AIScribe } from "@/features/ai-scribe/ai-scribe";
 import { EncounterNavigator } from "@/features/encounter-navigation/encounter-navigator";
+import { TermsOfUse } from "@/features/user-session/terms-of-use";
 
 export default function Home() {
   const applicationState = use(ApplicationStateContext);

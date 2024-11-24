@@ -12,8 +12,6 @@ import { WaitMessageSpinner } from "@/core/wait-message-spinner";
 import { createEncounter } from "@/services/application-state/create-encounter";
 import { useEncounters } from "@/services/application-state/use-encounters";
 import { useNoteTypes } from "@/services/application-state/use-note-types";
-import { useNoteGenerator } from "@/services/note-generation/use-note-generator";
-import { useTranscriber } from "@/services/transcription/use-transcriber";
 import { ApplicationError } from "@/utility/errors";
 
 import { AIScribeAudio } from "./ai-scribe-audio";
@@ -23,6 +21,8 @@ import {
   AIScribeOutput,
   AIScribeOutputType,
 } from "./ai-scribe-output";
+import { useNoteGenerator } from "./use-note-generator";
+import { useTranscriber } from "./use-transcriber";
 
 export const AIScribe = () => {
   const ref = useRef<Encounter | null>(null);
