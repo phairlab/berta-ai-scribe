@@ -2,7 +2,7 @@ import { SelectItem } from "@nextui-org/select";
 
 import { SafeSelect } from "@/core/safe-select";
 
-import { useSampleRecordings } from "./use-sample-recordings";
+import { useSampleRecordings } from "../../services/application-state/use-sample-recordings";
 
 type SampleRecordingSelectorProps = {
   onFileSelected: (audioData: File) => void;

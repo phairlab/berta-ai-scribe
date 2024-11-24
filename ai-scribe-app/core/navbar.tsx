@@ -23,7 +23,7 @@ import { link as linkStyles } from "@nextui-org/theme";
 
 import { siteConfig } from "@/config/site";
 
-import { EncounterNavigator } from "@/features/encounters/encounter-navigator";
+import { EncounterNavigator } from "@/features/encounter-navigation/encounter-navigator";
 import { CurrentUser } from "@/features/user-session/current-user";
 
 import { FeedbackModal } from "./feedback-modal";

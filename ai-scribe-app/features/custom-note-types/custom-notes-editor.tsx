@@ -19,7 +19,7 @@ import { RequiredFields } from "@/utility/typing";
 
 import { MixedRecordingsSelector } from "./mixed-recordings-selector";
 import { NoteTypeSelector } from "./note-type-selector";
-import { useNoteTypes } from "./use-note-types";
+import { useNoteTypes } from "../../services/application-state/use-note-types";
 
 type CustomNotesEditorProps = {
   editedNoteType: EditedNoteType;

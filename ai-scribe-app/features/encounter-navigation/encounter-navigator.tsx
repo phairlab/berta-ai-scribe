@@ -8,7 +8,7 @@ import { Encounter } from "@/core/types";
 import { WaitMessageSpinner } from "@/core/wait-message-spinner";
 
 import { EncounterList } from "./encounter-list";
-import { useEncounters } from "./use-encounters";
+import { useEncounters } from "../../services/application-state/use-encounters";
 
 type EncounterNavigatorProps = {
   onEncounterSelected?: (encounter: Encounter | null) => void;

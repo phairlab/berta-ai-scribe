@@ -2,8 +2,8 @@ import { Button } from "@nextui-org/button";
 
 import { NoteType } from "@/core/types";
 
-import { NoteTypeSelector } from "@/features/note-types/note-type-selector";
-import { useNoteTypes } from "@/features/note-types/use-note-types";
+import { NoteTypeSelector } from "@/features/custom-note-types/note-type-selector";
+import { useNoteTypes } from "@/services/application-state/use-note-types";
 
 type AIScribeControlsProps = {
   selectedNoteType?: NoteType;

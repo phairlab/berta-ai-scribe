@@ -6,8 +6,8 @@ import { SafeSelect } from "@/core/safe-select";
 import { Recording, SampleRecording } from "@/core/types";
 import { formatDatetime } from "@/utility/formatters";
 
-import { useEncounters } from "@/features/encounters/use-encounters";
-import { useSampleRecordings } from "@/features/sample-recordings/use-sample-recordings";
+import { useEncounters } from "@/services/application-state/use-encounters";
+import { useSampleRecordings } from "@/services/application-state/use-sample-recordings";
 
 type AnyRecordingType = Recording | SampleRecording;
 
