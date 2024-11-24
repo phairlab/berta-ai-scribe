@@ -104,10 +104,10 @@ export function useEncounters() {
 
     // Determine any changes that should be persisted.
     const existing = encounters.get(encounter.id)!;
-    const changes: Partial<{ title: string; transcript: string }> = {};
+    const changes: Partial<{ label: string; transcript: string }> = {};
 
     if (encounter.label !== existing.label) {
-      changes.title = encounter.label;
+      changes.label = encounter.label ?? undefined;
     }
 
     if (encounter.recording?.transcript !== existing.recording?.transcript) {

@@ -31,8 +31,8 @@ export type Encounter = {
   id: string;
   created: string;
   modified: string;
-  label?: string;
-  summary?: string;
+  label: string | null;
+  summary: string | null;
   recording?: Recording;
   draftNotes: DraftNote[];
 };

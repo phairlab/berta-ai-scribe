@@ -172,7 +172,8 @@ export const AIScribe = () => {
 
       if (activeEncounter.recording?.duration) {
         setAudioSource({
-          title: activeEncounter.id,
+          id: activeEncounter.id,
+          title: activeEncounter.label,
           url: `/api/recordings/${activeEncounter.recording.id}/download`,
           waveformPeaks: activeEncounter.recording.waveformPeaks,
           duration: activeEncounter.recording.duration,

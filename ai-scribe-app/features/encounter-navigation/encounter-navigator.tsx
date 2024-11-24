@@ -6,9 +6,9 @@ import { Listbox, ListboxItem } from "@nextui-org/listbox";
 
 import { Encounter } from "@/core/types";
 import { WaitMessageSpinner } from "@/core/wait-message-spinner";
+import { useEncounters } from "@/services/application-state/use-encounters";
 
 import { EncounterList } from "./encounter-list";
-import { useEncounters } from "../../services/application-state/use-encounters";
 
 type EncounterNavigatorProps = {
   onEncounterSelected?: (encounter: Encounter | null) => void;
@@ -33,10 +33,11 @@ export const EncounterNavigator = ({
       >
         <ListboxItem
           key="new"
-          className={clsx("h-12", {
-            "border-s-4 rounded-s-none border-blue-500 data-[hover=true]:bg-transparent":
-              !activeEncounter,
-          })}
+          className={clsx(
+            "h-12",
+            "border-s-4 rounded-s-none  data-[hover=true]:bg-transparent",
+            !activeEncounter ? "border-blue-500" : "border-transparent",
+          )}
           textValue="New Recording"
           onPress={() => selectEncounter(null)}
         >
@@ -71,6 +72,9 @@ export const EncounterNavigator = ({
           isLoading={encounters.isLoading}
           loadMore={encounters.loadMore}
           onDelete={(encounter) => encounters.purge(encounter)}
+          onLabelChanged={(encounter, label) =>
+            encounters.save({ ...encounter, label: label })
+          }
           onSelected={selectEncounter}
         />
       )}

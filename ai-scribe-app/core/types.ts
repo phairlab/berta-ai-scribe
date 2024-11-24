@@ -22,7 +22,8 @@ export type Recording = WebApiTypes.Recording;
 export type DraftNote = WithTracking<WebApiTypes.DraftNote>;
 
 export type AudioSource = {
-  title: string;
+  id: string;
+  title: string | null;
   url: string;
   waveformPeaks: number[] | null;
   duration: number;

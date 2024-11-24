@@ -173,7 +173,12 @@ export const AIScribeAudio = ({
             )}
           >
             <AudioTrackInfo
-              audioTitle={audioSource ? audioSource.title : "Audio Recording"}
+              audioId={audioSource ? audioSource.id : "Audio Recording"}
+              audioTitle={
+                audioSource && audioSource.title !== audioSource.id
+                  ? audioSource.title
+                  : null
+              }
               duration={audioSource ? audioSource.duration / 1000 : null}
               isRecording={isRecording}
               isRecordingPaused={isRecordingPaused}
