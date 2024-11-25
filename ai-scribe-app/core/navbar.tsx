@@ -135,7 +135,7 @@ export const Navbar = () => {
             </Link>
           </NavbarMenuItem>
           <Divider className="mt-3" />
-          <NavbarMenuItem onClick={() => setIsMenuOpen(false)}>
+          <NavbarMenuItem>
             <EncounterNavigator
               onEncounterSelected={() => {
                 router.push("/");
