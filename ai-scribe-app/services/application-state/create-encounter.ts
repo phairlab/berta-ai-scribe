@@ -11,6 +11,8 @@ export function createEncounter(fields: {
       id: fields.tempId,
       created: created.toISOString(),
       modified: created.toISOString(),
+      label: null,
+      autolabel: null,
       draftNotes: [],
       unsavedAudio: fields.audio,
     },
