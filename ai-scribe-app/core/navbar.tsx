@@ -23,10 +23,10 @@ import { link as linkStyles } from "@nextui-org/theme";
 
 import { siteConfig } from "@/config/site";
 
-import { EncounterNavigator } from "@/features/encounters/encounter-navigator";
+import { EncounterNavigator } from "@/features/encounter-navigation/encounter-navigator";
+import { FeedbackModal } from "@/features/user-feedback/feedback-modal";
 import { CurrentUser } from "@/features/user-session/current-user";
 
-import { FeedbackModal } from "./feedback-modal";
 import { Logo, SettingsIcon } from "./icons";
 import { ThemeSwitch } from "./theme-switch";
 
@@ -135,7 +135,7 @@ export const Navbar = () => {
             </Link>
           </NavbarMenuItem>
           <Divider className="mt-3" />
-          <NavbarMenuItem onClick={() => setIsMenuOpen(false)}>
+          <NavbarMenuItem>
             <EncounterNavigator
               onEncounterSelected={() => {
                 router.push("/");

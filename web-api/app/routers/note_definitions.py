@@ -52,7 +52,7 @@ def create_note_definition(
     
     # Associate the note definition with the current model,
     # which is what the definition is assumed tested against.
-    gen_ai_model = settings.GENERATIVE_AI_MODEL
+    gen_ai_model = settings.NOTE_GENERATION_MODEL
 
     # Create the new note definition and associate to the current user.
     try:

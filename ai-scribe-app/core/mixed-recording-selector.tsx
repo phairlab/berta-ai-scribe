@@ -2,24 +2,23 @@ import clsx from "clsx";
 
 import { SelectItem, SelectSection } from "@nextui-org/select";
 
-import { SafeSelect } from "@/core/safe-select";
+import { MobileCompatibleSelect } from "@/core/mobile-compatible-select";
 import { Recording, SampleRecording } from "@/core/types";
-import { formatDatestring } from "@/utility/formatters";
-
-import { useEncounters } from "@/features/encounters/use-encounters";
-import { useSampleRecordings } from "@/features/sample-recordings/use-sample-recordings";
+import { useEncounters } from "@/services/application-state/use-encounters";
+import { useSampleRecordings } from "@/services/application-state/use-sample-recordings";
+import { formatDatetime } from "@/utility/formatters";
 
 type AnyRecordingType = Recording | SampleRecording;
 
-type MixedRecordingsSelectorProps = {
+type MixedRecordingSelectorProps = {
   selectedRecording: AnyRecordingType | undefined;
   onRecordingSelected: (recording: AnyRecordingType | undefined) => void;
 };
 
-export const MixedRecordingsSelector = ({
+export const MixedRecordingSelector = ({
   selectedRecording,
   onRecordingSelected,
-}: MixedRecordingsSelectorProps) => {
+}: MixedRecordingSelectorProps) => {
   const encounters = useEncounters();
   const sampleRecordings = useSampleRecordings();
 
@@ -43,7 +42,7 @@ export const MixedRecordingsSelector = ({
   };
 
   return (
-    <SafeSelect
+    <MobileCompatibleSelect
       className="w-full"
       isDisabled={isLoading}
       isLoading={isLoading}
@@ -59,7 +58,7 @@ export const MixedRecordingsSelector = ({
       >
         {recentEncounters.map((encounter) => (
           <SelectItem key={encounter.recording!.id}>
-            {`${formatDatestring(new Date(encounter.created))}${encounter.label ? ` (${encounter.label.toUpperCase()})` : ""}`}
+            {`${formatDatetime(new Date(encounter.created))}${encounter.label ? ` (${encounter.label.toUpperCase()})` : ""}`}
           </SelectItem>
         ))}
       </SelectSection>
@@ -70,6 +69,6 @@ export const MixedRecordingsSelector = ({
           <SelectItem key={sr.id}>{sr.filename.split(".")[0]}</SelectItem>
         ))}
       </SelectSection>
-    </SafeSelect>
+    </MobileCompatibleSelect>
   );
 };

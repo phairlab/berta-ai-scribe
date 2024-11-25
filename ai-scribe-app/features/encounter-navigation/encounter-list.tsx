@@ -8,7 +8,7 @@ import { ScrollShadow } from "@nextui-org/scroll-shadow";
 
 import { Encounter } from "@/core/types";
 import { WaitMessageSpinner } from "@/core/wait-message-spinner";
-import { formatDatestring } from "@/utility/formatters";
+import { formatDatetime } from "@/utility/formatters";
 
 import { EncounterDropdown } from "./encounter-dropdown";
 
@@ -19,6 +19,7 @@ type EncounterListProps = {
   canLoadMore: boolean;
   loadMore: () => void;
   onSelected: (encounter: Encounter) => void;
+  onLabelChanged: (encounter: Encounter, label: string | null) => void;
   onDelete: (encounter: Encounter) => void;
 };
 
@@ -29,20 +30,24 @@ export const EncounterList = ({
   canLoadMore,
   loadMore,
   onSelected,
+  onLabelChanged,
   onDelete,
 }: EncounterListProps) => (
   <ScrollShadow className="max-h-[500px]">
     <Listbox
       aria-label="List containing saved recordings"
-      itemClasses={{ title: "w-full" }}
+      itemClasses={{ title: "w-full", wrapper: "relative" }}
     >
       {encounters.map((encounter: Encounter) => (
         <ListboxItem
           key={encounter.id!}
-          className={clsx("h-12 relative", {
-            "border-s-4 rounded-s-none border-blue-500 data-[hover=true]:bg-transparent":
-              activeEncounter && encounter.id === activeEncounter.id,
-          })}
+          className={clsx(
+            "relative min-h-12 box-border",
+            "border-s-4 rounded-s-none border-blue-500 data-[hover=true]:bg-transparent",
+            activeEncounter && encounter.id === activeEncounter.id
+              ? "border-blue-500"
+              : "border-transparent",
+          )}
           description={
             !encounter.tracking.isPersisted && encounter.tracking.hasError ? (
               <p className="ms-1 text-red-500 font-semibold">
@@ -61,23 +66,35 @@ export const EncounterList = ({
                 />
               </div>
             ) : (
-              <p className="ms-1">{encounter.label?.toUpperCase()}</p>
+              <p className="ms-1 pe-2 line-clamp-2 text-ellipse">
+                {encounter.label ??
+                  encounter.autolabel ??
+                  encounter.id?.toUpperCase()}
+              </p>
             )
           }
           textValue={encounter.id}
           onPress={() => onSelected(encounter)}
         >
-          <div className="flex flex-row gap-2">
-            <p className="grow">
-              {formatDatestring(new Date(encounter.created))}
-            </p>
+          <div className="flex flex-row">
+            <div className="grow max-w-[135px]">
+              {formatDatetime(new Date(encounter.created))}
+            </div>
             <EncounterDropdown
               encounter={encounter}
               onDelete={() => onDelete(encounter)}
+              onLabelChanged={(label) => onLabelChanged(encounter, label)}
             >
-              <p className="cursor-pointer text-xl text-zinc-500 leading-none align-top -mt-2 me-2">
-                ...
-              </p>
+              <div
+                className={clsx(
+                  "cursor-pointer",
+                  "absolute right-0",
+                  "w-[30px] h-[25px]",
+                  "text-xl text-zinc-500 text-center leading-snug",
+                )}
+              >
+                <div className="-mt-[10px]">...</div>
+              </div>
             </EncounterDropdown>
           </div>
         </ListboxItem>

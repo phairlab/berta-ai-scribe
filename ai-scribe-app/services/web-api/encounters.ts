@@ -1,7 +1,7 @@
 import { ApiRouterDefinition } from "./api-definition";
 import { WebApiToken } from "./authentication";
 import { httpAction } from "./base-queries";
-import { DataPage, DraftNote, Encounter, NoteOutputType } from "./types";
+import { DataPage, Encounter, NoteOutputType } from "./types";
 
 export const getAll =
   (getAccessToken: () => WebApiToken) =>
@@ -75,8 +75,8 @@ export const createDraftNote =
     content: string,
     outputType: NoteOutputType,
     cancellation?: AbortSignal,
-  ): Promise<DraftNote> =>
-    httpAction<DraftNote>("POST", `api/encounters/${encounterId}/draft-notes`, {
+  ): Promise<Encounter> =>
+    httpAction<Encounter>("POST", `api/encounters/${encounterId}/draft-notes`, {
       data: {
         noteDefinitionId: noteDefinitionId,
         noteId: noteId,

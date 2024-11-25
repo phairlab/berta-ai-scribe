@@ -9,12 +9,10 @@ import { Divider } from "@nextui-org/divider";
 import { ConsentScript } from "@/core/consent-script";
 import { AudioSource, DraftNote, Encounter } from "@/core/types";
 import { WaitMessageSpinner } from "@/core/wait-message-spinner";
-import { useNoteGenerator } from "@/services/note-generation/use-note-generator";
-import { useTranscriber } from "@/services/transcription/use-transcriber";
+import { createEncounter } from "@/services/application-state/create-encounter";
+import { useEncounters } from "@/services/application-state/use-encounters";
+import { useNoteTypes } from "@/services/application-state/use-note-types";
 import { ApplicationError } from "@/utility/errors";
-
-import { useEncounters } from "@/features/encounters/use-encounters";
-import { useNoteTypes } from "@/features/note-types/use-note-types";
 
 import { AIScribeAudio } from "./ai-scribe-audio";
 import { AIScribeControls } from "./ai-scribe-controls";
@@ -23,7 +21,8 @@ import {
   AIScribeOutput,
   AIScribeOutputType,
 } from "./ai-scribe-output";
-import { createEncounter } from "./create-encounter";
+import { useNoteGenerator } from "./use-note-generator";
+import { useTranscriber } from "./use-transcriber";
 
 export const AIScribe = () => {
   const ref = useRef<Encounter | null>(null);
@@ -173,7 +172,8 @@ export const AIScribe = () => {
 
       if (activeEncounter.recording?.duration) {
         setAudioSource({
-          title: activeEncounter.id,
+          id: activeEncounter.id,
+          title: activeEncounter.label ?? activeEncounter.autolabel,
           url: `/api/recordings/${activeEncounter.recording.id}/download`,
           waveformPeaks: activeEncounter.recording.waveformPeaks,
           duration: activeEncounter.recording.duration,

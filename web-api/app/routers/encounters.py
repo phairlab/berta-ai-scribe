@@ -12,9 +12,10 @@ import app.services.db as db
 import app.services.error_handling as errors
 from app.services.audio_processing import reformat_audio, compute_peaks
 from app.services.measurement import get_file_size, ExecutionTimer
-from app.services.logging import log_audio_conversion, log_data_change
+from app.services.logging import log_audio_conversion, log_data_change, log_generation
 from app.services.security import authenticate_session, useUserSession
 from app.services.db import useDatabase
+from app.tasks import generate_transcript_label
 from app.config import settings
 
 router = APIRouter(dependencies=[Depends(authenticate_session)])
@@ -113,7 +114,7 @@ def create_encounter(
 
         encounter = db.Encounter(
             id=encounter_id, username=userSession.username, created=created, modified=created,
-            label=(label or encounter_id), recording=recording,
+            label=label, recording=recording,
         )
         
         database.add(encounter)
@@ -179,6 +180,43 @@ def update_encounter(
 
     if transcript is not None:
         encounter.recording.transcript = transcript
+
+        def auto_label_transcript():
+            try:
+                generation = generate_transcript_label(settings.LABEL_MODEL, transcript)
+                autolabel = generation.text.split("\n")[-1][0:100]
+            except Exception as e:
+                if settings.ENVIRONMENT == "development":
+                    print(str(e))
+                
+                raise e
+
+            labelled_encounter = database.get_one(db.Encounter, encounterId)
+            labelled_encounter.autolabel = autolabel
+            labelled_encounter.modified = datetime.now(timezone.utc)
+
+            try:
+                database.commit()
+            except Exception as e:
+                if settings.ENVIRONMENT == "development":
+                    print(str(e))
+                
+                raise e
+            
+            log_generation(
+                database, encounter.recording.id, "LABEL TRANSCRIPT", generation.generatedAt,
+                generation.timeToGenerate, generation.service, generation.model, generation.completionTokens, generation.promptTokens,
+                session=userSession,
+            )
+            
+            log_data_change(
+                database, userSession, labelled_encounter.modified, "ENCOUNTER", "MODIFIED",
+                entity_id=labelled_encounter.id, server_task=True,
+            )
+
+        backgroundTasks.add_task(auto_label_transcript)
+
+
 
     encounter.modified = datetime.now(timezone.utc)
 
@@ -278,7 +316,7 @@ def create_draft_note(
     title: Annotated[str, Body()],
     content: Annotated[str, Body()],
     outputType: Annotated[sch.NoteOutputType, Body()],
-) -> sch.DraftNote:
+) -> sch.Encounter:
     """
     Creates and saves a new draft note to the encounter record for this user.
     If a note exists for the indicated note definition, it will be overwritten with the newer generated note.
@@ -291,7 +329,11 @@ def create_draft_note(
                 db.Encounter.username == userSession.username,
                 db.Encounter.id == encounterId,
                 db.Encounter.inactivated.is_(None),
-            )
+            ) \
+        .options(
+            selectinload(db.Encounter.recording),
+            selectinload(db.Encounter.draft_notes),
+        )
         
         encounter = database.execute(get_encounter).scalar_one()
     except NoResultFound:
@@ -315,7 +357,7 @@ def create_draft_note(
     
         get_active_note = select(db.DraftNote) \
             .where(
-                db.DraftNote.encounter_id == encounter.id,
+                db.DraftNote.encounter_id == encounterId,
                 db.DraftNote.definition_id == noteDefinitionId,
                 db.DraftNote.inactivated.is_(None),
             )
@@ -327,7 +369,7 @@ def create_draft_note(
             active_note.inactivated = saved
 
         new_note = db.DraftNote(
-            id=noteId, encounter_id=encounter.id, definition_id=note_definition.id, definition_version=note_definition.version,
+            id=noteId, definition_id=note_definition.id, definition_version=note_definition.version,
             created=saved, title=title, content=content, output_type=outputType,
         )
 
@@ -338,10 +380,10 @@ def create_draft_note(
         # Record the change.
         backgroundTasks.add_task(
             log_data_change,
-            database, userSession, encounter.modified, "ENCOUNTER", "MODIFIED", entity_id=encounter.id,
+            database, userSession, saved, "ENCOUNTER", "MODIFIED", entity_id=encounter.id,
         )
 
-        return sch.DraftNote.from_db_record(new_note)
+        return sch.Encounter.from_db_record(encounter)
     except Exception as e:
         raise errors.DatabaseError(str(e))
 

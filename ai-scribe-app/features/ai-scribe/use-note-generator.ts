@@ -1,11 +1,13 @@
 import { useState } from "react";
 
 import { DraftNote } from "@/core/types";
+import {
+  createNote,
+  ValidNoteType,
+} from "@/services/application-state/create-note";
 import { useWebApi } from "@/services/web-api/use-web-api";
 import { ApplicationError } from "@/utility/errors";
 import { useAbortController } from "@/utility/use-abort-controller";
-
-import { createNote, ValidNoteType } from "./create-note";
 
 type NoteGeneratorProps = {
   onGenerating?: () => void;

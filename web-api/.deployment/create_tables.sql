@@ -117,7 +117,7 @@ CREATE TABLE encounters (
   created TIMESTAMP_LTZ NOT NULL,
   modified TIMESTAMP_LTZ NOT NULL,
   label VARCHAR(100),
-  summary VARCHAR(500),
+  autolabel VARCHAR(100),
   inactivated TIMESTAMP_LTZ,
   purged TIMESTAMP_LTZ,
   PRIMARY KEY (id) RELY,
@@ -162,5 +162,6 @@ CREATE TABLE data_changes (
   entity_type VARCHAR(255) NOT NULL,
   entity_id VARCHAR(255),
   change_type VARCHAR(50) NOT NULL,
+  server_task BOOLEAN NOT NULL DEFAULT FALSE,
   PRIMARY KEY (id) RELY
 );

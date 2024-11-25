@@ -1,8 +1,7 @@
 import { SelectItem } from "@nextui-org/select";
 
-import { SafeSelect } from "@/core/safe-select";
-
-import { useSampleRecordings } from "./use-sample-recordings";
+import { MobileCompatibleSelect } from "@/core/mobile-compatible-select";
+import { useSampleRecordings } from "@/services/application-state/use-sample-recordings";
 
 type SampleRecordingSelectorProps = {
   onFileSelected: (audioData: File) => void;
@@ -20,7 +19,7 @@ export const SampleRecordingSelector = ({
   };
 
   return (
-    <SafeSelect
+    <MobileCompatibleSelect
       aria-label="Select an Audio Sample"
       className="w-32"
       isDisabled={!sampleRecordings.isReady}
@@ -36,6 +35,6 @@ export const SampleRecordingSelector = ({
           {recording.filename.split(".")[0]}
         </SelectItem>
       ))}
-    </SafeSelect>
+    </MobileCompatibleSelect>
   );
 };

@@ -35,7 +35,8 @@ class Settings(BaseSettings):
     RECORDINGS_FOLDER: str = ".recordings"
 
     GENERATIVE_AI_SERVICE: Literal["OPENAI", "SNOWFLAKE_CORTEX"] = "OPENAI"
-    GENERATIVE_AI_MODEL: str = "gpt-4o"
+    NOTE_GENERATION_MODEL: str = "gpt-4o"
+    LABEL_MODEL: str = "gpt-4o"
     TRANSCRIPTION_SERVICE: Literal["OPENAI", "LOCAL_WHISPER"] = "OPENAI"
     LOCAL_WHISPER_SERVICE_URL: str | None = None
     

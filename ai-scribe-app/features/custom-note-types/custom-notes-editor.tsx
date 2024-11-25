@@ -4,7 +4,9 @@ import { Button } from "@nextui-org/button";
 import { Input, Textarea } from "@nextui-org/input";
 
 import { ErrorCard } from "@/core/error-card";
+import { MixedRecordingSelector } from "@/core/mixed-recording-selector";
 import { NoteCard } from "@/core/note-card";
+import { NoteTypeSelector } from "@/core/note-type-selector";
 import {
   DraftNote,
   EditedNoteType,
@@ -13,13 +15,11 @@ import {
   SampleRecording,
 } from "@/core/types";
 import { WaitMessageSpinner } from "@/core/wait-message-spinner";
-import { useNoteGenerator } from "@/services/note-generation/use-note-generator";
+import { useNoteTypes } from "@/services/application-state/use-note-types";
 import { ApplicationError } from "@/utility/errors";
 import { RequiredFields } from "@/utility/typing";
 
-import { MixedRecordingsSelector } from "./mixed-recordings-selector";
-import { NoteTypeSelector } from "./note-type-selector";
-import { useNoteTypes } from "./use-note-types";
+import { useNoteGenerator } from "@/features/ai-scribe/use-note-generator";
 
 type CustomNotesEditorProps = {
   editedNoteType: EditedNoteType;
@@ -124,7 +124,7 @@ export const CustomNotesEditor = ({
       />
       <div className="flex flex-col md:flex-row gap-5 w-full items-center">
         <div className="flex flex-col sm:flex-row flex-row gap-2 w-full">
-          <MixedRecordingsSelector
+          <MixedRecordingSelector
             selectedRecording={recording}
             onRecordingSelected={setRecording}
           />

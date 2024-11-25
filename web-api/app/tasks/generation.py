@@ -54,3 +54,30 @@ def generate_note(model: str, instructions: str, transcript: str, output_type: s
         return generative_ai_service.complete(model, messages)
     except errors.ExternalServiceError as e:
         raise e
+
+LABEL_TRANSCRIPT_SYSTEM_PROMPT = """
+You are a specialist at reading audio transcripts and creating clear, short labels of the transcript content,
+suitable for an Emergency Physician to identify it in a list.
+You will be given the audio transcript as AUDIO_TRANSCRIPT.
+Respond with the label in a single line of text no more than 50 characters.
+Do not include formatting or header, and do not enclose the label in quotation marks.
+If AUDIO_TRANSCRIPT is a doctor-patient conversation:
+- Use the patient's chief complaint and how it occurred for the label, stated succinctly with no preamble in no more than 50 characters.
+- If AUDIO_TRANSCRIPT contains the name of the patient, prefix the label with their first name only, for example "John: " if the patient's first name is John.
+- Do not include the patient's name if it is not referenced in AUDIO_TRANSCRIPT.
+Otherwise:
+- Provide a succinct label for AUDIO_TRANSCRIPT with no preamble in no more than 50 characters.
+""".strip()
+
+def generate_transcript_label(model: str, transcript: str) -> sch.GenerationOutput:
+    # Configure prompt messages.
+    messages = [
+        {"role": "system", "content": LABEL_TRANSCRIPT_SYSTEM_PROMPT},
+        {"role": "user", "content": f"AUDIO_TRANSCRIPT:\n\"\"\"{transcript}\n\"\"\""},
+    ]
+
+    # Return the draft note segments.
+    try:
+        return generative_ai_service.complete(model, messages)
+    except errors.ExternalServiceError as e:
+        raise e

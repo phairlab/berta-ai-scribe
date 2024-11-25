@@ -1,7 +1,7 @@
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, Response, status
-from sqlalchemy import select
+from fastapi import APIRouter, Depends
+from sqlalchemy import select, or_
 from sqlalchemy.orm import selectinload
 from sqlalchemy.exc import NoResultFound
 
@@ -30,7 +30,10 @@ def get_updates(
         .where(
             db.DataChangeRecord.logged > cutoff,
             db.DataChangeRecord.username == userSession.username,
-            db.DataChangeRecord.session_id != userSession.sessionId
+            or_(
+                db.DataChangeRecord.session_id != userSession.sessionId,
+                db.DataChangeRecord.server_task == True,
+            ),
         )
     
     try:

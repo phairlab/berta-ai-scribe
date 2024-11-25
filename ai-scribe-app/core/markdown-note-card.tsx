@@ -10,7 +10,7 @@ import { SelectItem } from "@nextui-org/select";
 import * as convert from "@/utility/converters";
 
 import { OutputCard } from "./output-card";
-import { SafeSelect } from "./safe-select";
+import { MobileCompatibleSelect } from "./mobile-compatible-select";
 import { DraftNote } from "./types";
 
 type DisplayFormat = "Rich Text" | "Markdown" | "Plain Text";
@@ -123,7 +123,7 @@ export const MarkdownNoteCard = ({
 
   const controls = (
     <>
-      <SafeSelect
+      <MobileCompatibleSelect
         aria-label="Display Format Selector"
         className="w-32"
         disallowEmptySelection={true}
@@ -134,7 +134,7 @@ export const MarkdownNoteCard = ({
         onChange={(e) => setDisplayFormat(e.target.value as DisplayFormat)}
       >
         {(item) => <SelectItem key={item.key}>{item.label}</SelectItem>}
-      </SafeSelect>
+      </MobileCompatibleSelect>
       <Button color="default" size="sm" onClick={copyNote}>
         Copy
       </Button>

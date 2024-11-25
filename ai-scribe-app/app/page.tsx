@@ -5,11 +5,11 @@ import { use } from "react";
 import { Divider } from "@nextui-org/divider";
 import { Progress } from "@nextui-org/progress";
 
-import { TermsOfUse } from "@/core/terms-of-use";
 import { ApplicationStateContext } from "@/services/application-state/application-state-context";
 
 import { AIScribe } from "@/features/ai-scribe/ai-scribe";
-import { EncounterNavigator } from "@/features/encounters/encounter-navigator";
+import { EncounterNavigator } from "@/features/encounter-navigation/encounter-navigator";
+import { TermsOfUse } from "@/features/user-session/terms-of-use";
 
 export default function Home() {
   const applicationState = use(ApplicationStateContext);
@@ -32,14 +32,14 @@ export default function Home() {
         </div>
       ) : (
         <>
-          <nav className="hidden sm:block w-[200px]">
+          <nav className="hidden sm:block min-w-[200px] max-w-[200px]">
             <EncounterNavigator />
           </nav>
           <Divider
             className="hidden sm:block bg-zinc-100 dark:bg-zinc-900"
             orientation="vertical"
           />
-          <section className="w-full sm:w-[calc(100%-220px)] py-2">
+          <section className="w-full sm:min-w-[calc(100%-225px)] sm:max-w-[calc(100%-225px)] sm:w-[calc(100%-225px)] py-2">
             <AIScribe />
           </section>
         </>

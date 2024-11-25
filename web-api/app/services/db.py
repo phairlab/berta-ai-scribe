@@ -155,7 +155,7 @@ class Encounter(JenkinsDatabase):
     created: Mapped[datetime] = mapped_column(TIMESTAMP_LTZ)
     modified: Mapped[datetime] = mapped_column(TIMESTAMP_LTZ)
     label: Mapped[str | None] = mapped_column(VARCHAR(100))
-    summary: Mapped[str | None] = mapped_column(VARCHAR(500))
+    autolabel: Mapped[str | None] = mapped_column(VARCHAR(100))
     inactivated: Mapped[datetime | None] = mapped_column(TIMESTAMP_LTZ)
     purged: Mapped[datetime | None] = mapped_column(TIMESTAMP_LTZ)
 
@@ -215,6 +215,7 @@ class DataChangeRecord(JenkinsDatabase):
     entity_type: Mapped[DataEntityType] = mapped_column(VARCHAR(255))
     entity_id: Mapped[str | None] = sqid_column()
     change_type: Mapped[DataChangeType] = mapped_column(VARCHAR(50))
+    server_task: Mapped[bool] = mapped_column(default=False)
 
 # ----------------------------------
 # FILE OPERATIONS

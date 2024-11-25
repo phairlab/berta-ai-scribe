@@ -2,15 +2,15 @@
 
 import { useState } from "react";
 
+import { NoteTypeSelector } from "@/core/note-type-selector";
 import { subtitle, title } from "@/core/primitives";
 import { EditedNoteType, NoteType } from "@/core/types";
+import { createNoteType } from "@/services/application-state/create-note-type";
+import { useNoteTypes } from "@/services/application-state/use-note-types";
 import { setTracking } from "@/utility/tracking";
 
-import { createNoteType } from "@/features/note-types/create-note-type";
-import { CustomNotesEditor } from "@/features/note-types/custom-notes-editor";
-import { CustomNotesList } from "@/features/note-types/custom-notes-list";
-import { NoteTypeSelector } from "@/features/note-types/note-type-selector";
-import { useNoteTypes } from "@/features/note-types/use-note-types";
+import { CustomNotesEditor } from "@/features/custom-note-types/custom-notes-editor";
+import { CustomNotesList } from "@/features/custom-note-types/custom-notes-list";
 
 export default function Settings() {
   const noteTypes = useNoteTypes();
