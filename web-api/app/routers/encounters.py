@@ -193,6 +193,7 @@ def update_encounter(
 
             labelled_encounter = database.get_one(db.Encounter, encounterId)
             labelled_encounter.autolabel = autolabel
+            labelled_encounter.modified = datetime.now(timezone.utc)
 
             try:
                 database.commit()
