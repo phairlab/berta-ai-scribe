@@ -239,7 +239,7 @@ export function useEncounters() {
 
     try {
       // Persist the change.
-      const persistedNote = await webApi.encounters.createDraftNote(
+      const persistedEncounter = await webApi.encounters.createDraftNote(
         encounter.id,
         note.definitionId,
         note.id,
@@ -248,15 +248,10 @@ export function useEncounters() {
         note.outputType,
       );
 
-      const notes = [
-        ...updated.draftNotes.filter((n) => n.id !== note.id),
-        convert.fromWebApiDraftNote(persistedNote),
-      ].sort(byDate((x) => new Date(x.created), "Descending"));
-
       const currentEncounter = encounters.get(encounter.id);
 
       if (currentEncounter) {
-        encounters.put({ ...currentEncounter, draftNotes: notes });
+        encounters.put(convert.fromWebApiEncounter(persistedEncounter));
       }
     } catch (ex: unknown) {
       // Report on failure.

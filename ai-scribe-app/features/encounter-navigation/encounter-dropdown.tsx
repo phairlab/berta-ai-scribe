@@ -72,7 +72,7 @@ export const EncounterDropdown = ({
               labelPlacement="outside"
               maxRows={7}
               minRows={1}
-              placeholder={encounter.id}
+              placeholder={encounter.autolabel ?? encounter.id}
               value={label ?? ""}
               onValueChange={(text) =>
                 setLabel(text.replaceAll("\n", "").slice(0, 100))

@@ -162,5 +162,6 @@ CREATE TABLE data_changes (
   entity_type VARCHAR(255) NOT NULL,
   entity_id VARCHAR(255),
   change_type VARCHAR(50) NOT NULL,
+  server_task BOOLEAN NOT NULL DEFAULT FALSE,
   PRIMARY KEY (id) RELY
 );

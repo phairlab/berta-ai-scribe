@@ -215,6 +215,7 @@ class DataChangeRecord(JenkinsDatabase):
     entity_type: Mapped[DataEntityType] = mapped_column(VARCHAR(255))
     entity_id: Mapped[str | None] = sqid_column()
     change_type: Mapped[DataChangeType] = mapped_column(VARCHAR(50))
+    server_task: Mapped[bool] = mapped_column(default=False)
 
 # ----------------------------------
 # FILE OPERATIONS

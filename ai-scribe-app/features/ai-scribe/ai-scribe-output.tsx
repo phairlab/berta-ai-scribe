@@ -7,6 +7,7 @@ import { NoteCard } from "@/core/note-card";
 import { TranscriptCard } from "@/core/transcript-card";
 import { DraftNote, Recording } from "@/core/types";
 import { ApplicationError, isApplicationError } from "@/utility/errors";
+import { byDate } from "@/utility/sorters";
 
 export type AIScribeError = {
   name: string | null;
@@ -98,7 +99,7 @@ export const AIScribeOutput = ({
             />
           </Tab>
         )}
-        {notes.map((note) => (
+        {notes.sort(byDate((n) => new Date(n.created))).map((note) => (
           <Tab key={note.id} title={note.title}>
             <NoteCard note={note} showTitle={false} />
           </Tab>

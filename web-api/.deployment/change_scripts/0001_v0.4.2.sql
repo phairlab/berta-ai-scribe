@@ -143,7 +143,6 @@ INSERT INTO users_1 (username, registered, updated, default_note)
 SELECT username, registered, registered, default_note FROM users;
 
 ALTER TABLE users SWAP WITH users_1;
-
 DROP TABLE users_1;
 
 -- Fix 'registered' column of users table, use time of first request to backfill.
@@ -195,6 +194,7 @@ SELECT id, username, created, modified, CASE WHEN label = id THEN NULL else labe
 FROM encounters;
 
 ALTER TABLE encounters SWAP WITH encounters_1;
-
 DROP TABLE encounters_1;
 
+-- Add 'server_task' field to data_changes table.
+ALTER TABLE data_changes ADD COLUMN server_task BOOLEAN NOT NULL DEFAULT FALSE;

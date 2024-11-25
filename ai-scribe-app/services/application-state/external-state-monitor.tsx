@@ -10,7 +10,7 @@ import { useAbortController } from "@/utility/use-abort-controller";
 
 import { ApplicationStateContext } from "./application-state-context";
 
-const MONITOR_INTERVAL_MS = 10000;
+const MONITOR_INTERVAL_MS = 7000;
 const DEFERRAL_MS = 500;
 
 export const ExternalStateMonitor = ({ children }: PropsWithChildren) => {
@@ -208,7 +208,7 @@ export const ExternalStateMonitor = ({ children }: PropsWithChildren) => {
                       (notes, note) => ({ ...notes, [note.id]: note }),
                       {} as { [key: string]: webApiTypes.DraftNote },
                     ),
-                );
+                ).sort(byDate((n) => new Date(n.created), "Descending"));
 
                 const isNewer =
                   new Date(previous.modified).getTime() <

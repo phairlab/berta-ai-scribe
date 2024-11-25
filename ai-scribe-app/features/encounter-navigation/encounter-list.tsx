@@ -67,7 +67,9 @@ export const EncounterList = ({
               </div>
             ) : (
               <p className="ms-1 pe-2 line-clamp-2 text-ellipse">
-                {encounter.label ?? encounter.id?.toUpperCase()}
+                {encounter.label ??
+                  encounter.autolabel ??
+                  encounter.id?.toUpperCase()}
               </p>
             )
           }
