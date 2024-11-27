@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 
 from fastapi import Depends
 from sqlalchemy import ForeignKey, ForeignKeyConstraint, Sequence, text
-from sqlalchemy.orm import Session as SQLAlchemySession, DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy.orm import Session, sessionmaker, DeclarativeBase, Mapped, mapped_column, relationship
 from snowflake.sqlalchemy import TIMESTAMP_LTZ, VARCHAR, CHAR, INTEGER
 from sqids import Sqids
 
@@ -14,13 +14,16 @@ from app.config import settings
 
 sqids = Sqids(alphabet='ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890')
 
-def get_database_session() -> Iterator[SQLAlchemySession]:
-    with SQLAlchemySession(snowflake.db_engine) as database:
+AIScribeDatabase = sessionmaker(snowflake.db_engine)
+DatabaseSession = Session
+
+def get_database_session() -> Iterator[DatabaseSession]:
+    with AIScribeDatabase() as database:
         yield database
 
-useDatabase = Annotated[SQLAlchemySession, Depends(get_database_session)]
+useDatabase = Annotated[DatabaseSession, Depends(get_database_session)]
 
-def new_sqid(database: SQLAlchemySession) -> str:
+def new_sqid(database: DatabaseSession) -> str:
     id = database.scalars(text("SELECT sqid_sequence.nextval")).one()
     return sqids.encode([id])
 
@@ -34,13 +37,13 @@ def uuid_column(primary_key: bool = False):
     return mapped_column(CHAR(36), primary_key=primary_key)
 
 
-class JenkinsDatabase(DeclarativeBase):
+class AIScribeMetadata(DeclarativeBase):
     pass
 
 # ----------------------------------
-# TABLE ENTITIES
+# LOG TABLES
 
-class SessionRecord(JenkinsDatabase):
+class SessionRecord(AIScribeMetadata):
     __tablename__ = "session_log"
 
     session_id: Mapped[str] = uuid_column(primary_key=True)
@@ -48,7 +51,7 @@ class SessionRecord(JenkinsDatabase):
     started: Mapped[datetime] = mapped_column(TIMESTAMP_LTZ)
     user_agent: Mapped[str]
 
-class ErrorRecord(JenkinsDatabase):
+class ErrorRecord(AIScribeMetadata):
     __tablename__ = "error_log"
 
     error_id: Mapped[str] = uuid_column(primary_key=True)
@@ -59,7 +62,7 @@ class ErrorRecord(JenkinsDatabase):
     request_id: Mapped[str | None] = uuid_column()
     session_id: Mapped[str | None] = uuid_column()
 
-class RequestRecord(JenkinsDatabase):
+class RequestRecord(AIScribeMetadata):
     __tablename__ = "request_log"
 
     request_id: Mapped[str] = uuid_column(primary_key=True)
@@ -71,7 +74,7 @@ class RequestRecord(JenkinsDatabase):
     duration: Mapped[int]
     session_id: Mapped[str | None] = uuid_column()
 
-class AudioConversionTask(JenkinsDatabase):
+class AudioConversionTask(AIScribeMetadata):
     __tablename__ = "audio_conversion_log"
 
     task_id: Mapped[str] = uuid_column(primary_key=True)
@@ -85,7 +88,7 @@ class AudioConversionTask(JenkinsDatabase):
     error_id: Mapped[str | None] = uuid_column()
     session_id: Mapped[str | None] = uuid_column()
 
-class TranscriptionTask(JenkinsDatabase):
+class TranscriptionTask(AIScribeMetadata):
     __tablename__ = "transcription_log"
 
     task_id: Mapped[str] = uuid_column(primary_key=True)
@@ -96,7 +99,7 @@ class TranscriptionTask(JenkinsDatabase):
     error_id: Mapped[str | None] = uuid_column()
     session_id: Mapped[str | None] = uuid_column()
 
-class GenerationTask(JenkinsDatabase):
+class GenerationTask(AIScribeMetadata):
     __tablename__ = "generation_log"
 
     task_id: Mapped[str] = uuid_column(primary_key=True)
@@ -111,7 +114,10 @@ class GenerationTask(JenkinsDatabase):
     error_id: Mapped[str | None] = uuid_column()
     session_id: Mapped[str | None] = uuid_column()
 
-class User(JenkinsDatabase):
+# ----------------------------------
+# ENTITY TABLES
+
+class User(AIScribeMetadata):
     __tablename__ = "users"
 
     username: Mapped[str] = mapped_column(VARCHAR(255), primary_key=True)
@@ -122,7 +128,7 @@ class User(JenkinsDatabase):
     encounters: Mapped[list["Encounter"]] = relationship(back_populates="user")
     note_definitions: Mapped[list["NoteDefinition"]] = relationship(back_populates="user")
 
-class UserFeedback(JenkinsDatabase):
+class UserFeedback(AIScribeMetadata):
     __tablename__ = "user_feedback"
 
     id: Mapped[str] = uuid_column(primary_key=True)
@@ -132,7 +138,7 @@ class UserFeedback(JenkinsDatabase):
     context: Mapped[str] = mapped_column(default="(NOT CAPTURED)")
     session_id: Mapped[str | None] = uuid_column()
 
-class NoteDefinition(JenkinsDatabase):
+class NoteDefinition(AIScribeMetadata):
     __tablename__ = "note_definitions"
 
     id: Mapped[str] = sqid_column(primary_key=True)
@@ -147,7 +153,7 @@ class NoteDefinition(JenkinsDatabase):
 
     user: Mapped["User"] = relationship(back_populates="note_definitions")
 
-class Encounter(JenkinsDatabase):
+class Encounter(AIScribeMetadata):
     __tablename__ = "encounters"
 
     id: Mapped[str] = sqid_column(primary_key=True)
@@ -163,7 +169,7 @@ class Encounter(JenkinsDatabase):
     recording: Mapped["Recording"] = relationship(back_populates="encounter", cascade="all, delete")
     draft_notes: Mapped[list["DraftNote"]] = relationship(back_populates="encounter")
 
-class Recording(JenkinsDatabase):
+class Recording(AIScribeMetadata):
     __tablename__ = "recordings"
 
     id: Mapped[str] = sqid_column(primary_key=True)
@@ -176,7 +182,7 @@ class Recording(JenkinsDatabase):
 
     encounter: Mapped["Encounter"] = relationship(back_populates="recording")
 
-class DraftNote(JenkinsDatabase):
+class DraftNote(AIScribeMetadata):
     __tablename__ = "draft_notes"
 
     id: Mapped[str] = sqid_column(primary_key=True)
@@ -204,7 +210,7 @@ class DraftNote(JenkinsDatabase):
 DataEntityType = Literal["USER", "NOTE DEFINITION", "ENCOUNTER"]
 DataChangeType = Literal["CREATED", "MODIFIED", "REMOVED"]
 
-class DataChangeRecord(JenkinsDatabase):
+class DataChangeRecord(AIScribeMetadata):
     __tablename__ = "data_changes"
 
     id: Mapped[int] = autoid_column("data_change_ids")
@@ -263,5 +269,5 @@ def retrieve_recording(username: str, filename: str) -> BinaryIO:
 def purge_recording(username: str, filename: str) -> None:
     """Deletes a user's recording file directly from the Snowflake stage."""
 
-    with SQLAlchemySession(snowflake.db_engine) as session:
+    with AIScribeDatabase(snowflake.db_engine) as session:
         session.execute(text("REMOVE :stage_path;"), { "stage_path": f"@RECORDING_FILES/{username}/{filename}" })
