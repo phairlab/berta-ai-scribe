@@ -18,7 +18,7 @@ export default function Settings() {
   const [editedNoteType, setEditNoteType] =
     useState<EditedNoteType>(createNoteType());
 
-  const editNew = () => {
+  const resetEditor = () => {
     setEditNoteType(createNoteType());
   };
 
@@ -35,7 +35,7 @@ export default function Settings() {
 
   const handleDelete = (noteType: NoteType) => {
     if (noteType.id === editedNoteType.id) {
-      editNew();
+      resetEditor();
     }
   };
 
@@ -75,7 +75,7 @@ export default function Settings() {
           <CustomNotesEditor
             editedNoteType={editedNoteType}
             onChanges={handleChanges}
-            onReset={editNew}
+            onReset={resetEditor}
           />
         </div>
       </div>
