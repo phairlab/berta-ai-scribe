@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { useEffect, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import Markdown from "react-markdown";
 
@@ -9,13 +9,14 @@ import { SelectItem } from "@nextui-org/select";
 
 import * as convert from "@/utility/converters";
 
-import { OutputCard } from "./output-card";
 import { MobileCompatibleSelect } from "./mobile-compatible-select";
+import { OutputCard } from "./output-card";
 import { DraftNote } from "./types";
 
 type DisplayFormat = "Rich Text" | "Markdown" | "Plain Text";
 
-// This can be removed after upgrading Next.js and Typescript.
+// This patch declaration can potentially be removed after
+// upgrading Next.js and Typescript.
 declare var ClipboardItem: {
   new (
     items: Record<string, string | Blob | PromiseLike<string | Blob>>,
@@ -36,9 +37,7 @@ export const MarkdownNoteCard = ({
   showTitle = true,
   showRawOutput = false,
 }: MarkdownNoteCardProps) => {
-  const markdownNodeRef = useRef<HTMLDivElement | null>(null);
-  const [markdown, setMarkdown] = useState<string | null>(null);
-  const [plainText, setPlainText] = useState<string | null>(null);
+  const markdownNode = useRef<HTMLDivElement | null>(null);
   const [displayFormat, setDisplayFormat] =
     useState<DisplayFormat>("Rich Text");
 
@@ -51,29 +50,16 @@ export const MarkdownNoteCard = ({
     outputTypes = [...outputTypes, { key: "Markdown", label: "Markdown" }];
   }
 
-  const convertToPlainText = (markdown: string) => {
-    let plainText = convert.fromMarkdownToPlainText(markdown);
-
-    return plainText;
-  };
-
-  useEffect(() => {
-    if (note) {
-      const markdown = note.content;
-      const plainText = convertToPlainText(markdown);
-
-      setMarkdown(markdown);
-      setPlainText(plainText);
-    } else {
-      setMarkdown(null);
-      setPlainText(null);
-    }
-  }, [note]);
+  const markdown = note.content;
+  const plainText = useMemo(
+    () => convert.fromMarkdownToPlainText(note.content),
+    [note],
+  );
 
   const copyNote = async () => {
-    if (displayFormat === "Rich Text" && markdownNodeRef.current !== null) {
+    if (displayFormat === "Rich Text" && markdownNode.current !== null) {
       try {
-        const htmlFragment = markdownNodeRef.current.innerHTML;
+        const htmlFragment = markdownNode.current.innerHTML;
 
         // Include HTML data if supported.
         const htmlData = ClipboardItem?.supports("text/html")
@@ -148,7 +134,7 @@ export const MarkdownNoteCard = ({
       ) : displayFormat === "Markdown" ? (
         <div className="font-mono text-sm">{markdown}</div>
       ) : (
-        <div ref={markdownNodeRef}>
+        <div ref={markdownNode}>
           <Markdown
             className="flex flex-col gap-1 leading-normal p-0"
             components={{
