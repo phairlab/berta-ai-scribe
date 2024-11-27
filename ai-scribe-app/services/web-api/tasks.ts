@@ -1,7 +1,11 @@
 import { ApiRouterDefinition } from "./api-definition";
 import { WebApiToken } from "./authentication";
 import { httpAction } from "./base-queries";
-import { NoteGeneratorOutput, NoteOutputType, TranscriberOutput } from "./types";
+import {
+  NoteGeneratorOutput,
+  NoteOutputType,
+  TranscriberOutput,
+} from "./types";
 
 const transcribeAudio =
   (getAccessToken: () => WebApiToken) =>
