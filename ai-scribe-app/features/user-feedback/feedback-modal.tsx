@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { Button } from "@nextui-org/button";
 import { Textarea } from "@nextui-org/input";
@@ -25,19 +25,19 @@ export const FeedbackModal = ({
   onClose,
 }: FeedbackModalProps) => {
   const webApi = useWebApi();
-  const [feedbackText, setFeedbackText] = useState<string>();
-
-  useEffect(() => {
-    if (!isOpen) {
-      setFeedbackText(undefined);
-    }
-  }, [isOpen]);
+  const [feedbackText, setFeedbackText] = useState<string | null>(null);
 
   const handleSubmit = () => {
     if (feedbackText) {
       webApi.user.submitFeedback(new Date(), feedbackText);
+      setFeedbackText(null);
       onClose();
     }
+  };
+
+  const handleCancel = () => {
+    setFeedbackText(null);
+    onClose();
   };
 
   return (
@@ -83,7 +83,7 @@ export const FeedbackModal = ({
           >
             Submit
           </Button>
-          <Button color="default" onPress={onClose}>
+          <Button color="default" onPress={handleCancel}>
             Cancel
           </Button>
         </ModalFooter>
