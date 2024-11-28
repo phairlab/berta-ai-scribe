@@ -4,7 +4,7 @@ import { useMemo, useRef, useState } from "react";
 import { Button } from "@nextui-org/button";
 import { SelectItem } from "@nextui-org/select";
 
-import * as convert from "@/utility/converters";
+import { convertToPlainText } from "@/utility/markdown";
 
 import { Markdown } from "./markdown";
 import { MobileCompatibleSelect } from "./mobile-compatible-select";
@@ -49,10 +49,7 @@ export const MarkdownNoteCard = ({
   }
 
   const markdown = note.content;
-  const plainText = useMemo(
-    () => convert.fromMarkdownToPlainText(note.content),
-    [note],
-  );
+  const plainText = useMemo(() => convertToPlainText(note.content), [note]);
 
   const copyNote = async () => {
     if (displayFormat === "Rich Text" && markdownNode.current !== null) {
