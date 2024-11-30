@@ -61,17 +61,18 @@ def get_encounters(
 
 @router.post("")
 def create_encounter(
-    userSession: useUserSession, 
+    userSession: useUserSession,
     database: useDatabase,
     backgroundTasks: BackgroundTasks,
-    *, 
-    audio: UploadFile, 
-    created: Annotated[datetime, Body()] = datetime.now(timezone.utc), 
+    *,
+    audio: UploadFile,
     label: Annotated[str | None, Body()] = None,
 ) -> sch.Encounter:
     """
     Creates and saves a new encounter record.
     """
+
+    created = datetime.now(timezone.utc)
 
     encounter_id = db.new_sqid(database)
     recording_id = db.new_sqid(database)

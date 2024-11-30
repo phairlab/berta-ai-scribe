@@ -60,10 +60,7 @@ export function useEncounters() {
 
     try {
       // Persist the data.
-      const persistedRecord = await webApi.encounters.create(
-        audio,
-        new Date(encounter.created),
-      );
+      const persistedRecord = await webApi.encounters.create(audio);
 
       // Mutate temp records to update persisted id.
       encounter.id = persistedRecord.id;

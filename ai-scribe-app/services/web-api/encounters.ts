@@ -23,14 +23,12 @@ export const create =
   (getAccessToken: () => WebApiToken) =>
   (
     audio: File,
-    created: Date,
     label?: string,
     cancellation?: AbortSignal,
   ): Promise<Encounter> => {
     const formData = new FormData();
 
     formData.append("audio", audio);
-    formData.append("created", created.toISOString());
 
     if (label) {
       formData.append("label", label);
