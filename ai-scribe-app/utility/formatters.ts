@@ -19,12 +19,14 @@ export function formatDisplayName(username: string) {
 }
 
 export function formatDate(date: Date) {
-  const formattedDate = `${date.getFullYear()}-${("0" + date.getMonth()).slice(-2)}-${("0" + (date.getDate() + 1)).slice(-2)}`;
+  // Format: YYYY-MM-DD
+  const formattedDate = `${date.getFullYear()}-${("0" + (date.getMonth() + 1)).slice(-2)}-${("0" + date.getDate()).slice(-2)}`;
 
   return formattedDate;
 }
 
 export function formatTime(date: Date) {
+  // Format: HH:MM
   const formattedTime = `${("0" + date.getHours()).slice(-2)}:${("0" + date.getMinutes()).slice(-2)}`;
 
   return formattedTime;
