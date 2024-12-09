@@ -94,11 +94,7 @@ export const ApplicationStateProvider = ({ children }: PropsWithChildren) => {
       .then((records) => {
         const sampleRecordings: SampleRecording[] = records
           .sort(alphabetically((x) => x.filename))
-          .map((record) => ({
-            id: record.filename,
-            filename: record.filename,
-            transcript: record.transcript,
-          }));
+          .map((record) => convertWebApiRecord.toSampleRecording(record));
 
         setSampleRecordings(sampleRecordings);
         setSampleRecordingStatus("Ready");
