@@ -13,10 +13,10 @@ import {
   ApplicationStateContext,
   InitializationState,
 } from "./application-state-context";
-import { EncounterLoadState, useEncounterState } from "./encounter-state";
 import { ExternalStateMonitor } from "./external-state-monitor";
-import { useNoteTypeState } from "./note-type-state";
-import { useSampleRecordingState } from "./sample-recording-state";
+import { EncounterLoadState, useEncounterState } from "./use-encounter-state";
+import { useNoteTypeState } from "./use-note-type-state";
+import { useSampleRecordingState } from "./use-sample-recording-state";
 
 export const ApplicationStateProvider = ({ children }: PropsWithChildren) => {
   const webApi = useWebApi();
