@@ -35,3 +35,9 @@ export function formatTime(date: Date) {
 export function formatDatetime(date: Date) {
   return `${formatDate(date)} ${formatTime(date)}`;
 }
+
+export function formatDateWithWeekday(date: Date) {
+  const weekday = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+  return `${formatDate(date)} (${weekday[date.getDay()]})`;
+}
