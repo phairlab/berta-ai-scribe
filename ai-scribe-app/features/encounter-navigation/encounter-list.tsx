@@ -56,8 +56,8 @@ export const EncounterList = ({
     );
 
   return (
-    <ScrollShadow className="max-h-[500px]">
-      <Divider className="mt-3 mb-1 px-2 w-[65%] mx-auto opacity-50" />
+    <ScrollShadow className="min-h-full min-h-[400px] max-h-[calc(100vh-200px)]">
+      <Divider className="mt-3 mb-1 px-2 w-[75%] mx-auto opacity-50" />
       <Listbox
         aria-label="List containing saved recordings"
         itemClasses={{ title: "w-full", wrapper: "relative" }}
@@ -68,7 +68,7 @@ export const EncounterList = ({
             showDivider
             classNames={{
               heading: "text-inherit text-sm",
-              divider: "w-[65%] mx-auto opacity-50",
+              divider: "w-[75%] mx-auto opacity-50",
             }}
             title={g.date}
           >
@@ -77,10 +77,10 @@ export const EncounterList = ({
                 key={encounter.id!}
                 className={clsx(
                   "relative min-h-12 box-border",
-                  "border-s-4 rounded-s-none border-blue-500 data-[hover=true]:bg-transparent",
+                  "data-[hover=true]:bg-zinc-50 data-[hover=true]:dark:bg-zinc-900 data-[focus=true]:bg-transparent",
                   activeEncounter && encounter.id === activeEncounter.id
-                    ? "border-blue-500"
-                    : "border-transparent",
+                    ? "border-s-4 rounded-s-none border-blue-500 w-[calc(100%-10px)]"
+                    : "border-transparent ms-[4px] w-[calc(100%-14px)]",
                 )}
                 classNames={{ title: "text-xs mb-1" }}
                 description={

@@ -36,9 +36,9 @@ export default function Home() {
         <>
           <nav
             className={clsx(
-              "hidden sm:block",
+              "hidden sm:block max-h-full",
               "sm:min-w-[200px] sm:max-w-[200px]",
-              "md:min-w-[250px] md:max-w-[250px]",
+              "md:min-w-[275px] md:max-w-[275px]",
             )}
           >
             <EncounterNavigator />
@@ -51,7 +51,7 @@ export default function Home() {
             className={clsx(
               "w-full py-2",
               "sm:min-w-[calc(100%-225px)] sm:max-w-[calc(100%-225px)] sm:w-[calc(100%-225px)]",
-              "md:min-w-[calc(100%-275px)] md:max-w-[calc(100%-275px)] md:w-[calc(100%-275px)]",
+              "md:min-w-[calc(100%-325px)] md:max-w-[calc(100%-300px)] md:w-[calc(100%-300px)]",
             )}
           >
             <AIScribe />
