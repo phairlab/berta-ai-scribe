@@ -13,7 +13,7 @@ export type DataChanges = {
   encounters: ChangedEntities<Encounter>;
 };
 
-export type DataPage<T> = {
+export type Page<T> = {
   data: T[];
   isLastPage: boolean;
 };

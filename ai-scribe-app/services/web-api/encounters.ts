@@ -1,15 +1,15 @@
 import { ApiRouterDefinition } from "./api-definition";
 import { WebApiToken } from "./authentication";
 import { httpAction } from "./base-queries";
-import { DataPage, Encounter, NoteOutputType } from "./types";
+import { Page, Encounter, NoteOutputType } from "./types";
 
 export const getAll =
   (getAccessToken: () => WebApiToken) =>
   (
     earlierThan: Date | null = null,
     cancellation?: AbortSignal,
-  ): Promise<DataPage<Encounter>> =>
-    httpAction<DataPage<Encounter>>("GET", "api/encounters", {
+  ): Promise<Page<Encounter>> =>
+    httpAction<Page<Encounter>>("GET", "api/encounters", {
       accessToken: getAccessToken(),
       query: {
         earlierThan: earlierThan

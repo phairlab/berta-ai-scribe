@@ -26,7 +26,7 @@ def get_encounters(
     database: useDatabase,
     *,
     earlierThan: datetime | None = None,
-) -> sch.DataPage[sch.Encounter]:
+) -> sch.Page[sch.Encounter]:
     """
     Gets all saved encounters for the current user.
     """
@@ -54,7 +54,7 @@ def get_encounters(
     records = database.execute(get_encounters_batch).scalars().all()
     encounters = [sch.Encounter.from_db_record(r) for r in records]
 
-    return sch.DataPage[sch.Encounter](
+    return sch.Page[sch.Encounter](
         data=encounters[:settings.ENCOUNTERS_PAGE_SIZE],
         isLastPage=len(encounters) <= settings.ENCOUNTERS_PAGE_SIZE
     )

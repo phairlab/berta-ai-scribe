@@ -4,6 +4,6 @@ from pydantic import BaseModel
 
 T = TypeVar("T")
 
-class DataPage(BaseModel, Generic[T]):
+class Page(BaseModel, Generic[T]):
     data: list[T]
     isLastPage: bool
