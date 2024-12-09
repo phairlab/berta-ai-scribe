@@ -51,7 +51,7 @@ function plainTextRenderer() {
 }
 
 /** Converts a markdown string to equivalent plain text. */
-export function convertToPlainText(markdown: string) {
+function toPlainText(markdown: string) {
   const plainText = marked(markdown, {
     renderer: plainTextRenderer(),
   }) as string;
@@ -67,3 +67,5 @@ export function convertToPlainText(markdown: string) {
     .replace(/\n\n(1\. .*)/g, "\n$1") // Remove blank lines before numeric lists
     .trim();
 }
+
+export const convertMarkdown = { toPlainText };
