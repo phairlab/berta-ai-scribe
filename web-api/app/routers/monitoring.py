@@ -13,16 +13,16 @@ from app.services.db import useDatabase
 
 router = APIRouter(dependencies=[Depends(authenticate_session)])
 
-@router.get("/check-data-changes")
+@router.get("/check-external-changes")
 def get_updates(
     userSession: useUserSession,
     database: useDatabase,
     *,
     cutoff: datetime
-) -> sch.DataChanges | None:
+) -> sch.ExternalChangeUpdate | None:
     """
     Gets all updates for the current user after the specified date
-    that occurred in a different session.
+    that occurred in a different (i.e. external) session.
     """
 
     # Identify any updates.
@@ -105,15 +105,15 @@ def get_updates(
         return None
 
     # Return the changes.
-    return sch.DataChanges(
+    return sch.ExternalChangeUpdate(
         lastUpdate=max(u.logged for u in updates) if any(updates) else cutoff,
         userInfo=sch.UserInfo.from_db_record(user) if user is not None else None,
-        noteDefinitions=sch.ChangedEntities[sch.NoteDefinition](
+        noteDefinitions=sch.ExternalChanges[sch.NoteDefinition](
             created=[sch.NoteDefinition.from_db_record(e) for e in note_definitions if e.id in created_note_definition_ids],
             modified=[sch.NoteDefinition.from_db_record(e) for e in note_definitions if e.id in modified_note_definition_ids],
             removed=[sch.NoteDefinition.from_db_record(e) for e in note_definitions if e.id in removed_note_definition_ids],
         ),
-        encounters=sch.ChangedEntities[sch.Encounter](
+        encounters=sch.ExternalChanges[sch.Encounter](
             created=[sch.Encounter.from_db_record(e) for e in encounters if e.id in created_encounter_ids],
             modified=[sch.Encounter.from_db_record(e) for e in encounters if e.id in modified_encounter_ids],
             removed=[sch.Encounter.from_db_record(e) for e in encounters if e.id in removed_encounter_ids],

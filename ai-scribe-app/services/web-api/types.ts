@@ -1,16 +1,16 @@
 export type NoteOutputType = "Plain Text" | "Markdown";
 
-export type ChangedEntities<T> = {
+export type ExternalChanges<T> = {
   created: T[];
   modified: T[];
   removed: T[];
 };
 
-export type DataChanges = {
+export type ExternalChangeUpdate = {
   lastUpdate: string;
   userInfo: UserInfo | null;
-  noteDefinitions: ChangedEntities<NoteDefinition>;
-  encounters: ChangedEntities<Encounter>;
+  noteDefinitions: ExternalChanges<NoteDefinition>;
+  encounters: ExternalChanges<Encounter>;
 };
 
 export type Page<T> = {
