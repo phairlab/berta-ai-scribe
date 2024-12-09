@@ -3,7 +3,7 @@ import { use } from "react";
 import { IncompleteNoteType, NoteType } from "@/core/types";
 import { ApplicationStateContext } from "@/services/application-state/application-state-context";
 import { useWebApi } from "@/services/web-api/use-web-api";
-import * as convert from "@/utility/converters";
+import { convertWebApiRecord } from "@/utility/conversion";
 import { asApplicationError, InvalidOperationError } from "@/utility/errors";
 import { setTracking } from "@/utility/tracking";
 
@@ -57,7 +57,7 @@ export function useNoteTypes() {
       noteType.id = persistedRecord.id;
       tempRecord.id = persistedRecord.id;
 
-      noteTypes.put(convert.fromWebApiNoteType(persistedRecord));
+      noteTypes.put(convertWebApiRecord.toNoteType(persistedRecord));
     } catch (ex: unknown) {
       // Report on failure.
       noteTypes.put(
@@ -99,7 +99,7 @@ export function useNoteTypes() {
         instructions: noteType.instructions,
       });
 
-      noteTypes.put(convert.fromWebApiNoteType(persistedRecord));
+      noteTypes.put(convertWebApiRecord.toNoteType(persistedRecord));
     } catch (ex: unknown) {
       // Report on failure.
       noteTypes.put(

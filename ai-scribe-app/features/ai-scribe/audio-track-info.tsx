@@ -1,4 +1,4 @@
-import { formatDuration } from "@/utility/formatters";
+import { formatDuration } from "@/utility/formatting";
 
 type AudioTrackInfoProps = {
   duration: number | null;

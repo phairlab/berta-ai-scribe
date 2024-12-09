@@ -3,9 +3,9 @@ import { use } from "react";
 import { DraftNote, Encounter } from "@/core/types";
 import { ApplicationStateContext } from "@/services/application-state/application-state-context";
 import { useWebApi } from "@/services/web-api/use-web-api";
-import * as convert from "@/utility/converters";
+import { convertWebApiRecord } from "@/utility/conversion";
 import { asApplicationError, InvalidOperationError } from "@/utility/errors";
-import { byDate } from "@/utility/sorters";
+import { byDate } from "@/utility/sorting";
 import { setTracking } from "@/utility/tracking";
 
 /**
@@ -66,7 +66,7 @@ export function useEncounters() {
       encounter.id = persistedRecord.id;
       tempRecord.id = persistedRecord.id;
 
-      encounters.put(convert.fromWebApiEncounter(persistedRecord));
+      encounters.put(convertWebApiRecord.toEncounter(persistedRecord));
     } catch (ex: unknown) {
       // Report on failure.
       encounters.put(
@@ -248,7 +248,7 @@ export function useEncounters() {
       const currentEncounter = encounters.get(encounter.id);
 
       if (currentEncounter) {
-        encounters.put(convert.fromWebApiEncounter(persistedEncounter));
+        encounters.put(convertWebApiRecord.toEncounter(persistedEncounter));
       }
     } catch (ex: unknown) {
       // Report on failure.

@@ -3,8 +3,8 @@ import { PropsWithChildren, use, useEffect, useMemo, useRef } from "react";
 import { Encounter } from "@/core/types";
 import * as webApiTypes from "@/services/web-api/types";
 import { useWebApi } from "@/services/web-api/use-web-api";
-import * as convert from "@/utility/converters";
-import { byDate } from "@/utility/sorters";
+import { convertWebApiRecord } from "@/utility/conversion";
+import { byDate } from "@/utility/sorting";
 import { setTracking, WithTracking } from "@/utility/tracking";
 import { useAbortController } from "@/utility/use-abort-controller";
 
@@ -148,7 +148,7 @@ export const ExternalStateMonitor = ({ children }: PropsWithChildren) => {
               return;
             }
 
-            noteTypes.current.put(convert.fromWebApiNoteType(created));
+            noteTypes.current.put(convertWebApiRecord.toNoteType(created));
           }
 
           // MODIFIED NOTE DEFINITIONS
@@ -164,7 +164,9 @@ export const ExternalStateMonitor = ({ children }: PropsWithChildren) => {
                   new Date(previous.modified).getTime() <
                   new Date(modified.modified).getTime()
                 ) {
-                  noteTypes.current.put(convert.fromWebApiNoteType(modified));
+                  noteTypes.current.put(
+                    convertWebApiRecord.toNoteType(modified),
+                  );
                 }
               },
             );
@@ -188,7 +190,7 @@ export const ExternalStateMonitor = ({ children }: PropsWithChildren) => {
               return;
             }
 
-            encounters.current.put(convert.fromWebApiEncounter(created));
+            encounters.current.put(convertWebApiRecord.toEncounter(created));
           }
 
           // MODIFIED ENCOUNTERS
@@ -218,7 +220,7 @@ export const ExternalStateMonitor = ({ children }: PropsWithChildren) => {
                 // with the combined set of notes.
                 if (isNewer) {
                   encounters.current.put(
-                    convert.fromWebApiEncounter({
+                    convertWebApiRecord.toEncounter({
                       ...modified,
                       draftNotes: notes,
                     }),

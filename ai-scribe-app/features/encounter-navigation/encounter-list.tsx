@@ -8,7 +8,7 @@ import { ScrollShadow } from "@nextui-org/scroll-shadow";
 
 import { Encounter } from "@/core/types";
 import { WaitMessageSpinner } from "@/core/wait-message-spinner";
-import { formatDatetime } from "@/utility/formatters";
+import { formatDatetime } from "@/utility/formatting";
 
 import { EncounterDropdown } from "./encounter-dropdown";
 

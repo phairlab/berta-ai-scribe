@@ -4,7 +4,7 @@ import clsx from "clsx";
 
 import { WaitMessageSpinner } from "@/core/wait-message-spinner";
 import { useSession } from "@/services/session-management/use-session";
-import { formatDisplayName } from "@/utility/formatters";
+import { formatDisplayName } from "@/utility/formatting";
 
 import { SessionDropdown } from "./session-dropdown";
 

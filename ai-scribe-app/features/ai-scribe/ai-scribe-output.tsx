@@ -7,7 +7,7 @@ import { NoteCard } from "@/core/note-card";
 import { TranscriptCard } from "@/core/transcript-card";
 import { DraftNote, Recording } from "@/core/types";
 import { ApplicationError, isApplicationError } from "@/utility/errors";
-import { byDate } from "@/utility/sorters";
+import { byDate } from "@/utility/sorting";
 
 export type AIScribeError = {
   name: string | null;

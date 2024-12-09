@@ -1,5 +1,48 @@
 import { marked } from "marked";
 
+import * as UiTypes from "@/core/types";
+import * as WebApiTypes from "@/services/web-api/types";
+
+import { byDate } from "./sorting";
+import { setTracking } from "./tracking";
+
+// WEB API --> UI TYPE CONVERSION
+
+function toNote(record: WebApiTypes.DraftNote) {
+  return setTracking(record, "Synchronized") as UiTypes.DraftNote;
+}
+
+function toEncounter(record: WebApiTypes.Encounter) {
+  return setTracking(
+    {
+      ...record,
+      draftNotes: record.draftNotes
+        .map((n) => toNote(n))
+        .sort(byDate((x) => new Date(x.created), "Descending")),
+    },
+    "Synchronized",
+  ) as UiTypes.Encounter;
+}
+
+function toNoteType(record: WebApiTypes.NoteDefinition) {
+  return setTracking(record, "Synchronized") as UiTypes.NoteType;
+}
+
+function toSampleRecording(
+  record: WebApiTypes.SampleRecording,
+): UiTypes.SampleRecording {
+  return { id: record.filename, ...record };
+}
+
+export const convertWebApiRecord = {
+  toNote,
+  toEncounter,
+  toNoteType,
+  toSampleRecording,
+};
+
+// MARKDOWN CONVERSION
+
 function plainTextRenderer() {
   const render = new marked.Renderer();
 

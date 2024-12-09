@@ -3,7 +3,7 @@ import { useMemo, useRef, useState } from "react";
 import { Button } from "@nextui-org/button";
 import { SelectItem } from "@nextui-org/select";
 
-import { convertMarkdown } from "@/utility/markdown";
+import { convertMarkdown } from "@/utility/conversion";
 
 import { Markdown } from "./markdown";
 import { MobileCompatibleSelect } from "./mobile-compatible-select";

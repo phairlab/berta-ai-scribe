@@ -5,8 +5,8 @@ import { PropsWithChildren, useEffect, useState } from "react";
 import { Encounter, NoteType, SampleRecording } from "@/core/types";
 import { useSession } from "@/services/session-management/use-session";
 import { useWebApi } from "@/services/web-api/use-web-api";
-import * as convert from "@/utility/converters";
-import { alphabetically, byDate } from "@/utility/sorters";
+import { convertWebApiRecord } from "@/utility/conversion";
+import { alphabetically, byDate } from "@/utility/sorting";
 import { useAbortController } from "@/utility/use-abort-controller";
 
 import {
@@ -113,7 +113,7 @@ export const ApplicationStateProvider = ({ children }: PropsWithChildren) => {
       .then(([userInfo, records]) => {
         const noteTypes: NoteType[] = records
           .sort(alphabetically((x) => x.title))
-          .map((record) => convert.fromWebApiNoteType(record));
+          .map((record) => convertWebApiRecord.toNoteType(record));
 
         setNoteTypes(noteTypes);
 
@@ -141,7 +141,7 @@ export const ApplicationStateProvider = ({ children }: PropsWithChildren) => {
       .then((page) => {
         const encounters: Encounter[] = page.data
           .sort(byDate((x) => new Date(x.created), "Descending"))
-          .map((record) => convert.fromWebApiEncounter(record));
+          .map((record) => convertWebApiRecord.toEncounter(record));
 
         setEncounters(encounters);
         setEncounterLoadState(

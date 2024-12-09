@@ -1,8 +1,8 @@
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 
 import { Encounter, EncountersPage } from "@/core/types";
-import * as convert from "@/utility/converters";
-import { byDate } from "@/utility/sorters";
+import { convertWebApiRecord } from "@/utility/conversion";
+import { byDate } from "@/utility/sorting";
 
 import { InitializationState } from "./application-state-context";
 
@@ -84,7 +84,7 @@ export function useEncounterState(
     loadPage: (page: EncountersPage) => {
       const moreEncounters: Encounter[] = page.data
         .sort(byDate((x) => new Date(x.created), "Descending"))
-        .map((record) => convert.fromWebApiEncounter(record));
+        .map((record) => convertWebApiRecord.toEncounter(record));
 
       setEncounters((encounters) =>
         [...encounters, ...moreEncounters].sort(
