@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@nextui-org/button";
 import { Input, Textarea } from "@nextui-org/input";
@@ -64,6 +64,13 @@ export const CustomNotesEditor = ({
     noteTypes.save(editedNoteType);
     reset();
   };
+
+  useEffect(() => {
+    noteGenerator.abort();
+    setDraftNote(undefined);
+    setError(undefined);
+    setTemplate(undefined);
+  }, [editedNoteType]);
 
   const canTest =
     editedNoteType.instructions &&
@@ -165,7 +172,7 @@ export const CustomNotesEditor = ({
         )}
         {error && <ErrorCard error={error} />}
         {draftNote && (
-          <NoteCard note={draftNote} showRawOutput={true} showTitle={false} />
+          <NoteCard canFlag={false} note={draftNote} showRawOutput={true} />
         )}
       </div>
     </>

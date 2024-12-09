@@ -4,8 +4,8 @@ import { DraftNote } from "./types";
 
 type NoteCardProps = {
   note: DraftNote;
-  showTitle?: boolean;
   showRawOutput?: boolean;
+  canFlag?: boolean;
 };
 
 export const NoteCard = (props: NoteCardProps) =>

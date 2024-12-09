@@ -33,22 +33,25 @@ export const ErrorCard = ({
     </span>
   );
   const controls = (
-    <>
-      {retryAction && (
-        <Button color="default" size="sm" onClick={retryAction}>
-          Retry
-        </Button>
-      )}
-      {canDismiss && (
-        <Button color="default" size="sm" onClick={onDismiss}>
-          Dismiss
-        </Button>
-      )}
-    </>
+    <div className="flex flex-col sm:flex-row justify-between items-center gap-4 w-full">
+      <div className="text-lg font-semibold">{title}</div>
+      <div className="flex flex-row items-center gap-2">
+        {retryAction && (
+          <Button color="default" size="sm" onClick={retryAction}>
+            Retry
+          </Button>
+        )}
+        {canDismiss && (
+          <Button color="default" size="sm" onClick={onDismiss}>
+            Dismiss
+          </Button>
+        )}
+      </div>
+    </div>
   );
 
   return (
-    <OutputCard controls={controls} title={title}>
+    <OutputCard controls={controls}>
       {error.message && (
         <div className="flex flex-col gap-3 text-sm font-mono">
           {error.errorId && (

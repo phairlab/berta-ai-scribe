@@ -299,6 +299,31 @@ export const DownloadIcon: React.FC<IconSvgProps> = ({
     </g>
   </svg>
 );
+
+// TODO: Add atribution (https://help.thenounproject.com/hc/en-us/articles/200509948-Medium-Specific-Credit-Requirements-Examples).
+// Flag by Goran Markovic from <a href="https://thenounproject.com/browse/icons/term/flag/" target="_blank" title="Flag Icons">Noun Project</a> (CC BY 3.0)
+export const FlagIcon: React.FC<IconSvgProps> = ({
+  size = 24,
+  width,
+  height,
+  ...props
+}: IconSvgProps) => (
+  <svg
+    aria-hidden="true"
+    focusable="false"
+    height={size || height}
+    role="presentation"
+    stroke="black"
+    strokeWidth="2"
+    viewBox="0 0 64 64"
+    width={size || width}
+    {...props}
+  >
+    <path d="M57.38,22.62a1,1,0,0,0-.73-.6L40.83,18.89,45.29,2.26a1,1,0,0,0-1.77-.85c-4.17,5.78-11,8-17.63,10.09S13.23,15.56,9.82,20.72a1,1,0,0,0,0,1.05L22.05,43,33.3,62.5a1,1,0,0,0,1.74-1L24.1,42.56c3.1-4.19,8.73-6,14.68-8,7-2.28,14.23-4.64,18.5-11A1,1,0,0,0,57.38,22.62ZM38.16,32.69c-6,1.94-11.62,3.78-15.14,8L11.84,21.32c3.11-4.21,8.73-6,14.66-7.91,5.61-1.8,11.37-3.65,15.78-7.63L38.62,19.4a1,1,0,0,0,.11.79,1,1,0,0,0,.66.45l15.32,3C50.71,28.59,44.34,30.67,38.16,32.69Z" />
+  </svg>
+);
+
+// Copied from NextUI.
 export const DeleteDocumentIcon: React.FC<IconSvgProps> = (props) => (
   <svg
     aria-hidden="true"

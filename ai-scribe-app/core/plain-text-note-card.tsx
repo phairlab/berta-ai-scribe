@@ -5,13 +5,9 @@ import { DraftNote } from "./types";
 
 type PlainTextNoteCardProps = {
   note: DraftNote;
-  showTitle?: boolean;
 };
 
-export const PlainTextNoteCard = ({
-  note,
-  showTitle = true,
-}: PlainTextNoteCardProps) => {
+export const PlainTextNoteCard = ({ note }: PlainTextNoteCardProps) => {
   const copyNote = async () => {
     if (note.content) {
       await navigator.clipboard.writeText(note.content);
@@ -19,13 +15,13 @@ export const PlainTextNoteCard = ({
   };
 
   const controls = (
-    <Button color="default" size="sm" onClick={copyNote}>
+    <Button className="ms-auto" color="default" size="sm" onClick={copyNote}>
       Copy
     </Button>
   );
 
   return (
-    <OutputCard controls={controls} title={showTitle && note.title}>
+    <OutputCard controls={controls}>
       {note.content.replace(/^###.*###\n/g, "")}
     </OutputCard>
   );

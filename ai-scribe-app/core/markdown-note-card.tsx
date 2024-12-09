@@ -5,6 +5,8 @@ import { SelectItem } from "@nextui-org/select";
 
 import { convertMarkdown } from "@/utility/conversion";
 
+import { NoteFlag } from "@/features/user-feedback/note-flag";
+
 import { Markdown } from "./markdown";
 import { MobileCompatibleSelect } from "./mobile-compatible-select";
 import { OutputCard } from "./output-card";
@@ -25,14 +27,14 @@ declare var ClipboardItem: {
 
 type MarkdownNoteCardProps = {
   note: DraftNote;
-  showTitle?: boolean;
   showRawOutput?: boolean;
+  canFlag?: boolean;
 };
 
 export const MarkdownNoteCard = ({
   note,
-  showTitle = true,
   showRawOutput = false,
+  canFlag = true,
 }: MarkdownNoteCardProps) => {
   const markdownNode = useRef<HTMLDivElement | null>(null);
   const [displayFormat, setDisplayFormat] =
@@ -105,27 +107,30 @@ export const MarkdownNoteCard = ({
   };
 
   const controls = (
-    <>
-      <MobileCompatibleSelect
-        aria-label="Display Format Selector"
-        className="w-32"
-        disallowEmptySelection={true}
-        items={outputTypes}
-        selectedKeys={[displayFormat]}
-        selectionMode="single"
-        size="sm"
-        onChange={(e) => setDisplayFormat(e.target.value as DisplayFormat)}
-      >
-        {(item) => <SelectItem key={item.key}>{item.label}</SelectItem>}
-      </MobileCompatibleSelect>
-      <Button color="default" size="sm" onClick={copyNote}>
-        Copy
-      </Button>
-    </>
+    <div className="flex flex-col sm:flex-row justify-between items-center gap-4 w-full">
+      {canFlag ? <NoteFlag comments={null} isFlagged={false} /> : <div />}
+      <div className="flex flex-row items-center gap-2">
+        <MobileCompatibleSelect
+          aria-label="Display Format Selector"
+          className="w-32"
+          disallowEmptySelection={true}
+          items={outputTypes}
+          selectedKeys={[displayFormat]}
+          selectionMode="single"
+          size="sm"
+          onChange={(e) => setDisplayFormat(e.target.value as DisplayFormat)}
+        >
+          {(item) => <SelectItem key={item.key}>{item.label}</SelectItem>}
+        </MobileCompatibleSelect>
+        <Button color="default" size="sm" onClick={copyNote}>
+          Copy
+        </Button>
+      </div>
+    </div>
   );
 
   return (
-    <OutputCard controls={controls} title={showTitle && note.title}>
+    <OutputCard controls={controls}>
       {displayFormat === "Plain Text" ? (
         plainText
       ) : displayFormat === "Markdown" ? (
