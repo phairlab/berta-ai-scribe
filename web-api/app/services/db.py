@@ -269,5 +269,5 @@ def retrieve_recording(username: str, filename: str) -> BinaryIO:
 def purge_recording(username: str, filename: str) -> None:
     """Deletes a user's recording file directly from the Snowflake stage."""
 
-    with AIScribeDatabase(snowflake.db_engine) as session:
+    with AIScribeDatabase() as session:
         session.execute(text("REMOVE :stage_path;"), { "stage_path": f"@RECORDING_FILES/{username}/{filename}" })
