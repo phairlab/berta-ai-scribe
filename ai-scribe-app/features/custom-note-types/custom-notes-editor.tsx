@@ -9,7 +9,7 @@ import { NoteCard } from "@/core/note-card";
 import { NoteTypeSelector } from "@/core/note-type-selector";
 import {
   DraftNote,
-  EditedNoteType,
+  IncompleteNoteType,
   NoteType,
   Recording,
   SampleRecording,
@@ -22,8 +22,8 @@ import { RequiredFields } from "@/utility/typing";
 import { useNoteGenerator } from "@/features/ai-scribe/use-note-generator";
 
 type CustomNotesEditorProps = {
-  editedNoteType: EditedNoteType;
-  onChanges: (changes: Partial<EditedNoteType>) => void;
+  editedNoteType: IncompleteNoteType;
+  onChanges: (changes: Partial<IncompleteNoteType>) => void;
   onReset: () => void;
 };
 
@@ -75,7 +75,7 @@ export const CustomNotesEditor = ({
 
     if (transcript && editedNoteType.instructions !== undefined) {
       noteGenerator.generateNote(
-        editedNoteType as RequiredFields<EditedNoteType, "instructions">,
+        editedNoteType as RequiredFields<IncompleteNoteType, "instructions">,
         "(TEST)",
         transcript,
       );

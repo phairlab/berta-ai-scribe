@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { NoteTypeSelector } from "@/core/note-type-selector";
 import { subtitle, title } from "@/core/primitives";
-import { EditedNoteType, NoteType } from "@/core/types";
+import { IncompleteNoteType, NoteType } from "@/core/types";
 import { createNoteType } from "@/services/application-state/create-note-type";
 import { useNoteTypes } from "@/services/application-state/use-note-types";
 import { setTracking } from "@/utility/tracking";
@@ -16,7 +16,7 @@ export default function Settings() {
   const noteTypes = useNoteTypes();
 
   const [editedNoteType, setEditNoteType] =
-    useState<EditedNoteType>(createNoteType());
+    useState<IncompleteNoteType>(createNoteType());
 
   const resetEditor = () => {
     setEditNoteType(createNoteType());
@@ -26,7 +26,7 @@ export default function Settings() {
     setEditNoteType(setTracking(noteType, "Locally Modified"));
   };
 
-  const handleChanges = (changes: Partial<EditedNoteType>) => {
+  const handleChanges = (changes: Partial<IncompleteNoteType>) => {
     setEditNoteType({
       ...editedNoteType,
       ...changes,

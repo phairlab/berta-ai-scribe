@@ -7,7 +7,10 @@ export type UserInfo = WebApiTypes.UserInfo;
 export type SampleRecording = WebApiTypes.SampleRecording & { id: string };
 
 export type NoteType = WithTracking<WebApiTypes.NoteDefinition>;
-export type EditedNoteType = OptionalFields<NoteType, "instructions" | "title">;
+export type IncompleteNoteType = OptionalFields<
+  NoteType,
+  "instructions" | "title"
+>;
 
 export type EncountersPage = WebApiTypes.Page<WebApiTypes.Encounter>;
 export type Encounter = WithTracking<

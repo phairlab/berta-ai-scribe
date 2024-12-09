@@ -1,10 +1,10 @@
-import { DraftNote, EditedNoteType, NoteType } from "@/core/types";
+import { DraftNote, IncompleteNoteType, NoteType } from "@/core/types";
 import { setTracking } from "@/utility/tracking";
 import { RequiredFields } from "@/utility/typing";
 
 export type ValidNoteType =
   | NoteType
-  | RequiredFields<EditedNoteType, "instructions">;
+  | RequiredFields<IncompleteNoteType, "instructions">;
 
 export function createNote(fields: {
   noteType: ValidNoteType;
