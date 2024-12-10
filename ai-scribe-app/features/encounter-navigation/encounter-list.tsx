@@ -57,7 +57,7 @@ export const EncounterList = ({
 
   return (
     <ScrollShadow className="min-h-full min-h-[400px] max-h-[calc(100vh-200px)]">
-      <Divider className="mt-3 mb-1 px-2 w-[75%] mx-auto opacity-50" />
+      <Divider className="mt-3 mb-1 ms-2 px-2 w-[calc(100%-20px)] opacity-50" />
       <Listbox
         aria-label="List containing saved recordings"
         itemClasses={{ title: "w-full", wrapper: "relative" }}
@@ -67,8 +67,8 @@ export const EncounterList = ({
             key={g.date}
             showDivider
             classNames={{
-              heading: "text-inherit text-sm",
-              divider: "w-[75%] mx-auto opacity-50",
+              heading: "text-xs font-semibold text-blue-600 dark:text-blue-400",
+              divider: "ms-1 w-[calc(100%-15px)] opacity-50",
             }}
             title={g.date}
           >
@@ -82,7 +82,11 @@ export const EncounterList = ({
                     ? "border-s-4 rounded-s-none border-blue-500 w-[calc(100%-10px)]"
                     : "border-transparent ms-[4px] w-[calc(100%-14px)]",
                 )}
-                classNames={{ title: "text-xs mb-1" }}
+                classNames={{
+                  title:
+                    "text-xs mb-1 font-semibold text-zinc-600 dark:text-zinc-400",
+                  description: "text-zinc-500",
+                }}
                 description={
                   !encounter.tracking.isPersisted &&
                   encounter.tracking.hasError ? (
