@@ -1,5 +1,5 @@
 -- v0.5.0-0
 
 ALTER TABLE draft_notes ADD COLUMN is_flagged BOOLEAN NOT NULL DEFAULT FALSE;
-ALTER TABLE draft_notes ADD COLUMN qa_comments VARCHAR(500);
+ALTER TABLE draft_notes ADD COLUMN comments VARCHAR(500);
 

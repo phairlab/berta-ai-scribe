@@ -134,7 +134,9 @@ export const AIScribe = () => {
   const handleActiveEncounterUpdated = () => {
     if (activeEncounter && activeOutput) {
       if ("definitionId" in activeOutput) {
-        setActiveOutput(activeEncounter.draftNotes.find((n) => n.id === activeOutput.id));
+        setActiveOutput(
+          activeEncounter.draftNotes.find((n) => n.id === activeOutput.id),
+        );
       } else if ("transcript" in activeOutput) {
         setActiveOutput(activeEncounter.recording);
       }

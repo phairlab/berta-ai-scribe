@@ -195,7 +195,7 @@ class DraftNote(AIScribeMetadata):
     inactivated: Mapped[datetime | None] = mapped_column(TIMESTAMP_LTZ)
     output_type: Mapped[str] = mapped_column(VARCHAR(50))
     is_flagged: Mapped[bool] = mapped_column(default=False)
-    qa_comments: Mapped[str | None] = mapped_column(VARCHAR(500))
+    comments: Mapped[str | None] = mapped_column(VARCHAR(500))
 
     __table_args__ = (
         ForeignKeyConstraint(

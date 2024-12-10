@@ -13,7 +13,7 @@ class DraftNote(BaseModel):
     content: str
     outputType: NoteOutputType
     isFlagged: bool
-    qaComments: str | None
+    comments: str | None
 
     @staticmethod
     def from_db_record(db_record: db.DraftNote):
@@ -25,5 +25,5 @@ class DraftNote(BaseModel):
             content=db_record.content,
             outputType=db_record.output_type,
             isFlagged=db_record.is_flagged,
-            qaComments=db_record.qa_comments,
+            comments=db_record.comments,
         )

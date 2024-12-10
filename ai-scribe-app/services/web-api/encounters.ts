@@ -108,14 +108,14 @@ export const setNoteFlag =
     encounterId: string,
     noteId: string,
     isFlagged: boolean,
-    qaComments: string | null,
-    cancellation?: AbortSignal
+    comments: string | null,
+    cancellation?: AbortSignal,
   ): Promise<void> =>
     httpAction<void>(
       "PATCH",
       `api/encounters/${encounterId}/draft-notes/${noteId}/set-flag`,
       {
-        data: { isFlagged, qaComments },
+        data: { isFlagged, comments },
         accessToken: getAccessToken(),
         signal: cancellation,
       },

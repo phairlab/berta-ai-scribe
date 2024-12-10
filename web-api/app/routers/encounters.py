@@ -446,7 +446,7 @@ def set_note_flag(
     encounterId: str,
     noteId: str,
     isFlagged: Annotated[bool, Body()],
-    qaComments: Annotated[str | None, Body()] = None,
+    comments: Annotated[str | None, Body()] = None,
 ):
     """
     Sets or unsets a flag on a note and updates the associated QA comments.
@@ -475,7 +475,7 @@ def set_note_flag(
     try:
         modified = datetime.now(timezone.utc)
         draft_note.is_flagged = isFlagged
-        draft_note.qa_comments = qaComments
+        draft_note.comments = comments
         draft_note.encounter.modified = modified
 
         database.commit()

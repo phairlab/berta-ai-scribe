@@ -20,7 +20,7 @@ export function createNote(fields: {
       content: fields.content,
       outputType: fields.noteType.outputType,
       isFlagged: false,
-      qaComments: null,
+      comments: null,
     },
     "Not Persisted",
   );

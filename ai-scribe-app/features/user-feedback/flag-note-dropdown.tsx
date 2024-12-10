@@ -17,18 +17,18 @@ import { Popover, PopoverContent, PopoverTrigger } from "@nextui-org/popover";
 
 import { DraftNote } from "@/core/types";
 
-type NoteQADropdownProps = PropsWithChildren<{
+type FlagNoteDropdownProps = PropsWithChildren<{
   note: DraftNote;
   onFlagSet?: (comments: string | null) => void;
   onFlagUnset?: () => void;
 }>;
 
-export const NoteQADropdown = ({
+export const FlagNoteDropdown = ({
   children,
   note,
   onFlagSet,
   onFlagUnset,
-}: NoteQADropdownProps) => {
+}: FlagNoteDropdownProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [comments, setComments] = useState<string>("");
   const commentsRef = useRef<HTMLTextAreaElement>(null);
@@ -59,7 +59,7 @@ export const NoteQADropdown = ({
     }
 
     if (open) {
-      setComments(note.qaComments ?? "");
+      setComments(note.comments ?? "");
     }
 
     setIsOpen(open);
@@ -84,7 +84,7 @@ export const NoteQADropdown = ({
       <PopoverContent aria-label="Set QA flag details">
         <div className="w-fit max-w-[325px] flex flex-col justify-center gap-1 p-1">
           <p className="text-sm text-zinc-500 max-w-[95%] mx-auto mt-1">
-            Flagged notes are reviewed by the team for Quality Improvement.
+            Flagged notes are reviewed by the team for quality improvement.
           </p>
           <Divider className="mt-2 mb-1" />
           <div className="w-full flex justify-start h-fit m-0 px-2 py-1.5">
@@ -105,7 +105,12 @@ export const NoteQADropdown = ({
             <Button radius="sm" size="sm" onClick={unsetAndClose}>
               Clear Flag
             </Button>
-            <Button color="primary" radius="sm" size="sm" onClick={saveAndClose}>
+            <Button
+              color="primary"
+              radius="sm"
+              size="sm"
+              onClick={saveAndClose}
+            >
               Save
             </Button>
           </div>
