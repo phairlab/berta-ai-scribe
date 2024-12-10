@@ -280,7 +280,7 @@ export const AIScribe = () => {
           />
         )}
         {activeEncounter === null && (
-          <ConsentScript className="text-sm text-justify sm:text-start text-zinc-400 dark:text-zinc-600 w-96 max-w-[80%] mt-8" />
+          <ConsentScript className="text-sm text-justify sm:text-start text-zinc-400 dark:text-zinc-600 w-96 max-w-[80%] mt-8 space-y-3 sm:space-y-2" />
         )}
         {transcriber.isTranscribing && (
           <WaitMessageSpinner onCancel={transcriber.abort}>

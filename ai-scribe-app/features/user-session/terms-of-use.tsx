@@ -16,6 +16,7 @@ import { ScrollShadow } from "@nextui-org/scroll-shadow";
 
 import { sessionKeys } from "@/config/keys";
 import { ConsentScript } from "@/core/consent-script";
+import { TitledParagraph } from "@/core/titled-paragraph";
 
 export const TermsOfUse = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -40,6 +41,7 @@ export const TermsOfUse = () => {
   return (
     <Modal
       backdrop="blur"
+      className="w-fit max-w-[95%] sm:max-w-prose"
       hideCloseButton={true}
       isDismissable={false}
       isKeyboardDismissDisabled={false}
@@ -52,53 +54,75 @@ export const TermsOfUse = () => {
         <ModalHeader>Terms of Use</ModalHeader>
         <ModalBody>
           <ScrollShadow>
-            <div className="flex flex-col gap-6 justify-center items-center">
-              <div className="flex flex-col gap-3 text-small text-zinc-500 me-2 max-w-[90%] sm:max-w-[600px]">
-                <p className="text-red-500 font-semibold">
-                  <strong>Important</strong> - AHS Jenkins Terms of Use (Updated
-                  October 23, 2024)
-                </p>
-                <p>
-                  By using the AI Scribe application, you agree to the following
-                  terms:
-                </p>
-                <ul className="ms-6 list-none list-inside space-y-2">
-                  <li>
-                    <strong>Patient Consent: </strong>You must obtain verbal
-                    consent from each patient before the initial use on each
-                    visit, adhering the approved consent script (shown below).
-                  </li>
-                  <li>
-                    <strong>Data Sharing and Retention: </strong> Audio
-                    recordings, transcripts, and summaries of patient
+            <div className="flex flex-col gap-3 text-small text-zinc-500 me-2 max-w-[90%] sm:max-w-[600px]">
+              <p className="text-red-500 font-semibold">
+                <strong>Important</strong> - AHS Jenkins Terms of Use (Updated
+                December 10, 2024)
+              </p>
+              <p>
+                By using the AI Scribe application, you agree to the following
+                terms:
+              </p>
+
+              <ul className="mx-3 list-none list-inside space-y-3">
+                <li>
+                  <TitledParagraph title="Responsibility for Content Accuracy">
+                    The AI Scribe application may generate content that is
+                    incomplete, inaccurate, or fabricated (referred to as
+                    “hallucinations”). It may also omit important information
+                    from the original conversation. Physicians are required to
+                    carefully review all AI-generated content for accuracy,
+                    comprehensiveness, and relevance before entering it into the
+                    patient&apos;s medical record. The physician is solely
+                    responsible for the final content entered into the medical
+                    chart.
+                  </TitledParagraph>
+                </li>
+                <li>
+                  <TitledParagraph title="Note Identifiers">
+                    When copy/pasting content into a Connect Care note, please
+                    do not delete or alter the note footer. The integrity of the
+                    footer must be maintained to ensure proper attribution and
+                    record-keeping. You may still edit the content of the note
+                    as you see fit.
+                  </TitledParagraph>
+                </li>
+                <li>
+                  <TitledParagraph title="Patient Consent">
+                    You must obtain verbal consent from each patient before the
+                    initial use on each visit, adhering to the approved consent
+                    script (shown below).
+                  </TitledParagraph>
+                </li>
+                <li>
+                  <ConsentScript className="ms-5 sm:mx-5" />
+                </li>
+                <li>
+                  <TitledParagraph title="Data Sharing and Retention">
+                    Audio recordings, transcripts, and summaries of patient
                     conversations will be shared with the project team for
                     Quality Improvement (QI) purposes. This data will be
                     retained for the duration of the project and will be
-                    securely deleted upon the project&apos;s conclusion,{" "}
-                    <em>unless you choose to delete it earlier</em>.
-                  </li>
-                  <li>
-                    <strong>Content Integrity: </strong> When copy/pasting
-                    content into a Connect Care note, please do not delete or
-                    alter the note footer. The integrity of the footer must be
-                    maintained to ensure proper attribution and record-keeping.
-                    You may still edit the content of the note as you see fit.
-                  </li>
-                  <li>
-                    <strong>Recording Device Visibility: </strong> The recording
-                    device (e.g., mobile device, laptop, wireless on wheels
-                    workstation) must be clearly visible to the patient.
-                  </li>
-                  <li>
-                    <strong>Limitations of Use: </strong> The content generated
-                    by the AI Scirbe, including transcripts and summaries, is
-                    intended solely for documentation purposes. It should not be
-                    used as a diagnostic tool or as a substitute for clinical
-                    judgment.
-                  </li>
-                </ul>
-                <ConsentScript />
-              </div>
+                    securely deleted upon the project&apos;s conclusion, unless
+                    you choose to delete it earlier.
+                  </TitledParagraph>
+                </li>
+                <li>
+                  <TitledParagraph title="Recording Device Visibility">
+                    The recording device (e.g., mobile device, laptop, wireless
+                    on wheels workstation) must be clearly visible to the
+                    patient.
+                  </TitledParagraph>
+                </li>
+                <li>
+                  <TitledParagraph title="Limitations of Use">
+                    The content generated by the AI Scribe, including
+                    transcripts and summaries, is intended solely for
+                    documentation purposes. It should not be used as a
+                    diagnostic tool or as a substitute for clinical judgment.
+                  </TitledParagraph>
+                </li>
+              </ul>
             </div>
           </ScrollShadow>
         </ModalBody>
