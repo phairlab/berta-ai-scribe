@@ -351,6 +351,8 @@ export function useEncounters() {
       };
 
       encounters.put(updatedEncounter);
+
+      webApi.encounters.setNoteFlag(encounter.id, note.id, isFlagged, comments);
     }
   };
 

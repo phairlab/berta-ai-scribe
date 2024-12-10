@@ -436,3 +436,58 @@ def delete_draft_note(
         )
     except Exception as e:
         raise errors.DatabaseError(str(e))
+
+@router.patch("/{encounterId}/draft-notes/{noteId}/set-flag")
+def set_note_flag(
+    userSession: useUserSession,
+    database: useDatabase,
+    backgroundTasks: BackgroundTasks,
+    *,
+    encounterId: str,
+    noteId: str,
+    isFlagged: Annotated[bool, Body()],
+    qaComments: Annotated[str | None, Body()] = None,
+):
+    """
+    Sets or unsets a flag on a note and updates the associated QA comments.
+    """
+    
+    # Get the draft note and confirm it exists.
+    try:
+        get_note = select(db.DraftNote) \
+            .where(
+                db.DraftNote.id == noteId,
+                db.DraftNote.encounter.has(
+                    and_(
+                        db.Encounter.username == userSession.username,
+                        db.Encounter.id == encounterId,
+                        db.Encounter.inactivated.is_(None),
+                    )
+                )
+            ) \
+            .options(selectinload(db.DraftNote.encounter))
+        
+        draft_note = database.execute(get_note).scalar_one()
+    except NoResultFound:
+        raise errors.NotFound("Draft note not found")
+    
+    # Update the draft note.
+    try:
+        modified = datetime.now(timezone.utc)
+        draft_note.is_flagged = isFlagged
+        draft_note.qa_comments = qaComments
+        draft_note.encounter.modified = modified
+
+        database.commit()
+
+        # Record the change.
+        backgroundTasks.add_task(
+            log_data_change,
+            database, userSession, modified, "ENCOUNTER", "MODIFIED", entity_id=encounterId,
+        )
+    except Exception as e:
+        raise errors.DatabaseError(str(e))
+
+    
+
+

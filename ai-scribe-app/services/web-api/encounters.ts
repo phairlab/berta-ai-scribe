@@ -102,6 +102,25 @@ export const discardDraftNote =
       },
     );
 
+export const setNoteFlag =
+  (getAccessToken: () => WebApiToken) =>
+  (
+    encounterId: string,
+    noteId: string,
+    isFlagged: boolean,
+    qaComments: string | null,
+    cancellation?: AbortSignal
+  ): Promise<void> =>
+    httpAction<void>(
+      "PATCH",
+      `api/encounters/${encounterId}/draft-notes/${noteId}/set-flag`,
+      {
+        data: { isFlagged, qaComments },
+        accessToken: getAccessToken(),
+        signal: cancellation,
+      },
+    );
+
 export const routes = {
   getAll,
   create,
@@ -109,4 +128,5 @@ export const routes = {
   purgeData,
   createDraftNote,
   discardDraftNote,
+  setNoteFlag,
 } satisfies ApiRouterDefinition;
