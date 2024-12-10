@@ -103,7 +103,7 @@ export const AIScribeOutput = ({
           .sort(byDate((n) => new Date(n.created), "Descending"))
           .map((note) => (
             <Tab key={note.id} title={note.title}>
-              <NoteCard note={note} showTitle={false} />
+              <NoteCard note={note} />
             </Tab>
           ))}
         {recording !== undefined && recording.transcript !== null && (
