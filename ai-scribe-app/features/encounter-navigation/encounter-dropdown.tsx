@@ -52,9 +52,8 @@ export const EncounterDropdown = ({
 
   return (
     <Popover
-      className={clsx(
-        "inline-flex flex-col items-center subpixel-antialiased text-small w-full p-0 min-w-[200px]",
-      )}
+      showArrow
+      className={clsx("inline-flex flex-col items-center subpixel-antialiased")}
       classNames={{ content: "p-1" }}
       isOpen={isOpen}
       placement="bottom-end"
@@ -65,7 +64,7 @@ export const EncounterDropdown = ({
     >
       <PopoverTrigger>{children}</PopoverTrigger>
       <PopoverContent aria-label="Encounter actions">
-        <div className="w-full flex flex-col justify-center gap-1 p-1">
+        <div className="w-fit flex flex-col justify-center gap-1 p-1">
           <div className="w-full flex justify-start h-fit m-0 px-2 py-1.5">
             <Textarea
               label="Modify Label"

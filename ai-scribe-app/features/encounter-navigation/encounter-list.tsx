@@ -2,7 +2,6 @@
 
 import clsx from "clsx";
 
-import { Divider } from "@nextui-org/divider";
 import { Listbox, ListboxItem, ListboxSection } from "@nextui-org/listbox";
 import { Progress } from "@nextui-org/progress";
 import { ScrollShadow } from "@nextui-org/scroll-shadow";
@@ -56,8 +55,7 @@ export const EncounterList = ({
     );
 
   return (
-    <ScrollShadow className="min-h-full min-h-[400px] max-h-[calc(100vh-200px)]">
-      <Divider className="mt-3 mb-1 ms-2 px-2 w-[calc(100%-20px)] opacity-50" />
+    <ScrollShadow className="min-h-full min-h-[400px] max-h-[calc(100vh-215px)]">
       <Listbox
         aria-label="List containing saved recordings"
         itemClasses={{ title: "w-full", wrapper: "relative" }}
@@ -76,7 +74,7 @@ export const EncounterList = ({
               <ListboxItem
                 key={encounter.id!}
                 className={clsx(
-                  "relative min-h-12 box-border",
+                  "relative min-h-12 box-border mb-px",
                   "data-[hover=true]:bg-zinc-50 data-[hover=true]:dark:bg-zinc-900 data-[focus=true]:bg-transparent",
                   activeEncounter && encounter.id === activeEncounter.id
                     ? "border-s-4 rounded-s-none border-blue-500 w-[calc(100%-10px)]"
