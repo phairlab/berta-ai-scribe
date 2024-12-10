@@ -25,6 +25,8 @@ export type DraftNote = {
   title: string;
   content: string;
   outputType: NoteOutputType;
+  isFlagged: boolean;
+  qaComments: string | null;
 };
 
 export type Encounter = {

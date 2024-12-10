@@ -326,6 +326,34 @@ export function useEncounters() {
     }
   };
 
+  const setNoteFlag = (
+    encounter: Encounter,
+    note: DraftNote,
+    isFlagged: boolean,
+    comments: string | null,
+  ) => {
+    const currentEncounter = encounters.get(encounter.id);
+    const currentNote = currentEncounter?.draftNotes.find(
+      (n) => n.id === note.id,
+    );
+
+    if (currentEncounter && currentNote) {
+      const updatedNote = { ...currentNote, isFlagged, qaComments: comments };
+
+      const updatedNotes = [
+        ...currentEncounter.draftNotes.filter((n) => n.id !== note.id),
+        updatedNote,
+      ].sort(byDate((n) => new Date(n.created), "Descending"));
+
+      const updatedEncounter = {
+        ...currentEncounter,
+        draftNotes: updatedNotes,
+      };
+
+      encounters.put(updatedEncounter);
+    }
+  };
+
   return {
     isReady: encounters.status === "Ready",
     isLoading: encounters.loadState === "Fetching More",
@@ -338,6 +366,7 @@ export function useEncounters() {
     purge,
     saveNote,
     discardNote,
+    setNoteFlag,
     check: {
       canSave,
       canPurge,

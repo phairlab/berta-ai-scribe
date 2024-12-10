@@ -19,6 +19,8 @@ export function createNote(fields: {
       title: fields.noteType.title ?? "(Untitled Note Type)",
       content: fields.content,
       outputType: fields.noteType.outputType,
+      isFlagged: false,
+      qaComments: null,
     },
     "Not Persisted",
   );

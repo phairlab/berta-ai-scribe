@@ -6,6 +6,8 @@ type NoteCardProps = {
   note: DraftNote;
   showRawOutput?: boolean;
   canFlag?: boolean;
+  onFlagSet?: (comments: string | null) => void;
+  onFlagUnset?: () => void;
 };
 
 export const NoteCard = (props: NoteCardProps) =>

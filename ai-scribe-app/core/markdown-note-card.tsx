@@ -5,7 +5,7 @@ import { SelectItem } from "@nextui-org/select";
 
 import { convertMarkdown } from "@/utility/conversion";
 
-import { NoteFlag } from "@/features/user-feedback/note-flag";
+import { NoteQAFlag } from "@/features/user-feedback/note-qa-flag";
 
 import { Markdown } from "./markdown";
 import { MobileCompatibleSelect } from "./mobile-compatible-select";
@@ -29,12 +29,16 @@ type MarkdownNoteCardProps = {
   note: DraftNote;
   showRawOutput?: boolean;
   canFlag?: boolean;
+  onFlagSet?: (comments: string | null) => void;
+  onFlagUnset?: () => void;
 };
 
 export const MarkdownNoteCard = ({
   note,
   showRawOutput = false,
   canFlag = true,
+  onFlagSet,
+  onFlagUnset,
 }: MarkdownNoteCardProps) => {
   const markdownNode = useRef<HTMLDivElement | null>(null);
   const [displayFormat, setDisplayFormat] =
@@ -107,25 +111,38 @@ export const MarkdownNoteCard = ({
   };
 
   const controls = (
-    <div className="flex flex-col sm:flex-row justify-between items-center gap-4 w-full">
-      {canFlag ? <NoteFlag comments={null} isFlagged={false} /> : <div />}
-      <div className="flex flex-row items-center gap-2">
-        <MobileCompatibleSelect
-          aria-label="Display Format Selector"
-          className="w-32"
-          disallowEmptySelection={true}
-          items={outputTypes}
-          selectedKeys={[displayFormat]}
-          selectionMode="single"
-          size="sm"
-          onChange={(e) => setDisplayFormat(e.target.value as DisplayFormat)}
-        >
-          {(item) => <SelectItem key={item.key}>{item.label}</SelectItem>}
-        </MobileCompatibleSelect>
-        <Button color="default" size="sm" onClick={copyNote}>
-          Copy
-        </Button>
+    <div className="flex flex-col gap-3 sm:gap-2 w-full">
+      <div className="flex flex-row justify-between items-center gap-4 w-full">
+        {canFlag ? (
+          <NoteQAFlag
+            note={note}
+            onFlagSet={onFlagSet}
+            onFlagUnset={onFlagUnset}
+          />
+        ) : (
+          <div />
+        )}
+        <div className="flex flex-row items-center gap-2">
+          <MobileCompatibleSelect
+            aria-label="Display Format Selector"
+            className="w-32"
+            disallowEmptySelection={true}
+            items={outputTypes}
+            selectedKeys={[displayFormat]}
+            selectionMode="single"
+            size="sm"
+            onChange={(e) => setDisplayFormat(e.target.value as DisplayFormat)}
+          >
+            {(item) => <SelectItem key={item.key}>{item.label}</SelectItem>}
+          </MobileCompatibleSelect>
+          <Button color="default" size="sm" onClick={copyNote}>
+            Copy
+          </Button>
+        </div>
       </div>
+      {note.qaComments && (
+        <div className="text-xs text-zinc-500 px-6 line-clamp-2 text-ellipsis" title={note.qaComments}>{note.qaComments}</div>
+      )}
     </div>
   );
 

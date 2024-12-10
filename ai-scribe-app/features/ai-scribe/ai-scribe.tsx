@@ -192,6 +192,15 @@ export const AIScribe = () => {
     }
   };
 
+  const handleNoteFlagUpdated = (
+    encounter: Encounter,
+    note: DraftNote,
+    isFlagged: boolean,
+    comments: string | null,
+  ) => {
+    encounters.setNoteFlag(encounter, note, isFlagged, comments);
+  };
+
   // React to changes in the active encounter's state.
   useEffect(() => {
     handleActiveEncounterUpdated();
@@ -298,6 +307,14 @@ export const AIScribe = () => {
               recording={activeEncounter.recording}
               onActiveChanged={setActiveOutput}
               onErrorDismissed={() => setAIScribeError(undefined)}
+              onNoteFlagUpdated={(note, isFlagged, comments) =>
+                handleNoteFlagUpdated(
+                  activeEncounter,
+                  note,
+                  isFlagged,
+                  comments,
+                )
+              }
             />
           )}
       </div>
