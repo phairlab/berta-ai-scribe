@@ -132,11 +132,29 @@ export const AIScribe = () => {
   };
 
   const handleActiveEncounterUpdated = () => {
+    if (activeEncounter && activeOutput) {
+      if ("definitionId" in activeOutput) {
+        setActiveOutput(activeEncounter.draftNotes.find((n) => n.id === activeOutput.id));
+      } else if ("transcript" in activeOutput) {
+        setActiveOutput(activeEncounter.recording);
+      }
+    }
+
     const encounterChanged =
       !activeEncounter || ref.current?.id !== activeEncounter.id;
 
     if (encounterChanged) {
       setAIScribeError(undefined);
+
+      if (activeEncounter) {
+        if (activeEncounter.draftNotes.length > 0) {
+          setActiveOutput(activeEncounter.draftNotes[0]);
+        } else if (activeEncounter.recording?.transcript) {
+          setActiveOutput(activeEncounter.recording);
+        } else {
+          setActiveOutput(undefined);
+        }
+      }
     }
 
     if (activeEncounter?.tracking.error) {
@@ -180,14 +198,6 @@ export const AIScribe = () => {
         });
       } else {
         setAudioSource(null);
-      }
-
-      if (activeEncounter.draftNotes.length > 0) {
-        setActiveOutput(activeEncounter.draftNotes[0]);
-      } else if (activeEncounter.recording?.transcript) {
-        setActiveOutput(activeEncounter.recording);
-      } else {
-        setActiveOutput(undefined);
       }
     }
   };
