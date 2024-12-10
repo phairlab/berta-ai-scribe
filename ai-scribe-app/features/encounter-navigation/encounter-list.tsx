@@ -63,7 +63,6 @@ export const EncounterList = ({
         {encounterGroups.map((g) => (
           <ListboxSection
             key={g.date}
-            showDivider
             classNames={{
               heading: "text-xs font-semibold text-blue-600 dark:text-blue-400",
               divider: "ms-1 w-[calc(100%-15px)] opacity-50",

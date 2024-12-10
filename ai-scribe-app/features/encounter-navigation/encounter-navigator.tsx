@@ -2,7 +2,6 @@
 
 import clsx from "clsx";
 
-import { Divider } from "@nextui-org/divider";
 import { Listbox, ListboxItem } from "@nextui-org/listbox";
 
 import { Encounter } from "@/core/types";
@@ -50,7 +49,6 @@ export const EncounterNavigator = ({
           </span>
         </ListboxItem>
       </Listbox>
-      <Divider className="mt-2 mb-1 ms-2 px-2 w-[calc(100%-20px)] opacity-50" />
       {!encounters.isReady ? (
         <div className="flex justify-start items-start ms-4 mt-4 w-auto">
           <WaitMessageSpinner size="xs">
