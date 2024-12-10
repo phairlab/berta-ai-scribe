@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@nextui-org/button";
 import { Input, Textarea } from "@nextui-org/input";
@@ -9,7 +9,7 @@ import { NoteCard } from "@/core/note-card";
 import { NoteTypeSelector } from "@/core/note-type-selector";
 import {
   DraftNote,
-  EditedNoteType,
+  IncompleteNoteType,
   NoteType,
   Recording,
   SampleRecording,
@@ -22,8 +22,8 @@ import { RequiredFields } from "@/utility/typing";
 import { useNoteGenerator } from "@/features/ai-scribe/use-note-generator";
 
 type CustomNotesEditorProps = {
-  editedNoteType: EditedNoteType;
-  onChanges: (changes: Partial<EditedNoteType>) => void;
+  editedNoteType: IncompleteNoteType;
+  onChanges: (changes: Partial<IncompleteNoteType>) => void;
   onReset: () => void;
 };
 
@@ -65,6 +65,13 @@ export const CustomNotesEditor = ({
     reset();
   };
 
+  useEffect(() => {
+    noteGenerator.abort();
+    setDraftNote(undefined);
+    setError(undefined);
+    setTemplate(undefined);
+  }, [editedNoteType]);
+
   const canTest =
     editedNoteType.instructions &&
     recording &&
@@ -75,7 +82,7 @@ export const CustomNotesEditor = ({
 
     if (transcript && editedNoteType.instructions !== undefined) {
       noteGenerator.generateNote(
-        editedNoteType as RequiredFields<EditedNoteType, "instructions">,
+        editedNoteType as RequiredFields<IncompleteNoteType, "instructions">,
         "(TEST)",
         transcript,
       );
@@ -165,7 +172,7 @@ export const CustomNotesEditor = ({
         )}
         {error && <ErrorCard error={error} />}
         {draftNote && (
-          <NoteCard note={draftNote} showRawOutput={true} showTitle={false} />
+          <NoteCard canFlag={false} note={draftNote} showRawOutput={true} />
         )}
       </div>
     </>

@@ -4,8 +4,10 @@ import { DraftNote } from "./types";
 
 type NoteCardProps = {
   note: DraftNote;
-  showTitle?: boolean;
   showRawOutput?: boolean;
+  canFlag?: boolean;
+  onFlagSet?: (comments: string | null) => void;
+  onFlagUnset?: () => void;
 };
 
 export const NoteCard = (props: NoteCardProps) =>

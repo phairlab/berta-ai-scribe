@@ -146,6 +146,8 @@ CREATE TABLE draft_notes (
   content VARCHAR NOT NULL,
   inactivated TIMESTAMP_LTZ,
   output_type VARCHAR(50) NOT NULL DEFAULT 'Plain Text',
+  is_flagged BOOLEAN NOT NULL DEFAULT FALSE,
+  qa_comments VARCHAR(500),
   PRIMARY KEY (id) RELY,
   FOREIGN KEY (encounter_id) REFERENCES encounters (id) RELY,
   FOREIGN KEY (definition_id, definition_version) REFERENCES note_definitions (id, version) RELY

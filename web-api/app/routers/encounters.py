@@ -26,7 +26,7 @@ def get_encounters(
     database: useDatabase,
     *,
     earlierThan: datetime | None = None,
-) -> sch.DataPage[sch.Encounter]:
+) -> sch.Page[sch.Encounter]:
     """
     Gets all saved encounters for the current user.
     """
@@ -54,24 +54,25 @@ def get_encounters(
     records = database.execute(get_encounters_batch).scalars().all()
     encounters = [sch.Encounter.from_db_record(r) for r in records]
 
-    return sch.DataPage[sch.Encounter](
+    return sch.Page[sch.Encounter](
         data=encounters[:settings.ENCOUNTERS_PAGE_SIZE],
         isLastPage=len(encounters) <= settings.ENCOUNTERS_PAGE_SIZE
     )
 
 @router.post("")
 def create_encounter(
-    userSession: useUserSession, 
+    userSession: useUserSession,
     database: useDatabase,
     backgroundTasks: BackgroundTasks,
-    *, 
-    audio: UploadFile, 
-    created: Annotated[datetime, Body()] = datetime.now(timezone.utc), 
+    *,
+    audio: UploadFile,
     label: Annotated[str | None, Body()] = None,
 ) -> sch.Encounter:
     """
     Creates and saves a new encounter record.
     """
+
+    created = datetime.now(timezone.utc)
 
     encounter_id = db.new_sqid(database)
     recording_id = db.new_sqid(database)
@@ -435,3 +436,58 @@ def delete_draft_note(
         )
     except Exception as e:
         raise errors.DatabaseError(str(e))
+
+@router.patch("/{encounterId}/draft-notes/{noteId}/set-flag")
+def set_note_flag(
+    userSession: useUserSession,
+    database: useDatabase,
+    backgroundTasks: BackgroundTasks,
+    *,
+    encounterId: str,
+    noteId: str,
+    isFlagged: Annotated[bool, Body()],
+    qaComments: Annotated[str | None, Body()] = None,
+):
+    """
+    Sets or unsets a flag on a note and updates the associated QA comments.
+    """
+    
+    # Get the draft note and confirm it exists.
+    try:
+        get_note = select(db.DraftNote) \
+            .where(
+                db.DraftNote.id == noteId,
+                db.DraftNote.encounter.has(
+                    and_(
+                        db.Encounter.username == userSession.username,
+                        db.Encounter.id == encounterId,
+                        db.Encounter.inactivated.is_(None),
+                    )
+                )
+            ) \
+            .options(selectinload(db.DraftNote.encounter))
+        
+        draft_note = database.execute(get_note).scalar_one()
+    except NoResultFound:
+        raise errors.NotFound("Draft note not found")
+    
+    # Update the draft note.
+    try:
+        modified = datetime.now(timezone.utc)
+        draft_note.is_flagged = isFlagged
+        draft_note.qa_comments = qaComments
+        draft_note.encounter.modified = modified
+
+        database.commit()
+
+        # Record the change.
+        backgroundTasks.add_task(
+            log_data_change,
+            database, userSession, modified, "ENCOUNTER", "MODIFIED", entity_id=encounterId,
+        )
+    except Exception as e:
+        raise errors.DatabaseError(str(e))
+
+    
+
+

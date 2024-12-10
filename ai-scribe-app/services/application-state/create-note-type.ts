@@ -1,10 +1,10 @@
 import shortUUID from "short-uuid";
 
-import { EditedNoteType } from "@/core/types";
+import { IncompleteNoteType } from "@/core/types";
 import { setTracking } from "@/utility/tracking";
 
-export function createNoteType(): EditedNoteType {
-  const noteType: EditedNoteType = setTracking(
+export function createNoteType(): IncompleteNoteType {
+  const noteType: IncompleteNoteType = setTracking(
     {
       id: shortUUID.generate(),
       modified: new Date().toISOString(),

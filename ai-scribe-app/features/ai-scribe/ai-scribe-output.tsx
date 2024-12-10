@@ -7,7 +7,7 @@ import { NoteCard } from "@/core/note-card";
 import { TranscriptCard } from "@/core/transcript-card";
 import { DraftNote, Recording } from "@/core/types";
 import { ApplicationError, isApplicationError } from "@/utility/errors";
-import { byDate } from "@/utility/sorters";
+import { byDate } from "@/utility/sorting";
 
 export type AIScribeError = {
   name: string | null;
@@ -25,6 +25,11 @@ type AIScribeOutputProps = {
   activeOutput: AIScribeOutputType | undefined;
   onActiveChanged: (output: AIScribeOutputType | undefined) => void;
   onErrorDismissed: () => void;
+  onNoteFlagUpdated: (
+    note: DraftNote,
+    isFlagged: boolean,
+    comment: string | null,
+  ) => void;
 };
 
 export const AIScribeOutput = ({
@@ -34,6 +39,7 @@ export const AIScribeOutput = ({
   activeOutput,
   onActiveChanged,
   onErrorDismissed,
+  onNoteFlagUpdated,
 }: AIScribeOutputProps) => {
   const [activeTab, setActiveTab] = useState<string>("");
 
@@ -103,7 +109,13 @@ export const AIScribeOutput = ({
           .sort(byDate((n) => new Date(n.created), "Descending"))
           .map((note) => (
             <Tab key={note.id} title={note.title}>
-              <NoteCard note={note} showTitle={false} />
+              <NoteCard
+                note={note}
+                onFlagSet={(comments) =>
+                  onNoteFlagUpdated(note, true, comments)
+                }
+                onFlagUnset={() => onNoteFlagUpdated(note, false, null)}
+              />
             </Tab>
           ))}
         {recording !== undefined && recording.transcript !== null && (

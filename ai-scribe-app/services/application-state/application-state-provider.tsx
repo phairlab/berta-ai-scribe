@@ -5,18 +5,18 @@ import { PropsWithChildren, useEffect, useState } from "react";
 import { Encounter, NoteType, SampleRecording } from "@/core/types";
 import { useSession } from "@/services/session-management/use-session";
 import { useWebApi } from "@/services/web-api/use-web-api";
-import * as convert from "@/utility/converters";
-import { alphabetically, byDate } from "@/utility/sorters";
+import { convertWebApiRecord } from "@/utility/conversion";
+import { alphabetically, byDate } from "@/utility/sorting";
 import { useAbortController } from "@/utility/use-abort-controller";
 
 import {
   ApplicationStateContext,
   InitializationState,
 } from "./application-state-context";
-import { EncounterLoadState, useEncounterState } from "./encounter-state";
 import { ExternalStateMonitor } from "./external-state-monitor";
-import { useNoteTypeState } from "./note-type-state";
-import { useSampleRecordingState } from "./sample-recording-state";
+import { EncounterLoadState, useEncounterState } from "./use-encounter-state";
+import { useNoteTypeState } from "./use-note-type-state";
+import { useSampleRecordingState } from "./use-sample-recording-state";
 
 export const ApplicationStateProvider = ({ children }: PropsWithChildren) => {
   const webApi = useWebApi();
@@ -94,11 +94,7 @@ export const ApplicationStateProvider = ({ children }: PropsWithChildren) => {
       .then((records) => {
         const sampleRecordings: SampleRecording[] = records
           .sort(alphabetically((x) => x.filename))
-          .map((record) => ({
-            id: record.filename,
-            filename: record.filename,
-            transcript: record.transcript,
-          }));
+          .map((record) => convertWebApiRecord.toSampleRecording(record));
 
         setSampleRecordings(sampleRecordings);
         setSampleRecordingStatus("Ready");
@@ -113,7 +109,7 @@ export const ApplicationStateProvider = ({ children }: PropsWithChildren) => {
       .then(([userInfo, records]) => {
         const noteTypes: NoteType[] = records
           .sort(alphabetically((x) => x.title))
-          .map((record) => convert.fromWebApiNoteType(record));
+          .map((record) => convertWebApiRecord.toNoteType(record));
 
         setNoteTypes(noteTypes);
 
@@ -141,7 +137,7 @@ export const ApplicationStateProvider = ({ children }: PropsWithChildren) => {
       .then((page) => {
         const encounters: Encounter[] = page.data
           .sort(byDate((x) => new Date(x.created), "Descending"))
-          .map((record) => convert.fromWebApiEncounter(record));
+          .map((record) => convertWebApiRecord.toEncounter(record));
 
         setEncounters(encounters);
         setEncounterLoadState(

@@ -1,19 +1,19 @@
 export type NoteOutputType = "Plain Text" | "Markdown";
 
-export type ChangedEntities<T> = {
+export type ExternalChanges<T> = {
   created: T[];
   modified: T[];
   removed: T[];
 };
 
-export type DataChanges = {
+export type ExternalChangeUpdate = {
   lastUpdate: string;
   userInfo: UserInfo | null;
-  noteDefinitions: ChangedEntities<NoteDefinition>;
-  encounters: ChangedEntities<Encounter>;
+  noteDefinitions: ExternalChanges<NoteDefinition>;
+  encounters: ExternalChanges<Encounter>;
 };
 
-export type DataPage<T> = {
+export type Page<T> = {
   data: T[];
   isLastPage: boolean;
 };
@@ -25,6 +25,8 @@ export type DraftNote = {
   title: string;
   content: string;
   outputType: NoteOutputType;
+  isFlagged: boolean;
+  qaComments: string | null;
 };
 
 export type Encounter = {

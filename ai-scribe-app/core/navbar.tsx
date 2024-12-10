@@ -38,6 +38,7 @@ export const Navbar = () => {
 
   return (
     <NextUINavbar
+      classNames={{ wrapper: "max-w-full" }}
       isMenuOpen={isMenuOpen}
       position="sticky"
       onMenuOpenChange={setIsMenuOpen}

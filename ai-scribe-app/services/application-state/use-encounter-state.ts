@@ -1,8 +1,8 @@
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 
-import { Encounter, EncounterDataPage } from "@/core/types";
-import * as convert from "@/utility/converters";
-import { byDate } from "@/utility/sorters";
+import { Encounter, EncountersPage } from "@/core/types";
+import { convertWebApiRecord } from "@/utility/conversion";
+import { byDate } from "@/utility/sorting";
 
 import { InitializationState } from "./application-state-context";
 
@@ -22,7 +22,7 @@ export type EncounterState = {
   put: (data: Encounter) => void;
   remove: (id: string) => void;
   setPageLoading: () => void;
-  loadPage: (page: EncounterDataPage) => void;
+  loadPage: (page: EncountersPage) => void;
   setActive: (id: string | null) => void;
 };
 
@@ -81,10 +81,10 @@ export function useEncounterState(
     setPageLoading: () => {
       setLoadState("Fetching More");
     },
-    loadPage: (page: EncounterDataPage) => {
+    loadPage: (page: EncountersPage) => {
       const moreEncounters: Encounter[] = page.data
         .sort(byDate((x) => new Date(x.created), "Descending"))
-        .map((record) => convert.fromWebApiEncounter(record));
+        .map((record) => convertWebApiRecord.toEncounter(record));
 
       setEncounters((encounters) =>
         [...encounters, ...moreEncounters].sort(

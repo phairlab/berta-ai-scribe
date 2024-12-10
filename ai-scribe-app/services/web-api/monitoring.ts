@@ -1,17 +1,24 @@
 import { ApiRouterDefinition } from "./api-definition";
 import { WebApiToken } from "./authentication";
 import { httpAction } from "./base-queries";
-import { DataChanges } from "./types";
+import { ExternalChangeUpdate } from "./types";
 
-const checkDataChanges =
+const checkExternalChanges =
   (getAccessToken: () => WebApiToken) =>
-  (cutoff: Date, cancellation?: AbortSignal): Promise<DataChanges | null> =>
-    httpAction<DataChanges | null>("GET", "api/monitoring/check-data-changes", {
-      query: { cutoff: new Date(cutoff).toISOString() },
-      accessToken: getAccessToken(),
-      signal: cancellation,
-    });
+  (
+    cutoff: Date,
+    cancellation?: AbortSignal,
+  ): Promise<ExternalChangeUpdate | null> =>
+    httpAction<ExternalChangeUpdate | null>(
+      "GET",
+      "api/monitoring/check-external-changes",
+      {
+        query: { cutoff: new Date(cutoff).toISOString() },
+        accessToken: getAccessToken(),
+        signal: cancellation,
+      },
+    );
 
 export const routes = {
-  checkDataChanges,
+  checkDataChanges: checkExternalChanges,
 } satisfies ApiRouterDefinition;

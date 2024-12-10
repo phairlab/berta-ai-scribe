@@ -1,9 +1,9 @@
 import { use } from "react";
 
-import { EditedNoteType, NoteType } from "@/core/types";
+import { IncompleteNoteType, NoteType } from "@/core/types";
 import { ApplicationStateContext } from "@/services/application-state/application-state-context";
 import { useWebApi } from "@/services/web-api/use-web-api";
-import * as convert from "@/utility/converters";
+import { convertWebApiRecord } from "@/utility/conversion";
 import { asApplicationError, InvalidOperationError } from "@/utility/errors";
 import { setTracking } from "@/utility/tracking";
 
@@ -27,11 +27,11 @@ export function useNoteTypes() {
 
   /** Determines whether the note type has the fields required to persist the record. */
   const hasRequiredFields = (
-    noteType: NoteType | EditedNoteType,
+    noteType: NoteType | IncompleteNoteType,
   ): noteType is NoteType => !!noteType.title && !!noteType.instructions;
 
   /** Determines whether the preconditions for {@link create} hold for this note type. */
-  const canCreate = (noteType: EditedNoteType) =>
+  const canCreate = (noteType: IncompleteNoteType) =>
     hasRequiredFields(noteType) &&
     !noteTypes.list.find((nt) => nt.id === noteType.id);
 
@@ -57,7 +57,7 @@ export function useNoteTypes() {
       noteType.id = persistedRecord.id;
       tempRecord.id = persistedRecord.id;
 
-      noteTypes.put(convert.fromWebApiNoteType(persistedRecord));
+      noteTypes.put(convertWebApiRecord.toNoteType(persistedRecord));
     } catch (ex: unknown) {
       // Report on failure.
       noteTypes.put(
@@ -67,7 +67,7 @@ export function useNoteTypes() {
   };
 
   /** Determines whether the preconditions for {@link update} hold for this note type. */
-  const canUpdate = (noteType: EditedNoteType) =>
+  const canUpdate = (noteType: IncompleteNoteType) =>
     hasRequiredFields(noteType) &&
     noteTypes.exists(noteType.id) &&
     noteTypes.get(noteType.id)!.tracking.isPersisted === true &&
@@ -99,7 +99,7 @@ export function useNoteTypes() {
         instructions: noteType.instructions,
       });
 
-      noteTypes.put(convert.fromWebApiNoteType(persistedRecord));
+      noteTypes.put(convertWebApiRecord.toNoteType(persistedRecord));
     } catch (ex: unknown) {
       // Report on failure.
       noteTypes.put(
@@ -109,11 +109,11 @@ export function useNoteTypes() {
   };
 
   /** Determines whether the preconditions for {@link save} hold for this note type. */
-  const canSave = (noteType: EditedNoteType) =>
+  const canSave = (noteType: IncompleteNoteType) =>
     canCreate(noteType) || canUpdate(noteType);
 
   /** Adds or updates and then persists a note type with the provided data. */
-  const save = async (noteType: EditedNoteType) => {
+  const save = async (noteType: IncompleteNoteType) => {
     if (noteTypes.status !== "Ready") {
       throw new InvalidOperationError("Saving a note type before state ready");
     }

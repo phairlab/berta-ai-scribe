@@ -2,6 +2,8 @@
 
 import { use } from "react";
 
+import clsx from "clsx";
+
 import { Divider } from "@nextui-org/divider";
 import { Progress } from "@nextui-org/progress";
 
@@ -32,14 +34,26 @@ export default function Home() {
         </div>
       ) : (
         <>
-          <nav className="hidden sm:block min-w-[200px] max-w-[200px]">
+          <nav
+            className={clsx(
+              "hidden sm:block max-h-full",
+              "sm:min-w-[200px] sm:max-w-[200px]",
+              "md:min-w-[275px] md:max-w-[275px]",
+            )}
+          >
             <EncounterNavigator />
           </nav>
           <Divider
             className="hidden sm:block bg-zinc-100 dark:bg-zinc-900"
             orientation="vertical"
           />
-          <section className="w-full sm:min-w-[calc(100%-225px)] sm:max-w-[calc(100%-225px)] sm:w-[calc(100%-225px)] py-2">
+          <section
+            className={clsx(
+              "w-full py-2",
+              "sm:min-w-[calc(100%-225px)] sm:max-w-[calc(100%-225px)] sm:w-[calc(100%-225px)]",
+              "md:min-w-[calc(100%-325px)] md:max-w-[calc(100%-300px)] md:w-[calc(100%-300px)]",
+            )}
+          >
             <AIScribe />
           </section>
         </>

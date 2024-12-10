@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 
 import { AnimatedPulse } from "@/core/animated-pulse";
-import { formatDuration } from "@/utility/formatters";
+import { formatDuration } from "@/utility/formatting";
 import { useStopwatch } from "@/utility/use-stopwatch";
 
 import { AudioLevel } from "./audio-level";

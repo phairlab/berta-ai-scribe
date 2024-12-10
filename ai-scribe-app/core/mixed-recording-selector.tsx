@@ -6,7 +6,7 @@ import { MobileCompatibleSelect } from "@/core/mobile-compatible-select";
 import { Recording, SampleRecording } from "@/core/types";
 import { useEncounters } from "@/services/application-state/use-encounters";
 import { useSampleRecordings } from "@/services/application-state/use-sample-recordings";
-import { formatDatetime } from "@/utility/formatters";
+import { formatDatetime } from "@/utility/formatting";
 
 type AnyRecordingType = Recording | SampleRecording;
 

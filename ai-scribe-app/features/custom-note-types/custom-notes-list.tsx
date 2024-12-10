@@ -1,11 +1,11 @@
-import { EditedNoteType, NoteType } from "@/core/types";
+import { IncompleteNoteType, NoteType } from "@/core/types";
 import { WaitMessageSpinner } from "@/core/wait-message-spinner";
+import { useNoteTypes } from "@/services/application-state/use-note-types";
 
 import { CustomNotesListItem } from "./custom-notes-list-item";
-import { useNoteTypes } from "../../services/application-state/use-note-types";
 
 type CustomNotesListProps = {
-  editedNoteType: EditedNoteType | null;
+  editedNoteType: IncompleteNoteType | null;
   onEdit: (noteType: NoteType) => void;
   onDelete: (noteType: NoteType) => void;
 };

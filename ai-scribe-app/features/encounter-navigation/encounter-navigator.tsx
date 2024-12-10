@@ -26,7 +26,7 @@ export const EncounterNavigator = ({
   };
 
   return (
-    <>
+    <div className="max-h-full">
       <Listbox
         aria-label="List containing the new recording option"
         itemClasses={{ title: "font-semibold" }}
@@ -34,9 +34,12 @@ export const EncounterNavigator = ({
         <ListboxItem
           key="new"
           className={clsx(
-            "h-12",
-            "border-s-4 rounded-s-none  data-[hover=true]:bg-transparent",
-            !activeEncounter ? "border-blue-500" : "border-transparent",
+            "h-12 box-border w-[calc(100%-5px)]",
+            "data-[hover=true]:bg-zinc-50 data-[hover=true]:dark:bg-zinc-900 data-[focus=true]:bg-transparent",
+            "bg-transparent",
+            !activeEncounter
+              ? "border-s-4 rounded-s-none border-blue-500 w-[calc(100%-10px)]"
+              : "border-transparent ms-[4px] w-[calc(100%-14px)]",
           )}
           textValue="New Recording"
           onPress={() => selectEncounter(null)}
@@ -78,6 +81,6 @@ export const EncounterNavigator = ({
           onSelected={selectEncounter}
         />
       )}
-    </>
+    </div>
   );
 };

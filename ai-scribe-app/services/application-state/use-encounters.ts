@@ -3,9 +3,9 @@ import { use } from "react";
 import { DraftNote, Encounter } from "@/core/types";
 import { ApplicationStateContext } from "@/services/application-state/application-state-context";
 import { useWebApi } from "@/services/web-api/use-web-api";
-import * as convert from "@/utility/converters";
+import { convertWebApiRecord } from "@/utility/conversion";
 import { asApplicationError, InvalidOperationError } from "@/utility/errors";
-import { byDate } from "@/utility/sorters";
+import { byDate } from "@/utility/sorting";
 import { setTracking } from "@/utility/tracking";
 
 /**
@@ -60,16 +60,13 @@ export function useEncounters() {
 
     try {
       // Persist the data.
-      const persistedRecord = await webApi.encounters.create(
-        audio,
-        new Date(encounter.created),
-      );
+      const persistedRecord = await webApi.encounters.create(audio);
 
       // Mutate temp records to update persisted id.
       encounter.id = persistedRecord.id;
       tempRecord.id = persistedRecord.id;
 
-      encounters.put(convert.fromWebApiEncounter(persistedRecord));
+      encounters.put(convertWebApiRecord.toEncounter(persistedRecord));
     } catch (ex: unknown) {
       // Report on failure.
       encounters.put(
@@ -251,7 +248,7 @@ export function useEncounters() {
       const currentEncounter = encounters.get(encounter.id);
 
       if (currentEncounter) {
-        encounters.put(convert.fromWebApiEncounter(persistedEncounter));
+        encounters.put(convertWebApiRecord.toEncounter(persistedEncounter));
       }
     } catch (ex: unknown) {
       // Report on failure.
@@ -329,6 +326,36 @@ export function useEncounters() {
     }
   };
 
+  const setNoteFlag = (
+    encounter: Encounter,
+    note: DraftNote,
+    isFlagged: boolean,
+    comments: string | null,
+  ) => {
+    const currentEncounter = encounters.get(encounter.id);
+    const currentNote = currentEncounter?.draftNotes.find(
+      (n) => n.id === note.id,
+    );
+
+    if (currentEncounter && currentNote) {
+      const updatedNote = { ...currentNote, isFlagged, qaComments: comments };
+
+      const updatedNotes = [
+        ...currentEncounter.draftNotes.filter((n) => n.id !== note.id),
+        updatedNote,
+      ].sort(byDate((n) => new Date(n.created), "Descending"));
+
+      const updatedEncounter = {
+        ...currentEncounter,
+        draftNotes: updatedNotes,
+      };
+
+      encounters.put(updatedEncounter);
+
+      webApi.encounters.setNoteFlag(encounter.id, note.id, isFlagged, comments);
+    }
+  };
+
   return {
     isReady: encounters.status === "Ready",
     isLoading: encounters.loadState === "Fetching More",
@@ -341,6 +368,7 @@ export function useEncounters() {
     purge,
     saveNote,
     discardNote,
+    setNoteFlag,
     check: {
       canSave,
       canPurge,

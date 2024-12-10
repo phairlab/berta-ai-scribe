@@ -15,7 +15,6 @@ from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html, get_swagge
 from fastapi.staticfiles import StaticFiles
 from starlette.background import BackgroundTask
 from snowflake.connector.secret_detector import SecretDetector
-from sqlalchemy.orm import Session as SQLAlchemySession
 
 import app.services.snowflake as snowflake
 import app.services.db as db
@@ -73,7 +72,7 @@ async def lifespan(_: FastAPI):
     # On startup, for development environments simulate the snowflake mounted stage.
     if settings.ENVIRONMENT == "development" and not os.path.isdir(settings.RECORDINGS_FOLDER):
         os.mkdir(settings.RECORDINGS_FOLDER)
-        with SQLAlchemySession(snowflake.db_engine) as database, snowflake.start_session() as snowflake_session:
+        with db.AIScribeDatabase() as database, snowflake.start_session() as snowflake_session:
             for user in database.query(db.User).all():
                 if not os.path.isdir(Path(settings.RECORDINGS_FOLDER, user.username)):
                     os.mkdir(Path(settings.RECORDINGS_FOLDER, user.username))

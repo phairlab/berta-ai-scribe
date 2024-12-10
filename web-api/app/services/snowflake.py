@@ -42,9 +42,9 @@ def create_engine() -> SQLAlchemyEngine:
     return create_sqlalchemy_engine(
         engine_url,
         pool_pre_ping=True,
-        pool_size=0,
-        pool_recycle=45*60, # 45 min
-        hide_parameters=(settings.ENVIRONMENT != "development")
+        pool_size=0 if settings.ENVIRONMENT != "development" else 1, # 0 -> unlimited
+        pool_recycle=45*60 if is_spcs_oauth() else 4*60*60, # SPCS oauth: 45 min; else 4 hrs
+        hide_parameters=(settings.ENVIRONMENT != "development") # Prevent logging sensitive data in production
     )
 
 db_engine: SQLAlchemyEngine = create_engine()

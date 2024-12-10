@@ -1,8 +1,8 @@
 import { createContext } from "react";
 
-import { EncounterState } from "./encounter-state";
-import { NoteTypeState } from "./note-type-state";
-import { SampleRecordingState } from "./sample-recording-state";
+import { EncounterState } from "./use-encounter-state";
+import { NoteTypeState } from "./use-note-type-state";
+import { SampleRecordingState } from "./use-sample-recording-state";
 
 export type InitializationState =
   | "Uninitialized"

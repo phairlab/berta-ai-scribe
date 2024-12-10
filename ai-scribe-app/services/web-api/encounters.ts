@@ -1,15 +1,15 @@
 import { ApiRouterDefinition } from "./api-definition";
 import { WebApiToken } from "./authentication";
 import { httpAction } from "./base-queries";
-import { DataPage, Encounter, NoteOutputType } from "./types";
+import { Page, Encounter, NoteOutputType } from "./types";
 
 export const getAll =
   (getAccessToken: () => WebApiToken) =>
   (
     earlierThan: Date | null = null,
     cancellation?: AbortSignal,
-  ): Promise<DataPage<Encounter>> =>
-    httpAction<DataPage<Encounter>>("GET", "api/encounters", {
+  ): Promise<Page<Encounter>> =>
+    httpAction<Page<Encounter>>("GET", "api/encounters", {
       accessToken: getAccessToken(),
       query: {
         earlierThan: earlierThan
@@ -23,14 +23,12 @@ export const create =
   (getAccessToken: () => WebApiToken) =>
   (
     audio: File,
-    created: Date,
     label?: string,
     cancellation?: AbortSignal,
   ): Promise<Encounter> => {
     const formData = new FormData();
 
     formData.append("audio", audio);
-    formData.append("created", created.toISOString());
 
     if (label) {
       formData.append("label", label);
@@ -104,6 +102,25 @@ export const discardDraftNote =
       },
     );
 
+export const setNoteFlag =
+  (getAccessToken: () => WebApiToken) =>
+  (
+    encounterId: string,
+    noteId: string,
+    isFlagged: boolean,
+    qaComments: string | null,
+    cancellation?: AbortSignal
+  ): Promise<void> =>
+    httpAction<void>(
+      "PATCH",
+      `api/encounters/${encounterId}/draft-notes/${noteId}/set-flag`,
+      {
+        data: { isFlagged, qaComments },
+        accessToken: getAccessToken(),
+        signal: cancellation,
+      },
+    );
+
 export const routes = {
   getAll,
   create,
@@ -111,4 +128,5 @@ export const routes = {
   purgeData,
   createDraftNote,
   discardDraftNote,
+  setNoteFlag,
 } satisfies ApiRouterDefinition;

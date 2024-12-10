@@ -6,9 +6,7 @@ from http.client import responses as http_responses
 
 from fastapi import Depends, Header
 from pydantic import BaseModel
-from sqlalchemy.orm import Session as SQLAlchemySession
 
-import app.services.snowflake as snowflake
 import app.services.db as db
 from app.config import settings
 from app.schemas import WebAPISession
@@ -64,7 +62,7 @@ useRequestId = Annotated[str, Depends(get_request_id)]
 
 log = WebAPILogger(__name__)
 
-def log_session(database: db.SQLAlchemySession, session: WebAPISession, user_agent: str):
+def log_session(database: db.DatabaseSession, session: WebAPISession, user_agent: str):
     """Records the initiation of a user session to the database."""
 
     try:
@@ -89,7 +87,7 @@ def log_error(
     )
 
     try:
-        with SQLAlchemySession(snowflake.db_engine) as database:
+        with db.AIScribeDatabase() as database:
             database.add(error_record)
             database.commit()
     except Exception as e:
@@ -110,7 +108,7 @@ def log_request(
     )
 
     try:
-        with SQLAlchemySession(snowflake.db_engine) as database:
+        with db.AIScribeDatabase() as database:
             database.add(request_record)
             database.commit()
     except Exception as e:
@@ -118,7 +116,7 @@ def log_request(
         log.warning(message, session)
 
 def log_audio_conversion(
-    database: db.SQLAlchemySession, recording_id: str, started: datetime, time: int,
+    database: db.DatabaseSession, recording_id: str, started: datetime, time: int,
     original_media_type: str | None,
     original_file_size: str | None,
     converted_media_type: str | None,
@@ -145,7 +143,7 @@ def log_audio_conversion(
         log.warning(message, session)
 
 def log_transcription(
-    database: db.SQLAlchemySession, recording_id: str, started: datetime, time: int, service: str,
+    database: db.DatabaseSession, recording_id: str, started: datetime, time: int, service: str,
     *, error_id: str | None = None, session: WebAPISession | None = None,
 ):
     """Saves a record of a transcription task."""
@@ -163,7 +161,7 @@ def log_transcription(
         log.warning(message, session)
 
 def log_generation(
-    database: db.SQLAlchemySession, record_id: str, task_type: str, started: datetime,
+    database: db.DatabaseSession, record_id: str, task_type: str, started: datetime,
     time: int, service: str, model: str, completion_tokens: int, prompt_tokens: int,
     *, error_id: str | None = None, session: WebAPISession | None = None,
 ):
@@ -183,7 +181,7 @@ def log_generation(
         log.warning(message, session)
 
 def log_data_change(
-    database: db.SQLAlchemySession, session: WebAPISession, changed: datetime,
+    database: db.DatabaseSession, session: WebAPISession, changed: datetime,
     entity_type: db.DataEntityType, change_type: db.DataChangeType,
     *, entity_id: str | None = None, server_task: bool = False,
 ):

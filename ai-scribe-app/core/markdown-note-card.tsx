@@ -1,21 +1,21 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import { useEffect, useRef, useState } from "react";
-
-import Markdown from "react-markdown";
+import { useMemo, useRef, useState } from "react";
 
 import { Button } from "@nextui-org/button";
-import { Divider } from "@nextui-org/divider";
 import { SelectItem } from "@nextui-org/select";
 
-import * as convert from "@/utility/converters";
+import { convertMarkdown } from "@/utility/conversion";
 
-import { OutputCard } from "./output-card";
+import { NoteQAFlag } from "@/features/user-feedback/note-qa-flag";
+
+import { Markdown } from "./markdown";
 import { MobileCompatibleSelect } from "./mobile-compatible-select";
+import { OutputCard } from "./output-card";
 import { DraftNote } from "./types";
 
 type DisplayFormat = "Rich Text" | "Markdown" | "Plain Text";
 
-// This can be removed after upgrading Next.js and Typescript.
+// This patch declaration can potentially be removed after
+// upgrading Next.js and Typescript.
 declare var ClipboardItem: {
   new (
     items: Record<string, string | Blob | PromiseLike<string | Blob>>,
@@ -27,18 +27,20 @@ declare var ClipboardItem: {
 
 type MarkdownNoteCardProps = {
   note: DraftNote;
-  showTitle?: boolean;
   showRawOutput?: boolean;
+  canFlag?: boolean;
+  onFlagSet?: (comments: string | null) => void;
+  onFlagUnset?: () => void;
 };
 
 export const MarkdownNoteCard = ({
   note,
-  showTitle = true,
   showRawOutput = false,
+  canFlag = true,
+  onFlagSet,
+  onFlagUnset,
 }: MarkdownNoteCardProps) => {
-  const markdownNodeRef = useRef<HTMLDivElement | null>(null);
-  const [markdown, setMarkdown] = useState<string | null>(null);
-  const [plainText, setPlainText] = useState<string | null>(null);
+  const markdownNode = useRef<HTMLDivElement | null>(null);
   const [displayFormat, setDisplayFormat] =
     useState<DisplayFormat>("Rich Text");
 
@@ -51,29 +53,16 @@ export const MarkdownNoteCard = ({
     outputTypes = [...outputTypes, { key: "Markdown", label: "Markdown" }];
   }
 
-  const convertToPlainText = (markdown: string) => {
-    let plainText = convert.fromMarkdownToPlainText(markdown);
-
-    return plainText;
-  };
-
-  useEffect(() => {
-    if (note) {
-      const markdown = note.content;
-      const plainText = convertToPlainText(markdown);
-
-      setMarkdown(markdown);
-      setPlainText(plainText);
-    } else {
-      setMarkdown(null);
-      setPlainText(null);
-    }
-  }, [note]);
+  const markdown = note.content;
+  const plainText = useMemo(
+    () => convertMarkdown.toPlainText(note.content),
+    [note],
+  );
 
   const copyNote = async () => {
-    if (displayFormat === "Rich Text" && markdownNodeRef.current !== null) {
+    if (displayFormat === "Rich Text" && markdownNode.current !== null) {
       try {
-        const htmlFragment = markdownNodeRef.current.innerHTML;
+        const htmlFragment = markdownNode.current.innerHTML;
 
         // Include HTML data if supported.
         const htmlData = ClipboardItem?.supports("text/html")
@@ -122,110 +111,50 @@ export const MarkdownNoteCard = ({
   };
 
   const controls = (
-    <>
-      <MobileCompatibleSelect
-        aria-label="Display Format Selector"
-        className="w-32"
-        disallowEmptySelection={true}
-        items={outputTypes}
-        selectedKeys={[displayFormat]}
-        selectionMode="single"
-        size="sm"
-        onChange={(e) => setDisplayFormat(e.target.value as DisplayFormat)}
-      >
-        {(item) => <SelectItem key={item.key}>{item.label}</SelectItem>}
-      </MobileCompatibleSelect>
-      <Button color="default" size="sm" onClick={copyNote}>
-        Copy
-      </Button>
-    </>
+    <div className="flex flex-col gap-3 sm:gap-2 w-full">
+      <div className="flex flex-row justify-between items-center gap-4 w-full">
+        {canFlag ? (
+          <NoteQAFlag
+            note={note}
+            onFlagSet={onFlagSet}
+            onFlagUnset={onFlagUnset}
+          />
+        ) : (
+          <div />
+        )}
+        <div className="flex flex-row items-center gap-2">
+          <MobileCompatibleSelect
+            aria-label="Display Format Selector"
+            className="w-32"
+            disallowEmptySelection={true}
+            items={outputTypes}
+            selectedKeys={[displayFormat]}
+            selectionMode="single"
+            size="sm"
+            onChange={(e) => setDisplayFormat(e.target.value as DisplayFormat)}
+          >
+            {(item) => <SelectItem key={item.key}>{item.label}</SelectItem>}
+          </MobileCompatibleSelect>
+          <Button color="default" size="sm" onClick={copyNote}>
+            Copy
+          </Button>
+        </div>
+      </div>
+      {note.qaComments && (
+        <div className="text-xs text-zinc-500 px-6 line-clamp-2 text-ellipsis" title={note.qaComments}>{note.qaComments}</div>
+      )}
+    </div>
   );
 
   return (
-    <OutputCard controls={controls} title={showTitle && note.title}>
+    <OutputCard controls={controls}>
       {displayFormat === "Plain Text" ? (
         plainText
       ) : displayFormat === "Markdown" ? (
         <div className="font-mono text-sm">{markdown}</div>
       ) : (
-        <div ref={markdownNodeRef}>
-          <Markdown
-            className="flex flex-col gap-1 leading-normal p-0"
-            components={{
-              h1({ node, ...rest }) {
-                return (
-                  // eslint-disable-next-line jsx-a11y/heading-has-content
-                  <h1
-                    className="font-semibold mt-4 first:mt-0 [&+*]:mt-0"
-                    {...rest}
-                  />
-                );
-              },
-              h2({ node, ...rest }) {
-                return (
-                  // eslint-disable-next-line jsx-a11y/heading-has-content
-                  <h2 className="italic mt-4 first:mt-0 [&+*]:mt-0" {...rest} />
-                );
-              },
-              p({ node, ...rest }) {
-                return (
-                  <p
-                    className="mt-4 first:mt-0 [&+ul]:mt-0 [&+ol]:mt-0"
-                    {...rest}
-                  />
-                );
-              },
-              blockquote({ node, ...rest }) {
-                return (
-                  <blockquote
-                    className="[&>p]:my-0 py-1 ms-4 ps-3 border-s-1 flex flex-col gap-4"
-                    {...rest}
-                  />
-                );
-              },
-              pre({ node, ...rest }) {
-                return <pre className="text-sm" {...rest} />;
-              },
-              ul({ node, ...rest }) {
-                return (
-                  <ul
-                    className="list-['-_'] list-outside flex flex-col ps-3 mt-4 first:mt-0"
-                    {...rest}
-                  />
-                );
-              },
-              ol({ node, ...rest }) {
-                return (
-                  <ul
-                    className="list-decimal list-outside flex flex-col ps-6 mt-4 first:mt-0"
-                    {...rest}
-                  />
-                );
-              },
-              hr() {
-                return <Divider className="mx-auto w-[98%]" />;
-              },
-              a({ node, href, title, children, ...rest }) {
-                return (
-                  <span {...rest}>
-                    {children && children !== href
-                      ? `[${children}](${href}${title ? ` "${title}"` : ""})`
-                      : `<${href}>`}
-                  </span>
-                );
-              },
-              img({ node, src, title, alt, ...rest }) {
-                return (
-                  <span {...rest}>
-                    {`![${alt}](${src}${title ? ` "${title}"` : ""})`}
-                  </span>
-                );
-              },
-            }}
-            skipHtml={true}
-          >
-            {markdown}
-          </Markdown>
+        <div ref={markdownNode}>
+          <Markdown>{markdown}</Markdown>
         </div>
       )}
     </OutputCard>

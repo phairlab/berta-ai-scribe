@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 
 import { NoteType } from "@/core/types";
-import { alphabetically } from "@/utility/sorters";
+import { alphabetically } from "@/utility/sorting";
 
 import { InitializationState } from "./application-state-context";
 

@@ -9,13 +9,13 @@ from .note_definition import NoteDefinition
 
 T = TypeVar("T")
 
-class ChangedEntities(BaseModel, Generic[T]):
+class ExternalChanges(BaseModel, Generic[T]):
     created: list[T]
     modified: list[T]
     removed: list[T]
 
-class DataChanges(BaseModel):
+class ExternalChangeUpdate(BaseModel):
     lastUpdate: datetime
     userInfo: UserInfo | None
-    noteDefinitions: ChangedEntities[NoteDefinition]
-    encounters: ChangedEntities[Encounter]
+    noteDefinitions: ExternalChanges[NoteDefinition]
+    encounters: ExternalChanges[Encounter]
