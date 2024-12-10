@@ -59,7 +59,7 @@ export const FlagNoteDropdown = ({
     }
 
     if (open) {
-      setComments(note.qaComments ?? "");
+      setComments(note.comments ?? "");
     }
 
     setIsOpen(open);

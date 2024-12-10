@@ -32,12 +32,12 @@ export const NoteCardControls = ({
       )}
       {outputControls}
     </div>
-    {note.qaComments && (
+    {note.comments && (
       <div
         className="text-xs text-zinc-500 px-6 line-clamp-2 text-ellipsis"
-        title={note.qaComments}
+        title={note.comments}
       >
-        {note.qaComments}
+        {note.comments}
       </div>
     )}
   </div>

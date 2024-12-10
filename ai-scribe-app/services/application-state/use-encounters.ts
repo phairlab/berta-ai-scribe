@@ -338,7 +338,7 @@ export function useEncounters() {
     );
 
     if (currentEncounter && currentNote) {
-      const updatedNote = { ...currentNote, isFlagged, qaComments: comments };
+      const updatedNote = { ...currentNote, isFlagged, comments: comments };
 
       const updatedNotes = [
         ...currentEncounter.draftNotes.filter((n) => n.id !== note.id),
