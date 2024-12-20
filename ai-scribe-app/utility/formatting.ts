@@ -38,7 +38,6 @@ export function formatDatetime(date: Date) {
 
 export function formatDateWithWeekday(date: Date) {
   const weekday = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-  console.log(date.getDay(), weekday[date.getDay()]);
 
   return `${formatDate(date)} (${weekday[date.getDay()]})`;
 }

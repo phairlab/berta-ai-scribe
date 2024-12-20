@@ -1,44 +1,24 @@
-import { useState } from "react";
-
-import { DraftNote } from "@/core/types";
 import {
-  createNote,
-  ValidNoteType,
-} from "@/services/application-state/create-note";
+  DraftNote,
+  Encounter,
+  IncompleteNoteType,
+  NoteType,
+} from "@/core/types";
+import { createNote } from "@/services/application-state/create-note";
 import { useWebApi } from "@/services/web-api/use-web-api";
-import { ApplicationError } from "@/utility/errors";
-import { useAbortController } from "@/utility/use-abort-controller";
+import { asApplicationError } from "@/utility/errors";
+import { RequiredFields } from "@/utility/typing";
 
-type NoteGeneratorProps = {
-  onGenerating?: () => void;
-  onGenerated: (draftNote: DraftNote) => void;
-  onError: (error: ApplicationError, retry: () => void) => void;
-};
-
-export function useNoteGenerator({
-  onGenerating,
-  onGenerated,
-  onError,
-}: NoteGeneratorProps) {
+export function useNoteGenerator() {
   const webApi = useWebApi();
-  const controller = useAbortController();
-  const [generatingNoteType, setGeneratingNoteType] = useState<ValidNoteType>();
 
   const generateNote = async (
-    noteType: ValidNoteType,
-    encounterId: string,
+    encounter: Pick<Encounter, "id">,
+    noteType: NoteType | RequiredFields<IncompleteNoteType, "instructions">,
     transcript: string,
-    includeFooter: boolean = true,
+    abortSignal: AbortSignal,
+    options?: { includeFooter?: boolean },
   ) => {
-    if (generatingNoteType) {
-      controller.abort();
-    }
-
-    onGenerating?.();
-    setGeneratingNoteType(noteType);
-
-    const abortSignal = controller.signal.current;
-
     try {
       const response = await webApi.tasks.generateDraftNote(
         noteType.instructions,
@@ -47,16 +27,16 @@ export function useNoteGenerator({
         abortSignal,
       );
 
-      const draftNote: DraftNote = createNote({
-        noteType: noteType,
-        noteId: response.noteId,
-        content: response.text,
-      });
+      const draftNote: DraftNote = createNote(
+        noteType,
+        response.noteId,
+        response.text,
+      );
 
-      if (includeFooter) {
+      if (options?.includeFooter) {
         let noteFooter = [
           "Generated in part by the AHS Jenkins Scribe, with patient consent.",
-          `Note ID: ${encounterId}-${draftNote.id}`,
+          `Note ID: ${encounter.id}-${draftNote.id}`,
         ]
           .map((line) => `<<${line}>>`)
           .join("\n");
@@ -78,22 +58,11 @@ export function useNoteGenerator({
         }
       }
 
-      onGenerated(draftNote);
-    } catch (e: unknown) {
-      onError(e as ApplicationError, () =>
-        generateNote(noteType, encounterId, transcript),
-      );
-    } finally {
-      setGeneratingNoteType(undefined);
+      return draftNote;
+    } catch (ex: unknown) {
+      throw asApplicationError(ex);
     }
   };
 
-  const abort = () => {
-    if (generatingNoteType) {
-      controller.abort();
-      setGeneratingNoteType(undefined);
-    }
-  };
-
-  return { generateNote, abort, generatingNoteType } as const;
+  return { generateNote };
 }

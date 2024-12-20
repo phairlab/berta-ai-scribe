@@ -1,334 +1,362 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import shortUUID from "short-uuid";
 
+import { Button } from "@nextui-org/button";
 import { Divider } from "@nextui-org/divider";
 
 import { ConsentScript } from "@/core/consent-script";
-import { AudioSource, DraftNote, Encounter } from "@/core/types";
+import {
+  AudioSource,
+  DraftNote,
+  Encounter,
+  NoteType,
+  ScribeError,
+} from "@/core/types";
 import { WaitMessageSpinner } from "@/core/wait-message-spinner";
-import { createEncounter } from "@/services/application-state/create-encounter";
-import { useEncounters } from "@/services/application-state/use-encounters";
-import { useNoteTypes } from "@/services/application-state/use-note-types";
-import { ApplicationError } from "@/utility/errors";
+import { useActiveEncounter } from "@/services/application-state/active-encounter-context";
+import { useEncounters } from "@/services/application-state/encounters-context";
+import { useNoteTypes } from "@/services/application-state/note-types-context";
+import { useScribe } from "@/services/application-state/scribe-context";
+import { asApplicationError } from "@/utility/errors";
 
 import { AIScribeAudio } from "./ai-scribe-audio";
 import { AIScribeControls } from "./ai-scribe-controls";
-import {
-  AIScribeError,
-  AIScribeOutput,
-  AIScribeOutputType,
-} from "./ai-scribe-output";
+import { AIScribeOutput } from "./ai-scribe-output";
 import { useNoteGenerator } from "./use-note-generator";
 import { useTranscriber } from "./use-transcriber";
 
 export const AIScribe = () => {
-  const ref = useRef<Encounter | null>(null);
   const encounters = useEncounters();
-  const activeEncounter = encounters.activeEncounter;
-
   const noteTypes = useNoteTypes();
-  const [selectedNoteType, setSelectedNoteType] = useState(noteTypes.default);
-  const [audioSource, setAudioSource] = useState<AudioSource | null>(null);
-  const [activeOutput, setActiveOutput] = useState<AIScribeOutputType>();
+  const transcriber = useTranscriber();
+  const noteGenerator = useNoteGenerator();
+  const [encounter, setActiveEncounter] = useActiveEncounter();
 
-  const [aiScribeError, setAIScribeError] = useState<AIScribeError>();
-  const suppressNextError = useRef(false);
+  const scribe = useScribe();
+  const scribeState = scribe.get(encounter?.id);
 
-  const transcriber = useTranscriber({
-    onTranscribing: () => setAIScribeError(undefined),
-    onTranscript: (transcript) => handleTranscript(transcript),
-    onError: (error, retry) =>
-      handleError("Transcription", error, false, retry),
-  });
+  const [noteType, setNoteType] = useState<NoteType | undefined>(
+    noteTypes.default,
+  );
 
-  const noteGenerator = useNoteGenerator({
-    onGenerating: () => setAIScribeError(undefined),
-    onGenerated: (draftNote) => handleNoteGenerated(draftNote),
-    onError: (error, retry) =>
-      handleError("Note Generation", error, true, retry),
-  });
+  useEffect(() => {
+    if (encounter && noteType !== scribeState.noteType) {
+      setNoteType(scribeState.noteType ?? noteTypes.default);
+    } else if (encounter === null) {
+      setNoteType(noteTypes.default);
+    }
+  }, [encounter]);
+
+  const [transcriptionQueue, setTranscriptionQueue] = useState<string[]>([]);
+  const [noteGenerationQueue, setNoteGenerationQueue] = useState<
+    [string, NoteType | undefined][]
+  >([]);
+
+  useEffect(() => {
+    if (transcriptionQueue.length > 0) {
+      for (const encounterId of transcriptionQueue) {
+        transcribeRecording(encounterId);
+      }
+
+      setTranscriptionQueue([]);
+    }
+  }, [transcriptionQueue]);
+
+  useEffect(() => {
+    if (noteGenerationQueue.length > 0) {
+      for (const [encounterId, noteType] of noteGenerationQueue) {
+        generateNote(encounterId, noteType);
+      }
+
+      setNoteGenerationQueue([]);
+    }
+  }, [noteGenerationQueue]);
+
+  const recording = encounter?.recording ?? null;
+  const transcript = recording?.transcript ?? null;
+  const notes = encounter?.draftNotes ?? [];
+
+  const isSaving = scribeState.action?.type === "Saving";
+  const failedToSave = scribeState.error?.type === "Saving";
 
   const canTranscribe =
-    activeEncounter !== null &&
-    activeEncounter.tracking.isPersisted &&
-    !transcriber.isTranscribing;
+    recording !== null &&
+    transcript === null &&
+    !failedToSave &&
+    !scribeState.action;
 
-  const canGenerateNote =
-    selectedNoteType !== null &&
-    activeEncounter !== null &&
-    activeEncounter.recording !== undefined &&
-    activeEncounter.recording.transcript !== null &&
-    activeEncounter.recording.transcript !== "" &&
-    !noteGenerator.generatingNoteType;
+  const audio = useMemo(() => {
+    if (encounter && recording && recording.duration) {
+      return {
+        id: encounter.id,
+        title: encounter.label ?? encounter.autolabel,
+        url: `/api/recordings/${recording.id}/download`,
+        waveformPeaks: recording.waveformPeaks,
+        duration: recording.duration,
+      } satisfies AudioSource as AudioSource;
+    } else {
+      return null;
+    }
+  }, [encounter, recording]);
 
-  const handleAudioFileGenerated = (audio: File, setActive: boolean) => {
+  async function handleNoteTypeChanged(noteType: NoteType | undefined) {
+    setNoteType(noteType);
+
+    if (encounter) {
+      if (noteType) {
+        scribe.setNoteType(encounter.id, noteType);
+      } else {
+        scribe.clearNoteType(encounter.id);
+      }
+    }
+  }
+
+  async function saveEncounter(audio: File, setActive: boolean) {
     const tempId = shortUUID.generate();
 
-    // Create a new encounter record.
-    const encounter: Encounter = createEncounter({
-      tempId: tempId,
-      audio: audio,
-    });
+    scribe.track(tempId);
+    scribe.setAction(tempId, { type: "Saving" });
 
-    encounters.save(encounter, audio);
+    if (noteType) {
+      scribe.setNoteType(tempId, noteType);
+    }
 
     if (setActive) {
-      encounters.setActive(encounter);
+      setActiveEncounter(tempId);
     }
-  };
 
-  const handleTranscript = (transcript: string) => {
-    if (!activeEncounter) {
-      throw Error(
-        "Invalid Operation: Transcript generated but no active encounter",
+    try {
+      const newEncounter = await encounters.create(tempId, audio);
+
+      scribe.modifyId(tempId, newEncounter.id);
+      scribe.clearAction(newEncounter.id);
+
+      setActiveEncounter((active) =>
+        active === tempId ? newEncounter.id : active,
       );
+
+      setTranscriptionQueue((queue) => [...queue, newEncounter.id]);
+    } catch (ex: unknown) {
+      const error = {
+        type: "Saving",
+        cause: asApplicationError(ex),
+        canDismiss: false,
+        retry: () => {
+          scribe.clearError(tempId);
+          saveEncounter(audio, false);
+        },
+      } satisfies ScribeError;
+
+      scribe.clearAction(tempId);
+      scribe.setError(tempId, error);
     }
+  }
 
-    if (!activeEncounter.recording) {
-      throw Error(
-        "Invalid Operation: Active encounter has an incomplete data record",
-      );
-    }
+  const transcribeRecording = useCallback(
+    async (encounterId: string) => {
+      const encounter = encounters.list.find((e) => e.id === encounterId);
 
-    encounters.save({
-      ...activeEncounter,
-      recording: { ...activeEncounter.recording, transcript: transcript },
-    });
-
-    setActiveOutput(activeEncounter.recording);
-  };
-
-  const handleNoteGenerated = (note: DraftNote) => {
-    if (!activeEncounter) {
-      throw Error("Invalid Operation: Note generated but no active encounter.");
-    }
-
-    encounters.saveNote(activeEncounter, note);
-    setActiveOutput(note);
-  };
-
-  const handleError = (
-    name: string | null,
-    error: ApplicationError,
-    canDismiss: boolean,
-    retry: (() => void) | null,
-  ) => {
-    if (!suppressNextError.current) {
-      const aiScribeError = {
-        name: name,
-        content: error,
-        canDismiss: canDismiss,
-        retry: retry,
-      };
-
-      setAIScribeError(aiScribeError);
-      setActiveOutput(aiScribeError);
-    } else {
-      suppressNextError.current = false;
-    }
-  };
-
-  const handleActiveEncounterUpdated = () => {
-    if (activeEncounter && activeOutput) {
-      if ("definitionId" in activeOutput) {
-        setActiveOutput(
-          activeEncounter.draftNotes.find((n) => n.id === activeOutput.id),
-        );
-      } else if ("transcript" in activeOutput) {
-        setActiveOutput(activeEncounter.recording);
+      if (!encounter) {
+        return;
       }
-    }
 
-    const encounterChanged =
-      !activeEncounter || ref.current?.id !== activeEncounter.id;
+      scribe.clearError(encounter.id);
 
-    if (encounterChanged) {
-      setAIScribeError(undefined);
+      const recording = encounter.recording;
 
-      if (activeEncounter) {
-        if (activeEncounter.draftNotes.length > 0) {
-          setActiveOutput(activeEncounter.draftNotes[0]);
-        } else if (activeEncounter.recording?.transcript) {
-          setActiveOutput(activeEncounter.recording);
-        } else {
-          setActiveOutput(undefined);
+      if (!recording) {
+        return;
+      }
+
+      const controller = new AbortController();
+
+      scribe.setAction(encounter.id, {
+        type: "Transcribing",
+        abort: () => controller.abort(),
+      });
+
+      try {
+        const transcript = await transcriber.transcribe(
+          recording,
+          controller.signal,
+        );
+
+        encounters.setTranscript(encounter.id, transcript);
+        scribe.setOutput(encounter.id, { type: "Transcript" });
+        scribe.clearAction(encounter.id);
+
+        setNoteGenerationQueue((queue) => [...queue, [encounterId, undefined]]);
+      } catch (ex: unknown) {
+        const isAborted =
+          ex instanceof DOMException && ex.name === "AbortError";
+
+        if (!isAborted) {
+          const scribeError = {
+            type: "Transcribing",
+            cause: asApplicationError(ex),
+            canDismiss: false,
+            retry: () => transcribeRecording(encounterId),
+          } satisfies ScribeError;
+
+          scribe.clearAction(encounter.id);
+          scribe.setError(encounter.id, scribeError);
         }
       }
-    }
+    },
+    [encounters.list, scribe],
+  );
 
-    if (activeEncounter?.tracking.error) {
-      handleError(
-        null,
-        activeEncounter?.tracking.error,
-        false,
-        !activeEncounter.tracking.isPersisted && activeEncounter.unsavedAudio
-          ? () => {
-              setAIScribeError(undefined);
-              encounters.save(activeEncounter, activeEncounter.unsavedAudio);
-            }
-          : null,
-      );
-    }
+  const generateNote = useCallback(
+    async (encounterId: string, noteType?: NoteType) => {
+      const encounter = encounters.list.find((e) => e.id === encounterId);
 
-    if (
-      encounterChanged &&
-      (transcriber.isTranscribing || noteGenerator.generatingNoteType)
-    ) {
-      suppressNextError.current = true;
-      transcriber.abort();
-      noteGenerator.abort();
-    }
-
-    if (!activeEncounter) {
-      ref.current = null;
-      setAudioSource(null);
-      setActiveOutput(undefined);
-      setSelectedNoteType(noteTypes.default);
-    } else {
-      ref.current = activeEncounter;
-
-      if (activeEncounter.recording?.duration) {
-        setAudioSource({
-          id: activeEncounter.id,
-          title: activeEncounter.label ?? activeEncounter.autolabel,
-          url: `/api/recordings/${activeEncounter.recording.id}/download`,
-          waveformPeaks: activeEncounter.recording.waveformPeaks,
-          duration: activeEncounter.recording.duration,
-        });
-      } else {
-        setAudioSource(null);
+      if (!encounter) {
+        return;
       }
-    }
-  };
 
-  const handleNoteFlagUpdated = (
+      if (!noteType) {
+        noteType = scribe.get(encounterId).noteType;
+
+        if (!noteType) {
+          return;
+        }
+      }
+
+      scribe.clearError(encounter.id);
+
+      const transcript = encounter?.recording?.transcript;
+
+      if (!transcript || transcript.trim() === "") {
+        return;
+      }
+
+      const controller = new AbortController();
+
+      scribe.setAction(encounter.id, {
+        type: "Generating Note",
+        detail: noteType.title,
+        abort: () => controller.abort(),
+      });
+
+      try {
+        const note = await noteGenerator.generateNote(
+          encounter,
+          noteType,
+          transcript,
+          controller.signal,
+          { includeFooter: true },
+        );
+
+        encounters.saveNote(encounter.id, note);
+        scribe.setOutput(encounter.id, { type: "Note", id: note.id });
+        scribe.clearAction(encounter.id);
+      } catch (ex: unknown) {
+        const isAborted =
+          ex instanceof DOMException && ex.name === "AbortError";
+
+        if (!isAborted) {
+          const scribeError = {
+            type: "Generating Note",
+            cause: asApplicationError(ex),
+            canDismiss: true,
+            retry: () => generateNote(encounterId, noteType),
+          } satisfies ScribeError;
+
+          scribe.clearAction(encounter.id);
+          scribe.setError(encounter.id, scribeError);
+        }
+      }
+    },
+    [encounters.list, scribe],
+  );
+
+  const updateNoteFlag = (
     encounter: Encounter,
     note: DraftNote,
     isFlagged: boolean,
     comments: string | null,
   ) => {
-    encounters.setNoteFlag(encounter, note, isFlagged, comments);
+    encounters.setNoteFlag(encounter.id, note.id, isFlagged, comments);
   };
-
-  // React to changes in the active encounter's state.
-  useEffect(() => {
-    handleActiveEncounterUpdated();
-  }, [activeEncounter]);
-
-  // Auto-transcribe encounters on audio available.
-  useEffect(() => {
-    if (
-      canTranscribe &&
-      activeEncounter.recording &&
-      activeEncounter.recording.transcript === null
-    ) {
-      transcriber.transcribe(activeEncounter);
-    }
-  }, [activeEncounter]);
-
-  // Auto-generate first note on transcript available.
-  useEffect(() => {
-    if (canGenerateNote && activeEncounter.draftNotes.length === 0) {
-      noteGenerator.generateNote(
-        selectedNoteType,
-        activeEncounter.id,
-        activeEncounter.recording!.transcript!,
-      );
-    }
-  }, [selectedNoteType, activeEncounter]);
 
   return (
     <div className="flex flex-col gap-6">
       <AIScribeAudio
-        audioSource={audioSource}
-        isSaveFailed={
-          activeEncounter?.tracking.isPersisted === false &&
-          activeEncounter?.tracking.hasError === true
-        }
-        isSaving={
-          (activeEncounter?.tracking.isSaving &&
-            !activeEncounter.tracking.isPersisted) ??
-          false
-        }
-        onAudioFile={(audio) => handleAudioFileGenerated(audio, true)}
-        onRecoverRecording={(audio) => handleAudioFileGenerated(audio, false)}
-        onReset={() => encounters.setActive(null)}
+        audioSource={audio}
+        isSaveFailed={failedToSave}
+        isSaving={isSaving}
+        onAudioFile={(audio) => saveEncounter(audio, true)}
+        onRecoverRecording={(audio) => saveEncounter(audio, false)}
+        onReset={() => setActiveEncounter(null)}
       />
       <div className="flex flex-col gap-6 items-center">
         <Divider className="bg-zinc-100 dark:bg-zinc-900" />
-        {!(
-          activeEncounter?.tracking.isPersisted === false &&
-          activeEncounter?.tracking.hasError
-        ) && (
+        {!failedToSave && (
           <AIScribeControls
-            isDisabled={!canGenerateNote}
-            selectedNoteType={selectedNoteType ?? undefined}
-            onNoteTypeChanged={(noteType) =>
-              setSelectedNoteType(noteType ?? null)
-            }
+            isDisabled={transcript === null || scribeState.action !== undefined}
+            isRegenerate={notes.some(
+              (n) =>
+                n.definitionId ===
+                (scribeState.noteType?.id ?? noteTypes.default?.id),
+            )}
+            selectedNoteType={noteType}
+            onNoteTypeChanged={handleNoteTypeChanged}
             onSubmit={() =>
-              canGenerateNote &&
-              noteGenerator.generateNote(
-                selectedNoteType,
-                activeEncounter.id,
-                activeEncounter.recording!.transcript!,
-              )
+              encounter && noteType && generateNote(encounter.id, noteType)
             }
           />
         )}
-        {activeEncounter === null && (
+        {!encounter && (
           <ConsentScript className="text-sm text-justify sm:text-start text-zinc-400 dark:text-zinc-600 w-96 max-w-[80%] mt-8 space-y-3 sm:space-y-2" />
         )}
-        {transcriber.isTranscribing && (
-          <WaitMessageSpinner onCancel={transcriber.abort}>
-            Transcribing Audio
+        {scribeState.action && !isSaving && (
+          <WaitMessageSpinner onCancel={scribeState.action.abort}>
+            {scribeState.action.type}
+            {scribeState.action.detail && `: ${scribeState.action.detail}`}
           </WaitMessageSpinner>
         )}
-        {noteGenerator.generatingNoteType && (
-          <WaitMessageSpinner onCancel={noteGenerator.abort}>
-            Generating Note: {noteGenerator.generatingNoteType.title}
-          </WaitMessageSpinner>
+        {failedToSave && (
+          <div className="flex flex-col gap-2 text-sm max-w-prose text-justify sm:text-start">
+            <p className="font-bold text-red-500">WARNING:</p>
+            <p>
+              This recording has not yet been saved and may be lost if the
+              browser is closed or refreshed.
+            </p>
+            <p>
+              If this has occurred due to a loss of network connectivity, please
+              use the Retry button below once connectivity has been restored.
+            </p>
+          </div>
         )}
-        {activeEncounter?.tracking.isPersisted === false &&
-          activeEncounter?.tracking.hasError && (
-            <div className="flex flex-col gap-2 text-sm max-w-prose text-justify sm:text-start">
-              <p className="font-bold text-red-500">WARNING:</p>
-              <p>
-                This recording has not yet been saved and may be lost if the
-                browser is closed or refreshed.
-              </p>
-              <p>
-                If this has occurred due to a loss of network connectivity,
-                please use the Retry button below once connectivity has been
-                restored.
-              </p>
-            </div>
-          )}
-        {activeEncounter &&
-          (aiScribeError ||
-            activeEncounter.draftNotes.length > 0 ||
-            (activeEncounter.recording &&
-              activeEncounter.recording.transcript !== null)) && (
-            <AIScribeOutput
-              activeOutput={activeOutput}
-              error={aiScribeError}
-              notes={activeEncounter.draftNotes}
-              recording={activeEncounter.recording}
-              onActiveChanged={setActiveOutput}
-              onErrorDismissed={() => setAIScribeError(undefined)}
-              onNoteFlagUpdated={(note, isFlagged, comments) =>
-                handleNoteFlagUpdated(
-                  activeEncounter,
-                  note,
-                  isFlagged,
-                  comments,
-                )
-              }
-            />
-          )}
+        {encounter && canTranscribe && !scribeState.error && (
+          <div className="flex flex-col items-center justify-center gap-4 mt-16 max-w-[80%]">
+            <p className="text-center text-zinc-500">
+              This recording has not yet been transcribed.
+            </p>
+            <Button
+              color="primary"
+              onClick={() => transcribeRecording(encounter.id)}
+            >
+              Transcribe Now
+            </Button>
+          </div>
+        )}
+        {encounter && (scribeState.error || notes.length > 0 || transcript) && (
+          <AIScribeOutput
+            activeOutput={scribeState.output}
+            error={scribeState.error}
+            notes={notes}
+            recording={recording ?? undefined}
+            onActiveChanged={(output) => scribe.setOutput(encounter.id, output)}
+            onErrorDismissed={() => scribe.clearError(encounter.id)}
+            onNoteFlagUpdated={(note, isFlagged, comments) =>
+              updateNoteFlag(encounter, note, isFlagged, comments)
+            }
+          />
+        )}
       </div>
     </div>
   );

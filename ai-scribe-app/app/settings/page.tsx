@@ -6,14 +6,15 @@ import { NoteTypeSelector } from "@/core/note-type-selector";
 import { subtitle, title } from "@/core/primitives";
 import { IncompleteNoteType, NoteType } from "@/core/types";
 import { createNoteType } from "@/services/application-state/create-note-type";
-import { useNoteTypes } from "@/services/application-state/use-note-types";
-import { setTracking } from "@/utility/tracking";
+import { useNoteTypes } from "@/services/application-state/note-types-context";
+import { useCurrentUser } from "@/services/application-state/user-info-context";
 
 import { CustomNotesEditor } from "@/features/custom-note-types/custom-notes-editor";
 import { CustomNotesList } from "@/features/custom-note-types/custom-notes-list";
 
 export default function Settings() {
   const noteTypes = useNoteTypes();
+  const userInfo = useCurrentUser();
 
   const [editedNoteType, setEditNoteType] =
     useState<IncompleteNoteType>(createNoteType());
@@ -23,7 +24,7 @@ export default function Settings() {
   };
 
   const editExisting = (noteType: NoteType) => {
-    setEditNoteType(setTracking(noteType, "Locally Modified"));
+    setEditNoteType(noteType);
   };
 
   const handleChanges = (changes: Partial<IncompleteNoteType>) => {
@@ -41,7 +42,7 @@ export default function Settings() {
 
   const handleDefaultChanged = (noteType: NoteType | undefined) => {
     if (noteType) {
-      noteTypes.setDefault(noteType.id);
+      userInfo.setDefaultNoteType(noteType.id);
     }
   };
 
@@ -54,7 +55,8 @@ export default function Settings() {
           <NoteTypeSelector
             builtinTypes={noteTypes.builtin}
             customTypes={noteTypes.custom}
-            isLoading={!noteTypes.isReady}
+            isDisabled={noteTypes.initState !== "Ready"}
+            isLoading={noteTypes.initState == "Initializing"}
             selected={noteTypes.default ?? undefined}
             onChange={handleDefaultChanged}
           />
@@ -68,6 +70,7 @@ export default function Settings() {
         </div>
         <div className="flex flex-col gap-6 justify-center items-center max-w-2xl w-full">
           <CustomNotesList
+            className="flex flex-col gap-3 max-w-[90%] sm:max-w-[600px]"
             editedNoteType={editedNoteType}
             onDelete={handleDelete}
             onEdit={editExisting}

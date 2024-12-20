@@ -4,8 +4,8 @@ import { SelectItem, SelectSection } from "@nextui-org/select";
 
 import { MobileCompatibleSelect } from "@/core/mobile-compatible-select";
 import { Recording, SampleRecording } from "@/core/types";
-import { useEncounters } from "@/services/application-state/use-encounters";
-import { useSampleRecordings } from "@/services/application-state/use-sample-recordings";
+import { useEncounters } from "@/services/application-state/encounters-context";
+import { useSampleRecordings } from "@/services/application-state/sample-recordings-context";
 import { formatDatetime } from "@/utility/formatting";
 
 type AnyRecordingType = Recording | SampleRecording;
@@ -22,7 +22,8 @@ export const MixedRecordingSelector = ({
   const encounters = useEncounters();
   const sampleRecordings = useSampleRecordings();
 
-  const isLoading = !encounters.isReady || !sampleRecordings.isReady;
+  const isLoading =
+    encounters.initState !== "Ready" || sampleRecordings.initState !== "Ready";
 
   const recentEncounters = encounters.list
     .filter((e) => e.recording?.transcript)

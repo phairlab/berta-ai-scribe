@@ -15,6 +15,7 @@ type NoteTypeSelectorProps = {
   label?: ReactNode;
   labelPlacement?: "outside" | "outside-left" | "inside" | undefined;
   placeholder?: string | undefined;
+  isDisabled: boolean;
   isLoading: boolean;
   onChange: (noteType: NoteType | undefined) => void;
 };
@@ -27,13 +28,14 @@ export const NoteTypeSelector = ({
   label,
   labelPlacement,
   placeholder,
+  isDisabled,
   isLoading,
   onChange,
 }: NoteTypeSelectorProps) => {
   const hasCustomNotes = customTypes.length > 0;
 
   const persistedNoteTypes = (noteTypes: NoteType[]) =>
-    noteTypes.filter((nt) => nt.tracking.isPersisted);
+    noteTypes.filter((nt) => !nt.isNew);
 
   const handleChange = (key: string) => {
     const noteType =
@@ -48,7 +50,7 @@ export const NoteTypeSelector = ({
       aria-label="Select a Note Type"
       className={className}
       disallowEmptySelection={true}
-      isDisabled={isLoading}
+      isDisabled={isDisabled}
       isLoading={isLoading}
       label={label}
       labelPlacement={labelPlacement}

@@ -111,10 +111,10 @@ if settings.ENVIRONMENT == "development":
         return get_swagger_ui_html(
             openapi_url=app.openapi_url,
             title=f"{app.title} - Swagger UI",
-            swagger_favicon_url="static/favicon.ico",
+            swagger_favicon_url="api/static/favicon.ico",
             oauth2_redirect_url=app.swagger_ui_oauth2_redirect_url,
-            swagger_js_url="static/swagger-ui-bundle.js",
-            swagger_css_url="static/swagger-ui.css",
+            swagger_js_url="api/static/swagger-ui-bundle.js",
+            swagger_css_url="api/static/swagger-ui.css",
         )
 
     @app.get(app.swagger_ui_oauth2_redirect_url, include_in_schema=False)
@@ -126,8 +126,8 @@ if settings.ENVIRONMENT == "development":
         return get_redoc_html(
             openapi_url=app.openapi_url,
             title=f"{app.title} - ReDoc",
-            redoc_favicon_url="static/favicon.ico",
-            redoc_js_url="static/redoc.standalone.js"
+            redoc_favicon_url="api/static/favicon.ico",
+            redoc_js_url="api/static/redoc.standalone.js"
         )
 
 # ----------------------------------

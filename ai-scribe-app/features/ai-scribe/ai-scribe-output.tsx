@@ -1,29 +1,19 @@
-import { Key, useEffect, useState } from "react";
+import { Key, useMemo } from "react";
 
 import { Tab, Tabs } from "@nextui-org/tabs";
 
 import { ErrorCard } from "@/core/error-card";
 import { NoteCard } from "@/core/note-card";
 import { TranscriptCard } from "@/core/transcript-card";
-import { DraftNote, Recording } from "@/core/types";
-import { ApplicationError, isApplicationError } from "@/utility/errors";
+import { ScribeError, DraftNote, Recording, ScribeOutput } from "@/core/types";
 import { byDate } from "@/utility/sorting";
-
-export type AIScribeError = {
-  name: string | null;
-  content: ApplicationError;
-  canDismiss: boolean;
-  retry: (() => void) | null;
-};
-
-export type AIScribeOutputType = Recording | DraftNote | AIScribeError;
 
 type AIScribeOutputProps = {
   recording: Recording | undefined;
   notes: DraftNote[];
-  error: AIScribeError | undefined;
-  activeOutput: AIScribeOutputType | undefined;
-  onActiveChanged: (output: AIScribeOutputType | undefined) => void;
+  error: ScribeError | undefined;
+  activeOutput: ScribeOutput | undefined;
+  onActiveChanged: (output: ScribeOutput | undefined) => void;
   onErrorDismissed: () => void;
   onNoteFlagUpdated: (
     note: DraftNote,
@@ -41,46 +31,58 @@ export const AIScribeOutput = ({
   onErrorDismissed,
   onNoteFlagUpdated,
 }: AIScribeOutputProps) => {
-  const [activeTab, setActiveTab] = useState<string>("");
+  const activeTab = useMemo(() => {
+    let key: string = "";
 
-  function isError(output: AIScribeOutputType): output is AIScribeError {
-    return "content" in output && isApplicationError(output.content);
-  }
-
-  function isRecording(output: AIScribeOutputType): output is Recording {
-    return "transcript" in output;
-  }
-
-  function isNote(output: AIScribeOutputType): output is DraftNote {
-    return "definitionId" in output;
-  }
-
-  useEffect(() => {
-    const key: string | undefined = !activeOutput
-      ? undefined
-      : isError(activeOutput)
-        ? "error"
-        : isRecording(activeOutput)
-          ? "transcript"
-          : isNote(activeOutput)
-            ? notes.find((n) => n.id === activeOutput.id)?.id
-            : undefined;
-
-    if (activeTab !== key) {
-      setActiveTab(key ?? "");
+    if (activeOutput) {
+      if (activeOutput.type === "Error") {
+        key = "error";
+      } else if (activeOutput.type === "Transcript") {
+        key = "transcript";
+      } else if (activeOutput.type === "Note") {
+        key = notes.find((n) => n.id === activeOutput.id)?.id ?? "";
+      }
+    } else {
+      if (error) {
+        key = "error";
+      } else if (notes.length > 0) {
+        key = notes[0].id;
+      } else if (recording?.transcript) {
+        key = "transcript";
+      }
     }
+
+    return key;
   }, [activeOutput, error, recording, notes]);
 
-  const handleSelectionChange = (key: Key) => {
-    const output =
-      key === "transcript"
-        ? recording
-        : key === "error"
-          ? error
-          : notes.find((n) => n.id === key.toString());
+  function errorTabLabel(scribeError: ScribeError) {
+    switch (scribeError.type) {
+      case "Transcribing":
+        return "ERROR: Transcription";
+      case "Generating Note":
+        return "ERROR: Note Generation";
+      default:
+        return "ERROR DETAILS";
+    }
+  }
+
+  function handleSelectionChange(key: Key) {
+    let output: ScribeOutput | undefined = undefined;
+
+    if (key === "transcript") {
+      output = { type: "Transcript" };
+    } else if (key === "error") {
+      output = { type: "Error" };
+    } else {
+      const id = notes.find((n) => n.id === key.toString())?.id;
+
+      if (id) {
+        output = { type: "Note", id };
+      }
+    }
 
     onActiveChanged(output);
-  };
+  }
 
   return (
     <div className="flex flex-col w-full">
@@ -91,15 +93,10 @@ export const AIScribeOutput = ({
         onSelectionChange={handleSelectionChange}
       >
         {error && (
-          <Tab
-            key="error"
-            title={
-              error.name ? `ERROR DETAILS: ${error.name}` : "ERROR DETAILS"
-            }
-          >
+          <Tab key="error" title={errorTabLabel(error)}>
             <ErrorCard
               canDismiss={error.canDismiss}
-              error={error.content}
+              error={error.cause}
               retryAction={error.retry}
               onDismiss={onErrorDismissed}
             />

@@ -1,6 +1,32 @@
 import * as WebApiTypes from "@/services/web-api/types";
-import { WithTracking } from "@/utility/tracking";
+import { ApplicationError } from "@/utility/errors";
 import { OptionalFields } from "@/utility/typing";
+
+export type ScribeActionType = "Saving" | "Transcribing" | "Generating Note";
+
+export type ScribeAction = {
+  type: ScribeActionType;
+  detail?: string;
+  abort?: () => void;
+};
+
+export type ScribeError = {
+  type: ScribeActionType;
+  cause: ApplicationError;
+  canDismiss: boolean;
+  retry: (() => void) | null;
+};
+
+export type ScribeOutput =
+  | { type: "Transcript" | "Error" }
+  | { type: "Note"; id: string | undefined };
+
+export type ScribeTrackedEncounter = {
+  noteType?: NoteType;
+  action?: ScribeAction;
+  error?: ScribeError;
+  output?: ScribeOutput;
+};
 
 export type AudioSource = {
   id: string;
@@ -10,14 +36,12 @@ export type AudioSource = {
   duration: number;
 };
 
-export type DraftNote = WithTracking<WebApiTypes.DraftNote>;
+export type DraftNote = WebApiTypes.DraftNote;
 
-export type Encounter = WithTracking<
-  Omit<WebApiTypes.Encounter, "draftNotes"> & {
-    draftNotes: DraftNote[];
-    unsavedAudio?: File;
-  }
->;
+export type Encounter = Omit<WebApiTypes.Encounter, "draftNotes"> & {
+  draftNotes: DraftNote[];
+  isPersisted: boolean;
+};
 
 export type EncountersPage = WebApiTypes.Page<WebApiTypes.Encounter>;
 
@@ -26,10 +50,20 @@ export type IncompleteNoteType = OptionalFields<
   "instructions" | "title"
 >;
 
-export type NoteType = WithTracking<WebApiTypes.NoteDefinition>;
+export type NoteType = WebApiTypes.NoteDefinition & {
+  isNew: boolean;
+  isSaving: boolean;
+  saveError?: ApplicationError;
+};
 
 export type Recording = WebApiTypes.Recording;
 
 export type SampleRecording = WebApiTypes.SampleRecording & { id: string };
 
-export type UserInfo = WebApiTypes.UserInfo;
+export type UserInfo = {
+  username: string;
+  modified: string;
+  settings: {
+    defaultNoteType?: string;
+  };
+};

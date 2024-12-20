@@ -8,7 +8,7 @@ import { ThemeProviderProps } from "next-themes/dist/types";
 
 import { NextUIProvider } from "@nextui-org/system";
 
-import { ApplicationStateProvider } from "@/services/application-state/application-state-provider";
+import { AppContextProviders } from "@/services/application-state/app-context-providers";
 import { AuthenticationProvider } from "@/services/session-management/authentication-provider";
 
 export interface ProvidersProps {
@@ -23,7 +23,7 @@ export function Providers({ children, themeProps }: ProvidersProps) {
     <NextUIProvider navigate={router.push}>
       <NextThemesProvider {...themeProps}>
         <AuthenticationProvider>
-          <ApplicationStateProvider>{children}</ApplicationStateProvider>
+          <AppContextProviders>{children}</AppContextProviders>
         </AuthenticationProvider>
       </NextThemesProvider>
     </NextUIProvider>

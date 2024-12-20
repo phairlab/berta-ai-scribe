@@ -1,24 +1,27 @@
 "use client";
 
-import { use } from "react";
-
 import clsx from "clsx";
 
 import { Divider } from "@nextui-org/divider";
 import { Progress } from "@nextui-org/progress";
 
-import { ApplicationStateContext } from "@/services/application-state/application-state-context";
+import { useEncounters } from "@/services/application-state/encounters-context";
+import { useNoteTypes } from "@/services/application-state/note-types-context";
+import { useSampleRecordings } from "@/services/application-state/sample-recordings-context";
 
 import { AIScribe } from "@/features/ai-scribe/ai-scribe";
 import { EncounterNavigator } from "@/features/encounter-navigation/encounter-navigator";
 import { TermsOfUse } from "@/features/user-session/terms-of-use";
 
 export default function Home() {
-  const applicationState = use(ApplicationStateContext);
+  const { initState: encountersInitState } = useEncounters();
+  const { initState: noteTypesInitState } = useNoteTypes();
+  const { initState: sampleRecordingsInitState } = useSampleRecordings();
+
   const isLoading =
-    applicationState.encounters.status !== "Ready" ||
-    applicationState.noteTypes.status !== "Ready" ||
-    applicationState.sampleRecordings.status !== "Ready";
+    encountersInitState !== "Ready" ||
+    noteTypesInitState !== "Ready" ||
+    sampleRecordingsInitState !== "Ready";
 
   return (
     <div className="flex flex-row w-full gap-5 items-start justify-center">

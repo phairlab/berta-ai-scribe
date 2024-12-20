@@ -1,60 +1,23 @@
-import { useState } from "react";
-
-import { Encounter } from "@/core/types";
+import { Recording } from "@/services/web-api/types";
 import { useWebApi } from "@/services/web-api/use-web-api";
-import { ApplicationError, UnexpectedError } from "@/utility/errors";
-import { useAbortController } from "@/utility/use-abort-controller";
+import { asApplicationError } from "@/utility/errors";
 
-type TranscriberProps = {
-  onTranscribing?: () => void;
-  onTranscript: (transcript: string) => void;
-  onError: (error: ApplicationError, retry: () => void) => void;
-};
-
-export function useTranscriber({
-  onTranscribing,
-  onTranscript,
-  onError,
-}: TranscriberProps) {
+export function useTranscriber() {
   const webApi = useWebApi();
-  const controller = useAbortController();
-  const [isTranscribing, setIsTranscribing] = useState(false);
 
-  const transcribe = async (encounter: Encounter) => {
-    if (isTranscribing) {
-      controller.abort();
-    }
-
-    if (!encounter.recording) {
-      onError(UnexpectedError("Recording unavailable"), () =>
-        transcribe(encounter),
+  /** Transcribes a recording's audio file and returns the transcription text. */
+  const transcribe = async (recording: Recording, abortSignal: AbortSignal) => {
+    try {
+      const response = await webApi.tasks.transcribeAudio(
+        recording.id,
+        abortSignal,
       );
-    } else {
-      onTranscribing?.();
-      setIsTranscribing(true);
-      const abortSignal = controller.signal.current;
 
-      try {
-        const response = await webApi.tasks.transcribeAudio(
-          encounter.recording.id,
-          abortSignal,
-        );
-
-        onTranscript(response.text);
-      } catch (e: unknown) {
-        onError(e as ApplicationError, () => transcribe(encounter));
-      } finally {
-        setIsTranscribing(false);
-      }
+      return response.text;
+    } catch (ex: unknown) {
+      throw asApplicationError(ex);
     }
   };
 
-  const abort = () => {
-    if (isTranscribing) {
-      controller.abort();
-      setIsTranscribing(false);
-    }
-  };
-
-  return { transcribe, abort, isTranscribing } as const;
+  return { transcribe };
 }

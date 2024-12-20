@@ -3,7 +3,6 @@
 import clsx from "clsx";
 
 import { Listbox, ListboxItem, ListboxSection } from "@nextui-org/listbox";
-import { Progress } from "@nextui-org/progress";
 import { ScrollShadow } from "@nextui-org/scroll-shadow";
 
 import { Encounter } from "@/core/types";
@@ -12,6 +11,7 @@ import { formatDateWithWeekday, formatTime } from "@/utility/formatting";
 import { byDate } from "@/utility/sorting";
 
 import { EncounterDropdown } from "./encounter-dropdown";
+import { EncounterLabel } from "./encounter-label";
 
 type EncounterListProps = {
   encounters: Encounter[];
@@ -84,32 +84,7 @@ export const EncounterList = ({
                     "text-xs mb-1 font-semibold text-zinc-600 dark:text-zinc-400",
                   description: "text-zinc-500",
                 }}
-                description={
-                  !encounter.tracking.isPersisted &&
-                  encounter.tracking.hasError ? (
-                    <p className="ms-1 text-red-500 font-semibold">
-                      ERROR - NOT SAVED
-                    </p>
-                  ) : encounter.tracking.isSaving &&
-                    !encounter.tracking.isPersisted ? (
-                    <div className="flex flex-row gap-2 items-center justify-start ms-1 w-24">
-                      <p className="text-xs">Saving</p>
-                      <Progress
-                        isIndeterminate
-                        aria-label="Saving"
-                        className="mt-1"
-                        color="default"
-                        size="sm"
-                      />
-                    </div>
-                  ) : (
-                    <p className="pe-2 line-clamp-2 text-ellipse">
-                      {encounter.label ??
-                        encounter.autolabel ??
-                        encounter.id?.toUpperCase()}
-                    </p>
-                  )
-                }
+                description={<EncounterLabel encounter={encounter} />}
                 textValue={encounter.id}
                 onPress={() => onSelected(encounter)}
               >

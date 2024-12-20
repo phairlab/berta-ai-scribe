@@ -4,28 +4,29 @@ import * as UiTypes from "@/core/types";
 import * as WebApiTypes from "@/services/web-api/types";
 
 import { byDate } from "./sorting";
-import { setTracking } from "./tracking";
 
 // WEB API --> UI TYPE CONVERSION
 
 function toNote(record: WebApiTypes.DraftNote) {
-  return setTracking(record, "Synchronized") as UiTypes.DraftNote;
+  return record satisfies UiTypes.DraftNote as UiTypes.DraftNote;
 }
 
 function toEncounter(record: WebApiTypes.Encounter) {
-  return setTracking(
-    {
-      ...record,
-      draftNotes: record.draftNotes
-        .map((n) => toNote(n))
-        .sort(byDate((x) => new Date(x.created), "Descending")),
-    },
-    "Synchronized",
-  ) as UiTypes.Encounter;
+  return {
+    ...record,
+    draftNotes: record.draftNotes
+      .map((n) => toNote(n))
+      .sort(byDate((x) => new Date(x.created), "Descending")),
+    isPersisted: true,
+  } satisfies UiTypes.Encounter as UiTypes.Encounter;
 }
 
 function toNoteType(record: WebApiTypes.NoteDefinition) {
-  return setTracking(record, "Synchronized") as UiTypes.NoteType;
+  return {
+    ...record,
+    isNew: false,
+    isSaving: false,
+  } satisfies UiTypes.NoteType as UiTypes.NoteType;
 }
 
 function toSampleRecording(
@@ -34,11 +35,22 @@ function toSampleRecording(
   return { id: record.filename, ...record };
 }
 
+function toUserInfo(record: WebApiTypes.UserInfo): UiTypes.UserInfo {
+  return {
+    username: record.username,
+    modified: record.updated,
+    settings: {
+      defaultNoteType: record.defaultNoteType,
+    },
+  };
+}
+
 export const convertWebApiRecord = {
   toNote,
   toEncounter,
   toNoteType,
   toSampleRecording,
+  toUserInfo,
 };
 
 // MARKDOWN CONVERSION

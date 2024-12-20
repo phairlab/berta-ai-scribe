@@ -15,9 +15,10 @@ import {
   SampleRecording,
 } from "@/core/types";
 import { WaitMessageSpinner } from "@/core/wait-message-spinner";
-import { useNoteTypes } from "@/services/application-state/use-note-types";
-import { ApplicationError } from "@/utility/errors";
+import { useNoteTypes } from "@/services/application-state/note-types-context";
+import { ApplicationError, asApplicationError } from "@/utility/errors";
 import { RequiredFields } from "@/utility/typing";
+import { useAbortController } from "@/utility/use-abort-controller";
 
 import { useNoteGenerator } from "@/features/ai-scribe/use-note-generator";
 
@@ -33,20 +34,22 @@ export const CustomNotesEditor = ({
   onReset,
 }: CustomNotesEditorProps) => {
   const noteTypes = useNoteTypes();
-  const [template, setTemplate] = useState<NoteType>();
+  const noteGenerator = useNoteGenerator();
+  const controller = useAbortController();
 
+  const [template, setTemplate] = useState<NoteType>();
   const [recording, setRecording] = useState<Recording | SampleRecording>();
   const [draftNote, setDraftNote] = useState<DraftNote>();
   const [error, setError] = useState<ApplicationError>();
+  const [isGeneratingNote, setIsGeneratingNote] = useState(false);
 
-  const noteGenerator = useNoteGenerator({
-    onGenerating: () => setError(undefined),
-    onGenerated: (draftNote) => setDraftNote(draftNote),
-    onError: (error) => setError(error),
-  });
+  const canSave =
+    editedNoteType.instructions !== undefined &&
+    editedNoteType.title !== undefined;
 
   const reset = () => {
-    noteGenerator.abort();
+    controller.abort();
+    setIsGeneratingNote(false);
     setDraftNote(undefined);
     setError(undefined);
     setTemplate(undefined);
@@ -61,31 +64,57 @@ export const CustomNotesEditor = ({
   };
 
   const save = () => {
-    noteTypes.save(editedNoteType);
-    reset();
+    const instructions = editedNoteType.instructions;
+    const title = editedNoteType.title;
+
+    if (instructions !== undefined && title !== undefined) {
+      noteTypes.save({
+        ...editedNoteType,
+        instructions,
+        title,
+      } satisfies NoteType);
+      reset();
+    }
   };
 
   useEffect(() => {
-    noteGenerator.abort();
+    controller.abort();
+    setIsGeneratingNote(false);
     setDraftNote(undefined);
     setError(undefined);
     setTemplate(undefined);
   }, [editedNoteType]);
 
-  const canTest =
-    editedNoteType.instructions &&
-    recording &&
-    !noteGenerator.generatingNoteType;
+  const canTest = editedNoteType.instructions && recording && !isGeneratingNote;
 
   const test = async () => {
+    setError(undefined);
+
     const transcript = recording?.transcript;
 
-    if (transcript && editedNoteType.instructions !== undefined) {
-      noteGenerator.generateNote(
+    if (!transcript || editedNoteType.instructions === undefined) {
+      return;
+    }
+
+    try {
+      setIsGeneratingNote(true);
+
+      const note = await noteGenerator.generateNote(
+        { id: "TEST" },
         editedNoteType as RequiredFields<IncompleteNoteType, "instructions">,
-        "(TEST)",
         transcript,
+        controller.signal.current,
       );
+
+      setDraftNote(note);
+    } catch (ex: unknown) {
+      const isAborted = ex instanceof DOMException && ex.name === "AbortError";
+
+      if (!isAborted) {
+        setError(asApplicationError(ex));
+      }
+    } finally {
+      setIsGeneratingNote(false);
     }
   };
 
@@ -102,7 +131,8 @@ export const CustomNotesEditor = ({
         <NoteTypeSelector
           builtinTypes={noteTypes.builtin}
           customTypes={noteTypes.custom}
-          isLoading={!noteTypes.isReady}
+          isDisabled={noteTypes.initState !== "Ready"}
+          isLoading={noteTypes.initState === "Initializing"}
           label="Template"
           labelPlacement="outside"
           selected={template}
@@ -149,15 +179,15 @@ export const CustomNotesEditor = ({
           <Button
             className="mt-2 md:mt-6"
             color="primary"
-            isDisabled={!noteTypes.check.canSave(editedNoteType)}
+            isDisabled={!canSave}
             onClick={save}
           >
-            {editedNoteType.tracking.isPersisted ? "Save" : "Create"}
+            {editedNoteType.isNew ? "Create" : "Save"}
           </Button>
           <Button
             className="mt-2 md:mt-6"
             color="default"
-            isDisabled={!!noteGenerator.generatingNoteType}
+            isDisabled={isGeneratingNote}
             onClick={reset}
           >
             Reset
@@ -165,9 +195,9 @@ export const CustomNotesEditor = ({
         </div>
       </div>
       <div className="flex flex-col gap-4 w-full">
-        {noteGenerator.generatingNoteType && (
-          <WaitMessageSpinner onCancel={noteGenerator.abort}>
-            Generating Note: {noteGenerator.generatingNoteType.title}
+        {isGeneratingNote && (
+          <WaitMessageSpinner onCancel={controller.abort}>
+            Generating Note
           </WaitMessageSpinner>
         )}
         {error && <ErrorCard error={error} />}

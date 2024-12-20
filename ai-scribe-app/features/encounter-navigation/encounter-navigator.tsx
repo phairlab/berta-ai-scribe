@@ -6,7 +6,8 @@ import { Listbox, ListboxItem } from "@nextui-org/listbox";
 
 import { Encounter } from "@/core/types";
 import { WaitMessageSpinner } from "@/core/wait-message-spinner";
-import { useEncounters } from "@/services/application-state/use-encounters";
+import { useActiveEncounter } from "@/services/application-state/active-encounter-context";
+import { useEncounters } from "@/services/application-state/encounters-context";
 
 import { EncounterList } from "./encounter-list";
 
@@ -18,10 +19,10 @@ export const EncounterNavigator = ({
   onEncounterSelected,
 }: EncounterNavigatorProps) => {
   const encounters = useEncounters();
-  const activeEncounter = encounters.activeEncounter;
+  const [activeEncounter, setActiveEncounter] = useActiveEncounter();
 
   const selectEncounter = (encounter: Encounter | null) => {
-    encounters.setActive(encounter);
+    setActiveEncounter(encounter?.id ?? null);
     onEncounterSelected?.(encounter);
   };
 
@@ -49,7 +50,7 @@ export const EncounterNavigator = ({
           </span>
         </ListboxItem>
       </Listbox>
-      {!encounters.isReady ? (
+      {encounters.initState !== "Ready" ? (
         <div className="flex justify-start items-start ms-4 mt-4 w-auto">
           <WaitMessageSpinner size="xs">
             Loading Saved Recordings
@@ -72,11 +73,11 @@ export const EncounterNavigator = ({
           activeEncounter={activeEncounter}
           canLoadMore={encounters.canLoadMore}
           encounters={encounters.list}
-          isLoading={encounters.isLoading}
+          isLoading={encounters.isLoadingMore}
           loadMore={encounters.loadMore}
-          onDelete={(encounter) => encounters.purge(encounter)}
+          onDelete={(encounter) => encounters.remove(encounter.id)}
           onLabelChanged={(encounter, label) =>
-            encounters.save({ ...encounter, label: label })
+            encounters.setLabel(encounter.id, label)
           }
           onSelected={selectEncounter}
         />

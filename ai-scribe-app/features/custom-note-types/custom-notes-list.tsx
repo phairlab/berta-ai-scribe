@@ -1,6 +1,8 @@
+import { HTMLProps } from "react";
+
 import { IncompleteNoteType, NoteType } from "@/core/types";
 import { WaitMessageSpinner } from "@/core/wait-message-spinner";
-import { useNoteTypes } from "@/services/application-state/use-note-types";
+import { useNoteTypes } from "@/services/application-state/note-types-context";
 
 import { CustomNotesListItem } from "./custom-notes-list-item";
 
@@ -8,29 +10,30 @@ type CustomNotesListProps = {
   editedNoteType: IncompleteNoteType | null;
   onEdit: (noteType: NoteType) => void;
   onDelete: (noteType: NoteType) => void;
-};
+} & HTMLProps<HTMLDivElement>;
 
 export const CustomNotesList = ({
   editedNoteType,
   onEdit,
   onDelete,
+  ...props
 }: CustomNotesListProps) => {
   const noteTypes = useNoteTypes();
 
   const handleDelete = (noteType: NoteType) => {
-    noteTypes.discard(noteType);
+    noteTypes.remove(noteType.id);
     onDelete(noteType);
   };
 
   return (
-    <div className="flex flex-col gap-3 max-w-[90%] sm:max-w-[600px]">
-      {!noteTypes.isReady ? (
+    <div {...props}>
+      {noteTypes.initState !== "Ready" ? (
         <WaitMessageSpinner size="sm">Loading</WaitMessageSpinner>
       ) : (
         noteTypes.custom.map((noteType) => (
           <CustomNotesListItem
             key={noteType.id}
-            canDelete={noteTypes.check.canDiscard(noteType)}
+            canDelete={!noteType.isSaving}
             isBeingEdited={noteType.id === editedNoteType?.id}
             noteType={noteType}
             onDelete={() => handleDelete(noteType)}

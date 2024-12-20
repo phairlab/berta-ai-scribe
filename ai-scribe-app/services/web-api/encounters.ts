@@ -55,7 +55,7 @@ export const update =
       signal: cancellation,
     });
 
-export const purgeData =
+export const deleteAndPurge =
   (getAccessToken: () => WebApiToken) =>
   (id: string, cancellation?: AbortSignal): Promise<void> =>
     httpAction<void>("DELETE", `api/encounters/${id}`, {
@@ -125,7 +125,7 @@ export const routes = {
   getAll,
   create,
   update,
-  purgeData,
+  deleteAndPurge,
   createDraftNote,
   discardDraftNote,
   setNoteFlag,

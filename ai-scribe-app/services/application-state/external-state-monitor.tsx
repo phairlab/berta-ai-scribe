@@ -1,25 +1,28 @@
-import { PropsWithChildren, use, useEffect, useMemo, useRef } from "react";
+import { ReactNode, useEffect, useMemo, useRef } from "react";
 
-import { Encounter } from "@/core/types";
-import * as webApiTypes from "@/services/web-api/types";
+import { Encounter, Recording } from "@/core/types";
+import * as WebApiTypes from "@/services/web-api/types";
 import { useWebApi } from "@/services/web-api/use-web-api";
 import { convertWebApiRecord } from "@/utility/conversion";
-import { byDate } from "@/utility/sorting";
-import { setTracking, WithTracking } from "@/utility/tracking";
+import { alphabetically, byDate } from "@/utility/sorting";
 import { useAbortController } from "@/utility/use-abort-controller";
 
-import { ApplicationStateContext } from "./application-state-context";
+import { useRawEncountersState } from "./encounters-context";
+import { useRawNoteTypesState } from "./note-types-context";
+import { useRawUserInfoState } from "./user-info-context";
 
 const MONITOR_INTERVAL_MS = 7000;
-const DEFERRAL_MS = 500;
 
-export const ExternalStateMonitor = ({ children }: PropsWithChildren) => {
-  const applicationState = use(ApplicationStateContext);
+type MonitorProps = { children: ReactNode };
+
+export const ExternalStateMonitor = ({ children }: MonitorProps) => {
+  const userInfo = useRawUserInfoState();
+  const encounters = useRawEncountersState();
+  const noteTypes = useRawNoteTypesState();
+
   const webApi = useWebApi();
   const abortController = useAbortController();
 
-  const encounters = useRef(applicationState.encounters);
-  const noteTypes = useRef(applicationState.noteTypes);
   const isMonitoring = useRef(false);
   const cutoff = useRef<Date>(new Date());
   const abortSignal = useRef<AbortSignal>(abortController.signal.current);
@@ -27,18 +30,15 @@ export const ExternalStateMonitor = ({ children }: PropsWithChildren) => {
 
   const isStateReady = useMemo(
     () =>
-      applicationState.encounters.status == "Ready" &&
-      applicationState.noteTypes.status == "Ready",
-    [applicationState.encounters.status, applicationState.noteTypes.status],
+      userInfo.initState == "Ready" &&
+      encounters.initState == "Ready" &&
+      noteTypes.initState == "Ready",
+    [userInfo.initState, encounters.initState, noteTypes.initState],
   );
 
-  useEffect(() => {
-    encounters.current = applicationState.encounters;
-  }, [applicationState.encounters]);
-
-  useEffect(() => {
-    noteTypes.current = applicationState.noteTypes;
-  }, [applicationState.noteTypes]);
+  function earlierThan(a: string, b: string) {
+    return new Date(a).getTime() < new Date(b).getTime();
+  }
 
   /**
    * Begins the monitoring process when state is ready.
@@ -66,29 +66,6 @@ export const ExternalStateMonitor = ({ children }: PropsWithChildren) => {
 
     return () => abortController.abort();
   }, [isStateReady]);
-
-  /** Applies an effect to the target once it is saved. */
-  async function whenSaved<T>(
-    getTarget: () => WithTracking<T> | undefined,
-    apply: (target: WithTracking<T>) => void,
-  ) {
-    while (abortSignal.current?.aborted === false) {
-      const target = getTarget();
-
-      if (target === undefined) {
-        break;
-      }
-
-      if (target.tracking.isSaved) {
-        apply(target);
-        break;
-      }
-
-      await new Promise<void>((resolve) =>
-        setTimeout(() => resolve(), DEFERRAL_MS),
-      );
-    }
-  }
 
   /**
    * Defines the monitoring loop.
@@ -129,17 +106,18 @@ export const ExternalStateMonitor = ({ children }: PropsWithChildren) => {
         if (changes) {
           // Incorporate updates.
 
-          // Updates to existing records are deferred
-          // until that existing record is saved and settled, and
-          // only applied if the imported version is more current
-          // than the existing one.
-
           // MODIFIED USER INFO
-          if (changes.userInfo && changes.userInfo.defaultNoteType) {
-            noteTypes.current.setDefault(
-              changes.userInfo.defaultNoteType,
-              new Date(changes.userInfo.updated),
-            );
+          if (changes.userInfo) {
+            if (abortSignal.current.aborted) {
+              return;
+            }
+
+            const external = convertWebApiRecord.toUserInfo(changes.userInfo);
+            const local = userInfo.value;
+
+            if (earlierThan(local.modified, external.modified)) {
+              userInfo.setValue((local) => ({ ...local, ...external }));
+            }
           }
 
           // NEW NOTE DEFINITIONS
@@ -148,7 +126,11 @@ export const ExternalStateMonitor = ({ children }: PropsWithChildren) => {
               return;
             }
 
-            noteTypes.current.put(convertWebApiRecord.toNoteType(created));
+            const external = convertWebApiRecord.toNoteType(created);
+
+            noteTypes.setList((noteTypes) =>
+              [...noteTypes, external].sort(alphabetically((nt) => nt.title)),
+            );
           }
 
           // MODIFIED NOTE DEFINITIONS
@@ -157,18 +139,15 @@ export const ExternalStateMonitor = ({ children }: PropsWithChildren) => {
               return;
             }
 
-            await whenSaved(
-              () => noteTypes.current.get(modified.id),
-              (previous) => {
-                if (
-                  new Date(previous.modified).getTime() <
-                  new Date(modified.modified).getTime()
-                ) {
-                  noteTypes.current.put(
-                    convertWebApiRecord.toNoteType(modified),
-                  );
-                }
-              },
+            const external = modified;
+
+            noteTypes.setList((noteTypes) =>
+              noteTypes.map((local) =>
+                local.id === external.id &&
+                earlierThan(local.modified, external.modified)
+                  ? { ...local, ...external }
+                  : local,
+              ),
             );
           }
 
@@ -178,10 +157,9 @@ export const ExternalStateMonitor = ({ children }: PropsWithChildren) => {
               return;
             }
 
-            await whenSaved(
-              () => noteTypes.current.get(deleted.id),
-              () => noteTypes.current.remove(deleted.id),
-            );
+            noteTypes.setList((noteTypes) => [
+              ...noteTypes.filter((nt) => nt.id !== deleted.id),
+            ]);
           }
 
           // NEW ENCOUNTERS
@@ -190,7 +168,13 @@ export const ExternalStateMonitor = ({ children }: PropsWithChildren) => {
               return;
             }
 
-            encounters.current.put(convertWebApiRecord.toEncounter(created));
+            const external = convertWebApiRecord.toEncounter(created);
+
+            encounters.setList((encounters) =>
+              [...encounters, external].sort(
+                byDate((e) => new Date(e.created), "Descending"),
+              ),
+            );
           }
 
           // MODIFIED ENCOUNTERS
@@ -199,41 +183,45 @@ export const ExternalStateMonitor = ({ children }: PropsWithChildren) => {
               return;
             }
 
-            await whenSaved(
-              () => encounters.current.get(modified.id),
-              (previous) => {
-                // Get the distinct set of notes from both previous and modified encounters.
-                const notes = Object.values(
-                  [...previous.draftNotes, ...modified.draftNotes]
-                    .sort(byDate((n) => new Date(n.created)))
-                    .reduce(
-                      (notes, note) => ({ ...notes, [note.id]: note }),
-                      {} as { [key: string]: webApiTypes.DraftNote },
-                    ),
-                ).sort(byDate((n) => new Date(n.created), "Descending"));
+            const external = modified;
 
-                const isNewer =
-                  new Date(previous.modified).getTime() <
-                  new Date(modified.modified).getTime();
+            encounters.setList((encounters) =>
+              encounters.map((local) => {
+                if (local.id === external.id) {
+                  // Merge notes from local and external.
+                  const draftNotes = Object.values(
+                    [...local.draftNotes, ...external.draftNotes]
+                      .sort(byDate((n) => new Date(n.created)))
+                      .reduce(
+                        (notes, note) => ({
+                          ...notes,
+                          [note.definitionId]: note,
+                        }),
+                        {} as { [key: string]: WebApiTypes.DraftNote },
+                      ),
+                  ).sort(byDate((n) => new Date(n.created), "Descending"));
 
-                // Take the newer version of the encounter, but update
-                // with the combined set of notes.
-                if (isNewer) {
-                  encounters.current.put(
-                    convertWebApiRecord.toEncounter({
-                      ...modified,
-                      draftNotes: notes,
-                    }),
+                  const [earlier, later] = [local, external].toSorted(
+                    byDate((e) => new Date(e.modified)),
                   );
+
+                  return {
+                    ...local,
+                    autolabel: later.autolabel ?? earlier.autolabel,
+                    label: later.label ?? earlier.label,
+                    recording: {
+                      ...local.recording!,
+                      transcript:
+                        later.recording?.transcript ??
+                        earlier.recording?.transcript ??
+                        null,
+                    } satisfies Recording as Recording,
+                    draftNotes,
+                  } satisfies Encounter;
                 } else {
-                  encounters.current.put(
-                    setTracking(
-                      { ...previous, draftNotes: notes } as Encounter,
-                      "Synchronized",
-                    ),
-                  );
+                  return local;
                 }
-              },
+              }),
             );
           }
 
@@ -243,10 +231,9 @@ export const ExternalStateMonitor = ({ children }: PropsWithChildren) => {
               return;
             }
 
-            await whenSaved(
-              () => encounters.current.get(deleted.id),
-              () => encounters.current.remove(deleted.id),
-            );
+            encounters.setList((encounters) => [
+              ...encounters.filter((e) => e.id !== deleted.id),
+            ]);
           }
 
           cutoff.current = new Date(changes.lastUpdate);

@@ -29,7 +29,7 @@ export const CustomNotesListItem = ({
     >
       {noteType.title}
     </div>
-    {noteType.tracking.isSaving ? (
+    {noteType.isSaving ? (
       <WaitMessageSpinner size="sm">Saving</WaitMessageSpinner>
     ) : (
       <div className="flex flex-row gap-2 h-5">

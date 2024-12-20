@@ -1,7 +1,7 @@
 import { SelectItem } from "@nextui-org/select";
 
 import { MobileCompatibleSelect } from "@/core/mobile-compatible-select";
-import { useSampleRecordings } from "@/services/application-state/use-sample-recordings";
+import { useSampleRecordings } from "@/services/application-state/sample-recordings-context";
 
 type SampleRecordingSelectorProps = {
   onFileSelected: (audioData: File) => void;
@@ -22,8 +22,8 @@ export const SampleRecordingSelector = ({
     <MobileCompatibleSelect
       aria-label="Select an Audio Sample"
       className="w-32"
-      isDisabled={!sampleRecordings.isReady}
-      isLoading={!sampleRecordings.isReady}
+      isDisabled={sampleRecordings.initState !== "Ready"}
+      isLoading={sampleRecordings.initState === "Initializing"}
       placeholder="Use a Sample"
       selectedKeys={[]}
       selectionMode="single"
