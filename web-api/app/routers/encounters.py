@@ -1,5 +1,7 @@
+import os
 import json
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, UploadFile, Depends, Body
@@ -10,7 +12,7 @@ from sqlalchemy.exc import NoResultFound
 import app.schemas as sch
 import app.services.db as db
 import app.services.error_handling as errors
-from app.services.audio_processing import reformat_audio, compute_peaks
+from app.services.audio_processing import reformat_audio, append_audio, compute_peaks
 from app.services.measurement import get_file_size, ExecutionTimer
 from app.services.logging import log_audio_conversion, log_data_change, log_generation
 from app.services.security import authenticate_session, useUserSession
@@ -143,6 +145,106 @@ def create_encounter(
     backgroundTasks.add_task(
         log_data_change,
         database, userSession, created, "ENCOUNTER", "CREATED", entity_id=encounter_id,
+    )
+
+    # Return the created encounter.
+    return sch.Encounter.from_db_record(encounter)
+
+@router.patch("/{encounterId}/append-recording")
+def append_recording(
+    userSession: useUserSession,
+    database: useDatabase,
+    backgroundTasks: BackgroundTasks,
+    *,
+    encounterId: str,
+    audio: UploadFile,
+) -> sch.Encounter:
+    """
+    Appends further audio to an encounter's recording.
+    """
+
+    modified = datetime.now(timezone.utc)
+    reformatted_media_type = "audio/mpeg"
+
+    # Get the encounter record.
+    try:
+        get_encounter = select(db.Encounter) \
+            .where(
+                db.Encounter.username == userSession.username,
+                db.Encounter.id == encounterId,
+                db.Encounter.inactivated.is_(None),
+            ) \
+            .options(selectinload(db.Encounter.recording))
+        
+        encounter = database.execute(get_encounter).scalar_one()
+    except NoResultFound:
+        raise errors.NotFound("Record not found")
+    
+    recording_id = encounter.recording.id
+
+    # Get the recording file pointer.
+    recording_path = Path(settings.RECORDINGS_FOLDER, userSession.username, f"{recording_id}.mp3")
+
+    if not os.path.isfile(recording_path):
+        raise errors.NotFound("Recording not found")
+
+    try:
+        # Standardize all audio into mp3 at the default bitrate.
+        with ExecutionTimer() as timer, open(recording_path, "rb") as original_file:
+            (combined, duration) = append_audio(original_file, audio.file, format="mp3", bitrate=settings.DEFAULT_AUDIO_BITRATE)
+
+        # Determine the reformatted file size.
+        combined_file_size = get_file_size(combined)
+
+        backgroundTasks.add_task(
+            log_audio_conversion,
+            database, recording_id, timer.started_at, timer.elapsed_ms, audio.content_type, audio.size,
+            reformatted_media_type, (encounter.recording.file_size - combined_file_size), session=userSession,
+        )
+
+        # Compute waveform peaks.
+        peaks = compute_peaks(combined)
+    except Exception as e:
+        audio_error = errors.AudioProcessingError(str(e))
+
+        backgroundTasks.add_task(
+            log_audio_conversion,
+            database, recording_id, timer.started_at, timer.elapsed_ms, audio.content_type, audio.size,
+            error_id=audio_error.uuid, session=userSession,
+        )
+
+        raise audio_error
+
+    # Update the encounter record.
+    try:
+        encounter.modified = modified
+        encounter.recording.transcript = None
+        encounter.recording.duration = duration
+        encounter.recording.waveform_peaks = json.dumps(peaks)
+        database.commit()
+    except Exception as e:
+        combined.close()
+        raise errors.DatabaseError(str(e))    
+
+    # Save the recording file.
+    try:
+        filename = f"{recording_id}.mp3"
+        db.save_recording(combined, userSession.username, filename)
+
+        if settings.ENVIRONMENT == "development":
+            # This operation will close the file once completed.
+            backgroundTasks.add_task(
+                db.persist_recording,
+                combined, userSession.username, filename,
+            )
+    finally:
+        if settings.ENVIRONMENT != "development":
+            combined.close()
+    
+    # Record the change.
+    backgroundTasks.add_task(
+        log_data_change,
+        database, userSession, modified, "ENCOUNTER", "MODIFIED", entity_id=encounterId,
     )
 
     # Return the created encounter.

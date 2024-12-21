@@ -11,7 +11,6 @@ type AudioTrackInfoProps = {
 export const AudioTrackInfo = ({
   duration,
   audioId,
-  audioTitle,
   isRecording,
   isRecordingPaused,
 }: AudioTrackInfoProps) => {
@@ -19,12 +18,12 @@ export const AudioTrackInfo = ({
     ? isRecordingPaused
       ? "RECORDING PAUSED"
       : "RECORDING"
-    : audioTitle;
+    : null;
 
   return (
     <div className="flex flex-col-reverse sm:flex-row justify-between gap-1 sm:gap-5 md:gap-12 text-xs text-zinc-400 dark:text-zinc-500">
       <div className="font-semibold hidden sm:block">{audioId}</div>
-      {title !== null && (
+      {title && (
         <div
           className="grow line-clamp-1 text-ellipse text-start sm:text-center"
           title={title}

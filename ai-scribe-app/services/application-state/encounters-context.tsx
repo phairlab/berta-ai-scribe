@@ -172,6 +172,20 @@ function useEncounters() {
   }
 
   /**
+   * Appends more audio to an existing recording and persists the change.
+   *
+   * Persistence Strategy: Synchronous.
+   */
+  async function appendRecording(id: string, audio: File) {
+    const record = await webApi.encounters.appendAudio(id, audio);
+    const savedVersion = convertWebApiRecord.toEncounter(record);
+
+    put(id, savedVersion);
+
+    return savedVersion;
+  }
+
+  /**
    * Removes an encounter and persists the change.
    *
    * Persistence Strategy: Optimistic.
@@ -288,6 +302,7 @@ function useEncounters() {
     list: encounters,
     loadMore,
     create,
+    appendRecording,
     remove,
     saveNote,
     setTranscript,

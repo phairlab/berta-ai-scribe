@@ -1,13 +1,14 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import clsx from "clsx";
 
 import { Button } from "@nextui-org/button";
 
 import { SampleRecordingSelector } from "@/core/sample-recording-selector";
-import { AudioSource } from "@/core/types";
+import { AudioSource, Encounter } from "@/core/types";
 import { WaitMessageSpinner } from "@/core/wait-message-spinner";
 
+import { AppendRecordingButton } from "./append-recording-button";
 import { AudioFileBrowseButton } from "./audio-file-browse-button";
 import { AudioRecorder } from "./audio-recorder";
 import { AudioTrackInfo } from "./audio-track-info";
@@ -19,28 +20,51 @@ import {
 } from "./wavesurfer-widget";
 
 type AIScribeAudioProps = {
-  audioSource: AudioSource | null;
+  encounter: Encounter | null;
   isSaving: boolean;
   isSaveFailed: boolean;
-  onAudioFile: (audioData: File) => void;
-  onRecoverRecording: (audioData: File) => void;
+  onAudioFile: (audioData: File, encounterId?: string) => void;
   onReset?: () => void;
 };
 
 export const AIScribeAudio = ({
-  audioSource,
+  encounter,
   isSaving,
   isSaveFailed,
   onAudioFile,
   onReset,
 }: AIScribeAudioProps) => {
   const playerControls = useRef<WavesurferWidgetControls | null>(null);
+  const targetEncounter = useRef<Encounter | null>(null);
 
   const [isPlayerLoading, setIsPlayerLoading] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [isRecordingPaused, setIsRecordingPaused] = useState(false);
   const [recordingError, setRecordingError] = useState<string | null>(null);
+  const [isConfirmAbandon, setConfirmAbandon] = useState(false);
+  const [isAbandonRecording, setIsAbandonRecording] = useState(false);
+
+  const audioSource = useMemo(() => {
+    const recording = encounter?.recording;
+
+    if (encounter && recording && recording.duration) {
+      return {
+        id: encounter.id,
+        title: encounter.label ?? encounter.autolabel,
+        url: `/api/recordings/${recording.id}/download`,
+        waveformPeaks: recording.waveformPeaks,
+        duration: recording.duration,
+      } satisfies AudioSource as AudioSource;
+    } else {
+      return null;
+    }
+  }, [encounter]);
+
+  const title =
+    audioSource && audioSource.title !== audioSource.id
+      ? audioSource.title
+      : null;
 
   useEffect(() => {
     setIsRecording(false);
@@ -57,17 +81,23 @@ export const AIScribeAudio = ({
     setIsRecording(false);
     setIsRecordingPaused(false);
 
-    if (recording) {
-      onAudioFile(recording);
+    if (recording && !isAbandonRecording) {
+      onAudioFile(recording, targetEncounter.current?.id);
+      targetEncounter.current = null;
+    }
+
+    if (isAbandonRecording) {
+      setIsAbandonRecording(false);
     }
   };
 
-  const toggleRecording = async () => {
+  const toggleRecording = () => {
     setRecordingError(null);
 
     if (isRecording) {
       setIsRecordingPaused(!isRecordingPaused);
     } else {
+      targetEncounter.current = encounter;
       setIsRecording(true);
     }
   };
@@ -76,6 +106,12 @@ export const AIScribeAudio = ({
     setRecordingError(null);
     setIsRecording(false);
     setIsRecordingPaused(false);
+  };
+
+  const abandonRecording = () => {
+    setConfirmAbandon(false);
+    setIsAbandonRecording(true);
+    endRecording();
   };
 
   const reset = () => {
@@ -88,8 +124,20 @@ export const AIScribeAudio = ({
   };
 
   return (
-    <div className="flex flex-col-reverse md:flex-row gap-2 md:gap-4">
-      <div className="flex flex-row gap-2 md:gap-4 justify-center w-full">
+    <div className="flex flex-col-reverse lg:flex-row gap-2 lg:gap-4">
+      {title && (
+        <div
+          className={clsx(
+            "sm:hidden grow line-clamp-2 mt-4",
+            "text-zinc-400 dark:text-zinc-500",
+            "text-xs text-balance text-ellipse text-center",
+          )}
+          title={title}
+        >
+          {title}
+        </div>
+      )}
+      <div className="flex flex-row gap-2 lg:gap-4 justify-center w-full">
         {audioSource || isSaving || isSaveFailed ? (
           <PlayPauseButton
             action={isPlaying ? "pause" : "play"}
@@ -123,7 +171,7 @@ export const AIScribeAudio = ({
             !isSaving &&
             !isSaveFailed && (
               <div className="w-full h-[70px] flex justify-center items-center border rounded-lg border-zinc-100 dark:border-zinc-900">
-                <div className="text-center text-zinc-500 md:mb-2">
+                <div className="text-center text-zinc-500 lg:mb-2">
                   {recordingError ? (
                     recordingError ===
                     "Recording is not supported in this browser" ? (
@@ -169,7 +217,7 @@ export const AIScribeAudio = ({
             className={clsx(
               "mx-2 transition-opacity duration-250 ease-in-out",
               isPlayerLoading ? "invisible opacity-0" : "opacity-100",
-              (!audioSource || isRecording) && "hidden",
+              (!audioSource || isRecording || isSaving) && "hidden",
             )}
           >
             <AudioTrackInfo
@@ -187,20 +235,52 @@ export const AIScribeAudio = ({
         </div>
       </div>
       {audioSource === null && !isRecording && !isSaving && !isSaveFailed ? (
-        <div className="flex flex-row md:flex-col gap-2 md:gap-1 md:h-[70px] justify-end items-center md:items-start">
+        <div className="flex flex-row lg:flex-col gap-2 lg:gap-1 lg:h-[70px] justify-end items-center lg:items-start">
           <AudioFileBrowseButton onFileSelected={onAudioFile} />
           <SampleRecordingSelector onFileSelected={onAudioFile} />
         </div>
       ) : (
-        <div className="flex justify-end md:mt-[9px] md:mb-auto">
+        <div className="flex justify-end">
           {isRecording ? (
-            <Button size="sm" onClick={endRecording}>
-              Save Recording
-            </Button>
+            isConfirmAbandon ? (
+              <div className="flex flex-row lg:flex-col gap-2 lg:gap-1 lg:h-[70px] justify-end items-center lg:items-stretch">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setConfirmAbandon(false)}
+                >
+                  No, Keep Recording
+                </Button>
+                <Button
+                  className="text-red-600 dark:text-rose-500"
+                  size="sm"
+                  variant="ghost"
+                  onClick={abandonRecording}
+                >
+                  Discard Recording
+                </Button>
+              </div>
+            ) : (
+              <div className="flex flex-row lg:flex-col gap-2 lg:gap-1 lg:h-[70px] justify-end items-center lg:items-stretch">
+                <Button size="sm" variant="ghost" onClick={endRecording}>
+                  Save
+                </Button>
+                <Button
+                  size="sm"
+                  variant="flat"
+                  onClick={() => setConfirmAbandon(true)}
+                >
+                  Cancel
+                </Button>
+              </div>
+            )
           ) : (
-            <Button className="sm:hidden" size="sm" onClick={reset}>
-              New Recording
-            </Button>
+            <div className="flex flex-row gap-2 justify-center items-center">
+              <Button className="sm:hidden" size="sm" onClick={reset}>
+                New Recording
+              </Button>
+              <AppendRecordingButton onClick={toggleRecording} />
+            </div>
           )}
         </div>
       )}

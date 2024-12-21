@@ -2,7 +2,11 @@ import * as WebApiTypes from "@/services/web-api/types";
 import { ApplicationError } from "@/utility/errors";
 import { OptionalFields } from "@/utility/typing";
 
-export type ScribeActionType = "Saving" | "Transcribing" | "Generating Note";
+export type ScribeActionType =
+  | "Saving"
+  | "Transcribing"
+  | "Generating Note"
+  | "Regenerating Notes";
 
 export type ScribeAction = {
   type: ScribeActionType;

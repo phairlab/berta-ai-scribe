@@ -42,6 +42,25 @@ export const create =
     });
   };
 
+export const appendAudio =
+  (getAccessToken: () => WebApiToken) =>
+  (id: string, audio: File, cancellation?: AbortSignal): Promise<Encounter> => {
+    const formData = new FormData();
+
+    formData.append("audio", audio);
+
+    return httpAction<Encounter>(
+      "PATCH",
+      `api/encounters/${id}/append-recording`,
+      {
+        data: formData,
+        accessToken: getAccessToken(),
+        signal: cancellation,
+        retries: [500, 1000, 2000],
+      },
+    );
+  };
+
 export const update =
   (getAccessToken: () => WebApiToken) =>
   (
@@ -124,6 +143,7 @@ export const setNoteFlag =
 export const routes = {
   getAll,
   create,
+  appendAudio,
   update,
   deleteAndPurge,
   createDraftNote,

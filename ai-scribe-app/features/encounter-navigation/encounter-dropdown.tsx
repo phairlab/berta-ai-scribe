@@ -71,7 +71,7 @@ export const EncounterDropdown = ({
               labelPlacement="outside"
               maxRows={7}
               minRows={1}
-              placeholder={encounter.autolabel ?? encounter.id}
+              placeholder={encounter.autolabel ?? undefined}
               value={label ?? ""}
               onValueChange={(text) =>
                 setLabel(text.replaceAll("\n", "").slice(0, 100))
@@ -105,6 +105,7 @@ export const EncounterDropdown = ({
                 "text-red-600 dark:text-rose-500",
                 "w-full flex group justify-start h-fit m-0 px-2 py-1.5",
               )}
+              isDisabled={!encounter.isPersisted}
               radius="sm"
               startContent={
                 <DeleteDocumentIcon className="mt-px text-xl pointer-events-none flex-shrink-0" />

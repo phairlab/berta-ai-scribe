@@ -22,7 +22,7 @@ def get_duration(audio: BinaryIO) -> int:
     return len(segment)
 
 def reformat_audio(original: BinaryIO, format: str, bitrate: str = settings.DEFAULT_AUDIO_BITRATE) -> tuple[BinaryIO, int]:
-    "Returns a new audio file (and its format) with the given audio file converted into a standard format and bitrate."
+    "Returns a new audio file (and its duration) with the given audio file converted into a standard format and bitrate."
     reformatted = tempfile.SpooledTemporaryFile()
 
     try:
@@ -33,6 +33,23 @@ def reformat_audio(original: BinaryIO, format: str, bitrate: str = settings.DEFA
         return (reformatted, duration)
     except Exception as e:
         reformatted.close()
+        raise AudioProcessingError(str(e))
+    
+def append_audio(original: BinaryIO, new: BinaryIO, format: str, bitrate: str = settings.DEFAULT_AUDIO_BITRATE) -> tuple[BinaryIO, int]:
+    "Returns a new audio file (and its duration) combining the two input audio files separated by 1 second silence."
+    combined = tempfile.SpooledTemporaryFile()
+
+    try:
+        original_segment: AudioSegment = AudioSegment.from_file(original)
+        new_segment: AudioSegment = AudioSegment.from_file(new)
+
+        combined_segment = original_segment + AudioSegment.silent() + new_segment
+        duration = len(combined_segment)
+        combined_segment.export(combined, bitrate=bitrate, format=format)
+
+        return (combined, duration)
+    except Exception as e:
+        combined.close()
         raise AudioProcessingError(str(e))
 
 def compute_peaks(audio: BinaryIO) -> list[float]:

@@ -15,7 +15,7 @@ export const PlayPauseButton = ({
 }: PlayPauseButtonProps) => (
   <Button
     isIconOnly
-    className="h-[40px] w-[64px] my-[6px] mb-auto"
+    className="h-[40px] w-[64px] mt-[12px] mb-auto"
     isDisabled={isDisabled}
     onClick={onClick}
   >

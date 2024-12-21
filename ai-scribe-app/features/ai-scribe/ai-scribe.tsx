@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import shortUUID from "short-uuid";
 
@@ -8,13 +8,7 @@ import { Button } from "@nextui-org/button";
 import { Divider } from "@nextui-org/divider";
 
 import { ConsentScript } from "@/core/consent-script";
-import {
-  AudioSource,
-  DraftNote,
-  Encounter,
-  NoteType,
-  ScribeError,
-} from "@/core/types";
+import { DraftNote, Encounter, NoteType, ScribeError } from "@/core/types";
 import { WaitMessageSpinner } from "@/core/wait-message-spinner";
 import { useActiveEncounter } from "@/services/application-state/active-encounter-context";
 import { useEncounters } from "@/services/application-state/encounters-context";
@@ -54,6 +48,7 @@ export const AIScribe = () => {
   const [noteGenerationQueue, setNoteGenerationQueue] = useState<
     [string, NoteType | undefined][]
   >([]);
+  const [regenerationQueue, setRegenerationQueue] = useState<string[]>([]);
 
   useEffect(() => {
     if (transcriptionQueue.length > 0) {
@@ -75,6 +70,16 @@ export const AIScribe = () => {
     }
   }, [noteGenerationQueue]);
 
+  useEffect(() => {
+    if (regenerationQueue.length > 0) {
+      for (const encounterId of regenerationQueue) {
+        regenerateNotes(encounterId);
+      }
+
+      setRegenerationQueue([]);
+    }
+  }, [regenerationQueue]);
+
   const recording = encounter?.recording ?? null;
   const transcript = recording?.transcript ?? null;
   const notes = encounter?.draftNotes ?? [];
@@ -88,20 +93,6 @@ export const AIScribe = () => {
     !failedToSave &&
     !scribeState.action;
 
-  const audio = useMemo(() => {
-    if (encounter && recording && recording.duration) {
-      return {
-        id: encounter.id,
-        title: encounter.label ?? encounter.autolabel,
-        url: `/api/recordings/${recording.id}/download`,
-        waveformPeaks: recording.waveformPeaks,
-        duration: recording.duration,
-      } satisfies AudioSource as AudioSource;
-    } else {
-      return null;
-    }
-  }, [encounter, recording]);
-
   async function handleNoteTypeChanged(noteType: NoteType | undefined) {
     setNoteType(noteType);
 
@@ -114,7 +105,15 @@ export const AIScribe = () => {
     }
   }
 
-  async function saveEncounter(audio: File, setActive: boolean) {
+  function handleNewAudioFile(audio: File, encounterId?: string) {
+    if (!encounterId) {
+      saveEncounter(audio);
+    } else {
+      appendRecording(encounterId, audio);
+    }
+  }
+
+  async function saveEncounter(audio: File) {
     const tempId = shortUUID.generate();
 
     scribe.track(tempId);
@@ -124,9 +123,7 @@ export const AIScribe = () => {
       scribe.setNoteType(tempId, noteType);
     }
 
-    if (setActive) {
-      setActiveEncounter(tempId);
-    }
+    setActiveEncounter((active) => (active ? active : tempId));
 
     try {
       const newEncounter = await encounters.create(tempId, audio);
@@ -146,12 +143,39 @@ export const AIScribe = () => {
         canDismiss: false,
         retry: () => {
           scribe.clearError(tempId);
-          saveEncounter(audio, false);
+          saveEncounter(audio);
         },
       } satisfies ScribeError;
 
       scribe.clearAction(tempId);
       scribe.setError(tempId, error);
+      scribe.setOutput(tempId, { type: "Error" });
+    }
+  }
+
+  async function appendRecording(id: string, audio: File) {
+    scribe.setAction(id, { type: "Saving" });
+
+    try {
+      const updatedEncounter = await encounters.appendRecording(id, audio);
+
+      scribe.clearAction(updatedEncounter.id);
+
+      setTranscriptionQueue((queue) => [...queue, updatedEncounter.id]);
+    } catch (ex: unknown) {
+      const error = {
+        type: "Saving",
+        cause: asApplicationError(ex),
+        canDismiss: false,
+        retry: () => {
+          scribe.clearError(id);
+          appendRecording(id, audio);
+        },
+      } satisfies ScribeError;
+
+      scribe.clearAction(id);
+      scribe.setError(id, error);
+      scribe.setOutput(id, { type: "Error" });
     }
   }
 
@@ -188,7 +212,14 @@ export const AIScribe = () => {
         scribe.setOutput(encounter.id, { type: "Transcript" });
         scribe.clearAction(encounter.id);
 
-        setNoteGenerationQueue((queue) => [...queue, [encounterId, undefined]]);
+        if (encounter.draftNotes.length > 0) {
+          setRegenerationQueue((queue) => [...queue, encounterId]);
+        } else {
+          setNoteGenerationQueue((queue) => [
+            ...queue,
+            [encounterId, undefined],
+          ]);
+        }
       } catch (ex: unknown) {
         const isAborted =
           ex instanceof DOMException && ex.name === "AbortError";
@@ -203,6 +234,7 @@ export const AIScribe = () => {
 
           scribe.clearAction(encounter.id);
           scribe.setError(encounter.id, scribeError);
+          scribe.setOutput(encounter.id, { type: "Error" });
         }
       }
     },
@@ -267,6 +299,77 @@ export const AIScribe = () => {
 
           scribe.clearAction(encounter.id);
           scribe.setError(encounter.id, scribeError);
+          scribe.setOutput(encounter.id, { type: "Error" });
+        }
+      }
+    },
+    [encounters.list, scribe],
+  );
+
+  const regenerateNotes = useCallback(
+    async (encounterId: string) => {
+      const encounter = encounters.list.find((e) => e.id === encounterId);
+
+      if (!encounter) {
+        return;
+      }
+
+      scribe.clearError(encounter.id);
+
+      const transcript = encounter?.recording?.transcript;
+
+      if (!transcript || transcript.trim() === "") {
+        return;
+      }
+
+      const types = encounter.draftNotes
+        .map((n) =>
+          [...noteTypes.builtin, ...noteTypes.custom].find(
+            (nt) => nt.id === n.definitionId,
+          ),
+        )
+        .filter((nt) => nt !== undefined);
+
+      const controller = new AbortController();
+
+      scribe.setAction(encounter.id, {
+        type: "Regenerating Notes",
+        abort: () => controller.abort(),
+      });
+
+      try {
+        await Promise.all(
+          types.map((nt) =>
+            noteGenerator.generateNote(
+              encounter,
+              nt,
+              transcript,
+              controller.signal,
+              {
+                includeFooter: true,
+              },
+            ),
+          ),
+        ).then((notes) =>
+          notes.forEach((n) => encounters.saveNote(encounter.id, n)),
+        );
+        scribe.setOutput(encounter.id, undefined);
+        scribe.clearAction(encounter.id);
+      } catch (ex: unknown) {
+        const isAborted =
+          ex instanceof DOMException && ex.name === "AbortError";
+
+        if (!isAborted) {
+          const scribeError = {
+            type: "Regenerating Notes",
+            cause: asApplicationError(ex),
+            canDismiss: true,
+            retry: () => regenerateNotes(encounterId),
+          } satisfies ScribeError;
+
+          scribe.clearAction(encounter.id);
+          scribe.setError(encounter.id, scribeError);
+          scribe.setOutput(encounter.id, { type: "Error" });
         }
       }
     },
@@ -285,11 +388,10 @@ export const AIScribe = () => {
   return (
     <div className="flex flex-col gap-6">
       <AIScribeAudio
-        audioSource={audio}
+        encounter={encounter}
         isSaveFailed={failedToSave}
         isSaving={isSaving}
-        onAudioFile={(audio) => saveEncounter(audio, true)}
-        onRecoverRecording={(audio) => saveEncounter(audio, false)}
+        onAudioFile={handleNewAudioFile}
         onReset={() => setActiveEncounter(null)}
       />
       <div className="flex flex-col gap-6 items-center">

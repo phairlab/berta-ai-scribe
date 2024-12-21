@@ -44,6 +44,8 @@ export const EncounterLabel = ({ encounter }: EncounterLabelProps) => {
         return "Transcription Failed";
       case "Generating Note":
         return "Failed to Generate Note";
+      case "Regenerating Notes":
+        return "Failed to Regenerate Notes";
     }
   }
 
