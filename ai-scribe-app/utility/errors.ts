@@ -70,6 +70,10 @@ export function isFatal(ex: unknown): boolean {
   return (ex as ApplicationError)?.fatal ?? false;
 }
 
+export function isAbortError(ex: unknown): boolean {
+  return ex instanceof DOMException && ex.name === "AbortError";
+}
+
 export const UnexpectedError = (errorMessage: string): ApplicationError => ({
   name: "Unexpected Error",
   message: errorMessage,

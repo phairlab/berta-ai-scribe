@@ -4,18 +4,22 @@ import { MobileCompatibleSelect } from "@/core/mobile-compatible-select";
 import { useSampleRecordings } from "@/services/application-state/sample-recordings-context";
 
 type SampleRecordingSelectorProps = {
-  onFileSelected: (audioData: File) => void;
+  onFileSelected?: () => void;
+  onFileDownloaded: (audioData: File) => void;
 };
 
 export const SampleRecordingSelector = ({
+  onFileDownloaded,
   onFileSelected,
 }: SampleRecordingSelectorProps) => {
   const sampleRecordings = useSampleRecordings();
 
   const handleSelectionChange = async (filename: string) => {
+    onFileSelected?.();
+
     const file = await sampleRecordings.download(filename);
 
-    onFileSelected?.(file);
+    onFileDownloaded(file);
   };
 
   return (

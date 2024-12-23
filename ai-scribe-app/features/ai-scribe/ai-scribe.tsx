@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import shortUUID from "short-uuid";
 
@@ -14,7 +14,7 @@ import { useActiveEncounter } from "@/services/application-state/active-encounte
 import { useEncounters } from "@/services/application-state/encounters-context";
 import { useNoteTypes } from "@/services/application-state/note-types-context";
 import { useScribe } from "@/services/application-state/scribe-context";
-import { asApplicationError } from "@/utility/errors";
+import { asApplicationError, isAbortError } from "@/utility/errors";
 
 import { AIScribeAudio } from "./ai-scribe-audio";
 import { AIScribeControls } from "./ai-scribe-controls";
@@ -32,68 +32,56 @@ export const AIScribe = () => {
   const scribe = useScribe();
   const scribeState = scribe.get(encounter?.id);
 
+  const [isRecording, setIsRecording] = useState(false);
+  const [isDownloadingFile, setIsDownloadingFile] = useState(false);
   const [noteType, setNoteType] = useState<NoteType | undefined>(
     noteTypes.default,
   );
 
   useEffect(() => {
-    if (encounter && noteType !== scribeState.noteType) {
+    if (encounter && noteType !== (scribeState.noteType ?? noteTypes.default)) {
       setNoteType(scribeState.noteType ?? noteTypes.default);
     } else if (encounter === null) {
       setNoteType(noteTypes.default);
     }
   }, [encounter]);
 
-  const [transcriptionQueue, setTranscriptionQueue] = useState<string[]>([]);
-  const [noteGenerationQueue, setNoteGenerationQueue] = useState<
-    [string, NoteType | undefined][]
-  >([]);
-  const [regenerationQueue, setRegenerationQueue] = useState<string[]>([]);
+  const [autoTranscribe, setAutoTranscribe] = useState<string[]>([]);
+  const [autoGenerate, setAutoGenerate] = useState<string[]>([]);
+  const [autoRegenerate, setAutoRegenerate] = useState<string[]>([]);
 
   useEffect(() => {
-    if (transcriptionQueue.length > 0) {
-      for (const encounterId of transcriptionQueue) {
-        transcribeRecording(encounterId);
-      }
+    autoTranscribe.map((id) => transcribeRecording(id));
+    setAutoTranscribe((queue) => (queue.length > 0 ? [] : queue));
 
-      setTranscriptionQueue([]);
-    }
-  }, [transcriptionQueue]);
+    autoGenerate.map((id) => generateNote(id));
+    setAutoGenerate((queue) => (queue.length > 0 ? [] : queue));
 
-  useEffect(() => {
-    if (noteGenerationQueue.length > 0) {
-      for (const [encounterId, noteType] of noteGenerationQueue) {
-        generateNote(encounterId, noteType);
-      }
-
-      setNoteGenerationQueue([]);
-    }
-  }, [noteGenerationQueue]);
-
-  useEffect(() => {
-    if (regenerationQueue.length > 0) {
-      for (const encounterId of regenerationQueue) {
-        regenerateNotes(encounterId);
-      }
-
-      setRegenerationQueue([]);
-    }
-  }, [regenerationQueue]);
+    autoRegenerate.map((id) => regenerateNotes(id));
+    setAutoRegenerate((queue) => (queue.length > 0 ? [] : queue));
+  }, [autoTranscribe, autoGenerate, autoRegenerate]);
 
   const recording = encounter?.recording ?? null;
   const transcript = recording?.transcript ?? null;
   const notes = encounter?.draftNotes ?? [];
 
-  const isSaving = scribeState.action?.type === "Saving";
+  const isSaving = isDownloadingFile || scribeState.action?.type === "Saving";
   const failedToSave = scribeState.error?.type === "Saving";
 
   const canTranscribe =
     recording !== null &&
     transcript === null &&
+    !isRecording &&
     !failedToSave &&
     !scribeState.action;
 
-  async function handleNoteTypeChanged(noteType: NoteType | undefined) {
+  const canGenerateNote =
+    transcript !== null &&
+    transcript.trim() !== "" &&
+    !isRecording &&
+    !scribeState.action;
+
+  function handleNoteTypeChanged(noteType: NoteType | undefined) {
     setNoteType(noteType);
 
     if (encounter) {
@@ -105,63 +93,54 @@ export const AIScribe = () => {
     }
   }
 
-  function handleNewAudioFile(audio: File, encounterId?: string) {
-    if (!encounterId) {
-      saveEncounter(audio);
-    } else {
-      appendRecording(encounterId, audio);
-    }
+  function handleSampleFileSelected() {
+    setIsDownloadingFile(true);
   }
 
-  async function saveEncounter(audio: File) {
-    const tempId = shortUUID.generate();
-
-    scribe.track(tempId);
-    scribe.setAction(tempId, { type: "Saving" });
-
-    if (noteType) {
-      scribe.setNoteType(tempId, noteType);
-    }
-
-    setActiveEncounter((active) => (active ? active : tempId));
-
-    try {
-      const newEncounter = await encounters.create(tempId, audio);
-
-      scribe.modifyId(tempId, newEncounter.id);
-      scribe.clearAction(newEncounter.id);
-
-      setActiveEncounter((active) =>
-        active === tempId ? newEncounter.id : active,
-      );
-
-      setTranscriptionQueue((queue) => [...queue, newEncounter.id]);
-    } catch (ex: unknown) {
-      const error = {
-        type: "Saving",
-        cause: asApplicationError(ex),
-        canDismiss: false,
-        retry: () => {
-          scribe.clearError(tempId);
-          saveEncounter(audio);
-        },
-      } satisfies ScribeError;
-
-      scribe.clearAction(tempId);
-      scribe.setError(tempId, error);
-      scribe.setOutput(tempId, { type: "Error" });
-    }
+  function handleRecordingStarted() {
+    scribeState.action?.abort?.();
+    setIsRecording(true);
   }
 
-  async function appendRecording(id: string, audio: File) {
+  function handleRecordingFinished() {
+    setIsRecording(false);
+  }
+
+  function handleAudioFile(audio: File, encounterId?: string) {
+    setIsDownloadingFile(false);
+    saveEncounter(audio, encounterId);
+  }
+
+  async function saveEncounter(audio: File, encounterId?: string) {
+    let isNew = !encounterId;
+    const id = encounterId ?? shortUUID.generate();
+
+    if (isNew) {
+      scribe.track(id);
+
+      if (noteType) {
+        scribe.setNoteType(id, noteType);
+      }
+
+      setActiveEncounter((active) => active ?? id);
+    }
+
     scribe.setAction(id, { type: "Saving" });
 
     try {
-      const updatedEncounter = await encounters.appendRecording(id, audio);
+      const savedEncounter = isNew
+        ? await encounters.create(id, audio)
+        : await encounters.appendRecording(id, audio);
 
-      scribe.clearAction(updatedEncounter.id);
+      if (isNew) {
+        scribe.modifyId(id, savedEncounter.id);
+        setActiveEncounter((active) =>
+          active === id ? savedEncounter.id : active,
+        );
+      }
 
-      setTranscriptionQueue((queue) => [...queue, updatedEncounter.id]);
+      scribe.clearAction(savedEncounter.id);
+      setAutoTranscribe((queue) => [...queue, savedEncounter.id]);
     } catch (ex: unknown) {
       const error = {
         type: "Saving",
@@ -169,7 +148,7 @@ export const AIScribe = () => {
         canDismiss: false,
         retry: () => {
           scribe.clearError(id);
-          appendRecording(id, audio);
+          saveEncounter(audio, encounterId);
         },
       } satisfies ScribeError;
 
@@ -179,202 +158,179 @@ export const AIScribe = () => {
     }
   }
 
-  const transcribeRecording = useCallback(
-    async (encounterId: string) => {
-      const encounter = encounters.list.find((e) => e.id === encounterId);
+  async function transcribeRecording(encounterId: string) {
+    const encounter = encounters.list.find((e) => e.id === encounterId);
+    const recording = encounter?.recording;
 
-      if (!encounter) {
-        return;
+    if (!recording) {
+      return;
+    }
+
+    scribe.clearError(encounter.id);
+
+    const controller = new AbortController();
+
+    scribe.setAction(encounter.id, {
+      type: "Transcribing",
+      abort: () => controller.abort(),
+    });
+
+    try {
+      const transcript = await transcriber.transcribe(
+        recording,
+        controller.signal,
+      );
+
+      encounters.setTranscript(encounter.id, transcript);
+      scribe.setOutput(encounter.id, { type: "Transcript" });
+      scribe.clearAction(encounter.id);
+
+      if (encounter.draftNotes.length > 0) {
+        setAutoRegenerate((queue) => [...queue, encounterId]);
+      } else {
+        setAutoGenerate((queue) => [...queue, encounterId]);
+      }
+    } catch (ex: unknown) {
+      if (!isAbortError(ex)) {
+        const scribeError = {
+          type: "Transcribing",
+          cause: asApplicationError(ex),
+          canDismiss: false,
+          retry: () => transcribeRecording(encounterId),
+        } satisfies ScribeError;
+
+        scribe.setError(encounter.id, scribeError);
+        scribe.setOutput(encounter.id, { type: "Error" });
       }
 
-      scribe.clearError(encounter.id);
+      scribe.clearAction(encounter.id);
+    }
+  }
 
-      const recording = encounter.recording;
+  async function generateNote(encounterId: string, noteType?: NoteType) {
+    const encounter = encounters.list.find((e) => e.id === encounterId);
 
-      if (!recording) {
-        return;
-      }
+    if (!encounter) {
+      return;
+    }
 
-      const controller = new AbortController();
-
-      scribe.setAction(encounter.id, {
-        type: "Transcribing",
-        abort: () => controller.abort(),
-      });
-
-      try {
-        const transcript = await transcriber.transcribe(
-          recording,
-          controller.signal,
-        );
-
-        encounters.setTranscript(encounter.id, transcript);
-        scribe.setOutput(encounter.id, { type: "Transcript" });
-        scribe.clearAction(encounter.id);
-
-        if (encounter.draftNotes.length > 0) {
-          setRegenerationQueue((queue) => [...queue, encounterId]);
-        } else {
-          setNoteGenerationQueue((queue) => [
-            ...queue,
-            [encounterId, undefined],
-          ]);
-        }
-      } catch (ex: unknown) {
-        const isAborted =
-          ex instanceof DOMException && ex.name === "AbortError";
-
-        if (!isAborted) {
-          const scribeError = {
-            type: "Transcribing",
-            cause: asApplicationError(ex),
-            canDismiss: false,
-            retry: () => transcribeRecording(encounterId),
-          } satisfies ScribeError;
-
-          scribe.clearAction(encounter.id);
-          scribe.setError(encounter.id, scribeError);
-          scribe.setOutput(encounter.id, { type: "Error" });
-        }
-      }
-    },
-    [encounters.list, scribe],
-  );
-
-  const generateNote = useCallback(
-    async (encounterId: string, noteType?: NoteType) => {
-      const encounter = encounters.list.find((e) => e.id === encounterId);
-
-      if (!encounter) {
-        return;
-      }
+    if (!noteType) {
+      noteType = scribe.get(encounterId).noteType;
 
       if (!noteType) {
-        noteType = scribe.get(encounterId).noteType;
-
-        if (!noteType) {
-          return;
-        }
-      }
-
-      scribe.clearError(encounter.id);
-
-      const transcript = encounter?.recording?.transcript;
-
-      if (!transcript || transcript.trim() === "") {
         return;
       }
+    }
 
-      const controller = new AbortController();
+    scribe.clearError(encounter.id);
 
-      scribe.setAction(encounter.id, {
-        type: "Generating Note",
-        detail: noteType.title,
-        abort: () => controller.abort(),
-      });
+    const transcript = encounter?.recording?.transcript;
 
-      try {
-        const note = await noteGenerator.generateNote(
-          encounter,
-          noteType,
-          transcript,
-          controller.signal,
-          { includeFooter: true },
-        );
+    if (!transcript || transcript.trim() === "") {
+      return;
+    }
 
-        encounters.saveNote(encounter.id, note);
-        scribe.setOutput(encounter.id, { type: "Note", id: note.id });
-        scribe.clearAction(encounter.id);
-      } catch (ex: unknown) {
-        const isAborted =
-          ex instanceof DOMException && ex.name === "AbortError";
+    const controller = new AbortController();
 
-        if (!isAborted) {
-          const scribeError = {
-            type: "Generating Note",
-            cause: asApplicationError(ex),
-            canDismiss: true,
-            retry: () => generateNote(encounterId, noteType),
-          } satisfies ScribeError;
+    scribe.setAction(encounter.id, {
+      type: "Generating Note",
+      detail: noteType.title,
+      abort: () => controller.abort(),
+    });
 
-          scribe.clearAction(encounter.id);
-          scribe.setError(encounter.id, scribeError);
-          scribe.setOutput(encounter.id, { type: "Error" });
-        }
-      }
-    },
-    [encounters.list, scribe],
-  );
+    try {
+      const note = await noteGenerator.generateNote(
+        encounter,
+        noteType,
+        transcript,
+        controller.signal,
+        { includeFooter: true },
+      );
 
-  const regenerateNotes = useCallback(
-    async (encounterId: string) => {
-      const encounter = encounters.list.find((e) => e.id === encounterId);
+      encounters.saveNote(encounter.id, note);
+      scribe.setOutput(encounter.id, { type: "Note", id: note.id });
+      scribe.clearAction(encounter.id);
+    } catch (ex: unknown) {
+      if (!isAbortError(ex)) {
+        const scribeError = {
+          type: "Generating Note",
+          cause: asApplicationError(ex),
+          canDismiss: true,
+          retry: () => generateNote(encounterId, noteType),
+        } satisfies ScribeError;
 
-      if (!encounter) {
-        return;
+        scribe.setError(encounter.id, scribeError);
+        scribe.setOutput(encounter.id, { type: "Error" });
       }
 
-      scribe.clearError(encounter.id);
+      scribe.clearAction(encounter.id);
+    }
+  }
 
-      const transcript = encounter?.recording?.transcript;
+  async function regenerateNotes(encounterId: string) {
+    const encounter = encounters.list.find((e) => e.id === encounterId);
 
-      if (!transcript || transcript.trim() === "") {
-        return;
-      }
+    if (!encounter) {
+      return;
+    }
 
-      const types = encounter.draftNotes
-        .map((n) =>
-          [...noteTypes.builtin, ...noteTypes.custom].find(
-            (nt) => nt.id === n.definitionId,
+    scribe.clearError(encounter.id);
+
+    const transcript = encounter?.recording?.transcript;
+
+    if (!transcript || transcript.trim() === "") {
+      return;
+    }
+
+    const types = encounter.draftNotes
+      .map((n) =>
+        [...noteTypes.builtin, ...noteTypes.custom].find(
+          (nt) => nt.id === n.definitionId,
+        ),
+      )
+      .filter((nt) => nt !== undefined);
+
+    const controller = new AbortController();
+
+    scribe.setAction(encounter.id, {
+      type: "Regenerating Notes",
+      abort: () => controller.abort(),
+    });
+
+    try {
+      await Promise.all(
+        types.map((nt) =>
+          noteGenerator.generateNote(
+            encounter,
+            nt,
+            transcript,
+            controller.signal,
+            {
+              includeFooter: true,
+            },
           ),
-        )
-        .filter((nt) => nt !== undefined);
+        ),
+      ).then((notes) =>
+        notes.forEach((n) => encounters.saveNote(encounter.id, n)),
+      );
+      scribe.setOutput(encounter.id, undefined);
+      scribe.clearAction(encounter.id);
+    } catch (ex: unknown) {
+      if (!isAbortError(ex)) {
+        const scribeError = {
+          type: "Regenerating Notes",
+          cause: asApplicationError(ex),
+          canDismiss: true,
+          retry: () => regenerateNotes(encounterId),
+        } satisfies ScribeError;
 
-      const controller = new AbortController();
-
-      scribe.setAction(encounter.id, {
-        type: "Regenerating Notes",
-        abort: () => controller.abort(),
-      });
-
-      try {
-        await Promise.all(
-          types.map((nt) =>
-            noteGenerator.generateNote(
-              encounter,
-              nt,
-              transcript,
-              controller.signal,
-              {
-                includeFooter: true,
-              },
-            ),
-          ),
-        ).then((notes) =>
-          notes.forEach((n) => encounters.saveNote(encounter.id, n)),
-        );
-        scribe.setOutput(encounter.id, undefined);
-        scribe.clearAction(encounter.id);
-      } catch (ex: unknown) {
-        const isAborted =
-          ex instanceof DOMException && ex.name === "AbortError";
-
-        if (!isAborted) {
-          const scribeError = {
-            type: "Regenerating Notes",
-            cause: asApplicationError(ex),
-            canDismiss: true,
-            retry: () => regenerateNotes(encounterId),
-          } satisfies ScribeError;
-
-          scribe.clearAction(encounter.id);
-          scribe.setError(encounter.id, scribeError);
-          scribe.setOutput(encounter.id, { type: "Error" });
-        }
+        scribe.setError(encounter.id, scribeError);
+        scribe.setOutput(encounter.id, { type: "Error" });
       }
-    },
-    [encounters.list, scribe],
-  );
+
+      scribe.clearAction(encounter.id);
+    }
+  }
 
   const updateNoteFlag = (
     encounter: Encounter,
@@ -391,14 +347,17 @@ export const AIScribe = () => {
         encounter={encounter}
         isSaveFailed={failedToSave}
         isSaving={isSaving}
-        onAudioFile={handleNewAudioFile}
+        onAudioFile={handleAudioFile}
+        onRecordingFinished={handleRecordingFinished}
+        onRecordingStarted={handleRecordingStarted}
         onReset={() => setActiveEncounter(null)}
+        onSampleFileSelected={handleSampleFileSelected}
       />
       <div className="flex flex-col gap-6 items-center">
         <Divider className="bg-zinc-100 dark:bg-zinc-900" />
         {!failedToSave && (
           <AIScribeControls
-            isDisabled={transcript === null || scribeState.action !== undefined}
+            isDisabled={!canGenerateNote}
             isRegenerate={notes.some(
               (n) =>
                 n.definitionId ===
@@ -434,7 +393,7 @@ export const AIScribe = () => {
           </div>
         )}
         {encounter && canTranscribe && !scribeState.error && (
-          <div className="flex flex-col items-center justify-center gap-4 mt-16 max-w-[80%]">
+          <div className="flex flex-col items-center justify-center gap-4 my-6 sm:my-8 max-w-[80%]">
             <p className="text-center text-zinc-500">
               This recording has not yet been transcribed.
             </p>

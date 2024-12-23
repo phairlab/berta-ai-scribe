@@ -24,7 +24,10 @@ type AIScribeAudioProps = {
   isSaving: boolean;
   isSaveFailed: boolean;
   onAudioFile: (audioData: File, encounterId?: string) => void;
+  onRecordingStarted?: () => void;
+  onRecordingFinished?: () => void;
   onReset?: () => void;
+  onSampleFileSelected?: () => void;
 };
 
 export const AIScribeAudio = ({
@@ -32,7 +35,10 @@ export const AIScribeAudio = ({
   isSaving,
   isSaveFailed,
   onAudioFile,
+  onRecordingStarted,
+  onRecordingFinished,
   onReset,
+  onSampleFileSelected,
 }: AIScribeAudioProps) => {
   const playerControls = useRef<WavesurferWidgetControls | null>(null);
   const targetEncounter = useRef<Encounter | null>(null);
@@ -78,6 +84,8 @@ export const AIScribeAudio = ({
   };
 
   const handleRecordingFinished = (recording: File | null) => {
+    onRecordingFinished?.();
+
     setIsRecording(false);
     setIsRecordingPaused(false);
 
@@ -97,6 +105,7 @@ export const AIScribeAudio = ({
     if (isRecording) {
       setIsRecordingPaused(!isRecordingPaused);
     } else {
+      onRecordingStarted?.();
       targetEncounter.current = encounter;
       setIsRecording(true);
     }
@@ -138,7 +147,7 @@ export const AIScribeAudio = ({
         </div>
       )}
       <div className="flex flex-row gap-2 lg:gap-4 justify-center w-full">
-        {audioSource || isSaving || isSaveFailed ? (
+        {!isRecording && (audioSource || isSaving || isSaveFailed) ? (
           <PlayPauseButton
             action={isPlaying ? "pause" : "play"}
             isDisabled={isPlayerLoading || isSaving || isSaveFailed}
@@ -237,7 +246,10 @@ export const AIScribeAudio = ({
       {audioSource === null && !isRecording && !isSaving && !isSaveFailed ? (
         <div className="flex flex-row lg:flex-col gap-2 lg:gap-1 lg:h-[70px] justify-end items-center lg:items-start">
           <AudioFileBrowseButton onFileSelected={onAudioFile} />
-          <SampleRecordingSelector onFileSelected={onAudioFile} />
+          <SampleRecordingSelector
+            onFileDownloaded={onAudioFile}
+            onFileSelected={onSampleFileSelected}
+          />
         </div>
       ) : (
         <div className="flex justify-end">
@@ -279,7 +291,10 @@ export const AIScribeAudio = ({
               <Button className="sm:hidden" size="sm" onClick={reset}>
                 New Recording
               </Button>
-              <AppendRecordingButton onClick={toggleRecording} />
+              <AppendRecordingButton
+                isDisabled={isPlayerLoading || isSaving || isSaveFailed}
+                onClick={toggleRecording}
+              />
             </div>
           )}
         </div>
