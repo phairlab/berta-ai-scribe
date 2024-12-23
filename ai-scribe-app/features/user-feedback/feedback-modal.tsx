@@ -36,7 +36,6 @@ export const FeedbackModal = ({
   };
 
   const handleCancel = () => {
-    setFeedbackText(null);
     onClose();
   };
 
