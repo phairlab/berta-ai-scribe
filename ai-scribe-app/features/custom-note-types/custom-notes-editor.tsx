@@ -182,7 +182,7 @@ export const CustomNotesEditor = ({
             isDisabled={!canSave}
             onClick={save}
           >
-            {editedNoteType.isNew ? "Create" : "Save"}
+            {editedNoteType.isNew ? "Create" : "Update Note Type"}
           </Button>
           <Button
             className="mt-2 md:mt-6"
