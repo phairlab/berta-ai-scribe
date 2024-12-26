@@ -47,10 +47,15 @@ function useActiveEncounter() {
   const [activeEncounterId, setActiveEncounter] = context;
   const { list: encounters } = useEncounters();
 
-  const activeEncounter =
-    encounters.find((e) => e.id === activeEncounterId) ?? null;
+  const hookValue = useMemo(
+    () => [
+      encounters.find((e) => e.id === activeEncounterId) ?? null,
+      setActiveEncounter,
+    ],
+    [encounters, activeEncounterId],
+  );
 
-  return [activeEncounter, setActiveEncounter] as [
+  return hookValue as [
     Encounter | null,
     Dispatch<SetStateAction<string | null>>,
   ];

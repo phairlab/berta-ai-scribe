@@ -7,6 +7,7 @@ import { convertWebApiRecord } from "@/utility/conversion";
 import { alphabetically, byDate } from "@/utility/sorting";
 import { useAbortController } from "@/utility/use-abort-controller";
 
+import { useActiveEncounter } from "./active-encounter-context";
 import { useRawEncountersState } from "./encounters-context";
 import { useRawNoteTypesState } from "./note-types-context";
 import { useRawUserInfoState } from "./user-info-context";
@@ -19,6 +20,7 @@ export const ExternalStateMonitor = ({ children }: MonitorProps) => {
   const userInfo = useRawUserInfoState();
   const encounters = useRawEncountersState();
   const noteTypes = useRawNoteTypesState();
+  const [, setActiveEncounter] = useActiveEncounter();
 
   const webApi = useWebApi();
   const abortController = useAbortController();
@@ -234,6 +236,10 @@ export const ExternalStateMonitor = ({ children }: MonitorProps) => {
             encounters.setList((encounters) => [
               ...encounters.filter((e) => e.id !== deleted.id),
             ]);
+
+            setActiveEncounter((active) =>
+              active === deleted.id ? null : active,
+            );
           }
 
           cutoff.current = new Date(changes.lastUpdate);
