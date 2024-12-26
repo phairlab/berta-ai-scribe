@@ -1,4 +1,5 @@
 import os
+import io
 import tempfile
 import subprocess
 import json
@@ -23,11 +24,12 @@ def get_duration(audio: BinaryIO) -> int:
 
 def reformat_audio(original: BinaryIO, format: str, bitrate: str = settings.DEFAULT_AUDIO_BITRATE) -> tuple[BinaryIO, int]:
     "Returns a new audio file (and its duration) with the given audio file converted into a standard format and bitrate."
-    reformatted = tempfile.SpooledTemporaryFile()
+    reformatted = io.BytesIO()
 
     try:
         segment: AudioSegment = AudioSegment.from_file(original)
         duration = len(segment)
+        
         segment.export(reformatted, bitrate=bitrate, format=format)
 
         return (reformatted, duration)
@@ -37,7 +39,7 @@ def reformat_audio(original: BinaryIO, format: str, bitrate: str = settings.DEFA
     
 def append_audio(original: BinaryIO, new: BinaryIO, format: str, bitrate: str = settings.DEFAULT_AUDIO_BITRATE) -> tuple[BinaryIO, int]:
     "Returns a new audio file (and its duration) combining the two input audio files separated by 1 second silence."
-    combined = tempfile.SpooledTemporaryFile()
+    combined = io.BytesIO()
 
     try:
         original_segment: AudioSegment = AudioSegment.from_file(original)
@@ -45,6 +47,7 @@ def append_audio(original: BinaryIO, new: BinaryIO, format: str, bitrate: str = 
 
         combined_segment = original_segment + AudioSegment.silent() + new_segment
         duration = len(combined_segment)
+
         combined_segment.export(combined, bitrate=bitrate, format=format)
 
         return (combined, duration)
