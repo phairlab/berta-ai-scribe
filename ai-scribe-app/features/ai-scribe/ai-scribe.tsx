@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import shortUUID from "short-uuid";
 
@@ -30,7 +30,10 @@ export const AIScribe = () => {
   const [encounter, setActiveEncounter] = useActiveEncounter();
 
   const scribe = useScribe();
-  const scribeState = scribe.get(encounter?.id);
+  const scribeState = useMemo(
+    () => scribe.get(encounter?.id),
+    [scribe, encounter],
+  );
 
   const [isRecording, setIsRecording] = useState(false);
   const [isDownloadingFile, setIsDownloadingFile] = useState(false);
@@ -370,7 +373,7 @@ export const AIScribe = () => {
             }
           />
         )}
-        {!encounter && (
+        {!encounter && !isSaving && (
           <ConsentScript className="text-sm text-justify sm:text-start text-zinc-400 dark:text-zinc-600 w-96 max-w-[80%] mt-8 space-y-3 sm:space-y-2" />
         )}
         {scribeState.action && !isSaving && (

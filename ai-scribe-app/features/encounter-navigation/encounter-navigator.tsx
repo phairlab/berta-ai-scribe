@@ -26,6 +26,11 @@ export const EncounterNavigator = ({
     onEncounterSelected?.(encounter);
   };
 
+  const handleDelete = (encounter: Encounter) => {
+    encounters.remove(encounter.id);
+    setActiveEncounter(null);
+  };
+
   return (
     <div className="max-h-full">
       <Listbox
@@ -75,7 +80,7 @@ export const EncounterNavigator = ({
           encounters={encounters.list}
           isLoading={encounters.isLoadingMore}
           loadMore={encounters.loadMore}
-          onDelete={(encounter) => encounters.remove(encounter.id)}
+          onDelete={handleDelete}
           onLabelChanged={(encounter, label) =>
             encounters.setLabel(encounter.id, label)
           }
