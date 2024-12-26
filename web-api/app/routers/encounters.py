@@ -434,7 +434,6 @@ def create_draft_note(
                 db.Encounter.inactivated.is_(None),
             ) \
         .options(
-            selectinload(db.Encounter.recording),
             selectinload(db.Encounter.draft_notes),
         )
         
@@ -457,20 +456,13 @@ def create_draft_note(
     # Save the note.
     try:
         saved = datetime.now(timezone.utc)
-    
-        get_active_note = select(db.DraftNote) \
-            .where(
-                db.DraftNote.encounter_id == encounterId,
-                db.DraftNote.definition_id == noteDefinitionId,
-                db.DraftNote.inactivated.is_(None),
-            )
-        
-        active_note = database.execute(get_active_note).scalar_one_or_none()
 
-        # If the note exists for this note definition, auto-inactivate it.
-        if active_note is not None:
-            active_note.inactivated = saved
+        # Auto-inactivate any previous notes of the same type.
+        for note in encounter.draft_notes:
+            if note.inactivated is None and note.definition_id == noteDefinitionId:
+                note.inactivated = saved
 
+        # Create and add the new note.
         new_note = db.DraftNote(
             id=noteId, definition_id=note_definition.id, definition_version=note_definition.version,
             created=saved, title=title, content=content, output_type=outputType,
