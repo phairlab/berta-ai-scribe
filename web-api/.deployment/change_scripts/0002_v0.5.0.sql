@@ -209,3 +209,54 @@ Plan/Treatment
 - Referrals: [Referrals to specialists or other departments (if applicable)]
 - Discharge & Follow-up Instructions: [Instructions for patient discharge and follow-up (if applicable)]$$
 ) n;
+
+-- v0.5.0-2
+
+-- Add 'task_type' field to audio_conversion_log.
+CREATE TABLE audio_conversion_log_1 (
+  task_id CHAR(36) NOT NULL,
+  task_type VARCHAR(50) NOT NULL DEFAULT 'NEW RECORDING',
+  recording_id VARCHAR(12) NOT NULL,
+  started TIMESTAMP_LTZ NOT NULL,
+  time INTEGER NOT NULL,
+  original_media_type VARCHAR(255),
+  original_file_size INTEGER,
+  converted_media_type VARCHAR(255),
+  converted_file_size INTEGER,
+  error_id CHAR(36),
+  session_id CHAR(36),
+  PRIMARY KEY (task_id) RELY
+);
+
+INSERT INTO audio_conversion_log_1 (
+  task_id, task_type, recording_id, started, time, original_media_type, original_file_size, converted_media_type, converted_file_size, error_id, session_id
+)
+SELECT task_id, 'NEW RECORDING', recording_id, started, time, original_media_type, original_file_size, converted_media_type, converted_file_size, error_id, session_id
+FROM audio_conversion_log;
+
+ALTER TABLE audio_conversion_log SWAP WITH audio_conversion_log_1;
+DROP TABLE audio_conversion_log_1;
+
+-- Add 'segments' field to recordings.
+
+CREATE TABLE recordings_1 (
+  id VARCHAR(12) NOT NULL,
+  encounter_id VARCHAR(12) NOT NULL,
+  media_type VARCHAR(255),
+  file_size INTEGER,
+  duration INTEGER,
+  segments VARCHAR,
+  waveform_peaks VARCHAR,
+  transcript VARCHAR,
+  PRIMARY KEY (id) RELY,
+  FOREIGN KEY (encounter_id) REFERENCES encounters (id) RELY
+);
+
+INSERT INTO recordings_1 (
+  id, encounter_id, media_type, file_size, duration, segments, waveform_peaks, transcript
+)
+SELECT id, encounter_id, media_type, file_size, duration, '[0]', waveform_peaks, transcript
+FROM recordings;
+
+ALTER TABLE recordings SWAP WITH recordings_1;
+DROP TABLE recordings_1;
