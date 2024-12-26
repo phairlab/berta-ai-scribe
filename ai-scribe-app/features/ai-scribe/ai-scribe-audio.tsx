@@ -51,6 +51,8 @@ export const AIScribeAudio = ({
   const [isConfirmAbandon, setConfirmAbandon] = useState(false);
   const [isAbandonRecording, setIsAbandonRecording] = useState(false);
 
+  const currentId = useRef<string>();
+
   const audioSource = useMemo(() => {
     const recording = encounter?.recording;
 
@@ -73,10 +75,13 @@ export const AIScribeAudio = ({
       : null;
 
   useEffect(() => {
-    setIsRecording(false);
-    setIsRecordingPaused(false);
-    setRecordingError(null);
-    setIsPlaying(false);
+    if (audioSource?.id !== currentId.current) {
+      currentId.current = audioSource?.id;
+      setIsRecording(false);
+      setIsRecordingPaused(false);
+      setRecordingError(null);
+      setIsPlaying(false);
+    }
   }, [audioSource]);
 
   const handleAudioPlayerInit = (controls: WavesurferWidgetControls) => {
