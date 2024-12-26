@@ -122,12 +122,14 @@ def log_audio_conversion(
     converted_media_type: str | None,
     converted_file_size: str | None,
     *,
-    error_id: str | None = None, session: WebAPISession | None = None,
+    task_type: str = "NEW RECORDING",
+    error_id: str | None = None,
+    session: WebAPISession | None = None,
 ):
     """Saves a record of an audio conversion task."""
 
     audio_conversion_task = db.AudioConversionTask(
-        task_id=str(uuid4()), recording_id=recording_id, started=started, time=time,
+        task_id=str(uuid4()), task_type=task_type, recording_id=recording_id, started=started, time=time,
         original_media_type=original_media_type,
         original_file_size=original_file_size,
         converted_media_type=converted_media_type,

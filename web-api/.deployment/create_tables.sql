@@ -38,6 +38,7 @@ CREATE TABLE request_log (
 
 CREATE TABLE audio_conversion_log (
   task_id CHAR(36) NOT NULL,
+  task_type VARCHAR(50) NOT NULL DEFAULT 'NEW RECORDING',
   recording_id VARCHAR(12) NOT NULL,
   started TIMESTAMP_LTZ NOT NULL,
   time INTEGER NOT NULL,
@@ -130,6 +131,7 @@ CREATE TABLE recordings (
   media_type VARCHAR(255),
   file_size INTEGER,
   duration INTEGER,
+  segments VARCHAR,
   waveform_peaks VARCHAR,
   transcript VARCHAR,
   PRIMARY KEY (id) RELY,

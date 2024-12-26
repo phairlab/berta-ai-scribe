@@ -104,6 +104,7 @@ def create_encounter(
             log_audio_conversion,
             database, recording_id, timer.started_at, timer.elapsed_ms, audio.content_type, audio.size,
             error_id=audio_error.uuid, session=userSession,
+            task_type="NEW RECORDING",
         )
 
         raise audio_error
@@ -112,7 +113,7 @@ def create_encounter(
     try:
         recording = db.Recording(
             id=recording_id, media_type=reformatted_media_type, file_size=reformatted_file_size,
-            duration=duration, waveform_peaks=json.dumps(peaks)
+            duration=duration, waveform_peaks=json.dumps(peaks), segments=json.dumps([0]),
         )
 
         encounter = db.Encounter(
@@ -199,11 +200,20 @@ def append_recording(
         backgroundTasks.add_task(
             log_audio_conversion,
             database, recording_id, timer.started_at, timer.elapsed_ms, audio.content_type, audio.size,
-            reformatted_media_type, (encounter.recording.file_size - combined_file_size), session=userSession,
+            reformatted_media_type, combined_file_size, session=userSession,
+            task_type="APPEND AUDIO",
         )
 
         # Compute waveform peaks.
         peaks = compute_peaks(combined)
+
+        # Record the new start of segment.
+        if encounter.recording.segments is not None:
+            segments: list[int] = json.loads(encounter.recording.segments)
+        else:
+            segments: list[int] = [0]
+
+        segments.append(encounter.recording.duration)
     except Exception as e:
         audio_error = errors.AudioProcessingError(str(e))
 
@@ -217,10 +227,12 @@ def append_recording(
 
     # Update the encounter record.
     try:
+
         encounter.modified = modified
         encounter.recording.transcript = None
         encounter.recording.duration = duration
         encounter.recording.waveform_peaks = json.dumps(peaks)
+        encounter.recording.segments = json.dumps(segments)
         database.commit()
     except Exception as e:
         combined.close()

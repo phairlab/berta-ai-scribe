@@ -78,6 +78,7 @@ class AudioConversionTask(AIScribeMetadata):
     __tablename__ = "audio_conversion_log"
 
     task_id: Mapped[str] = uuid_column(primary_key=True)
+    task_type: Mapped[str] = mapped_column(VARCHAR(50))
     recording_id: Mapped[str] = sqid_column()
     started: Mapped[datetime] = mapped_column(TIMESTAMP_LTZ)
     time: Mapped[int]
@@ -178,6 +179,7 @@ class Recording(AIScribeMetadata):
     file_size: Mapped[int | None]
     duration: Mapped[int | None]
     waveform_peaks: Mapped[str | None]
+    segments: Mapped[str | None]
     transcript: Mapped[str | None]
 
     encounter: Mapped["Encounter"] = relationship(back_populates="recording")
