@@ -51,7 +51,7 @@ export const AIScribeAudio = ({
   const [isConfirmAbandon, setConfirmAbandon] = useState(false);
   const [isAbandonRecording, setIsAbandonRecording] = useState(false);
 
-  const currentId = useRef<string>();
+  const currentId = useRef<string>(undefined);
 
   const audioSource = useMemo(() => {
     const recording = encounter?.recording;
