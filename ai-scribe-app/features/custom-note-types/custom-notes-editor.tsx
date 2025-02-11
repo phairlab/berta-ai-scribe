@@ -110,6 +110,7 @@ export const CustomNotesEditor = ({
       const note = await noteGenerator.generateNote(
         { id: "TEST" },
         editedNoteType as RequiredFields<IncompleteNoteType, "instructions">,
+        undefined,
         transcript,
         controller.signal.current,
       );

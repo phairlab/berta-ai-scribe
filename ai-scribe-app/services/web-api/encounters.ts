@@ -23,12 +23,17 @@ export const create =
   (getAccessToken: () => WebApiToken) =>
   (
     audio: File,
+    context?: string,
     label?: string,
     cancellation?: AbortSignal,
   ): Promise<Encounter> => {
     const formData = new FormData();
 
     formData.append("audio", audio);
+
+    if (context) {
+      formData.append("context", context);
+    }
 
     if (label) {
       formData.append("label", label);
@@ -65,7 +70,7 @@ export const update =
   (getAccessToken: () => WebApiToken) =>
   (
     id: string,
-    changes: { label?: string; transcript?: string },
+    changes: { label?: string; transcript?: string; context?: string },
     cancellation?: AbortSignal,
   ): Promise<Encounter> =>
     httpAction<Encounter>("PATCH", `api/encounters/${id}`, {

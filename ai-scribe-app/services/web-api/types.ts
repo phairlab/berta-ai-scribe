@@ -36,6 +36,7 @@ export type Encounter = {
   modified: string;
   label: string | null;
   autolabel: string | null;
+  context: string | null;
   recording?: Recording;
   draftNotes: DraftNote[];
 };

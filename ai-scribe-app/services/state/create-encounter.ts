@@ -1,6 +1,6 @@
 import { Encounter } from "@/core/types";
 
-export function createEncounter(tempId: string): Encounter {
+export function createEncounter(tempId: string, context?: string): Encounter {
   const created = new Date();
   const encounter: Encounter = {
     id: tempId,
@@ -8,6 +8,7 @@ export function createEncounter(tempId: string): Encounter {
     modified: created.toISOString(),
     label: null,
     autolabel: null,
+    context: context ?? null,
     draftNotes: [],
     isPersisted: false,
   } satisfies Encounter;

@@ -212,6 +212,7 @@ class Encounter(Base):
     modified: Mapped[datetime] = mapped_column(DATETIME_TYPE)
     label: Mapped[str | None] = mapped_column(VARCHAR(100))
     autolabel: Mapped[str | None] = mapped_column(VARCHAR(100))
+    context: Mapped[str | None]
     inactivated: Mapped[datetime | None] = mapped_column(DATETIME_TYPE)
     purged: Mapped[datetime | None] = mapped_column(DATETIME_TYPE)
 

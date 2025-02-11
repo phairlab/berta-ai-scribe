@@ -73,6 +73,7 @@ def create_encounter(
     *,
     audio: UploadFile,
     label: Annotated[str | None, Body()] = None,
+    context: Annotated[str | None, Body()] = None,
 ) -> sch.Encounter:
     """
     Creates and saves a new encounter record.
@@ -145,6 +146,7 @@ def create_encounter(
             created=created,
             modified=created,
             label=label,
+            context=context,
             recording=recording,
         )
 
@@ -314,6 +316,7 @@ def update_encounter(
     encounterId: str,
     label: Annotated[str | None, Body()] = None,
     transcript: Annotated[str | None, Body()] = None,
+    context: Annotated[str | None, Body()] = None,
 ) -> sch.Encounter:
     """
     Saves updates to a saved encounter for the current user.
@@ -337,6 +340,9 @@ def update_encounter(
 
     if label is not None:
         encounter.label = label
+
+    if context is not None:
+        encounter.context = context
 
     if transcript is not None:
         encounter.recording.transcript = transcript
@@ -455,7 +461,10 @@ def delete_encounter(
         # Delete the transcript.
         encounter.recording.transcript = ""
 
-        # Delete the content of any saved notes and inactivate them.
+        # Delete the textual context.
+        encounter.context = ""
+
+        # Delete the content and context of any saved notes and inactivate them.
         for draft_note in encounter.draft_notes:
             draft_note.content = ""
             draft_note.inactivated = deleted

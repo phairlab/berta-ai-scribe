@@ -28,6 +28,7 @@ def _get_service(model) -> GenerativeAIService | None:
 def generate_note(
     model: str,
     instructions: str,
+    context: str | None,
     transcript: str,
     output_type: sch.NoteOutputType = "Markdown",
 ) -> sch.GenerationOutput:
@@ -46,10 +47,14 @@ def generate_note(
             {"role": "user", "content": f'Instructions:\n"""{instructions}\n"""'},
             {"role": "user", "content": f'Audio Transcript:\n"""{transcript}\n"""'},
         ]
+        if context is not None and len(context.strip()) > 0:
+            messages.append(
+                {"role": "user", "content": f'Other Details:\n"""{context}\n"""'}
+            )
     else:
         messages = [
             {"role": "system", "content": PLAINTEXT_NOTE_SYSTEM_PROMPT},
-            {"role": "user", "content": f"{instructions}\n\n{transcript}"},
+            {"role": "user", "content": f"{instructions}\n\n{transcript}\n\n{context}"},
         ]
 
     # Return the draft note segments.

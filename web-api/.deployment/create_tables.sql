@@ -119,6 +119,7 @@ CREATE TABLE encounters (
   modified TIMESTAMP_LTZ NOT NULL,
   label VARCHAR(100),
   autolabel VARCHAR(100),
+  context VARCHAR,
   inactivated TIMESTAMP_LTZ,
   purged TIMESTAMP_LTZ,
   PRIMARY KEY (id) RELY,

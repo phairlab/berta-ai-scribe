@@ -40,6 +40,7 @@ export const AIScribe = () => {
   const [noteType, setNoteType] = useState<NoteType | undefined>(
     noteTypes.default,
   );
+  const [pendingDetails, setPendingDetails] = useState<string | null>(null);
 
   useEffect(() => {
     if (encounter && noteType !== (scribeState.noteType ?? noteTypes.default)) {
@@ -67,6 +68,7 @@ export const AIScribe = () => {
   const recording = encounter?.recording ?? null;
   const transcript = recording?.transcript ?? null;
   const notes = encounter?.draftNotes ?? [];
+  const details = encounter?.context ?? null;
 
   const isSaving = isDownloadingFile || scribeState.action?.type === "Saving";
   const failedToSave = scribeState.error?.type === "Saving";
@@ -96,6 +98,14 @@ export const AIScribe = () => {
     }
   }
 
+  function handleContextChanged(context: string | null) {
+    if (encounter) {
+      encounters.setContext(encounter.id, context);
+    } else {
+      setPendingDetails(context);
+    }
+  }
+
   function handleSampleFileSelected() {
     setIsDownloadingFile(true);
   }
@@ -111,10 +121,20 @@ export const AIScribe = () => {
 
   function handleAudioFile(audio: File, encounterId?: string) {
     setIsDownloadingFile(false);
-    saveEncounter(audio, encounterId);
+
+    if (!encounterId) {
+      saveEncounter(audio, undefined, pendingDetails ?? undefined);
+      setPendingDetails(null);
+    } else {
+      saveEncounter(audio, encounterId);
+    }
   }
 
-  async function saveEncounter(audio: File, encounterId?: string) {
+  async function saveEncounter(
+    audio: File,
+    encounterId?: string,
+    context?: string,
+  ) {
     let isNew = !encounterId;
     const id = encounterId ?? shortUUID.generate();
 
@@ -132,7 +152,7 @@ export const AIScribe = () => {
 
     try {
       const savedEncounter = isNew
-        ? await encounters.create(id, audio)
+        ? await encounters.create(id, audio, context)
         : await encounters.appendRecording(id, audio);
 
       if (isNew) {
@@ -151,7 +171,7 @@ export const AIScribe = () => {
         canDismiss: false,
         retry: () => {
           scribe.clearError(id);
-          saveEncounter(audio, encounterId);
+          saveEncounter(audio, encounterId, context);
         },
       } satisfies ScribeError;
 
@@ -245,6 +265,7 @@ export const AIScribe = () => {
       const note = await noteGenerator.generateNote(
         encounter,
         noteType,
+        details ?? undefined,
         transcript,
         controller.signal,
         { includeFooter: true },
@@ -306,6 +327,7 @@ export const AIScribe = () => {
           noteGenerator.generateNote(
             encounter,
             nt,
+            details ?? undefined,
             transcript,
             controller.signal,
             {
@@ -360,6 +382,7 @@ export const AIScribe = () => {
         <Divider className="bg-zinc-100 dark:bg-zinc-900" />
         {!failedToSave && (
           <AIScribeControls
+            context={encounter === null ? pendingDetails : details}
             isDisabled={!canGenerateNote}
             isRegenerate={notes.some(
               (n) =>
@@ -367,6 +390,7 @@ export const AIScribe = () => {
                 (scribeState.noteType?.id ?? noteTypes.default?.id),
             )}
             selectedNoteType={noteType}
+            onContextChanged={handleContextChanged}
             onNoteTypeChanged={handleNoteTypeChanged}
             onSubmit={() =>
               encounter && noteType && generateNote(encounter.id, noteType)

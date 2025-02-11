@@ -95,6 +95,7 @@ def generate_draft_note(
     *,
     model: Annotated[str, Body()] = settings.DEFAULT_NOTE_GENERATION_MODEL,
     instructions: Annotated[str, Body()],
+    context: Annotated[str | None, Body()] = None,
     transcript: Annotated[str, Body()],
     outputType: Annotated[sch.NoteOutputType, Body()],
 ) -> sch.GenerationResponse:
@@ -103,7 +104,7 @@ def generate_draft_note(
         noteId = next_sqid(database)
 
         generation_output = tasks.generate_note(
-            model, instructions, transcript, outputType
+            model, instructions, context, transcript, outputType
         )
 
         backgroundTasks.add_task(

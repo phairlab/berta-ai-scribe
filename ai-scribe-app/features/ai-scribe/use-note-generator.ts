@@ -15,6 +15,7 @@ export function useNoteGenerator() {
   const generateNote = async (
     encounter: Pick<Encounter, "id">,
     noteType: NoteType | RequiredFields<IncompleteNoteType, "instructions">,
+    context: string | undefined,
     transcript: string,
     abortSignal: AbortSignal,
     options?: { includeFooter?: boolean },
@@ -24,6 +25,7 @@ export function useNoteGenerator() {
         noteType.instructions,
         transcript,
         noteType.outputType,
+        context,
         noteType.model,
         abortSignal,
       );

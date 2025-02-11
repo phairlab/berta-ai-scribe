@@ -159,13 +159,13 @@ function useEncounters() {
    *
    * Persistence Strategy: Synchronous.
    */
-  async function create(tempId: string, audio: File) {
+  async function create(tempId: string, audio: File, context?: string) {
     const modified = new Date().toISOString();
-    const encounter = createEncounter(tempId);
+    const encounter = createEncounter(tempId, context);
 
     put(tempId, { ...encounter, modified });
 
-    const record = await webApi.encounters.create(audio);
+    const record = await webApi.encounters.create(audio, context);
     const savedVersion = convertWebApiRecord.toEncounter(record);
 
     put(tempId, savedVersion);
@@ -266,6 +266,18 @@ function useEncounters() {
   }
 
   /**
+   * Updates an encounter's text context and persists the change.
+   *
+   * Persistence Strategy: Optimistic.
+   */
+  function setContext(id: string, context: string | null) {
+    const modified = new Date().toISOString();
+
+    modify(id, (e) => ({ ...e, context, modified }));
+    webApi.encounters.update(id, { context: context ?? "" });
+  }
+
+  /**
    * Sets or unsets a flag and associated comments on a note
    * and persists the change.
    *
@@ -309,6 +321,7 @@ function useEncounters() {
     saveNote,
     setTranscript,
     setLabel,
+    setContext,
     setNoteFlag,
   };
 }

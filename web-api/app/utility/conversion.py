@@ -57,6 +57,7 @@ class ConvertToSchema:
             modified=db_record.modified,
             label=db_record.label,
             autolabel=db_record.autolabel,
+            context=db_record.context,
             recording=ConvertToSchema.recording(db_record.recording),
             draftNotes=[
                 ConvertToSchema.draft_note(d)

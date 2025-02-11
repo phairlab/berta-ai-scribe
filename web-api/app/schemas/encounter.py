@@ -12,5 +12,6 @@ class Encounter(BaseModel):
     modified: datetime
     label: str | None
     autolabel: str | None
+    context: str | None
     recording: Recording
     draftNotes: list[DraftNote]
