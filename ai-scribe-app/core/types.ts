@@ -54,6 +54,10 @@ export type IncompleteNoteType = OptionalFields<
   "instructions" | "title"
 >;
 
+export type LanguageModel = WebApiTypes.LanguageModel;
+
+export type LlmManifest = WebApiTypes.LlmManifest;
+
 export type NoteType = WebApiTypes.NoteDefinition & {
   isNew: boolean;
   isSaving: boolean;
@@ -69,5 +73,6 @@ export type UserInfo = {
   modified: string;
   settings: {
     defaultNoteType?: string;
+    availableLlms: LlmManifest;
   };
 };

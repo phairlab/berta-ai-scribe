@@ -145,6 +145,7 @@ CREATE TABLE draft_notes (
   definition_version VARCHAR(12) NOT NULL,
   created TIMESTAMP_LTZ NOT NULL,
   title VARCHAR(100) NOT NULL,
+  model VARCHAR(50),
   content VARCHAR NOT NULL,
   inactivated TIMESTAMP_LTZ,
   output_type VARCHAR(50) NOT NULL DEFAULT 'Plain Text',

@@ -25,6 +25,13 @@ export function formatDate(date: Date) {
   return formattedDate;
 }
 
+export function formatShortDate(date: Date) {
+  // Format: MM-DD
+  const formattedDate = `${("0" + (date.getMonth() + 1)).slice(-2)}-${("0" + date.getDate()).slice(-2)}`;
+
+  return formattedDate;
+}
+
 export function formatTime(date: Date) {
   // Format: HH:MM
   const formattedTime = `${("0" + date.getHours()).slice(-2)}:${("0" + date.getMinutes()).slice(-2)}`;
@@ -34,6 +41,10 @@ export function formatTime(date: Date) {
 
 export function formatDatetime(date: Date) {
   return `${formatDate(date)} ${formatTime(date)}`;
+}
+
+export function formatShortDatetime(date: Date) {
+  return `${formatShortDate(date)} ${formatTime(date)}`;
 }
 
 export function formatDateWithWeekday(date: Date) {

@@ -16,13 +16,11 @@ export const create =
   (
     title: string,
     instructions: string,
+    model: string,
     cancellation?: AbortSignal,
   ): Promise<NoteDefinition> =>
     httpAction<NoteDefinition>("POST", "api/note-definitions", {
-      data: {
-        title: title,
-        instructions: instructions,
-      },
+      data: { title, instructions, model },
       accessToken: getAccessToken(),
       signal: cancellation,
     });
@@ -31,7 +29,7 @@ export const update =
   (getAccessToken: () => WebApiToken) =>
   (
     id: string,
-    changes: { title?: string; instructions?: string },
+    changes: { title?: string; instructions?: string; model?: string },
     cancellation?: AbortSignal,
   ): Promise<NoteDefinition> =>
     httpAction<NoteDefinition>("PATCH", `api/note-definitions/${id}`, {

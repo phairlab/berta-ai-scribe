@@ -6,8 +6,8 @@ import { Listbox, ListboxItem } from "@nextui-org/listbox";
 
 import { Encounter } from "@/core/types";
 import { WaitMessageSpinner } from "@/core/wait-message-spinner";
-import { useActiveEncounter } from "@/services/application-state/active-encounter-context";
-import { useEncounters } from "@/services/application-state/encounters-context";
+import { useActiveEncounter } from "@/services/state/active-encounter-context";
+import { useEncounters } from "@/services/state/encounters-context";
 
 import { EncounterList } from "./encounter-list";
 

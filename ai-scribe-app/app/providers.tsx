@@ -10,8 +10,9 @@ import {
 
 import { NextUIProvider } from "@nextui-org/system";
 
-import { AppContextProviders } from "@/services/application-state/app-context-providers";
-import { AuthenticationProvider } from "@/services/session-management/authentication-provider";
+import { AuthenticationProvider } from "@/services/identity/authentication-provider";
+import { AppContextProviders } from "@/services/state/app-context-providers";
+import { JotaiProvider } from "@/services/state/jotai-provider";
 
 export interface ProvidersProps {
   children: React.ReactNode;
@@ -24,9 +25,11 @@ export function Providers({ children, themeProps }: ProvidersProps) {
   return (
     <NextUIProvider navigate={router.push}>
       <NextThemesProvider {...themeProps}>
-        <AuthenticationProvider>
-          <AppContextProviders>{children}</AppContextProviders>
-        </AuthenticationProvider>
+        <JotaiProvider>
+          <AuthenticationProvider>
+            <AppContextProviders>{children}</AppContextProviders>
+          </AuthenticationProvider>
+        </JotaiProvider>
       </NextThemesProvider>
     </NextUIProvider>
   );

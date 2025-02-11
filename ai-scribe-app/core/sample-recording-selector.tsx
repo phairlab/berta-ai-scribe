@@ -1,7 +1,7 @@
 import { SelectItem } from "@nextui-org/select";
 
 import { MobileCompatibleSelect } from "@/core/mobile-compatible-select";
-import { useSampleRecordings } from "@/services/application-state/sample-recordings-context";
+import { useSampleRecordings } from "@/services/state/sample-recordings-context";
 
 type SampleRecordingSelectorProps = {
   onFileSelected?: () => void;

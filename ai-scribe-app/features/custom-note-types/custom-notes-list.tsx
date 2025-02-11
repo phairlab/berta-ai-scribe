@@ -2,7 +2,7 @@ import { HTMLProps } from "react";
 
 import { IncompleteNoteType, NoteType } from "@/core/types";
 import { WaitMessageSpinner } from "@/core/wait-message-spinner";
-import { useNoteTypes } from "@/services/application-state/note-types-context";
+import { useNoteTypes } from "@/services/state/note-types-context";
 
 import { CustomNotesListItem } from "./custom-notes-list-item";
 

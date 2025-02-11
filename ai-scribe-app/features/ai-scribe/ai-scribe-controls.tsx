@@ -2,7 +2,7 @@ import { Button } from "@nextui-org/button";
 
 import { NoteTypeSelector } from "@/core/note-type-selector";
 import { NoteType } from "@/core/types";
-import { useNoteTypes } from "@/services/application-state/note-types-context";
+import { useNoteTypes } from "@/services/state/note-types-context";
 
 type AIScribeControlsProps = {
   isDisabled: boolean;
@@ -38,7 +38,7 @@ export const AIScribeControls = ({
           color="primary"
           isDisabled={isDisabled}
           size="md"
-          onClick={onSubmit}
+          onPress={onSubmit}
         >
           {isRegenerate ? "Regenerate Note" : "Generate Note"}
         </Button>

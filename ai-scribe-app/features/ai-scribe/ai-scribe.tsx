@@ -10,10 +10,10 @@ import { Divider } from "@nextui-org/divider";
 import { ConsentScript } from "@/core/consent-script";
 import { DraftNote, Encounter, NoteType, ScribeError } from "@/core/types";
 import { WaitMessageSpinner } from "@/core/wait-message-spinner";
-import { useActiveEncounter } from "@/services/application-state/active-encounter-context";
-import { useEncounters } from "@/services/application-state/encounters-context";
-import { useNoteTypes } from "@/services/application-state/note-types-context";
-import { useScribe } from "@/services/application-state/scribe-context";
+import { useActiveEncounter } from "@/services/state/active-encounter-context";
+import { useEncounters } from "@/services/state/encounters-context";
+import { useNoteTypes } from "@/services/state/note-types-context";
+import { useScribe } from "@/services/state/scribe-context";
 import { asApplicationError, isAbortError } from "@/utility/errors";
 
 import { AIScribeAudio } from "./ai-scribe-audio";

@@ -3,36 +3,64 @@ from typing import BinaryIO
 
 import aiohttp
 
+from app.errors import (
+    ExternalServiceError,
+    ExternalServiceInterruption,
+    ExternalServiceTimeout,
+)
 from app.schemas import TranscriptionOutput
-from app.services.audio_processing import get_duration
-from app.services.measurement import ExecutionTimer
-from app.services.error_handling import ExternalServiceTimeout, ExternalServiceError, ExternalServiceInterruption, AudioProcessingError
-from app.config import settings
+from app.services.adapters import TranscriptionService
 
-SERVICE_NAME = "Local WhisperX"
 
-async def transcribe(audio_file: BinaryIO, filename: str, content_type: str, prompt: str | None = None) -> TranscriptionOutput:
-    async with aiohttp.ClientSession(settings.LOCAL_WHISPER_SERVICE_URL) as session:
-        form_data = aiohttp.FormData()
-        form_data.add_field("audio", audio_file.read(), filename=filename, content_type="multipart/form-data")
+class WhisperXTranscriptionService(TranscriptionService):
+    def __init__(self, service_url):
+        self._service_url = service_url
 
-        try:
-            async with session.post("/transcribe-audio", data=form_data) as response:
-                if response.status == 200:
-                    response = await response.json()
-                    transcript = response["text"]
-                else:
-                    error = await response.json()
-                    error_message = error["detail"]
-                    raise ExternalServiceError(SERVICE_NAME, json.dumps(error_message))
-        except aiohttp.ServerTimeoutError as e:
-            raise ExternalServiceTimeout(SERVICE_NAME, str(e))
-        except aiohttp.ServerConnectionError as e:
-            raise ExternalServiceInterruption(SERVICE_NAME, str(e))
-        except (aiohttp.ClientPayloadError, aiohttp.ClientResponseError, aiohttp.RedirectClientError) as e:
-            raise ExternalServiceError(SERVICE_NAME, str(e))
+    @property
+    def service_name(self):
+        return "WhisperX"
 
-    return TranscriptionOutput(
-        transcript=transcript,
-        service=SERVICE_NAME,
-    )
+    async def transcribe(
+        self,
+        audio_file: BinaryIO,
+        filename: str,
+        content_type: str,
+        prompt: str | None = None,
+    ) -> TranscriptionOutput:
+        async with aiohttp.ClientSession(self._service_url) as httpSession:
+            form_data = aiohttp.FormData()
+            form_data.add_field(
+                "audio",
+                audio_file.read(),
+                filename=filename,
+                content_type="multipart/form-data",
+            )
+
+            try:
+                async with httpSession.post(
+                    "/transcribe-audio", data=form_data
+                ) as response:
+                    if response.status == 200:
+                        response = await response.json()
+                        transcript = response["text"]
+                    else:
+                        error = await response.json()
+                        error_message = error["detail"]
+                        raise ExternalServiceError(
+                            self.service_name, json.dumps(error_message)
+                        )
+            except aiohttp.ServerTimeoutError as e:
+                raise ExternalServiceTimeout(self.service_name, str(e))
+            except aiohttp.ServerConnectionError as e:
+                raise ExternalServiceInterruption(self.service_name, str(e))
+            except (
+                aiohttp.ClientPayloadError,
+                aiohttp.ClientResponseError,
+                aiohttp.RedirectClientError,
+            ) as e:
+                raise ExternalServiceError(self.service_name, str(e))
+
+        return TranscriptionOutput(
+            transcript=transcript,
+            service=self.service_name,
+        )

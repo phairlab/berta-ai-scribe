@@ -2,6 +2,10 @@
 let nextConfig = {
   experimental: {
     proxyTimeout: 300 * 1000,
+    swcPlugins: [
+      ["@swc-jotai/debug-label", {}],
+      ["@swc-jotai/react-refresh", {}],
+    ],
   },
 };
 

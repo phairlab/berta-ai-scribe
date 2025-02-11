@@ -1,6 +1,8 @@
 from pydantic import BaseModel
 
-from app.schemas import SimpleMessage, WebAPIErrorDetail
+from .simple_message import SimpleMessage
+from .web_api_error_detail import WebAPIErrorDetail
+
 
 class WebAPIError(BaseModel):
     detail: SimpleMessage | WebAPIErrorDetail

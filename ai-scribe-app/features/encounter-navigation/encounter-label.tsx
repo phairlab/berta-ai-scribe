@@ -6,7 +6,7 @@ import {
   ScribeActionType,
   ScribeError,
 } from "@/core/types";
-import { useScribe } from "@/services/application-state/scribe-context";
+import { useScribe } from "@/services/state/scribe-context";
 
 const IMPORTANT_ACTION_TYPES: ScribeActionType[] = ["Saving", "Transcribing"];
 

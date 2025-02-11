@@ -23,6 +23,7 @@ export type DraftNote = {
   definitionId: string;
   created: string;
   title: string;
+  model: string;
   content: string;
   outputType: NoteOutputType;
   isFlagged: boolean;
@@ -39,11 +40,22 @@ export type Encounter = {
   draftNotes: DraftNote[];
 };
 
+export type LanguageModel = {
+  name: string;
+  size: "Large" | "Medium" | "Small";
+};
+
+export type LlmManifest = {
+  models: LanguageModel[];
+  recommended: string;
+};
+
 export type NoteDefinition = {
   id: string;
   modified: string;
   title: string;
   instructions: string;
+  model: string;
   isBuiltin: boolean;
   isSystemDefault: boolean;
   outputType: NoteOutputType;
@@ -80,4 +92,5 @@ export type UserInfo = {
   username: string;
   updated: string;
   defaultNoteType?: string;
+  availableLlms: LlmManifest;
 };

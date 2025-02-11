@@ -5,9 +5,9 @@ import clsx from "clsx";
 import { Divider } from "@nextui-org/divider";
 import { Progress } from "@nextui-org/progress";
 
-import { useEncounters } from "@/services/application-state/encounters-context";
-import { useNoteTypes } from "@/services/application-state/note-types-context";
-import { useSampleRecordings } from "@/services/application-state/sample-recordings-context";
+import { useEncounters } from "@/services/state/encounters-context";
+import { useNoteTypes } from "@/services/state/note-types-context";
+import { useSampleRecordings } from "@/services/state/sample-recordings-context";
 
 import { AIScribe } from "@/features/ai-scribe/ai-scribe";
 import { EncounterNavigator } from "@/features/encounter-navigation/encounter-navigator";

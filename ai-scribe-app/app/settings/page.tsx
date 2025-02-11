@@ -5,9 +5,9 @@ import { useState } from "react";
 import { NoteTypeSelector } from "@/core/note-type-selector";
 import { subtitle, title } from "@/core/primitives";
 import { IncompleteNoteType, NoteType } from "@/core/types";
-import { createNoteType } from "@/services/application-state/create-note-type";
-import { useNoteTypes } from "@/services/application-state/note-types-context";
-import { useCurrentUser } from "@/services/application-state/user-info-context";
+import { createNoteType } from "@/services/state/create-note-type";
+import { useNoteTypes } from "@/services/state/note-types-context";
+import { useCurrentUser } from "@/services/state/user-info-context";
 
 import { CustomNotesEditor } from "@/features/custom-note-types/custom-notes-editor";
 import { CustomNotesList } from "@/features/custom-note-types/custom-notes-list";
@@ -28,10 +28,10 @@ export default function Settings() {
   };
 
   const handleChanges = (changes: Partial<IncompleteNoteType>) => {
-    setEditNoteType({
-      ...editedNoteType,
+    setEditNoteType((nt) => ({
+      ...nt,
       ...changes,
-    });
+    }));
   };
 
   const handleDelete = (noteType: NoteType) => {

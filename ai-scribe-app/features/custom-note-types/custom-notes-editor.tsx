@@ -4,6 +4,7 @@ import { Button } from "@nextui-org/button";
 import { Input, Textarea } from "@nextui-org/input";
 
 import { ErrorCard } from "@/core/error-card";
+import { LanguageModelSelector } from "@/core/language-model-selector";
 import { MixedRecordingSelector } from "@/core/mixed-recording-selector";
 import { NoteCard } from "@/core/note-card";
 import { NoteTypeSelector } from "@/core/note-type-selector";
@@ -15,7 +16,7 @@ import {
   SampleRecording,
 } from "@/core/types";
 import { WaitMessageSpinner } from "@/core/wait-message-spinner";
-import { useNoteTypes } from "@/services/application-state/note-types-context";
+import { useNoteTypes } from "@/services/state/note-types-context";
 import { ApplicationError, asApplicationError } from "@/utility/errors";
 import { RequiredFields } from "@/utility/typing";
 import { useAbortController } from "@/utility/use-abort-controller";
@@ -59,19 +60,22 @@ export const CustomNotesEditor = ({
 
   const applyTemplate = () => {
     if (template) {
-      onChanges({ instructions: template.instructions });
+      onReset();
+      onChanges({ instructions: template.instructions, model: template.model });
     }
   };
 
   const save = () => {
     const instructions = editedNoteType.instructions;
     const title = editedNoteType.title;
+    const model = editedNoteType.model;
 
     if (instructions !== undefined && title !== undefined) {
       noteTypes.save({
         ...editedNoteType,
         instructions,
         title,
+        model,
       } satisfies NoteType);
       reset();
     }
@@ -85,7 +89,11 @@ export const CustomNotesEditor = ({
     setTemplate(undefined);
   }, [editedNoteType]);
 
-  const canTest = editedNoteType.instructions && recording && !isGeneratingNote;
+  const canTest =
+    editedNoteType.instructions &&
+    editedNoteType.model &&
+    recording &&
+    !isGeneratingNote;
 
   const test = async () => {
     setError(undefined);
@@ -110,6 +118,8 @@ export const CustomNotesEditor = ({
     } catch (ex: unknown) {
       const isAborted = ex instanceof DOMException && ex.name === "AbortError";
 
+      setDraftNote(undefined);
+
       if (!isAborted) {
         setError(asApplicationError(ex));
       }
@@ -120,14 +130,7 @@ export const CustomNotesEditor = ({
 
   return (
     <>
-      <div className="flex flex-col sm:flex-row gap-2 w-full items-end">
-        <Input
-          isRequired
-          label="Title"
-          labelPlacement="outside"
-          value={editedNoteType.title ?? ""}
-          onValueChange={(title) => onChanges({ title: title })}
-        />
+      <div className="flex flex-row gap-2 mt-4 w-full items-end">
         <NoteTypeSelector
           builtinTypes={noteTypes.builtin}
           customTypes={noteTypes.custom}
@@ -135,6 +138,7 @@ export const CustomNotesEditor = ({
           isLoading={noteTypes.initState === "Initializing"}
           label="Template"
           labelPlacement="outside"
+          placeholder="Choose a starting point"
           selected={template}
           onChange={setTemplate}
         />
@@ -142,10 +146,25 @@ export const CustomNotesEditor = ({
           className="mt-2 sm:mt-6 ms-auto"
           color="default"
           variant="ghost"
-          onClick={applyTemplate}
+          onPress={applyTemplate}
         >
           Apply
         </Button>
+      </div>
+      <div className="flex flex-col sm:flex-row gap-4 w-full items-end">
+        <Input
+          isRequired
+          label="Title"
+          labelPlacement="outside"
+          placeholder="Label your custom note type"
+          value={editedNoteType.title ?? ""}
+          onValueChange={(title) => onChanges({ title })}
+        />
+        <LanguageModelSelector
+          isRequired
+          selected={editedNoteType.model}
+          onChange={(model) => onChanges({ model })}
+        />
       </div>
       <Textarea
         isRequired
@@ -160,17 +179,19 @@ export const CustomNotesEditor = ({
         }
       />
       <div className="flex flex-col md:flex-row gap-5 w-full items-center">
-        <div className="flex flex-col sm:flex-row flex-row gap-2 w-full">
-          <MixedRecordingSelector
-            selectedRecording={recording}
-            onRecordingSelected={setRecording}
-          />
+        <div className="flex flex-col sm:flex-row gap-2 w-full">
+          <div className="w-full md:max-w-sm truncate shrink ">
+            <MixedRecordingSelector
+              selectedRecording={recording}
+              onRecordingSelected={setRecording}
+            />
+          </div>
           <Button
             className="mt-2 sm:mt-6 ms-auto"
             color="default"
             isDisabled={!canTest}
             variant="ghost"
-            onClick={test}
+            onPress={test}
           >
             Test
           </Button>
@@ -180,7 +201,7 @@ export const CustomNotesEditor = ({
             className="mt-2 md:mt-6"
             color="primary"
             isDisabled={!canSave}
-            onClick={save}
+            onPress={save}
           >
             {editedNoteType.isNew ? "Create" : "Update Note Type"}
           </Button>
@@ -188,7 +209,7 @@ export const CustomNotesEditor = ({
             className="mt-2 md:mt-6"
             color="default"
             isDisabled={isGeneratingNote}
-            onClick={reset}
+            onPress={reset}
           >
             Reset
           </Button>

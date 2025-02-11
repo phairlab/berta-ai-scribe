@@ -1,32 +1,50 @@
-from typing import Annotated
 from pathlib import Path
+from typing import Annotated
 
-from fastapi import APIRouter, Depends, Body, status, BackgroundTasks
+from fastapi import APIRouter, BackgroundTasks, Body, Depends, status
 
-import app.services.error_handling as errors
+import app.errors as errors
 import app.schemas as sch
 import app.tasks as tasks
-from app.services.db import new_sqid, useDatabase
-from app.services.security import authenticate_session, useUserSession
-from app.services.logging import WebAPILogger, log_transcription, log_generation
-from app.services.measurement import ExecutionTimer
 from app.config import settings
+from app.config.db import next_sqid, useDatabase
+from app.logging import WebAPILogger, log_generation, log_transcription
+from app.security import authenticate_session, useUserSession
+from app.utility.timing import ExecutionTimer
 
 log = WebAPILogger(__name__)
 
-router = APIRouter(dependencies=[Depends(authenticate_session)], responses={
-    status.HTTP_500_INTERNAL_SERVER_ERROR: {"description": "Internal Server Error", "model": sch.WebAPIError},
-    status.HTTP_502_BAD_GATEWAY: {"description": "External Service Error", "model": sch.WebAPIError},
-    status.HTTP_503_SERVICE_UNAVAILABLE: {"description": "External Service Unavailable", "model": sch.WebAPIError},
-    status.HTTP_504_GATEWAY_TIMEOUT: {"description": "External Service Timeout", "model": sch.WebAPIError},
-})
+router = APIRouter(
+    dependencies=[Depends(authenticate_session)],
+    responses={
+        status.HTTP_500_INTERNAL_SERVER_ERROR: {
+            "description": "Internal Server Error",
+            "model": sch.WebAPIError,
+        },
+        status.HTTP_502_BAD_GATEWAY: {
+            "description": "External Service Error",
+            "model": sch.WebAPIError,
+        },
+        status.HTTP_503_SERVICE_UNAVAILABLE: {
+            "description": "External Service Unavailable",
+            "model": sch.WebAPIError,
+        },
+        status.HTTP_504_GATEWAY_TIMEOUT: {
+            "description": "External Service Timeout",
+            "model": sch.WebAPIError,
+        },
+    },
+)
 
-@router.post("/transcribe-audio", generate_unique_id_function=(lambda _: "TranscribeAudio"))
+
+@router.post(
+    "/transcribe-audio", generate_unique_id_function=(lambda _: "TranscribeAudio")
+)
 async def transcribe_audio(
     userSession: useUserSession,
     database: useDatabase,
     backgroundTasks: BackgroundTasks,
-    *, 
+    *,
     recordingId: Annotated[str, Body()],
 ) -> sch.TextResponse:
     try:
@@ -35,73 +53,65 @@ async def transcribe_audio(
         filepath = Path(settings.RECORDINGS_FOLDER, userSession.username, filename)
 
         with ExecutionTimer() as timer, open(filepath, mode="rb") as file:
-            transcription_output = await tasks.transcribe_audio(file, filename, media_type)
+            transcription_output = await tasks.transcribe_audio(
+                file, filename, media_type
+            )
 
         backgroundTasks.add_task(
             log_transcription,
-            database,
-            recordingId,
-            timer.started_at,
-            timer.elapsed_ms,
-            settings.TRANSCRIPTION_SERVICE,
+            database=database,
+            recording_id=recordingId,
+            timer=timer,
+            service=settings.TRANSCRIPTION_SERVICE,
             session=userSession,
         )
-    except (errors.ExternalServiceError, errors.AudioProcessingError) as e:
-        backgroundTasks.add_task(
-            log_transcription,
-            database,
-            recordingId,
-            timer.started_at,
-            timer.elapsed_ms,
-            settings.TRANSCRIPTION_SERVICE,
-            error_id=e.uuid,
-            session=userSession,
+    except Exception as ex:
+        transcription_error = (
+            ex
+            if isinstance(ex, errors.WebAPIException)
+            else errors.WebAPIException(str(ex))
         )
 
-        raise e
-    except Exception as e:
-        transcription_error = errors.WebAPIException(str(e))
-
         backgroundTasks.add_task(
             log_transcription,
-            database,
-            recordingId,
-            timer.started_at,
-            timer.elapsed_ms,
-            settings.TRANSCRIPTION_SERVICE,
-            error_id=transcription_error.uuid,
+            database=database,
+            recording_id=recordingId,
+            timer=timer,
+            service=settings.TRANSCRIPTION_SERVICE,
+            error=transcription_error,
             session=userSession,
         )
 
         raise transcription_error
-        
+
     return sch.TextResponse(text=transcription_output.transcript)
+
 
 @router.post("/generate-draft-note")
 def generate_draft_note(
-    database: useDatabase, 
+    database: useDatabase,
     userSession: useUserSession,
     backgroundTasks: BackgroundTasks,
-    *, 
-    instructions: Annotated[str, Body()], 
+    *,
+    model: Annotated[str, Body()] = settings.DEFAULT_NOTE_GENERATION_MODEL,
+    instructions: Annotated[str, Body()],
     transcript: Annotated[str, Body()],
     outputType: Annotated[sch.NoteOutputType, Body()],
 ) -> sch.GenerationResponse:
     # Get the stream of note segments.
     try:
-        noteId = new_sqid(database)
-        generation_output = tasks.generate_note(settings.NOTE_GENERATION_MODEL, instructions, transcript, outputType)
+        noteId = next_sqid(database)
+
+        generation_output = tasks.generate_note(
+            model, instructions, transcript, outputType
+        )
+
         backgroundTasks.add_task(
             log_generation,
-            database,
-            noteId,
-            "GENERATE NOTE",
-            generation_output.generatedAt,
-            generation_output.timeToGenerate,
-            generation_output.service,
-            generation_output.model,
-            generation_output.completionTokens,
-            generation_output.promptTokens,
+            database=database,
+            record_id=noteId,
+            task_type="GENERATE NOTE",
+            generation_output=generation_output,
             session=userSession,
         )
     except errors.ExternalServiceError as e:

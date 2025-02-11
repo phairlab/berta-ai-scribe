@@ -30,14 +30,11 @@ const generateDraftNote =
     instructions: string,
     transcript: string,
     outputType: NoteOutputType,
+    model?: string,
     cancellation?: AbortSignal,
   ): Promise<NoteGeneratorOutput> =>
     httpAction<NoteGeneratorOutput>("POST", "/api/tasks/generate-draft-note", {
-      data: {
-        instructions: instructions,
-        transcript: transcript,
-        outputType: outputType,
-      },
+      data: { instructions, transcript, outputType, model },
       accessToken: getAccessToken(),
       signal: cancellation,
     });

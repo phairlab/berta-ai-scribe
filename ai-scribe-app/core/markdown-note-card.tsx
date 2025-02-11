@@ -111,6 +111,7 @@ export const MarkdownNoteCard = ({
 
   const outputControls = (
     <div className="flex flex-row items-center gap-2">
+      <div className="text-xs text-zinc-500 me-4">{note.model}</div>
       <MobileCompatibleSelect
         aria-label="Display Format Selector"
         className="w-32"
