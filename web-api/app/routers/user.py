@@ -49,7 +49,7 @@ def set_default_note_type(
         raise errors.BadRequest("User is not registered")
 
     user.default_note = id
-    user.updated = datetime.now(timezone.utc)
+    user.updated = datetime.now(timezone.utc).astimezone()
     database.commit()
 
     # Record the change.

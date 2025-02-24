@@ -82,7 +82,7 @@ def create_encounter(
     if audio.size is None or audio.content_type is None:
         raise errors.BadRequest("Audio file metadata is missing")
 
-    created = datetime.now(timezone.utc)
+    created = datetime.now(timezone.utc).astimezone()
 
     encounter_id = db.next_sqid(database)
     recording_id = db.next_sqid(database)
@@ -195,7 +195,7 @@ def append_recording(
     if audio.size is None or audio.content_type is None:
         raise errors.BadRequest("Audio file metadata is missing")
 
-    modified = datetime.now(timezone.utc)
+    modified = datetime.now(timezone.utc).astimezone()
     reformatted_media_type = "audio/mpeg"
 
     # Get the encounter record.
@@ -359,7 +359,7 @@ def update_encounter(
 
             labelled_encounter = database.get_one(db.Encounter, encounterId)
             labelled_encounter.autolabel = autolabel
-            labelled_encounter.modified = datetime.now(timezone.utc)
+            labelled_encounter.modified = datetime.now(timezone.utc).astimezone()
 
             try:
                 database.commit()
@@ -389,7 +389,7 @@ def update_encounter(
 
         backgroundTasks.add_task(auto_label_transcript)
 
-    encounter.modified = datetime.now(timezone.utc)
+    encounter.modified = datetime.now(timezone.utc).astimezone()
 
     try:
         database.commit()
@@ -448,7 +448,7 @@ def delete_encounter(
         raise errors.NotFound("Record not found")
 
     # Delete the encounter.
-    deleted = datetime.now(timezone.utc)
+    deleted = datetime.now(timezone.utc).astimezone()
     filename = f"{encounter.recording.id}.mp3"
 
     try:
@@ -539,7 +539,7 @@ def create_draft_note(
 
     # Save the note.
     try:
-        saved = datetime.now(timezone.utc)
+        saved = datetime.now(timezone.utc).astimezone()
 
         # Auto-inactivate any previous notes of the same type.
         for note in encounter.draft_notes:
@@ -615,7 +615,7 @@ def delete_draft_note(
 
     # Delete the draft note.
     try:
-        inactivated = datetime.now(timezone.utc)
+        inactivated = datetime.now(timezone.utc).astimezone()
         draft_note.inactivated = inactivated
         draft_note.encounter.modified = inactivated
 
@@ -673,7 +673,7 @@ def set_note_flag(
 
     # Update the draft note.
     try:
-        modified = datetime.now(timezone.utc)
+        modified = datetime.now(timezone.utc).astimezone()
         draft_note.is_flagged = isFlagged
         draft_note.comments = comments
         draft_note.encounter.modified = modified

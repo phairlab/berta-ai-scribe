@@ -1,5 +1,5 @@
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class ExecutionTimer:
@@ -18,7 +18,7 @@ class ExecutionTimer:
     elapsed_ms: int | None = None
 
     def __enter__(self):
-        self.started_at = datetime.now()
+        self.started_at = datetime.now(timezone.utc).astimezone()
         self._start_time = time.time()
         return self
 

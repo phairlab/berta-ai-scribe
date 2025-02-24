@@ -19,7 +19,7 @@ useCredentials = Annotated[HTTPAuthorizationCredentials, Depends(security_scheme
 def create_token(data: dict, expires_delta: timedelta, secret: str) -> str:
     payload = data.copy()
 
-    expires = datetime.now(timezone.utc) + expires_delta
+    expires = datetime.now(timezone.utc).astimezone() + expires_delta
     payload.update({"exp": expires})
 
     encoded_jwt = jwt.encode(payload, secret, algorithm=settings.JWT_ALGORITHM)

@@ -150,7 +150,7 @@ def log_session(
         session_record = db.SessionRecord(
             session_id=session.sessionId,
             username=session.username,
-            started=datetime.now(timezone.utc),
+            started=datetime.now(timezone.utc).astimezone(),
             user_agent=user_agent,
         )
 

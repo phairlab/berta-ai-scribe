@@ -156,7 +156,7 @@ async def webapi_exception_handler(request: Request, exc: WebAPIException):
         headers=exc.headers,
         background=BackgroundTask(
             log_error,
-            occurred=datetime.now(timezone.utc),
+            occurred=datetime.now(timezone.utc).astimezone(),
             name=exc.name,
             message=exc.message,
             stack_trace=stack_trace,
@@ -198,7 +198,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         ),
         background=BackgroundTask(
             log_error,
-            occurred=datetime.now(timezone.utc),
+            occurred=datetime.now(timezone.utc).astimezone(),
             name="Validation Error",
             message=str(exc),
             stack_trace=stack_trace,
@@ -249,7 +249,7 @@ async def fallback_exception_handler(request: Request, exc: Exception):
         headers=error.headers,
         background=BackgroundTask(
             log_error,
-            occurred=datetime.now(timezone.utc),
+            occurred=datetime.now(timezone.utc).astimezone(),
             name="Internal Server Error",
             message=str(exc),
             stack_trace=stack_trace,
@@ -268,7 +268,7 @@ async def fallback_exception_handler(request: Request, exc: Exception):
 async def request_logging_middleware(request: Request, call_next):
     log = WebAPILogger("app.http")
 
-    requested_at = datetime.now(timezone.utc)
+    requested_at = datetime.now(timezone.utc).astimezone()
 
     headers = dict(request.scope["headers"])
     if b"jenkins-authorization" in headers:

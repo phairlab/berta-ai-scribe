@@ -59,7 +59,7 @@ def create_note_definition(
     """
     # Create the new note definition and associate to the current user.
     try:
-        created = datetime.now(timezone.utc)
+        created = datetime.now(timezone.utc).astimezone()
         sqid = db.next_sqid(database)
 
         record = db.NoteDefinition(
@@ -124,7 +124,7 @@ def update_note_definition(
 
     # Create a new version of the note definition and inactivate the previous.
     try:
-        modified = datetime.now(timezone.utc)
+        modified = datetime.now(timezone.utc).astimezone()
         sqid = db.next_sqid(database)
 
         new_version = db.NoteDefinition(
@@ -179,7 +179,7 @@ def delete_note_definition(
     in queries but does not purge the record in case it needs to be recovered.
     """
 
-    inactivated = datetime.now(timezone.utc)
+    inactivated = datetime.now(timezone.utc).astimezone()
 
     # Fetch the note definition and verify it exists.
     try:

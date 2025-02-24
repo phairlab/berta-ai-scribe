@@ -163,10 +163,10 @@ class User(Base):
 
     username: Mapped[str] = mapped_column(VARCHAR(255), primary_key=True)
     registered: Mapped[datetime] = mapped_column(
-        DATETIME_TYPE, default=lambda: datetime.now(timezone.utc)
+        DATETIME_TYPE, default=lambda: datetime.now(timezone.utc).astimezone()
     )
     updated: Mapped[datetime] = mapped_column(
-        DATETIME_TYPE, default=lambda: datetime.now(timezone.utc)
+        DATETIME_TYPE, default=lambda: datetime.now(timezone.utc).astimezone()
     )
     default_note: Mapped[str | None] = sqid_column()
 
@@ -341,7 +341,7 @@ def initialize_dev_datafolder():
 
 
 def update_builtin_notetypes():
-    updated = datetime.now(timezone.utc)
+    updated = datetime.now(timezone.utc).astimezone()
 
     definition_filepaths = [
         Path(f.path)
