@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+import clsx from "clsx";
+
 import { Button } from "@nextui-org/button";
 import {
   Link,
@@ -15,6 +17,8 @@ import {
 import { NoteTypeSelector } from "@/core/note-type-selector";
 import { NoteType } from "@/core/types";
 import { useNoteTypes } from "@/services/state/note-types-context";
+
+const MAX_CONTEXT_LENGTH = 4000;
 
 type AIScribeControlsProps = {
   context: string | null;
@@ -38,16 +42,16 @@ export const AIScribeControls = ({
   const noteTypes = useNoteTypes();
   const { isOpen, onOpen, onClose } = useDisclosure();
 
-  const [details, setDetails] = useState<string | null>(null);
+  const [draftContext, setDraftContext] = useState<string | null>(null);
 
   const handleOpen = () => {
-    setDetails(context);
+    setDraftContext(context);
     onOpen();
   };
 
   const handleClose = () => {
-    onContextChanged(details);
-    setDetails(null);
+    onContextChanged(draftContext);
+    setDraftContext(null);
     onClose();
   };
 
@@ -74,7 +78,7 @@ export const AIScribeControls = ({
             {isRegenerate ? "Regenerate Note" : "Generate Note"}
           </Button>
           <Link className="text-sm cursor-pointer" onPress={handleOpen}>
-            {context ? "Update Details" : "Add Details"}
+            {context ? "Update Context" : "Add Context"}
           </Link>
         </div>
       </div>
@@ -87,28 +91,49 @@ export const AIScribeControls = ({
         onOpenChange={isOpen ? handleClose : handleOpen}
       >
         <ModalContent>
-          <ModalHeader>Other Details</ModalHeader>
+          <ModalHeader>Context</ModalHeader>
           <ModalBody>
+            <p className="text-sm">
+              Any details added below will be used when generating notes for
+              this recording. Existing notes must be regenerated before changes
+              are applied.
+            </p>
             <Textarea
               isRequired
-              label="Instructions"
+              label="Details"
               labelPlacement="outside"
               maxRows={30}
               minRows={10}
               placeholder="Enter any other relevant details here"
-              value={details ?? ""}
+              value={draftContext ?? ""}
               onValueChange={(value) =>
-                value.length > 0 ? setDetails(value) : setDetails(null)
+                value.length > 0
+                  ? setDraftContext(value.substring(0, MAX_CONTEXT_LENGTH))
+                  : setDraftContext(null)
               }
             />
           </ModalBody>
           <ModalFooter>
-            <Button color="default" onPress={() => setDetails(null)}>
-              Clear
-            </Button>
-            <Button color="primary" onPress={handleClose}>
-              Close
-            </Button>
+            <div className="flex flex-row justify-between gap-2 w-full">
+              <div
+                className={clsx(
+                  "justify-self-start self-center text-sm ms-4",
+                  (draftContext?.length ?? 0) < MAX_CONTEXT_LENGTH
+                    ? "text-zinc-500"
+                    : "text-primary-500",
+                )}
+              >
+                {draftContext?.length ?? 0} / {MAX_CONTEXT_LENGTH}
+              </div>
+              <div className="flex flex-row gap-2">
+                <Button color="default" onPress={() => setDraftContext(null)}>
+                  Clear
+                </Button>
+                <Button color="primary" onPress={handleClose}>
+                  Close
+                </Button>
+              </div>
+            </div>
           </ModalFooter>
         </ModalContent>
       </Modal>

@@ -54,13 +54,12 @@ export const FeedbackModal = ({
         </ModalHeader>
         <ModalBody>
           <p className="text-sm mb-3">
-            Submit your feedback below or email the project&apos;s primary
-            contact at:
+            Submit your feedback below or email the project team at:
             <Link
               className="ms-3 text-sm"
-              href="mailto:michael.weldon@albertahealthservices.ca"
+              href="mailto:digitalscribe.team@albertahealthservices.ca"
             >
-              michael.weldon@albertahealthservices.ca
+              digitalscribe.team@albertahealthservices.ca
             </Link>
           </p>
           <Textarea
