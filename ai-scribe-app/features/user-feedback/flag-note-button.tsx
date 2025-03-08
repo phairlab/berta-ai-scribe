@@ -1,6 +1,6 @@
 import clsx from "clsx";
 
-import { Link } from "@nextui-org/link";
+import { Link } from "@heroui/link";
 
 import { FlagIcon } from "@/core/icons";
 import { DraftNote } from "@/core/types";

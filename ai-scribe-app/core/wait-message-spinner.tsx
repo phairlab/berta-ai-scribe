@@ -2,8 +2,8 @@ import { PropsWithChildren } from "react";
 
 import clsx from "clsx";
 
-import { Link } from "@nextui-org/link";
-import { Spinner } from "@nextui-org/spinner";
+import { Link } from "@heroui/link";
+import { Spinner } from "@heroui/spinner";
 
 type WaitMessageSpinnerProps = PropsWithChildren<{
   size?: "xs" | "sm" | "md" | "lg";
@@ -35,7 +35,7 @@ export const WaitMessageSpinner = ({
       <Link
         className={clsx(`text-${size}`, "text-blue-500")}
         href="#"
-        onClick={onCancel}
+        onPress={onCancel}
       >
         (Cancel)
       </Link>

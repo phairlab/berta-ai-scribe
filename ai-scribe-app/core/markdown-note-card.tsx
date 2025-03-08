@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 
-import { Button } from "@nextui-org/button";
-import { SelectItem } from "@nextui-org/select";
+import { Button } from "@heroui/button";
+import { SelectItem } from "@heroui/select";
 
 import { convertMarkdown } from "@/utility/conversion";
 
@@ -111,7 +111,7 @@ export const MarkdownNoteCard = ({
 
   const outputControls = (
     <div className="flex flex-row items-center gap-2">
-      <div className="text-xs text-zinc-500 me-4">{note.model}</div>
+      {/* <div className="text-xs text-zinc-500 me-4">{note.model}</div> */}
       <MobileCompatibleSelect
         aria-label="Display Format Selector"
         className="w-32"
@@ -124,7 +124,7 @@ export const MarkdownNoteCard = ({
       >
         {(item) => <SelectItem key={item.key}>{item.label}</SelectItem>}
       </MobileCompatibleSelect>
-      <Button color="default" size="sm" onClick={copyNote}>
+      <Button color="default" size="sm" onPress={copyNote}>
         Copy
       </Button>
     </div>

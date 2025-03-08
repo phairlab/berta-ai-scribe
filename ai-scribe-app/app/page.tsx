@@ -2,8 +2,8 @@
 
 import clsx from "clsx";
 
-import { Divider } from "@nextui-org/divider";
-import { Progress } from "@nextui-org/progress";
+import { Divider } from "@heroui/divider";
+import { Progress } from "@heroui/progress";
 
 import { useEncounters } from "@/services/state/encounters-context";
 import { useNoteTypes } from "@/services/state/note-types-context";

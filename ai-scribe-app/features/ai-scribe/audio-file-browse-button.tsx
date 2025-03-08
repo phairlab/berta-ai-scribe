@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 
-import { Button } from "@nextui-org/button";
+import { Button } from "@heroui/button";
 
 const ACCEPT_FILE_TYPES = ["mp3", "mp4", "mpeg", "m4a", "webm", "wav", "mpga"];
 
@@ -28,7 +28,7 @@ export const AudioFileBrowseButton = ({
       <Button
         className="w-fit text-sm text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800"
         size="sm"
-        onClick={() => inputFile.current?.click()}
+        onPress={() => inputFile.current?.click()}
       >
         Browse ...
       </Button>

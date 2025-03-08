@@ -1,7 +1,7 @@
 import clsx from "clsx";
 
-import { Divider } from "@nextui-org/divider";
-import { Link } from "@nextui-org/link";
+import { Divider } from "@heroui/divider";
+import { Link } from "@heroui/link";
 
 import { NoteType } from "@/core/types";
 import { WaitMessageSpinner } from "@/core/wait-message-spinner";
@@ -33,7 +33,7 @@ export const CustomNotesListItem = ({
       <WaitMessageSpinner size="sm">Saving</WaitMessageSpinner>
     ) : (
       <div className="flex flex-row gap-2 h-5">
-        <Link className="text-sm" href="#" onClick={onEdit}>
+        <Link className="text-sm" href="#" onPress={onEdit}>
           Edit
         </Link>
         <Divider orientation="vertical" />
@@ -41,7 +41,7 @@ export const CustomNotesListItem = ({
           className="text-sm"
           href="#"
           isDisabled={!canDelete}
-          onClick={onDelete}
+          onPress={onDelete}
         >
           Delete
         </Link>

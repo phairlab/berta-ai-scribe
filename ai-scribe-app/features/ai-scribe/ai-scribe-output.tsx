@@ -1,6 +1,6 @@
 import { Key, useMemo } from "react";
 
-import { Tab, Tabs } from "@nextui-org/tabs";
+import { Tab, Tabs } from "@heroui/tabs";
 
 import { ErrorCard } from "@/core/error-card";
 import { NoteCard } from "@/core/note-card";

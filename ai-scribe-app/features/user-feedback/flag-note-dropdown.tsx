@@ -10,10 +10,10 @@ import {
 
 import clsx from "clsx";
 
-import { Button } from "@nextui-org/button";
-import { Divider } from "@nextui-org/divider";
-import { Textarea } from "@nextui-org/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@nextui-org/popover";
+import { Button } from "@heroui/button";
+import { Divider } from "@heroui/divider";
+import { Textarea } from "@heroui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@heroui/popover";
 
 import { DraftNote } from "@/core/types";
 
@@ -102,14 +102,14 @@ export const FlagNoteDropdown = ({
           </div>
           <Divider className="mt-2 mb-1" />
           <div className="flex flex-row gap-2 justify-end">
-            <Button radius="sm" size="sm" onClick={unsetAndClose}>
+            <Button radius="sm" size="sm" onPress={unsetAndClose}>
               Clear Flag
             </Button>
             <Button
               color="primary"
               radius="sm"
               size="sm"
-              onClick={saveAndClose}
+              onPress={saveAndClose}
             >
               Save
             </Button>

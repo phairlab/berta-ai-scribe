@@ -1,4 +1,4 @@
-import { Button } from "@nextui-org/button";
+import { Button } from "@heroui/button";
 
 import { MicrophoneIcon, PauseIcon } from "@/core/icons";
 
@@ -6,14 +6,14 @@ type RecordButtonProps = {
   isDisabled: boolean;
   isRecording: boolean;
   isRecordingPaused: boolean;
-  onClick?: () => void;
+  onPress?: () => void;
 };
 
 export const RecordButton = ({
   isDisabled,
   isRecording,
   isRecordingPaused,
-  onClick,
+  onPress,
 }: RecordButtonProps) => (
   <Button
     isIconOnly
@@ -21,8 +21,11 @@ export const RecordButton = ({
     isDisabled={isDisabled}
     radius="full"
     size="lg"
+    title={
+      isRecording && !isRecordingPaused ? "Pause Recording" : "Record Audio"
+    }
     variant="shadow"
-    onClick={onClick}
+    onPress={onPress}
   >
     {isRecording && !isRecordingPaused ? (
       <PauseIcon className="dark:fill-white" size={30} />

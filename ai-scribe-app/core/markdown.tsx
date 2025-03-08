@@ -1,6 +1,6 @@
 import ReactMarkdown from "react-markdown";
 
-import { Divider } from "@nextui-org/divider";
+import { Divider } from "@heroui/divider";
 
 export const Markdown = ({ children }: { children: string }) => (
   <ReactMarkdown

@@ -152,7 +152,7 @@ export default [
               position: "after",
             },
             {
-              pattern: "@nextui-org/**",
+              pattern: "@heroui/**",
               group: "external",
               position: "after",
             },

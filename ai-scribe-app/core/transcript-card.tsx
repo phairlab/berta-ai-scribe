@@ -1,4 +1,4 @@
-import { Button } from "@nextui-org/button";
+import { Button } from "@heroui/button";
 
 import { OutputCard } from "./output-card";
 import { Recording } from "./types";
@@ -27,7 +27,7 @@ export const TranscriptCard = ({ recording }: TranscriptCardProps) => {
           color="default"
           isDisabled={isEmptyTranscript}
           size="sm"
-          onClick={copyNote}
+          onPress={copyNote}
         >
           Copy
         </Button>

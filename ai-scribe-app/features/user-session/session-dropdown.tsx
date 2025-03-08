@@ -9,7 +9,7 @@ import {
   DropdownItem,
   DropdownMenu,
   DropdownTrigger,
-} from "@nextui-org/dropdown";
+} from "@heroui/dropdown";
 
 type SessionDropdownProps = PropsWithChildren;
 

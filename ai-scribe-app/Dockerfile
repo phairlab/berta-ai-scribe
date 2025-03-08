@@ -14,7 +14,7 @@ EXPOSE 4000
 ENV NODE_ENV=production
 
 # Disable Next.js telemetry.
-ENV NEXT_TELEMETRY_DISABLED 1
+ENV NEXT_TELEMETRY_DISABLED=1
 
 # Copy the current directory contents into the container.
 COPY . ./

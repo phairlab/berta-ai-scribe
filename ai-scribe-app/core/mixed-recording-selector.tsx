@@ -1,6 +1,6 @@
 import clsx from "clsx";
 
-import { SelectItem, SelectSection } from "@nextui-org/select";
+import { SelectItem, SelectSection } from "@heroui/select";
 
 import { MobileCompatibleSelect } from "@/core/mobile-compatible-select";
 import { Encounter, Recording, SampleRecording } from "@/core/types";

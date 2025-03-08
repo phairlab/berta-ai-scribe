@@ -2,7 +2,7 @@ import { useState } from "react";
 
 import clsx from "clsx";
 
-import { Button } from "@nextui-org/button";
+import { Button } from "@heroui/button";
 import {
   Link,
   Modal,
@@ -12,7 +12,7 @@ import {
   ModalHeader,
   Textarea,
   useDisclosure,
-} from "@nextui-org/react";
+} from "@heroui/react";
 
 import { NoteTypeSelector } from "@/core/note-type-selector";
 import { NoteType } from "@/core/types";

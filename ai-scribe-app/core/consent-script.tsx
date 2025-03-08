@@ -9,10 +9,9 @@ type ConsentScriptProps = DetailedHTMLProps<
 
 export const ConsentScript = ({ ...props }: ConsentScriptProps) => (
   <TitledParagraph title="Consent Script" {...props}>
-    &quot;I have a new AI tool that listens to our conversation and helps me
-    write my notes. I review everything before the notes are placed into your
-    chart. Your information may be used for quality improvement. Saying no to
-    using the AI tool to record our conversation will have no impact on your
-    care. Are you okay with me turning it on?&quot;
+    &quot;I have a new AHS tool that records our conversation and uses AI to
+    help me write my notes. I review everything before it&apos;s added to your
+    chart. Saying no won&apos;t affect your care. Are you okay with me turning
+    it on?&quot;
   </TitledParagraph>
 );

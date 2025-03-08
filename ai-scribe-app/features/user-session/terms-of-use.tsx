@@ -2,8 +2,8 @@
 
 import { useEffect } from "react";
 
-import { Button } from "@nextui-org/button";
-import { Divider } from "@nextui-org/divider";
+import { Button } from "@heroui/button";
+import { Divider } from "@heroui/divider";
 import {
   Modal,
   ModalBody,
@@ -11,8 +11,8 @@ import {
   ModalFooter,
   ModalHeader,
   useDisclosure,
-} from "@nextui-org/modal";
-import { ScrollShadow } from "@nextui-org/scroll-shadow";
+} from "@heroui/modal";
+import { ScrollShadow } from "@heroui/scroll-shadow";
 
 import { sessionKeys } from "@/config/keys";
 import { ConsentScript } from "@/core/consent-script";

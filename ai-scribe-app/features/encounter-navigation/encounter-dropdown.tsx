@@ -4,10 +4,10 @@ import { KeyboardEventHandler, PropsWithChildren, useState } from "react";
 
 import clsx from "clsx";
 
-import { Button } from "@nextui-org/button";
-import { Divider } from "@nextui-org/divider";
-import { Textarea } from "@nextui-org/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@nextui-org/popover";
+import { Button } from "@heroui/button";
+import { Divider } from "@heroui/divider";
+import { Textarea } from "@heroui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@heroui/popover";
 
 import { DeleteDocumentIcon } from "@/core/icons";
 import { Encounter } from "@/core/types";
@@ -90,7 +90,7 @@ export const EncounterDropdown = ({
                 <DeleteDocumentIcon className="mt-px text-xl pointer-events-none flex-shrink-0" />
               }
               variant="faded"
-              onClick={handleDeleteConfirmed}
+              onPress={handleDeleteConfirmed}
             >
               <div className="flex flex-col text-start">
                 <div className="text-sm">CONFIRM DELETE</div>
@@ -111,7 +111,7 @@ export const EncounterDropdown = ({
                 <DeleteDocumentIcon className="mt-px text-xl pointer-events-none flex-shrink-0" />
               }
               variant="light"
-              onClick={confirmDelete}
+              onPress={confirmDelete}
             >
               <div className="flex flex-col text-start">
                 <div className="text-sm">Delete Recording</div>

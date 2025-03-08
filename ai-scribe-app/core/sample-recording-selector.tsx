@@ -1,4 +1,4 @@
-import { SelectItem } from "@nextui-org/select";
+import { SelectItem } from "@heroui/select";
 
 import { MobileCompatibleSelect } from "@/core/mobile-compatible-select";
 import { useSampleRecordings } from "@/services/state/sample-recordings-context";

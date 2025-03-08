@@ -1,4 +1,4 @@
-import { Progress } from "@nextui-org/progress";
+import { Progress } from "@heroui/progress";
 
 import {
   Encounter,

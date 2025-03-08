@@ -1,4 +1,4 @@
-import { Button } from "@nextui-org/button";
+import { Button } from "@heroui/button";
 
 import { NoteCardControls } from "./note-card-controls";
 import { OutputCard } from "./output-card";
@@ -24,7 +24,7 @@ export const PlainTextNoteCard = ({
   };
 
   const outputControls = (
-    <Button color="default" size="sm" onClick={copyNote}>
+    <Button color="default" size="sm" onPress={copyNote}>
       Copy
     </Button>
   );

@@ -7,9 +7,9 @@ import clsx from "clsx";
 import NextLink from "next/link";
 import { useRouter } from "next/navigation";
 
-import { Divider } from "@nextui-org/divider";
-import { Link } from "@nextui-org/link";
-import { useDisclosure } from "@nextui-org/modal";
+import { Divider } from "@heroui/divider";
+import { Link } from "@heroui/link";
+import { useDisclosure } from "@heroui/modal";
 import {
   Navbar as NextUINavbar,
   NavbarContent,
@@ -18,8 +18,8 @@ import {
   NavbarBrand,
   NavbarItem,
   NavbarMenuItem,
-} from "@nextui-org/navbar";
-import { link as linkStyles } from "@nextui-org/theme";
+} from "@heroui/navbar";
+import { link as linkStyles } from "@heroui/theme";
 
 import { siteConfig } from "@/config/site";
 
@@ -117,7 +117,7 @@ export const Navbar = () => {
               className="text-zinc-600 dark:text-zinc-400"
               color="foreground"
               href="/settings"
-              onClick={() => setIsMenuOpen(false)}
+              onPress={() => setIsMenuOpen(false)}
             >
               <div className="flex flex-row gap-2">
                 <SettingsIcon className="mt-[4px]" size={18} />
@@ -130,7 +130,7 @@ export const Navbar = () => {
               className="text-zinc-600 dark:text-zinc-400 ms-[24px]"
               color="foreground"
               href="#"
-              onClick={feedbackModal.onOpen}
+              onPress={feedbackModal.onOpen}
             >
               <div className="flex flex-row gap-2">Feedback</div>
             </Link>

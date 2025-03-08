@@ -1,4 +1,4 @@
-import { SelectItem, SelectSection } from "@nextui-org/react";
+import { SelectItem, SelectSection } from "@heroui/react";
 
 import { useCurrentUser } from "@/services/state/user-info-context";
 import { alphabetically } from "@/utility/sorting";

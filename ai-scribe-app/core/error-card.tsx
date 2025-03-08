@@ -1,4 +1,4 @@
-import { Button } from "@nextui-org/button";
+import { Button } from "@heroui/button";
 
 import { ApplicationError } from "@/utility/errors";
 
@@ -37,12 +37,12 @@ export const ErrorCard = ({
       <div className="text-lg font-semibold">{title}</div>
       <div className="flex flex-row items-center gap-2">
         {retryAction && (
-          <Button color="default" size="sm" onClick={retryAction}>
+          <Button color="default" size="sm" onPress={retryAction}>
             Retry
           </Button>
         )}
         {canDismiss && (
-          <Button color="default" size="sm" onClick={onDismiss}>
+          <Button color="default" size="sm" onPress={onDismiss}>
             Dismiss
           </Button>
         )}

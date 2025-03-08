@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import clsx from "clsx";
 
-import { Button } from "@nextui-org/button";
+import { Button } from "@heroui/button";
 
 import { SampleRecordingSelector } from "@/core/sample-recording-selector";
 import { AudioSource, Encounter } from "@/core/types";
@@ -156,14 +156,14 @@ export const AIScribeAudio = ({
           <PlayPauseButton
             action={isPlaying ? "pause" : "play"}
             isDisabled={isPlayerLoading || isSaving || isSaveFailed}
-            onClick={playerControls.current?.playPause}
+            onPress={playerControls.current?.playPause}
           />
         ) : (
           <RecordButton
             isDisabled={false}
             isRecording={isRecording}
             isRecordingPaused={isRecordingPaused}
-            onClick={toggleRecording}
+            onPress={toggleRecording}
           />
         )}
         <div className="w-full flex flex-col gap-2">
@@ -264,7 +264,7 @@ export const AIScribeAudio = ({
                 <Button
                   size="sm"
                   variant="ghost"
-                  onClick={() => setConfirmAbandon(false)}
+                  onPress={() => setConfirmAbandon(false)}
                 >
                   No, Keep Recording
                 </Button>
@@ -272,20 +272,20 @@ export const AIScribeAudio = ({
                   className="text-red-600 dark:text-rose-500"
                   size="sm"
                   variant="ghost"
-                  onClick={abandonRecording}
+                  onPress={abandonRecording}
                 >
                   Discard Recording
                 </Button>
               </div>
             ) : (
               <div className="flex flex-row lg:flex-col gap-2 lg:gap-1 lg:h-[70px] justify-end items-center lg:items-stretch">
-                <Button size="sm" variant="ghost" onClick={endRecording}>
+                <Button size="sm" variant="ghost" onPress={endRecording}>
                   Save
                 </Button>
                 <Button
                   size="sm"
                   variant="flat"
-                  onClick={() => setConfirmAbandon(true)}
+                  onPress={() => setConfirmAbandon(true)}
                 >
                   Cancel
                 </Button>
@@ -293,12 +293,12 @@ export const AIScribeAudio = ({
             )
           ) : (
             <div className="flex flex-row gap-2 justify-center items-center">
-              <Button className="sm:hidden" size="sm" onClick={reset}>
+              <Button className="sm:hidden" size="sm" onPress={reset}>
                 New Recording
               </Button>
               <AppendRecordingButton
                 isDisabled={isPlayerLoading || isSaving || isSaveFailed}
-                onClick={toggleRecording}
+                onPress={toggleRecording}
               />
             </div>
           )}

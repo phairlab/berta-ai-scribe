@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { Select, SelectProps } from "@nextui-org/select";
+import { Select, SelectProps } from "@heroui/select";
 
 type MobileCompatibleSelectProps<T extends object> = Omit<
   SelectProps<T>,

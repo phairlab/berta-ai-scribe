@@ -10,7 +10,7 @@ import Wavesurfer, { WaveSurferOptions } from "wavesurfer.js/dist/wavesurfer";
 
 import { useTheme } from "next-themes";
 
-import { Progress } from "@nextui-org/progress";
+import { Progress } from "@heroui/progress";
 
 import { AudioSource } from "@/core/types";
 import { tailwindColors } from "@/utility/constants";

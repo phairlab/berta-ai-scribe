@@ -1,23 +1,24 @@
-import { Button } from "@nextui-org/button";
+import { Button } from "@heroui/button";
 
 import { PauseIcon, PlayIcon } from "@/core/icons";
 
 type PlayPauseButtonProps = {
   isDisabled: boolean;
   action: "play" | "pause";
-  onClick?: () => void;
+  onPress?: () => void;
 };
 
 export const PlayPauseButton = ({
   isDisabled,
   action,
-  onClick,
+  onPress,
 }: PlayPauseButtonProps) => (
   <Button
     isIconOnly
     className="h-[40px] w-[64px] mt-[12px] mb-auto"
     isDisabled={isDisabled}
-    onClick={onClick}
+    title={action === "pause" ? "Pause Playback" : "Play Audio"}
+    onPress={onPress}
   >
     {action === "pause" ? (
       <PauseIcon className="dark:fill-white" />

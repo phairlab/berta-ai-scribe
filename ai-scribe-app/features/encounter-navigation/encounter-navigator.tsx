@@ -2,7 +2,7 @@
 
 import clsx from "clsx";
 
-import { Listbox, ListboxItem } from "@nextui-org/listbox";
+import { Listbox, ListboxItem } from "@heroui/listbox";
 
 import { Encounter } from "@/core/types";
 import { WaitMessageSpinner } from "@/core/wait-message-spinner";

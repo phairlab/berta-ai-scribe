@@ -8,7 +8,7 @@ import {
   ThemeProviderProps,
 } from "next-themes";
 
-import { NextUIProvider } from "@nextui-org/system";
+import { HeroUIProvider } from "@heroui/system";
 
 import { AuthenticationProvider } from "@/services/identity/authentication-provider";
 import { AppContextProviders } from "@/services/state/app-context-providers";
@@ -23,7 +23,7 @@ export function Providers({ children, themeProps }: ProvidersProps) {
   const router = useRouter();
 
   return (
-    <NextUIProvider navigate={router.push}>
+    <HeroUIProvider navigate={router.push}>
       <NextThemesProvider {...themeProps}>
         <JotaiProvider>
           <AuthenticationProvider>
@@ -31,6 +31,6 @@ export function Providers({ children, themeProps }: ProvidersProps) {
           </AuthenticationProvider>
         </JotaiProvider>
       </NextThemesProvider>
-    </NextUIProvider>
+    </HeroUIProvider>
   );
 }

@@ -2,8 +2,8 @@
 
 import clsx from "clsx";
 
-import { Listbox, ListboxItem, ListboxSection } from "@nextui-org/listbox";
-import { ScrollShadow } from "@nextui-org/scroll-shadow";
+import { Listbox, ListboxItem, ListboxSection } from "@heroui/listbox";
+import { ScrollShadow } from "@heroui/scroll-shadow";
 
 import { Encounter } from "@/core/types";
 import { WaitMessageSpinner } from "@/core/wait-message-spinner";

@@ -1,15 +1,15 @@
 import { useState } from "react";
 
-import { Button } from "@nextui-org/button";
-import { Textarea } from "@nextui-org/input";
-import { Link } from "@nextui-org/link";
+import { Button } from "@heroui/button";
+import { Textarea } from "@heroui/input";
+import { Link } from "@heroui/link";
 import {
   Modal,
   ModalBody,
   ModalContent,
   ModalFooter,
   ModalHeader,
-} from "@nextui-org/modal";
+} from "@heroui/modal";
 
 import { useWebApi } from "@/services/web-api/use-web-api";
 

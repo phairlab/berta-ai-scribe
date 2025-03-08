@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
-import { Button } from "@nextui-org/button";
-import { Input, Textarea } from "@nextui-org/input";
+import { Button } from "@heroui/button";
+import { Input, Textarea } from "@heroui/input";
 
 import { ErrorCard } from "@/core/error-card";
 import { LanguageModelSelector } from "@/core/language-model-selector";

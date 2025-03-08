@@ -1,8 +1,8 @@
 import { PropsWithChildren, ReactNode } from "react";
 
-import { Card, CardBody, CardHeader } from "@nextui-org/card";
-import { Divider } from "@nextui-org/divider";
-import { ScrollShadow } from "@nextui-org/scroll-shadow";
+import { Card, CardBody, CardHeader } from "@heroui/card";
+import { Divider } from "@heroui/divider";
+import { ScrollShadow } from "@heroui/scroll-shadow";
 
 type OutputCardProps = PropsWithChildren<{
   controls?: ReactNode;

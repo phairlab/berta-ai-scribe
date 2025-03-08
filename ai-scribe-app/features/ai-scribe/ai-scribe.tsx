@@ -4,8 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 
 import shortUUID from "short-uuid";
 
-import { Button } from "@nextui-org/button";
-import { Divider } from "@nextui-org/divider";
+import { Button } from "@heroui/button";
+import { Divider } from "@heroui/divider";
 
 import { ConsentScript } from "@/core/consent-script";
 import { DraftNote, Encounter, NoteType, ScribeError } from "@/core/types";
@@ -426,7 +426,7 @@ export const AIScribe = () => {
             </p>
             <Button
               color="primary"
-              onClick={() => transcribeRecording(encounter.id)}
+              onPress={() => transcribeRecording(encounter.id)}
             >
               Transcribe Now
             </Button>

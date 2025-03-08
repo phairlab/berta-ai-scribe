@@ -43,3 +43,7 @@ export function middleware(request: NextRequest) {
   // In production, forward the request as normal.
   return NextResponse.next();
 }
+
+export const config = {
+  matcher: ["/api/:path*", "/openai.json"],
+};

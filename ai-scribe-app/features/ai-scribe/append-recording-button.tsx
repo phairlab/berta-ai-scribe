@@ -1,15 +1,15 @@
-import { Button } from "@nextui-org/button";
+import { Button } from "@heroui/button";
 
 import { MicrophonePlusIcon } from "@/core/icons";
 
 type AppendRecordingButtonProps = {
   isDisabled?: boolean;
-  onClick?: () => void;
+  onPress?: () => void;
 };
 
 export const AppendRecordingButton = ({
   isDisabled = false,
-  onClick,
+  onPress,
 }: AppendRecordingButtonProps) => (
   <>
     <Button
@@ -19,7 +19,7 @@ export const AppendRecordingButton = ({
       startContent={
         <MicrophonePlusIcon className="dark:fill-white" size={16} />
       }
-      onClick={onClick}
+      onPress={onPress}
     >
       Append
     </Button>
@@ -28,8 +28,9 @@ export const AppendRecordingButton = ({
       className="hidden lg:flex h-[48px] w-[48px] -ms-[8px] mt-[10px] mb-auto"
       isDisabled={isDisabled}
       radius="full"
+      title="Append Audio"
       variant="shadow"
-      onClick={onClick}
+      onPress={onPress}
     >
       <MicrophonePlusIcon className="dark:fill-white mt-px" size={24} />
     </Button>
