@@ -73,6 +73,7 @@ class ConvertToSchema:
         return sch.NoteDefinition(
             id=db_record.id,
             modified=db_record.created,
+            category=db_record.category,
             title=db_record.title,
             instructions=db_record.instructions,
             model=db_record.model,
@@ -105,6 +106,11 @@ class ConvertToSchema:
             username=db_record.username,
             updated=db_record.updated,
             defaultNoteType=db_record.default_note,
+            enabledNoteTypes=(
+                json.loads(db_record.enabled_notes)
+                if db_record.enabled_notes is not None
+                else None
+            ),
             availableLlms=sch.LlmManifest(
                 recommended=settings.DEFAULT_NOTE_GENERATION_MODEL,
                 models=[m for s in generative_ai_services for m in s.models],

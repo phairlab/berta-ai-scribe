@@ -169,6 +169,7 @@ class User(Base):
         DATETIME_TYPE, default=lambda: datetime.now(timezone.utc).astimezone()
     )
     default_note: Mapped[str | None] = sqid_column()
+    enabled_notes: Mapped[str | None]
 
     encounters: Mapped[list["Encounter"]] = relationship(back_populates="user")
     note_definitions: Mapped[list["NoteDefinition"]] = relationship(
@@ -194,6 +195,7 @@ class NoteDefinition(Base):
     version: Mapped[str] = sqid_column(primary_key=True)
     username: Mapped[str] = mapped_column(ForeignKey("users.username"))
     created: Mapped[datetime] = mapped_column(DATETIME_TYPE)
+    category: Mapped[str] = mapped_column(VARCHAR(50))
     title: Mapped[str] = mapped_column(VARCHAR(100))
     instructions: Mapped[str]
     model: Mapped[str] = mapped_column(VARCHAR(50))
@@ -342,14 +344,20 @@ def initialize_dev_datafolder():
 
 def update_builtin_notetypes():
     updated = datetime.now(timezone.utc).astimezone()
-
-    definition_filepaths = [
-        Path(f.path)
+    categories = [
+        (f.name, f.path)
         for f in os.scandir(settings.BUILTIN_NOTETYPES_FOLDER)
+        if f.is_dir()
+    ]
+
+    filepaths = [
+        (category, Path(f.path))
+        for (category, folder) in categories
+        for f in os.scandir(folder)
         if f.is_file() and Path(f.name).suffix == ".txt"
     ]
 
-    configured_notetypes = {path.stem for path in definition_filepaths}
+    note_titles = {path.stem for (_, path) in filepaths}
 
     with next(get_database_session()) as database:
         # Get the current built-in note types.
@@ -366,14 +374,17 @@ def update_builtin_notetypes():
             nt.title: nt for nt in database.execute(get_builtin_notetypes).scalars()
         }
 
-        for path in definition_filepaths:
+        for category, path in filepaths:
             title = path.stem
 
             with open(path, "r", encoding="utf8") as f:
                 instructions = f.read().strip()
 
             if title in saved_notetypes:
-                if saved_notetypes[title].instructions != instructions:
+                if (
+                    saved_notetypes[title].instructions != instructions
+                    or saved_notetypes[title].category != category
+                ):
                     current_version = saved_notetypes[title]
                     sqid = next_sqid(database)
 
@@ -382,6 +393,7 @@ def update_builtin_notetypes():
                         version=sqid,
                         username=current_version.username,
                         created=updated,
+                        category=category,
                         title=current_version.title,
                         instructions=instructions,
                         model=settings.DEFAULT_NOTE_GENERATION_MODEL,
@@ -398,6 +410,7 @@ def update_builtin_notetypes():
                     version=sqid,
                     username=settings.SYSTEM_USER,
                     created=updated,
+                    category=category,
                     title=title,
                     instructions=instructions,
                     model=settings.DEFAULT_NOTE_GENERATION_MODEL,
@@ -407,7 +420,7 @@ def update_builtin_notetypes():
                 database.add(new_record)
 
             for nt in saved_notetypes.values():
-                if nt.title not in configured_notetypes:
+                if nt.title not in note_titles:
                     nt.inactivated = updated
 
             database.commit()

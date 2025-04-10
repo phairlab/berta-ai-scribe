@@ -67,6 +67,7 @@ def create_note_definition(
             version=sqid,
             username=userSession.username,
             created=created,
+            category="Custom",
             title=title,
             instructions=instructions,
             model=model,
@@ -132,6 +133,7 @@ def update_note_definition(
             version=sqid,
             username=current_record.username,
             created=modified,
+            category="Custom",
             title=title if title is not None else current_record.title,
             instructions=(
                 instructions

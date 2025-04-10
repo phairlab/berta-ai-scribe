@@ -28,6 +28,7 @@ import { FeedbackModal } from "@/features/user-feedback/feedback-modal";
 import { CurrentUser } from "@/features/user-session/current-user";
 
 import { Logo, SettingsIcon } from "./icons";
+import { LinkButton } from "./link-button";
 import { ThemeSwitch } from "./theme-switch";
 
 export const Navbar = () => {
@@ -73,14 +74,12 @@ export const Navbar = () => {
           ))}
         </ul>
         <NavbarItem className="hidden sm:flex justify-center items-center">
-          <Link
-            color="foreground"
-            href="#"
-            size="sm"
+          <LinkButton
+            className="text-foreground text-sm"
             onPress={feedbackModal.onOpen}
           >
             Feedback
-          </Link>
+          </LinkButton>
         </NavbarItem>
       </NavbarContent>
 
@@ -126,14 +125,12 @@ export const Navbar = () => {
             </Link>
           </NavbarMenuItem>
           <NavbarMenuItem>
-            <Link
+            <LinkButton
               className="text-zinc-600 dark:text-zinc-400 ms-[24px]"
-              color="foreground"
-              href="#"
               onPress={feedbackModal.onOpen}
             >
               <div className="flex flex-row gap-2">Feedback</div>
-            </Link>
+            </LinkButton>
           </NavbarMenuItem>
           <Divider className="mt-3" />
           <NavbarMenuItem>

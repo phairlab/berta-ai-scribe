@@ -19,7 +19,7 @@ import { convertWebApiRecord } from "@/utility/conversion";
 import { InvalidOperationError } from "@/utility/errors";
 
 const FALLBACK_RECOMMENDED_MODEL: LanguageModel = {
-  name: "gpt-49",
+  name: "gpt-4o",
   size: "Large",
 };
 
@@ -117,11 +117,29 @@ function useCurrentUser() {
     webApi.user.setDefaultNoteType(id);
   }
 
+  /**
+   * Updates the user's currently enabled note types and persists the change.
+   *
+   * Persistence Strategy: Optimistic.
+   */
+  function setEnabledNoteTypes(noteTypes: string[]) {
+    const modified = new Date().toISOString();
+
+    setUserInfo((userInfo) => ({
+      ...userInfo,
+      settings: { ...userInfo.settings, enabledNoteTypes: noteTypes },
+      modified,
+    }));
+
+    webApi.user.setEnabledNoteTypes(noteTypes);
+  }
+
   return {
     initState,
     username: userInfo.username,
     settings: userInfo.settings,
     setDefaultNoteType,
+    setEnabledNoteTypes,
   };
 }
 

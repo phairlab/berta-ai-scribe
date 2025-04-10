@@ -32,9 +32,19 @@ export const NoteTypeSelector = ({
   isLoading,
   onChange,
 }: NoteTypeSelectorProps) => {
-  const hasCustomNotes = customTypes.length > 0;
+  const commonTypes = builtinTypes.filter((nt) => nt.category === "Common");
+  const otherTypes = builtinTypes.filter((nt) => nt.category === "Other");
+  const sectionTypes = builtinTypes.filter(
+    (nt) => nt.category === "Individual Sections",
+  );
 
-  const persistedNoteTypes = (noteTypes: NoteType[]) =>
+  const isMultiSection =
+    customTypes.length > 0 || otherTypes.length > 0 || sectionTypes.length > 0;
+
+  const noteTypesByCategory = (category: string) =>
+    builtinTypes.filter((nt) => nt.category === category);
+
+  const onlySaved = (noteTypes: NoteType[]) =>
     noteTypes.filter((nt) => !nt.isNew);
 
   const handleChange = (key: string) => {
@@ -61,15 +71,31 @@ export const NoteTypeSelector = ({
       onChange={(e) => handleChange(e.target.value)}
     >
       <SelectSection
-        className={clsx({ hidden: !hasCustomNotes })}
+        className={clsx({ hidden: customTypes.length === 0 })}
         title="Custom Note Types"
       >
-        {persistedNoteTypes(customTypes).map((noteType) => (
+        {onlySaved(customTypes).map((noteType) => (
           <SelectItem key={noteType.id}>{noteType.title}</SelectItem>
         ))}
       </SelectSection>
-      <SelectSection title={hasCustomNotes ? "Built-in Note Types" : undefined}>
-        {persistedNoteTypes(builtinTypes).map((noteType) => (
+      <SelectSection title={isMultiSection ? "Common Note Types" : undefined}>
+        {onlySaved(commonTypes).map((noteType) => (
+          <SelectItem key={noteType.id}>{noteType.title}</SelectItem>
+        ))}
+      </SelectSection>
+      <SelectSection
+        className={clsx({ hidden: otherTypes.length === 0 })}
+        title="Other Note Types"
+      >
+        {onlySaved(noteTypesByCategory("Other")).map((noteType) => (
+          <SelectItem key={noteType.id}>{noteType.title}</SelectItem>
+        ))}
+      </SelectSection>
+      <SelectSection
+        className={clsx({ hidden: sectionTypes.length === 0 })}
+        title="Individual Sections"
+      >
+        {onlySaved(sectionTypes).map((noteType) => (
           <SelectItem key={noteType.id}>{noteType.title}</SelectItem>
         ))}
       </SelectSection>

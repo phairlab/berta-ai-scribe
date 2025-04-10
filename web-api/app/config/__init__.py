@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     DEV_DATABASE_FILE: str = f"{DATA_FOLDER}/database.db"
 
     PROMPTS_FOLDER: str = ".prompts"
-    BUILTIN_NOTETYPES_FOLDER: str = f"{PROMPTS_FOLDER}/note-types"
+    BUILTIN_NOTETYPES_FOLDER: str = f"{PROMPTS_FOLDER}/builtin-note-types"
 
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_SECRET: str

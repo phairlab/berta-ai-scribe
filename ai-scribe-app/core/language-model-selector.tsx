@@ -1,3 +1,5 @@
+import clsx from "clsx";
+
 import { SelectItem, SelectSection } from "@heroui/react";
 
 import { useCurrentUser } from "@/services/state/user-info-context";
@@ -53,7 +55,11 @@ export const LanguageModelSelector = ({
       onSelectionChange={(keys) => onChange(keys.currentKey ?? "")}
     >
       {modelGroups.map((group) => (
-        <SelectSection key={group.name} title={group.name}>
+        <SelectSection
+          key={group.name}
+          className={clsx({ hidden: group.models.length === 0 })}
+          title={group.name}
+        >
           {group.models.map((model) => (
             <SelectItem key={model.name} textValue={model.name}>
               {model.name}

@@ -20,6 +20,15 @@ const setDefaultNoteType =
       signal: cancellation,
     });
 
+const setEnabledNoteTypes =
+  (getAccessToken: () => WebApiToken) =>
+  (noteTypes: string[], cancellation?: AbortSignal): Promise<void> =>
+    httpAction<void>("PUT", "api/user/enabled-note-types", {
+      data: noteTypes,
+      accessToken: getAccessToken(),
+      signal: cancellation,
+    });
+
 const submitFeedback =
   (getAccessToken: () => WebApiToken) =>
   (
@@ -39,5 +48,6 @@ const submitFeedback =
 export const routes = {
   getInfo,
   setDefaultNoteType,
+  setEnabledNoteTypes,
   submitFeedback,
 } satisfies ApiRouterDefinition;

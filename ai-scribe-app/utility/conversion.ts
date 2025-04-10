@@ -41,6 +41,7 @@ function toUserInfo(record: WebApiTypes.UserInfo): UiTypes.UserInfo {
     modified: record.updated,
     settings: {
       defaultNoteType: record.defaultNoteType,
+      enabledNoteTypes: record.enabledNoteTypes,
       availableLlms: record.availableLlms,
     },
   };

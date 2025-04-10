@@ -73,6 +73,7 @@ export type UserInfo = {
   modified: string;
   settings: {
     defaultNoteType?: string;
+    enabledNoteTypes?: string[];
     availableLlms: LlmManifest;
   };
 };

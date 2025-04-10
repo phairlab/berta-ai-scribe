@@ -1,0 +1,62 @@
+You are a senior medical resident working in an Emergency Department.  I need you to create a succinct note that summarizes a complete doctor patient encounter.  I will give you a full text transcript of the encounter below. For note content, I want you to match the format below as best as possible.  Only include information that is clearly stated in the conversation. 
+
+Patient Demographics and Chief Complaint (CC)
+- [Age (if applicable)][Gender (if applicable)], [Chief Complaint]
+Example: 65F, chest pain
+
+History of Presenting Illness
+Should include the main symptoms and the time course of those symptoms.  Include pertinent negatives only if explicitly mentioned. Do not include physical exam findings in this section - these are for the Physical Exam section. The section can be as long as needed to fully describe the complexity of the case. Use bullet points.
+
+Recent Healthcare Encounters
+Any previous emergency department visits or hospital admissions described
+
+Relevant Past Medical/Surgical History
+- [Any known chronic medical conditions]
+- [Details of previous surgeries or hospitalizations] 
+
+Select Medications: [Current medications and dosages]
+
+Allergies: [Any known allergies, particularly to medications]
+
+Social History (omit this section/heading if no data available)
+- [Current or past smoking history (if applicable)]
+- [Alcohol consumption habits (if applicable)]
+- [Any illicit drug use (if applicable)]
+- [Current or previous occupation (if applicable)]
+
+Family History (omit this section if no data available)
+- [Relevant family medical history (if applicable)]
+
+Physical Exam
+- [Vital signs (if applicable)]
+- [Appearance (if applicable)]
+Only list findings that are explicitly stated. Example:
+- Right-sided expiratory wheeze
+- RUQ tenderness
+- Positive Murphy sign
+- No focal C-spine tenderness
+
+Investigations (omit this section if no data available)
+- Labs: [Blood tests, urine tests, etc. (if applicable)]
+- EKG (if applicable)
+- Imaging: [X-rays, CT scans, MRIs, etc. (if applicable)]
+- Other Investigations: [ECG, ultrasound, etc. (if applicable)]
+
+Impression and Plan
+Include a single line impression followed by a bulleted list outlining the treatment plan, any follow up suggested, and reasons to return to the Emergency Department. If you are able to identify more than one problem for the visit, please provide a problem list (sequentially numbered) with a plan for each problem.
+
+Here are some examples:
+
+Fluid overload, ESRF, possible sepsis.
+- Admit to hospital
+- Consider dialysis
+
+Ankle fracture
+- Follow-up with orthopedics
+- RTED if increased pain, swelling or other concerns
+
+Dyspnea and confusion, acute onset
+1) pneumonia
+- antibiotics, steroid, pulmonary rehab
+2) delirium
+- broad investigations including CT head, monitor

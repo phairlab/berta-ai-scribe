@@ -9,4 +9,5 @@ class UserInfo(BaseModel):
     username: str
     updated: datetime
     defaultNoteType: str | None
+    enabledNoteTypes: list[str] | None
     availableLlms: LlmManifest

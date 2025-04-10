@@ -98,14 +98,25 @@ function useNoteTypes() {
         ? "Failed"
         : "Initializing";
 
-  const builtin = noteTypes.filter((nt) => nt.isBuiltin);
+  const allBuiltin = noteTypes.filter((nt) => nt.isBuiltin);
+  const enabledBuiltin = allBuiltin.filter(
+    (nt) =>
+      nt.category === "Common" ||
+      (userInfo.settings.enabledNoteTypes ?? []).some((x) => nt.id === x),
+  );
   const custom = noteTypes.filter((nt) => !nt.isBuiltin);
+  const enabledCommon = enabledBuiltin.filter((nt) => nt.category === "Common");
 
   const userDefault = noteTypes.find(
     (nt) => nt.id === userInfo.settings.defaultNoteType,
   );
   const systemDefault = noteTypes.find((nt) => nt.isSystemDefault);
-  const fallbackDefault = noteTypes.length > 0 ? noteTypes[0] : undefined;
+  const fallbackDefault =
+    enabledCommon.length > 0
+      ? enabledCommon[0]
+      : noteTypes.length > 0
+        ? noteTypes[0]
+        : undefined;
 
   /** Gets a note type if it exists. */
   function get(id: string) {
@@ -197,7 +208,8 @@ function useNoteTypes() {
 
   return {
     initState: derivedInitState,
-    builtin,
+    allBuiltin,
+    builtin: enabledBuiltin,
     custom,
     default: userDefault ?? systemDefault ?? fallbackDefault,
     save,

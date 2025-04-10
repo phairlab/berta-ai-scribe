@@ -8,6 +8,7 @@ from .note_output_types import NoteOutputType
 class NoteDefinition(BaseModel):
     id: str
     modified: datetime
+    category: str
     title: str
     instructions: str
     model: str

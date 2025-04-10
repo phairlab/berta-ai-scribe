@@ -26,10 +26,11 @@ class CortexGenerativeAIService(GenerativeAIService):
             LanguageModel(name="llama3.1-405b", size="Large"),
             LanguageModel(name="mistral-large2", size="Large"),
             LanguageModel(name="llama3.1-70b", size="Medium"),
-            LanguageModel(name="llama3.1-8b", size="Small"),
-            LanguageModel(name="llama3.2-3b", size="Small"),
-            LanguageModel(name="llama3.2-1b", size="Small"),
-            LanguageModel(name="mistral-7b", size="Small"),
+            LanguageModel(name="snowflake-llama-3.3-70b", size="Medium"),
+            # LanguageModel(name="llama3.1-8b", size="Small"),
+            # LanguageModel(name="llama3.2-3b", size="Small"),
+            # LanguageModel(name="llama3.2-1b", size="Small"),
+            # LanguageModel(name="mistral-7b", size="Small"),
         ]
 
     def _count_tokens(

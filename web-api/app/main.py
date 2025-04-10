@@ -56,8 +56,7 @@ configure_logging()
 async def lifespan(_: FastAPI):
     if settings.ENVIRONMENT == "development" and not db.is_datafolder_initialized():
         db.initialize_dev_datafolder()
-
-    db.update_builtin_notetypes()
+        db.update_builtin_notetypes()
 
     # Run the app.
     yield

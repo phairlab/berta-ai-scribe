@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 
+import clsx from "clsx";
+
 import { Button } from "@heroui/button";
 import { Input, Textarea } from "@heroui/input";
 
@@ -131,7 +133,12 @@ export const CustomNotesEditor = ({
 
   return (
     <>
-      <div className="flex flex-row gap-2 mt-4 w-full items-end">
+      <div
+        className={clsx([
+          "flex flex-row gap-2 mt-4 w-full items-end",
+          { hidden: !editedNoteType.isNew },
+        ])}
+      >
         <NoteTypeSelector
           builtinTypes={noteTypes.builtin}
           customTypes={noteTypes.custom}
@@ -212,7 +219,7 @@ export const CustomNotesEditor = ({
             isDisabled={isGeneratingNote}
             onPress={reset}
           >
-            Reset
+            {editedNoteType.isNew ? "Reset" : "Cancel Edit"}
           </Button>
         </div>
       </div>

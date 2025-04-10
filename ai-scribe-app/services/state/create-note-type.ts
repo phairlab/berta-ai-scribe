@@ -4,11 +4,12 @@ import { IncompleteNoteType } from "@/core/types";
 
 import { FALLBACK_RECOMMENDED_MODEL } from "./user-info-context";
 
-export function createNoteType(): IncompleteNoteType {
+export function createNoteType(model?: string): IncompleteNoteType {
   const noteType: IncompleteNoteType = {
     id: shortUUID.generate(),
     modified: new Date().toISOString(),
-    model: FALLBACK_RECOMMENDED_MODEL.name,
+    category: "Custom",
+    model: model ?? FALLBACK_RECOMMENDED_MODEL.name,
     isBuiltin: false,
     isSystemDefault: false,
     outputType: "Markdown",

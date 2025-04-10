@@ -5,8 +5,8 @@ type IconSvgProps = SVGProps<SVGSVGElement> & {
   size?: number;
 };
 
-// TODO: Add attribution (https://www.flaticon.com/free-icon/sound-wave_9380416?term=sound-wave&related_id=9380416#).
-// <a href="https://www.flaticon.com/free-icons/sound-wave" title="sound wave icons">Sound wave icons created by alfanz - Flaticon</a>
+// Derived from https://www.flaticon.com/free-icon/sound-wave_9380416?term=sound-wave&related_id=9380416&origin=search.
+// Downloaded via Premium Flatiron License for unrestricted use.
 export const Logo: React.FC<IconSvgProps> = ({
   size = 20,
   width,
@@ -68,6 +68,7 @@ export const Logo: React.FC<IconSvgProps> = ({
   </svg>
 );
 
+// Built into NextUI template.
 export const MoonFilledIcon = ({
   size = 24,
   width,
@@ -90,6 +91,7 @@ export const MoonFilledIcon = ({
   </svg>
 );
 
+// Built into NextUI template.
 export const SunFilledIcon = ({
   size = 24,
   width,
@@ -109,248 +111,6 @@ export const SunFilledIcon = ({
       <path d="M19 12a7 7 0 11-7-7 7 7 0 017 7z" />
       <path d="M12 22.96a.969.969 0 01-1-.96v-.08a1 1 0 012 0 1.038 1.038 0 01-1 1.04zm7.14-2.82a1.024 1.024 0 01-.71-.29l-.13-.13a1 1 0 011.41-1.41l.13.13a1 1 0 010 1.41.984.984 0 01-.7.29zm-14.28 0a1.024 1.024 0 01-.71-.29 1 1 0 010-1.41l.13-.13a1 1 0 011.41 1.41l-.13.13a1 1 0 01-.7.29zM22 13h-.08a1 1 0 010-2 1.038 1.038 0 011.04 1 .969.969 0 01-.96 1zM2.08 13H2a1 1 0 010-2 1.038 1.038 0 011.04 1 .969.969 0 01-.96 1zm16.93-7.01a1.024 1.024 0 01-.71-.29 1 1 0 010-1.41l.13-.13a1 1 0 011.41 1.41l-.13.13a.984.984 0 01-.7.29zm-14.02 0a1.024 1.024 0 01-.71-.29l-.13-.14a1 1 0 011.41-1.41l.13.13a1 1 0 010 1.41.97.97 0 01-.7.3zM12 3.04a.969.969 0 01-1-.96V2a1 1 0 012 0 1.038 1.038 0 01-1 1.04z" />
     </g>
-  </svg>
-);
-
-// TODO: Add attribution (https://help.thenounproject.com/hc/en-us/articles/200509948-Medium-Specific-Credit-Requirements-Examples).
-// Settings by Adrien Coquet from <a href="https://thenounproject.com/browse/icons/term/settings/" target="_blank" title="Settings Icons">Noun Project</a> (CC BY 3.0)
-export const SettingsIcon: React.FC<IconSvgProps> = ({
-  size = 24,
-  width,
-  height,
-  ...props
-}: IconSvgProps) => (
-  <svg
-    aria-hidden="true"
-    focusable="false"
-    height={size || height}
-    role="presentation"
-    strokeWidth="0"
-    viewBox="0 0 100 100"
-    width={size || width}
-    {...props}
-  >
-    <g fill="currentColor">
-      <path d="M94.8,40.8L84.2,39c-0.6-1.9-1.4-3.7-2.3-5.5l6.2-8.7c0.9-1.3,0.8-3.1-0.3-4.2l-8.5-8.5c-1.1-1.1-2.9-1.3-4.2-0.3    l-8.7,6.2c-1.7-0.9-3.6-1.7-5.5-2.3L59.2,5.2c-0.3-1.6-1.6-2.7-3.2-2.7H44c-1.6,0-2.9,1.1-3.2,2.7L39,15.8    c-1.9,0.6-3.7,1.4-5.5,2.3l-8.7-6.2c-1.3-0.9-3.1-0.8-4.2,0.3l-8.5,8.5c-1.1,1.1-1.3,2.9-0.3,4.2l6.2,8.7    c-0.9,1.7-1.7,3.6-2.3,5.5L5.2,40.8c-1.6,0.3-2.7,1.6-2.7,3.2v12c0,1.6,1.1,2.9,2.7,3.2L15.8,61c0.6,1.9,1.4,3.7,2.3,5.5l-6.2,8.7    c-0.9,1.3-0.8,3.1,0.3,4.2l8.5,8.5c1.1,1.1,2.9,1.3,4.2,0.3l8.7-6.2c1.7,0.9,3.6,1.7,5.5,2.3l1.8,10.6c0.3,1.6,1.6,2.7,3.2,2.7h12    c1.6,0,2.9-1.1,3.2-2.7L61,84.2c1.9-0.6,3.7-1.4,5.5-2.3l8.7,6.2c1.3,0.9,3.1,0.8,4.2-0.3l8.5-8.5c1.1-1.1,1.3-2.9,0.3-4.2    l-6.2-8.7c0.9-1.7,1.7-3.6,2.3-5.5l10.6-1.8c1.6-0.3,2.7-1.6,2.7-3.2V44C97.5,42.4,96.4,41.1,94.8,40.8z M50,67.1    c-9.5,0-17.1-7.7-17.1-17.1c0-9.5,7.7-17.1,17.1-17.1S67.1,40.5,67.1,50C67.1,59.5,59.5,67.1,50,67.1z" />
-    </g>
-  </svg>
-);
-
-// TODO: Add attribution (https://help.thenounproject.com/hc/en-us/articles/200509948-Medium-Specific-Credit-Requirements-Examples).
-// mic by Kholila wale from <a href="https://thenounproject.com/browse/icons/term/mic/" target="_blank" title="mic Icons">Noun Project</a> (CC BY 3.0)
-// https://thenounproject.com/icon/mic-6848689/
-export const MicrophoneIcon: React.FC<IconSvgProps> = ({
-  size = 24,
-  width,
-  height,
-  ...props
-}: IconSvgProps) => (
-  <svg
-    aria-hidden="true"
-    fill="black"
-    focusable="false"
-    height={size || height}
-    role="presentation"
-    stroke="black"
-    strokeWidth="0"
-    viewBox="0 0 100 100"
-    width={size || width}
-    {...props}
-  >
-    <g>
-      <path d="m50 66.059c3.9883 0 7.8125-1.5859 10.629-4.4141 2.8125-2.8242 4.3867-6.6562 4.3711-10.645v-26.309c0-5.3594-2.8594-10.312-7.5-12.992-4.6406-2.6797-10.359-2.6797-15 0-4.6406 2.6797-7.5 7.6328-7.5 12.992v26.309c-0.015625 3.9883 1.5586 7.8203 4.3711 10.645 2.8164 2.8281 6.6406 4.4141 10.629 4.4141zm-11-41.367c0-6.0781 4.9258-11 11-11s11 4.9219 11 11v26.309c0 6.0742-4.9258 11-11 11s-11-4.9258-11-11z" />
-      <path d="m27.859 38.379c-1.1055 0-2 0.89844-2 2v11.199c-0.003906 6.0586 2.2695 11.898 6.3711 16.355 4.1016 4.457 9.7305 7.2109 15.77 7.707v10.688h-7.2695c-1.1055 0-2 0.89844-2 2 0 1.1055 0.89453 2 2 2h18.539c1.1055 0 2-0.89453 2-2 0-1.1016-0.89453-2-2-2h-7.2695v-10.68c12.32-1 22.141-11.84 22.141-24.641v-10.629c0-1.1016-0.89453-2-2-2s-2 0.89844-2 2v10.621c0 11.078-8.7305 20.371-19.469 20.711-5.457 0.1875-10.758-1.8516-14.68-5.6484-3.9258-3.7969-6.1367-9.0234-6.1328-14.484v-11.199c0-0.53125-0.21094-1.0391-0.58594-1.4141s-0.88281-0.58594-1.4141-0.58594z" />
-    </g>
-  </svg>
-);
-
-export const MicrophonePlusIcon: React.FC<IconSvgProps> = ({
-  size = 24,
-  width,
-  height,
-  ...props
-}: IconSvgProps) => (
-  <svg
-    aria-hidden="true"
-    fill="black"
-    focusable="false"
-    height={size || height}
-    role="presentation"
-    stroke="black"
-    strokeWidth="0"
-    transform="translate(-0.75)"
-    viewBox="0 0 100 100"
-    width={size || width}
-    {...props}
-  >
-    <g>
-      <path d="m50 66.059c3.9883 0 7.8125-1.5859 10.629-4.4141 2.8125-2.8242 4.3867-6.6562 4.3711-10.645v-26.309c0-5.3594-2.8594-10.312-7.5-12.992-4.6406-2.6797-10.359-2.6797-15 0-4.6406 2.6797-7.5 7.6328-7.5 12.992v26.309c-0.015625 3.9883 1.5586 7.8203 4.3711 10.645 2.8164 2.8281 6.6406 4.4141 10.629 4.4141zm-11-41.367c0-6.0781 4.9258-11 11-11s11 4.9219 11 11v26.309c0 6.0742-4.9258 11-11 11s-11-4.9258-11-11z" />
-      <path d="m27.859 38.379c-1.1055 0-2 0.89844-2 2v11.199c-0.003906 6.0586 2.2695 11.898 6.3711 16.355 4.1016 4.457 9.7305 7.2109 15.77 7.707v10.688h-7.2695c-1.1055 0-2 0.89844-2 2 0 1.1055 0.89453 2 2 2h18.539c1.1055 0 2-0.89453 2-2 0-1.1016-0.89453-2-2-2h-7.2695v-10.68c12.32-1 22.141-11.84 22.141-24.641v-10.629c0-1.1016-0.89453-2-2-2s-2 0.89844-2 2v10.621c0 11.078-8.7305 20.371-19.469 20.711-5.457 0.1875-10.758-1.8516-14.68-5.6484-3.9258-3.7969-6.1367-9.0234-6.1328-14.484v-11.199c0-0.53125-0.21094-1.0391-0.58594-1.4141s-0.88281-0.58594-1.4141-0.58594z" />
-      <polygon
-        points="36.45,16.81 36.45,12.4 40.86,12.4 40.86,10.43 36.45,10.43 36.45,6.02 34.48,6.02 34.48,10.43 30.07,10.43   30.07,12.4 34.48,12.4 34.48,16.81 "
-        transform="scale(2) translate(10)"
-      />
-    </g>
-  </svg>
-);
-
-// TODO: Add attribution (https://help.thenounproject.com/hc/en-us/articles/200509948-Medium-Specific-Credit-Requirements-Examples).
-// Cloud Upload by creative_visionary from <a href="https://thenounproject.com/browse/icons/term/cloud-upload/" target="_blank" title="Cloud Upload Icons">Noun Project</a> (CC BY 3.0)
-export const FileUploadIcon: React.FC<IconSvgProps> = ({
-  size = 24,
-  width,
-  height,
-  ...props
-}: IconSvgProps) => (
-  <svg
-    aria-hidden="true"
-    fill="black"
-    focusable="false"
-    height={size || height}
-    role="presentation"
-    stroke="black"
-    strokeWidth="1"
-    viewBox="0 0 100 100"
-    width={size || width}
-    {...props}
-  >
-    <g>
-      <path d="M67.83,33c-0.68-9.04-8.25-16.18-17.45-16.18c-9.16,0-16.69,7.07-17.44,16.11C23.78,33.48,16.5,41.11,16.5,50.4  c0,9.65,7.85,17.5,17.5,17.5c0.83,0,1.5-0.67,1.5-1.5s-0.67-1.5-1.5-1.5c-8,0-14.5-6.5-14.5-14.5S26,35.9,34,35.9  c0.08,0,0.16,0,0.24,0.01c0.42,0.04,0.84-0.14,1.15-0.43c0.31-0.28,0.49-0.73,0.49-1.16c0-8,6.5-14.5,14.5-14.5s14.5,6.5,14.5,14.59  c0,0.82,0.65,1.48,1.47,1.5c7.8,0.17,14.15,6.67,14.15,14.49c0,8-6.5,14.5-14.5,14.5c-0.83,0-1.5,0.67-1.5,1.5s0.67,1.5,1.5,1.5  c9.65,0,17.5-7.85,17.5-17.5C83.5,41.45,76.59,33.92,67.83,33z" />
-      <path d="M50.7,83.17c0.83,0,1.5-0.67,1.5-1.5V52.29l5.21,5.21c0.59,0.59,1.54,0.59,2.12,0c0.59-0.59,0.59-1.54,0-2.12l-7.77-7.77  c-0.14-0.14-0.31-0.25-0.49-0.33c-0.01,0-0.02-0.01-0.03-0.01c-0.16-0.06-0.34-0.1-0.53-0.1c-0.01,0-0.02,0-0.03,0  c-0.18,0-0.35,0.04-0.51,0.1c-0.02,0.01-0.03,0.01-0.05,0.01c-0.18,0.07-0.34,0.18-0.47,0.32c0,0-0.01,0-0.01,0.01l-8.1,8.09  c-0.59,0.59-0.59,1.54,0,2.12c0.29,0.29,0.68,0.44,1.06,0.44c0.38,0,0.77-0.15,1.06-0.44l5.55-5.54v29.39  C49.2,82.5,49.87,83.17,50.7,83.17z" />
-    </g>
-  </svg>
-);
-
-// TODO: Add atribution (https://help.thenounproject.com/hc/en-us/articles/200509948-Medium-Specific-Credit-Requirements-Examples).
-// audio-files by Sentya Irma from <a href="https://thenounproject.com/browse/icons/term/audio-files/" target="_blank" title="audio-files Icons">Noun Project</a> (CC BY 3.0)
-export const AudioFilesIcon: React.FC<IconSvgProps> = ({
-  size = 24,
-  width,
-  height,
-  ...props
-}: IconSvgProps) => (
-  <svg
-    aria-hidden="true"
-    fill="black"
-    focusable="false"
-    height={size || height}
-    role="presentation"
-    stroke="black"
-    strokeWidth="0"
-    viewBox="-8 -3 80 70"
-    width={size || width}
-    {...props}
-  >
-    <g>
-      <path d="M54.15419,16.35938,43.97272,5.3739A4.23889,4.23889,0,0,0,40.85074,4H21.9778a4.38668,4.38668,0,0,0-4.38172,4.38172v3.09991H13.09252A4.39078,4.39078,0,0,0,8.707,15.86719V55.59334A4.40085,4.40085,0,0,0,13.09252,60H41.97807a4.41114,4.41114,0,0,0,4.40666-4.40666V52.51357h4.517A4.3915,4.3915,0,0,0,55.293,48.13185v-28.874A4.2177,4.2177,0,0,0,54.15419,16.35938Zm-10.617-7.11933,6.9043,7.44937H45.61335a2.07885,2.07885,0,0,1-2.07621-2.07621Zm8.80853,38.8918a1.44093,1.44093,0,0,1-1.44394,1.43435H21.99746a1.45574,1.45574,0,0,1-1.454-1.45354V18.85485a1.47385,1.47385,0,0,0-2.94736.00007V48.11266a4.40634,4.40634,0,0,0,4.40138,4.40091h21.4399v3.07977a1.46055,1.46055,0,0,1-1.45929,1.45929H13.09252a1.45033,1.45033,0,0,1-1.43819-1.45929V15.86719A1.42267,1.42267,0,0,1,13.09252,14.429h5.92969a1.46694,1.46694,0,0,0,1.52124-1.46888V8.38172A1.43609,1.43609,0,0,1,21.9778,6.94737h18.612v7.66584a5.02944,5.02944,0,0,0,5.02357,5.02358h6.73232Z" />
-      <path d="M38.26028,27.14049a3.47889,3.47889,0,0,0-3.70532.40584L31.00267,30.3565a2.635,2.635,0,0,1-1.62863.567H27.2537a4.14817,4.14817,0,0,0-4.14378,4.14378v4.46422A4.14817,4.14817,0,0,0,27.2537,43.6753c1.0776.047,2.88092-.243,3.749.56609l3.5523,2.8111a3.52817,3.52817,0,0,0,5.68456-2.75079L40.23958,30.297A3.48189,3.48189,0,0,0,38.26028,27.14049Zm-.96807,17.16132a.56124.56124,0,0,1-.90858.44038L32.83135,41.9301c-1.47933-1.31206-3.72467-1.24968-5.57769-1.202a1.19776,1.19776,0,0,1-1.19637-1.19654V35.0673a1.19758,1.19758,0,0,1,1.19641-1.19641H29.374a5.59036,5.59036,0,0,0,3.45731-1.20313l3.55228-2.81017a.56124.56124,0,0,1,.90858.43942Z" />
-      <path d="M42.003,32.47684a1.47406,1.47406,0,0,0,1.47368,1.47368,3.34889,3.34889,0,0,1,0,6.69778,1.47384,1.47384,0,0,0,.00006,2.94736,6.29626,6.29626,0,0,0-.00006-12.59251A1.47406,1.47406,0,0,0,42.003,32.47684Z" />
-      <path d="M23.9547,12.23862h4.66907a1.47368,1.47368,0,0,0,0-2.94736H23.9547A1.47383,1.47383,0,0,0,23.9547,12.23862Z" />
-      <path d="M34.5185,16.90817a1.47384,1.47384,0,0,0-.00006-2.94737H23.9547a1.47384,1.47384,0,0,0,.00007,2.94737Z" />
-    </g>
-  </svg>
-);
-
-// TODO: Add atribution (https://help.thenounproject.com/hc/en-us/articles/200509948-Medium-Specific-Credit-Requirements-Examples).
-// play by Perametade Games from <a href="https://thenounproject.com/browse/icons/term/play/" target="_blank" title="play Icons">Noun Project</a> (CC BY 3.0)
-export const PlayIcon: React.FC<IconSvgProps> = ({
-  size = 24,
-  width,
-  height,
-  ...props
-}: IconSvgProps) => (
-  <svg
-    aria-hidden="true"
-    fill="black"
-    focusable="false"
-    height={size || height}
-    role="presentation"
-    stroke="black"
-    strokeWidth="0"
-    viewBox="0 0 100 100"
-    width={size || width}
-    {...props}
-  >
-    <g>
-      <path d="M78.627,47.203L24.873,16.167c-1.082-0.625-2.227-0.625-3.311,0C20.478,16.793,20,17.948,20,19.199V81.27  c0,1.25,0.478,2.406,1.561,3.031c0.542,0.313,1.051,0.469,1.656,0.469c0.604,0,1.161-0.156,1.703-0.469l53.731-31.035  c1.083-0.625,1.738-1.781,1.738-3.031C80.389,48.984,79.71,47.829,78.627,47.203z M27,75.207V25.261l43.255,24.974L27,75.207z" />
-    </g>
-  </svg>
-);
-
-// TODO: Add atribution (https://help.thenounproject.com/hc/en-us/articles/200509948-Medium-Specific-Credit-Requirements-Examples).
-// pause by Perametade Games from <a href="https://thenounproject.com/browse/icons/term/pause/" target="_blank" title="pause Icons">Noun Project</a> (CC BY 3.0)
-export const PauseIcon: React.FC<IconSvgProps> = ({
-  size = 24,
-  width,
-  height,
-  ...props
-}: IconSvgProps) => (
-  <svg
-    aria-hidden="true"
-    fill="black"
-    focusable="false"
-    height={size || height}
-    role="presentation"
-    stroke="black"
-    strokeWidth="0"
-    viewBox="0 0 100 100"
-    width={size || width}
-    {...props}
-  >
-    <g>
-      <path d="M35.5,15.5c-1.933,0-3.5,1.567-3.5,3.5v62c0,1.933,1.567,3.5,3.5,3.5S39,82.933,39,81V19C39,17.067,37.433,15.5,35.5,15.5z   " />
-      <path d="M63.5,15.5c-1.933,0-3.5,1.567-3.5,3.5v62c0,1.933,1.567,3.5,3.5,3.5S67,82.933,67,81V19C67,17.067,65.433,15.5,63.5,15.5z   " />
-    </g>
-  </svg>
-);
-
-// TODO: Add atribution (https://help.thenounproject.com/hc/en-us/articles/200509948-Medium-Specific-Credit-Requirements-Examples).
-// arrow download by Perametade Games from <a href="https://thenounproject.com/browse/icons/term/arrow-download/" target="_blank" title="arrow download Icons">Noun Project</a> (CC BY 3.0)
-export const DownloadIcon: React.FC<IconSvgProps> = ({
-  size = 24,
-  width,
-  height,
-  ...props
-}: IconSvgProps) => (
-  <svg
-    aria-hidden="true"
-    fill="black"
-    focusable="false"
-    height={size || height}
-    role="presentation"
-    stroke="black"
-    strokeWidth="0"
-    viewBox="0 0 100 100"
-    width={size || width}
-    {...props}
-  >
-    <g>
-      <path d="M47.206,72.855c1.563,1.563,4.11,1.563,5.671,0l22.14-22.125c0.781-0.78,1.201-1.805,1.201-2.828s-0.333-2.048-1.114-2.828   c-1.562-1.563-3.978-1.563-5.54,0L54,60.87V20.027c0-2.209-1.791-4-4-4s-4,1.791-4,4V59.87L30.846,44.949   c-1.563-1.563-4.327-1.563-5.89,0c-1.562,1.561-1.562,4.096,0,5.656L47.206,72.855z" />
-      <path d="M76,76H24c-2.209,0-4,1.791-4,4s1.791,4,4,4h52c2.209,0,4-1.791,4-4S78.209,76,76,76z" />
-    </g>
-  </svg>
-);
-
-// TODO: Add atribution (https://help.thenounproject.com/hc/en-us/articles/200509948-Medium-Specific-Credit-Requirements-Examples).
-// Flag by Goran Markovic from <a href="https://thenounproject.com/browse/icons/term/flag/" target="_blank" title="Flag Icons">Noun Project</a> (CC BY 3.0)
-export const FlagIcon: React.FC<IconSvgProps> = ({
-  size = 24,
-  width,
-  height,
-  ...props
-}: IconSvgProps) => (
-  <svg
-    aria-hidden="true"
-    focusable="false"
-    height={size || height}
-    role="presentation"
-    stroke="black"
-    strokeWidth="2"
-    viewBox="0 0 64 64"
-    width={size || width}
-    {...props}
-  >
-    <path d="M57.38,22.62a1,1,0,0,0-.73-.6L40.83,18.89,45.29,2.26a1,1,0,0,0-1.77-.85c-4.17,5.78-11,8-17.63,10.09S13.23,15.56,9.82,20.72a1,1,0,0,0,0,1.05L22.05,43,33.3,62.5a1,1,0,0,0,1.74-1L24.1,42.56c3.1-4.19,8.73-6,14.68-8,7-2.28,14.23-4.64,18.5-11A1,1,0,0,0,57.38,22.62ZM38.16,32.69c-6,1.94-11.62,3.78-15.14,8L11.84,21.32c3.11-4.21,8.73-6,14.66-7.91,5.61-1.8,11.37-3.65,15.78-7.63L38.62,19.4a1,1,0,0,0,.11.79,1,1,0,0,0,.66.45l15.32,3C50.71,28.59,44.34,30.67,38.16,32.69Z" />
   </svg>
 );
 
@@ -381,5 +141,170 @@ export const DeleteDocumentIcon: React.FC<IconSvgProps> = (props) => (
       fill="currentColor"
       fillRule="evenodd"
     />
+  </svg>
+);
+
+// Derived from https://thenounproject.com/icon/settings-1939978/.
+// Creative Commons Attribution License (CC BY 3.0).
+// - Royalty-free commerical non-attribution license purchased in support of author.
+export const SettingsIcon: React.FC<IconSvgProps> = ({
+  size = 24,
+  width,
+  height,
+  ...props
+}: IconSvgProps) => (
+  <svg
+    aria-hidden="true"
+    focusable="false"
+    height={size || height}
+    role="presentation"
+    strokeWidth="0"
+    viewBox="0 0 100 100"
+    width={size || width}
+    {...props}
+  >
+    <g fill="currentColor">
+      <path d="M94.8,40.8L84.2,39c-0.6-1.9-1.4-3.7-2.3-5.5l6.2-8.7c0.9-1.3,0.8-3.1-0.3-4.2l-8.5-8.5c-1.1-1.1-2.9-1.3-4.2-0.3    l-8.7,6.2c-1.7-0.9-3.6-1.7-5.5-2.3L59.2,5.2c-0.3-1.6-1.6-2.7-3.2-2.7H44c-1.6,0-2.9,1.1-3.2,2.7L39,15.8    c-1.9,0.6-3.7,1.4-5.5,2.3l-8.7-6.2c-1.3-0.9-3.1-0.8-4.2,0.3l-8.5,8.5c-1.1,1.1-1.3,2.9-0.3,4.2l6.2,8.7    c-0.9,1.7-1.7,3.6-2.3,5.5L5.2,40.8c-1.6,0.3-2.7,1.6-2.7,3.2v12c0,1.6,1.1,2.9,2.7,3.2L15.8,61c0.6,1.9,1.4,3.7,2.3,5.5l-6.2,8.7    c-0.9,1.3-0.8,3.1,0.3,4.2l8.5,8.5c1.1,1.1,2.9,1.3,4.2,0.3l8.7-6.2c1.7,0.9,3.6,1.7,5.5,2.3l1.8,10.6c0.3,1.6,1.6,2.7,3.2,2.7h12    c1.6,0,2.9-1.1,3.2-2.7L61,84.2c1.9-0.6,3.7-1.4,5.5-2.3l8.7,6.2c1.3,0.9,3.1,0.8,4.2-0.3l8.5-8.5c1.1-1.1,1.3-2.9,0.3-4.2    l-6.2-8.7c0.9-1.7,1.7-3.6,2.3-5.5l10.6-1.8c1.6-0.3,2.7-1.6,2.7-3.2V44C97.5,42.4,96.4,41.1,94.8,40.8z M50,67.1    c-9.5,0-17.1-7.7-17.1-17.1c0-9.5,7.7-17.1,17.1-17.1S67.1,40.5,67.1,50C67.1,59.5,59.5,67.1,50,67.1z" />
+    </g>
+  </svg>
+);
+
+// Derived from https://thenounproject.com/icon/mic-6848689/.
+// Creative Commons Attribution License (CC BY 3.0).
+// - Royalty-free commerical non-attribution license purchased in support of author.
+export const MicrophoneIcon: React.FC<IconSvgProps> = ({
+  size = 24,
+  width,
+  height,
+  ...props
+}: IconSvgProps) => (
+  <svg
+    aria-hidden="true"
+    fill="black"
+    focusable="false"
+    height={size || height}
+    role="presentation"
+    stroke="black"
+    strokeWidth="0"
+    viewBox="0 0 100 100"
+    width={size || width}
+    {...props}
+  >
+    <g>
+      <path d="m50 66.059c3.9883 0 7.8125-1.5859 10.629-4.4141 2.8125-2.8242 4.3867-6.6562 4.3711-10.645v-26.309c0-5.3594-2.8594-10.312-7.5-12.992-4.6406-2.6797-10.359-2.6797-15 0-4.6406 2.6797-7.5 7.6328-7.5 12.992v26.309c-0.015625 3.9883 1.5586 7.8203 4.3711 10.645 2.8164 2.8281 6.6406 4.4141 10.629 4.4141zm-11-41.367c0-6.0781 4.9258-11 11-11s11 4.9219 11 11v26.309c0 6.0742-4.9258 11-11 11s-11-4.9258-11-11z" />
+      <path d="m27.859 38.379c-1.1055 0-2 0.89844-2 2v11.199c-0.003906 6.0586 2.2695 11.898 6.3711 16.355 4.1016 4.457 9.7305 7.2109 15.77 7.707v10.688h-7.2695c-1.1055 0-2 0.89844-2 2 0 1.1055 0.89453 2 2 2h18.539c1.1055 0 2-0.89453 2-2 0-1.1016-0.89453-2-2-2h-7.2695v-10.68c12.32-1 22.141-11.84 22.141-24.641v-10.629c0-1.1016-0.89453-2-2-2s-2 0.89844-2 2v10.621c0 11.078-8.7305 20.371-19.469 20.711-5.457 0.1875-10.758-1.8516-14.68-5.6484-3.9258-3.7969-6.1367-9.0234-6.1328-14.484v-11.199c0-0.53125-0.21094-1.0391-0.58594-1.4141s-0.88281-0.58594-1.4141-0.58594z" />
+    </g>
+  </svg>
+);
+
+// Derived from https://thenounproject.com/icon/mic-6848689/.
+// Creative Commons Attribution License (CC BY 3.0).
+// - Royalty-free commerical non-attribution license purchased in support of author.
+export const MicrophonePlusIcon: React.FC<IconSvgProps> = ({
+  size = 24,
+  width,
+  height,
+  ...props
+}: IconSvgProps) => (
+  <svg
+    aria-hidden="true"
+    fill="black"
+    focusable="false"
+    height={size || height}
+    role="presentation"
+    stroke="black"
+    strokeWidth="0"
+    transform="translate(-0.75)"
+    viewBox="0 0 100 100"
+    width={size || width}
+    {...props}
+  >
+    <g>
+      <path d="m50 66.059c3.9883 0 7.8125-1.5859 10.629-4.4141 2.8125-2.8242 4.3867-6.6562 4.3711-10.645v-26.309c0-5.3594-2.8594-10.312-7.5-12.992-4.6406-2.6797-10.359-2.6797-15 0-4.6406 2.6797-7.5 7.6328-7.5 12.992v26.309c-0.015625 3.9883 1.5586 7.8203 4.3711 10.645 2.8164 2.8281 6.6406 4.4141 10.629 4.4141zm-11-41.367c0-6.0781 4.9258-11 11-11s11 4.9219 11 11v26.309c0 6.0742-4.9258 11-11 11s-11-4.9258-11-11z" />
+      <path d="m27.859 38.379c-1.1055 0-2 0.89844-2 2v11.199c-0.003906 6.0586 2.2695 11.898 6.3711 16.355 4.1016 4.457 9.7305 7.2109 15.77 7.707v10.688h-7.2695c-1.1055 0-2 0.89844-2 2 0 1.1055 0.89453 2 2 2h18.539c1.1055 0 2-0.89453 2-2 0-1.1016-0.89453-2-2-2h-7.2695v-10.68c12.32-1 22.141-11.84 22.141-24.641v-10.629c0-1.1016-0.89453-2-2-2s-2 0.89844-2 2v10.621c0 11.078-8.7305 20.371-19.469 20.711-5.457 0.1875-10.758-1.8516-14.68-5.6484-3.9258-3.7969-6.1367-9.0234-6.1328-14.484v-11.199c0-0.53125-0.21094-1.0391-0.58594-1.4141s-0.88281-0.58594-1.4141-0.58594z" />
+      <polygon
+        points="36.45,16.81 36.45,12.4 40.86,12.4 40.86,10.43 36.45,10.43 36.45,6.02 34.48,6.02 34.48,10.43 30.07,10.43   30.07,12.4 34.48,12.4 34.48,16.81 "
+        transform="scale(2) translate(10)"
+      />
+    </g>
+  </svg>
+);
+
+// Derived from https://thenounproject.com/icon/play-839207/.
+// Creative Commons Attribution License (CC BY 3.0).
+// - Royalty-free commerical non-attribution license purchased in support of author.
+export const PlayIcon: React.FC<IconSvgProps> = ({
+  size = 24,
+  width,
+  height,
+  ...props
+}: IconSvgProps) => (
+  <svg
+    aria-hidden="true"
+    fill="black"
+    focusable="false"
+    height={size || height}
+    role="presentation"
+    stroke="black"
+    strokeWidth="0"
+    viewBox="0 0 100 100"
+    width={size || width}
+    {...props}
+  >
+    <g>
+      <path d="M78.627,47.203L24.873,16.167c-1.082-0.625-2.227-0.625-3.311,0C20.478,16.793,20,17.948,20,19.199V81.27  c0,1.25,0.478,2.406,1.561,3.031c0.542,0.313,1.051,0.469,1.656,0.469c0.604,0,1.161-0.156,1.703-0.469l53.731-31.035  c1.083-0.625,1.738-1.781,1.738-3.031C80.389,48.984,79.71,47.829,78.627,47.203z M27,75.207V25.261l43.255,24.974L27,75.207z" />
+    </g>
+  </svg>
+);
+
+// Derived from https://thenounproject.com/icon/pause-839209/.
+// Creative Commons Attribution License (CC BY 3.0).
+// - Royalty-free commerical non-attribution license purchased in support of author.
+export const PauseIcon: React.FC<IconSvgProps> = ({
+  size = 24,
+  width,
+  height,
+  ...props
+}: IconSvgProps) => (
+  <svg
+    aria-hidden="true"
+    fill="black"
+    focusable="false"
+    height={size || height}
+    role="presentation"
+    stroke="black"
+    strokeWidth="0"
+    viewBox="0 0 100 100"
+    width={size || width}
+    {...props}
+  >
+    <g>
+      <path d="M35.5,15.5c-1.933,0-3.5,1.567-3.5,3.5v62c0,1.933,1.567,3.5,3.5,3.5S39,82.933,39,81V19C39,17.067,37.433,15.5,35.5,15.5z   " />
+      <path d="M63.5,15.5c-1.933,0-3.5,1.567-3.5,3.5v62c0,1.933,1.567,3.5,3.5,3.5S67,82.933,67,81V19C67,17.067,65.433,15.5,63.5,15.5z   " />
+    </g>
+  </svg>
+);
+
+// Derived from https://thenounproject.com/icon/flag-2165171/.
+// Creative Commons Attribution License (CC BY 3.0).
+// - Royalty-free commerical non-attribution license purchased in support of author.
+export const FlagIcon: React.FC<IconSvgProps> = ({
+  size = 24,
+  width,
+  height,
+  ...props
+}: IconSvgProps) => (
+  <svg
+    aria-hidden="true"
+    focusable="false"
+    height={size || height}
+    role="presentation"
+    stroke="black"
+    strokeWidth="2"
+    viewBox="0 0 64 64"
+    width={size || width}
+    {...props}
+  >
+    <path d="M57.38,22.62a1,1,0,0,0-.73-.6L40.83,18.89,45.29,2.26a1,1,0,0,0-1.77-.85c-4.17,5.78-11,8-17.63,10.09S13.23,15.56,9.82,20.72a1,1,0,0,0,0,1.05L22.05,43,33.3,62.5a1,1,0,0,0,1.74-1L24.1,42.56c3.1-4.19,8.73-6,14.68-8,7-2.28,14.23-4.64,18.5-11A1,1,0,0,0,57.38,22.62ZM38.16,32.69c-6,1.94-11.62,3.78-15.14,8L11.84,21.32c3.11-4.21,8.73-6,14.66-7.91,5.61-1.8,11.37-3.65,15.78-7.63L38.62,19.4a1,1,0,0,0,.11.79,1,1,0,0,0,.66.45l15.32,3C50.71,28.59,44.34,30.67,38.16,32.69Z" />
   </svg>
 );

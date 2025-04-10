@@ -1,8 +1,8 @@
 import clsx from "clsx";
 
 import { Divider } from "@heroui/divider";
-import { Link } from "@heroui/link";
 
+import { LinkButton } from "@/core/link-button";
 import { NoteType } from "@/core/types";
 import { WaitMessageSpinner } from "@/core/wait-message-spinner";
 
@@ -21,30 +21,33 @@ export const CustomNotesListItem = ({
   onEdit,
   onDelete,
 }: CustomNotesListItemProps) => (
-  <div key={noteType.id} className="flex flex-row gap-2 h-5">
+  <div key={noteType.id} className="flex flex-row gap-5">
     <div
-      className={clsx("basis-full text-start self-stretch w-[300px] ps-2 h-7", {
-        "border-s-4 border-blue-500": isBeingEdited,
-      })}
+      className={clsx(
+        "basis-full text-sm sm:text-base text-start truncate w-full text-ellipsis self-stretch w-[300px] ps-2 py-1",
+        {
+          "border-s-4 border-blue-500": isBeingEdited,
+        },
+      )}
+      title={noteType.title}
     >
       {noteType.title}
     </div>
     {noteType.isSaving ? (
       <WaitMessageSpinner size="sm">Saving</WaitMessageSpinner>
     ) : (
-      <div className="flex flex-row gap-2 h-5">
-        <Link className="text-sm" href="#" onPress={onEdit}>
+      <div className="flex flex-row gap-2 items-center">
+        <LinkButton className="text-primary text-sm" onPress={onEdit}>
           Edit
-        </Link>
-        <Divider orientation="vertical" />
-        <Link
-          className="text-sm"
-          href="#"
+        </LinkButton>
+        <Divider className="h-[70%]" orientation="vertical" />
+        <LinkButton
+          className="text-primary text-sm"
           isDisabled={!canDelete}
           onPress={onDelete}
         >
           Delete
-        </Link>
+        </LinkButton>
       </div>
     )}
   </div>

@@ -54,6 +54,7 @@ export type LlmManifest = {
 export type NoteDefinition = {
   id: string;
   modified: string;
+  category: string;
   title: string;
   instructions: string;
   model: string;
@@ -93,5 +94,6 @@ export type UserInfo = {
   username: string;
   updated: string;
   defaultNoteType?: string;
+  enabledNoteTypes?: string[];
   availableLlms: LlmManifest;
 };

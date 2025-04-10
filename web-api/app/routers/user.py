@@ -1,3 +1,4 @@
+import json
 from datetime import datetime, timezone
 from typing import Annotated
 from uuid import uuid4
@@ -49,6 +50,39 @@ def set_default_note_type(
         raise errors.BadRequest("User is not registered")
 
     user.default_note = id
+    user.updated = datetime.now(timezone.utc).astimezone()
+    database.commit()
+
+    # Record the change.
+    backgroundTasks.add_task(
+        log_data_change,
+        database=database,
+        session=userSession,
+        changed=user.updated,
+        entity_type="USER",
+        change_type="MODIFIED",
+        entity_id=user.username,
+    )
+
+
+@router.put("/enabled-note-types", tags=["Note Definitions"])
+def set_enabled_note_types(
+    userSession: useUserSession,
+    database: useDatabase,
+    backgroundTasks: BackgroundTasks,
+    *,
+    noteTypes: Annotated[list[str], Body()]
+):
+    """
+    Sets the enabled note types for the current user.
+    """
+
+    try:
+        user = database.get_one(db.User, userSession.username)
+    except NoResultFound:
+        raise errors.BadRequest("User is not registered")
+
+    user.enabled_notes = json.dumps(noteTypes)
     user.updated = datetime.now(timezone.utc).astimezone()
     database.commit()
 

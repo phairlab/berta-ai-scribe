@@ -2,8 +2,9 @@ import { PropsWithChildren } from "react";
 
 import clsx from "clsx";
 
-import { Link } from "@heroui/link";
 import { Spinner } from "@heroui/spinner";
+
+import { LinkButton } from "./link-button";
 
 type WaitMessageSpinnerProps = PropsWithChildren<{
   size?: "xs" | "sm" | "md" | "lg";
@@ -32,13 +33,9 @@ export const WaitMessageSpinner = ({
       <span className={clsx(`text-${size}`, "text-zinc-500")}>{children}</span>
     </div>
     {onCancel && (
-      <Link
-        className={clsx(`text-${size}`, "text-blue-500")}
-        href="#"
-        onPress={onCancel}
-      >
+      <LinkButton className={clsx(`text-${size}`)} onPress={onCancel}>
         (Cancel)
-      </Link>
+      </LinkButton>
     )}
   </div>
 );

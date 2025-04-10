@@ -82,6 +82,7 @@ CREATE TABLE users (
   registered TIMESTAMP_LTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated TIMESTAMP_LTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   default_note VARCHAR(12),
+  enabled_notes VARCHAR,
   PRIMARY KEY (username) RELY
 );
 
@@ -103,6 +104,7 @@ CREATE TABLE note_definitions (
   version VARCHAR(12) NOT NULL,
   username VARCHAR(255) NOT NULL,
   created TIMESTAMP_LTZ NOT NULL,
+  category VARCHAR(50) NOT NULL DEFAULT 'Custom',
   title VARCHAR(100) NOT NULL,
   instructions VARCHAR NOT NULL,
   model VARCHAR(50),
