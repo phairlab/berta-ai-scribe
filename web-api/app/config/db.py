@@ -26,16 +26,26 @@ from app.config import settings
 from app.services.adapters import DatabaseProvider
 from app.services.snowflake import SnowflakeDatabaseProvider
 from app.services.sqlite import SqliteDatabaseProvider
+from app.services.aurora import AuroraPostgresProvider
 
 sqids = Sqids(alphabet="ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
 
 
 database_provider: DatabaseProvider
 
-if settings.ENVIRONMENT == "development":
+if settings.USE_AURORA:
+    database_provider = AuroraPostgresProvider()
+elif settings.ENVIRONMENT == "development":
     database_provider = SqliteDatabaseProvider()
 else:
     database_provider = SnowflakeDatabaseProvider()
+
+# if settings.ENVIRONMENT == "development":
+#     database_provider = SqliteDatabaseProvider()
+# elif settings.USE_AURORA:
+#     database_provider = AuroraPostgresProvider()
+# else:
+#     database_provider = SnowflakeDatabaseProvider()
 
 engine: Engine = database_provider.create_engine()
 DatabaseSessionMaker = sessionmaker(engine)

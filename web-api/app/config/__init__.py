@@ -30,10 +30,17 @@ class Settings(BaseSettings):
     SYSTEM_USER: str = "BUILTIN"
     DEFAULT_NOTE_DEFINITION: str = "Full Visit"
 
-    DEFAULT_NOTE_GENERATION_MODEL: str = "gpt-4o"
-    LABEL_MODEL: str = "gpt-4o"
-    TRANSCRIPTION_SERVICE: Literal["OpenAI Whisper", "WhisperX"] = "OpenAI Whisper"
+    DEFAULT_NOTE_GENERATION_MODEL: str = "us.meta.llama3-3-70b-instruct-v1:0"
+    LABEL_MODEL: str = "us.meta.llama3-3-70b-instruct-v1:0"
+    TRANSCRIPTION_SERVICE: Literal["OpenAI Whisper", "WhisperX", "AWS Transcribe"] = (
+        "AWS Transcribe"
+    )
     LOCAL_WHISPER_SERVICE_URL: str | None = None
+
+    AWS_ACCESS_KEY_ID: str | None = None
+    AWS_SECRET_ACCESS_KEY: str | None = None
+    AWS_REGION: str = "us-west-2"
+    S3_BUCKET_NAME: str = "jenkins-ahs"
 
     ENCOUNTERS_PAGE_SIZE: int = 15
 
@@ -55,6 +62,13 @@ class Settings(BaseSettings):
     AZURE_API_VERSION: str | None = None
     AZURE_OPENAI_ENDPOINT: str | None = None
 
+    USE_AURORA: bool = False
+    AURORA_WRITER_ENDPOINT: str | None = None
+    DB_NAME: str | None = None
+    DB_USER: str | None = None
+    DB_PASSWORD: str | None = None
+    DB_PORT: int = 5432
+
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True)
 
 
@@ -63,3 +77,12 @@ settings = Settings()  # type: ignore
 is_cortex_supported: bool = settings.SNOWFLAKE_ACCOUNT is not None
 is_openai_supported: bool = settings.OPENAI_API_KEY is not None
 is_azure_cognitive_supported: bool = settings.AZURE_TENANT_ID is not None
+is_aws_bedrock_supported = (
+    bool(settings.AWS_ACCESS_KEY_ID)
+    and bool(settings.AWS_SECRET_ACCESS_KEY)
+    and bool(settings.AWS_REGION)
+)
+is_aws_transcribe_supported: bool = (
+    settings.AWS_ACCESS_KEY_ID is not None
+    and settings.AWS_SECRET_ACCESS_KEY is not None
+)
