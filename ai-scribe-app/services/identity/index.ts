@@ -21,11 +21,14 @@ const authenticationStateAtom = atom((get) => get(authenticationAtom).state);
 
 const webApiTokenAtom = atom((get) => {
   const authentication = get(authenticationAtom);
+  console.log("Getting web API token, authentication state:", authentication.state);
 
   if (authentication.state === "Authenticated") {
+    console.log("Returning web API token");
     return authentication.token;
   }
 
+  console.log("No web API token available");
   return undefined;
 });
 
@@ -37,12 +40,18 @@ const userSessionAtom = atom<UserSession>((get) => {
     const token = get(webApiTokenAtom);
 
     if (!token) {
+      console.error("Unable to load user session - no token available");
       throw new Error("Unable to load user session");
     }
 
-    const { username, sessionId, rights } = jwtDecode<SessionData>(token);
-
-    return { state, username, sessionId, rights };
+    try {
+      const { username, sessionId, rights } = jwtDecode<SessionData>(token);
+      console.log("User session loaded:", { username, sessionId });
+      return { state, username, sessionId, rights };
+    } catch (error) {
+      console.error("Error decoding token:", error);
+      throw new Error("Invalid token format");
+    }
   }
 
   return { state };

@@ -1,26 +1,37 @@
-FROM python:3.11.9-slim-bookworm
+FROM --platform=linux/amd64 python:3.11-slim
 
-# Set the working directory in the container.
+# Create non-root user
+RUN useradd -m -u 1000 appuser
+
 WORKDIR /app
 
-COPY /.deployment/python_packages/audiowaveform_1.10.1-1-12_amd64.deb /app/audiowaveform_1.10.1-1-12_amd64.deb
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libpq-dev \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install ffmpeg and audiowaveform
-RUN apt-get -y update
-RUN apt-get -y upgrade
-RUN apt install -y ./audiowaveform_1.10.1-1-12_amd64.deb
-RUN apt-get -f install -y
-RUN apt-get install -y ffmpeg
+# Copy requirements first to leverage Docker cache
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt \
+    && pip install --no-cache-dir psycopg2-binary
 
-# Install the required Python packages.
-COPY requirements.txt /app/requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Make port 8000 available to outside the container.
-EXPOSE 8000
-
-# Copy the current directory contents into the container.
+# Copy the rest of the application
 COPY . .
 
-# Run the app when the container launches.
+# Set proper permissions
+RUN chown -R appuser:appuser /app
+
+# Switch to non-root user
+USER appuser
+
+# Expose the port the app runs on
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Command to run the application
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

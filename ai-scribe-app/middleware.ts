@@ -6,9 +6,7 @@ export function middleware(request: NextRequest) {
     // Redirect /openapi.json calls during development.
     if (request.nextUrl.pathname === "/openapi.json") {
       const url = request.nextUrl.clone();
-
       url.pathname = "/api/openapi.json";
-
       return NextResponse.redirect(url);
     }
 
@@ -25,13 +23,12 @@ export function middleware(request: NextRequest) {
     // Proxy Web API requests during development.
     if (request.nextUrl.pathname.startsWith("/api")) {
       const destination = new URL("http://localhost:8000");
-
       const url = request.nextUrl.clone();
 
       url.protocol = destination.protocol;
       url.host = destination.host;
       url.port = destination.port;
-      url.pathname = request.nextUrl.pathname.slice("/api".length);
+      url.pathname = request.nextUrl.pathname;
 
       return NextResponse.rewrite(url, { headers: requestHeaders });
     }

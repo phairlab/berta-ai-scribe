@@ -1,0 +1,576 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'CloudFormation template for Jenkins AHS application infrastructure'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: production
+    AllowedValues:
+      - dev
+      - staging
+      - production
+    Description: Environment name for resource naming
+
+  HostedZoneId:
+    Type: AWS::Route53::HostedZone::Id
+    Description: The Route53 Hosted Zone ID of the domain
+
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC where the resources will be deployed
+
+  PublicSubnets:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: Public subnets for ALB
+
+  PrivateSubnets:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: Private subnets for Fargate tasks
+
+  FrontendImageUri:
+    Type: String
+    Description: URI of the frontend container image
+
+  BackendImageUri:
+    Type: String
+    Description: URI of the backend container image
+
+  DomainName:
+    Type: String
+    Description: Domain name for the application
+
+  AuthDomainPrefix:
+    Type: String
+    Description: Prefix for Cognito auth domain
+
+  AccessTokenSecret:
+    Type: String
+    NoEcho: true
+    Description: Secret for signing JWT tokens
+
+  DBName:
+    Type: String
+    Description: Aurora database name
+
+  DBUser:
+    Type: String
+    Description: Aurora master username
+
+  DBPassword:
+    Type: String
+    NoEcho: true
+    Description: Aurora master password
+
+  AWSAccessKeyId:
+    Type: String
+    Description: AWS Access Key ID
+
+  AWSSecretAccessKey:
+    Type: String
+    NoEcho: true
+    Description: AWS Secret Access Key
+
+Resources:
+  JenkinsS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub jenkins-ahs-${AWS::AccountId}
+      VersioningConfiguration:
+        Status: Enabled
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders: ['*']
+            AllowedMethods: [GET, PUT, POST, DELETE]
+            AllowedOrigins: ['*']
+            MaxAge: 3000
+
+  # Aurora RDS Cluster
+  AuroraDBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Subnet group for Aurora cluster
+      SubnetIds: !Ref PrivateSubnets
+
+  AuroraSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for Aurora cluster
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          SourceSecurityGroupId: !Ref JenkinsSecurityGroup
+      SecurityGroupEgress:
+        - IpProtocol: '-1'
+          FromPort: -1
+          ToPort: -1
+          CidrIp: 0.0.0.0/0
+
+  AuroraCluster:
+    Type: AWS::RDS::DBCluster
+    Properties:
+      Engine: aurora-postgresql
+      EngineVersion: '15.4'
+      EngineMode: provisioned
+      MasterUsername: !Ref DBUser
+      MasterUserPassword: !Ref DBPassword
+      DatabaseName: !Ref DBName
+      DBSubnetGroupName: !Ref AuroraDBSubnetGroup
+      VpcSecurityGroupIds:
+        - !Ref AuroraSecurityGroup
+      BackupRetentionPeriod: 7
+      PreferredBackupWindow: '03:00-04:00'
+      PreferredMaintenanceWindow: 'sun:04:00-sun:05:00'
+      StorageEncrypted: true
+      DeletionProtection: true
+      EnableHttpEndpoint: false
+      EnableIAMDatabaseAuthentication: false
+      Port: 5432
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+
+  AuroraInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      Engine: aurora-postgresql
+      DBClusterIdentifier: !Ref AuroraCluster
+      DBInstanceClass: db.t4g.medium
+      PubliclyAccessible: false
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+
+  # ECR Repositories
+  FrontendECRRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Join ['-', ['jenkins-ahs-frontend', !Ref Environment]]
+      ImageTagMutability: MUTABLE
+
+  BackendECRRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: !Join ['-', ['jenkins-ahs-backend', !Ref Environment]]
+      ImageTagMutability: MUTABLE
+
+  CognitoUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: !Join ['-', ['JenkinsAHS', !Ref Environment]]
+      AdminCreateUserConfig:
+        AllowAdminCreateUserOnly: false
+      AutoVerifiedAttributes:
+        - email
+      UsernameAttributes:
+        - email
+      MfaConfiguration: "OFF"
+
+  CognitoUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      UserPoolId: !Ref CognitoUserPool
+      ClientName: !Join ['-', ['jenkins-ahs-client', !Ref Environment]]
+      GenerateSecret: false
+      ExplicitAuthFlows:
+        - ALLOW_USER_SRP_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+      CallbackURLs:
+        - !Sub https://${DomainName}/login
+      LogoutURLs:
+        - !Sub https://${DomainName}
+      AllowedOAuthFlows:
+        - code
+      AllowedOAuthScopes:
+        - email
+        - openid
+        - profile
+      AllowedOAuthFlowsUserPoolClient: true
+      PreventUserExistenceErrors: ENABLED
+
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Join ['-', ['jenkins-ahs-cluster', !Ref Environment]]
+      CapacityProviders:
+        - FARGATE
+
+  ECSTaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+        - arn:aws:iam::aws:policy/AmazonTranscribeFullAccess
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+        - arn:aws:iam::aws:policy/AmazonBedrockFullAccess
+
+  ECSExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+        - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
+
+  FrontendTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Join ['-', ['jenkins-ahs-frontend', !Ref Environment]]
+      Cpu: '512'
+      Memory: '1024'
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      ExecutionRoleArn: !Ref ECSExecutionRole
+      TaskRoleArn: !Ref ECSTaskRole
+      ContainerDefinitions:
+        - Name: jenkins-ahs-frontend
+          Image: 034039014574.dkr.ecr.us-west-2.amazonaws.com/jenkins-ahs-frontend:latest
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: /ecs/jenkins-ahs-frontend
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: ecs
+              awslogs-create-group: 'true'
+          PortMappings:
+            - ContainerPort: 4000
+              Protocol: tcp
+          Environment:
+            - Name: NEXT_PUBLIC_BACKEND_URL
+              Value: !Sub https://api.${DomainName}
+            - Name: NEXT_PUBLIC_AWS_REGION
+              Value: !Ref AWS::Region
+            - Name: NEXT_PUBLIC_COGNITO_DOMAIN
+              Value: !Sub https://${AuthDomainPrefix}.auth.${AWS::Region}.amazoncognito.com
+            - Name: NEXT_PUBLIC_COGNITO_CLIENT_ID
+              Value: !Ref CognitoUserPoolClient
+            - Name: NEXT_PUBLIC_COGNITO_REDIRECT_URI
+              Value: !Sub https://${DomainName}/login
+            - Name: NEXT_PUBLIC_COGNITO_LOGOUT_URI
+              Value: !Sub https://${DomainName}
+            - Name: NEXT_PUBLIC_USE_COGNITO
+              Value: 'true'
+
+  BackendTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Join ['-', ['jenkins-ahs-backend', !Ref Environment]]
+      Cpu: '1024'
+      Memory: '2048'
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      ExecutionRoleArn: !Ref ECSExecutionRole
+      TaskRoleArn: !Ref ECSTaskRole
+      ContainerDefinitions:
+        - Name: jenkins-ahs-backend
+          Image: 034039014574.dkr.ecr.us-west-2.amazonaws.com/jenkins-ahs-backend:latest
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: /ecs/jenkins-ahs-backend
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: ecs
+              awslogs-create-group: 'true'
+          PortMappings:
+            - ContainerPort: 8000
+              Protocol: tcp
+          Environment:
+            - Name: FRONTEND_URL
+              Value: !Sub https://${DomainName}
+            - Name: ALLOWED_ORIGINS
+              Value: !Sub https://${DomainName}
+            - Name: AWS_REGION
+              Value: !Ref AWS::Region
+            - Name: AWS_BUCKET_NAME
+              Value: !Ref JenkinsS3Bucket
+            - Name: COGNITO_USER_POOL_ID
+              Value: !Ref CognitoUserPool
+            - Name: COGNITO_APP_CLIENT_ID
+              Value: !Ref CognitoUserPoolClient
+            - Name: USE_COGNITO
+              Value: 'true'
+            - Name: ENVIRONMENT
+              Value: !Ref Environment
+            - Name: ACCESS_TOKEN_SECRET
+              Value: !Ref AccessTokenSecret
+            - Name: ACCESS_TOKEN_EXPIRE_MINUTES
+              Value: "1440"
+            - Name: USE_AURORA
+              Value: "true"
+            - Name: COOKIE_SECURE
+              Value: "true"
+            - Name: LOGGING_LEVEL
+              Value: DEBUG
+            - Name: DEFAULT_NOTE_GENERATION_MODEL
+              Value: us.meta.llama3-3-70b-instruct-v1:0
+            - Name: LABEL_MODEL
+              Value: us.meta.llama3-3-70b-instruct-v1:0
+            - Name: S3_BUCKET_NAME
+              Value: !Ref JenkinsS3Bucket
+            - Name: AURORA_WRITER_ENDPOINT
+              Value: !GetAtt AuroraCluster.Endpoint.Address
+            - Name: DB_NAME
+              Value: !Ref DBName
+            - Name: DB_USER
+              Value: !Ref DBUser
+            - Name: DB_PASSWORD
+              Value: !Ref DBPassword
+            - Name: DB_PORT
+              Value: "5432"
+            - Name: COGNITO_CLIENT_ID
+              Value: !Ref CognitoUserPoolClient
+            - Name: COGNITO_DOMAIN
+              Value: !Sub https://${AuthDomainPrefix}.auth.${AWS::Region}.amazoncognito.com
+            - Name: COGNITO_REDIRECT_URI
+              Value: !Sub https://${DomainName}/login
+            - Name: TRANSCRIPTION_SERVICE
+              Value: "AWS Transcribe"
+            - Name: AWS_ACCESS_KEY_ID
+              Value: !Ref AWSAccessKeyId
+            - Name: AWS_SECRET_ACCESS_KEY
+              Value: !Ref AWSSecretAccessKey
+
+  FrontendService:
+    Type: AWS::ECS::Service
+    DependsOn:
+      - FrontendHTTPSListener
+    Properties:
+      ServiceName: !Join ['-', ['jenkins-ahs-frontend', !Ref Environment]]
+      Cluster: !Ref ECSCluster
+      TaskDefinition: !Ref FrontendTaskDefinition
+      DesiredCount: 1
+      EnableExecuteCommand: true
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          SecurityGroups:
+            - !Ref JenkinsSecurityGroup
+          Subnets: !Ref PrivateSubnets
+      LoadBalancers:
+        - ContainerName: jenkins-ahs-frontend
+          ContainerPort: 4000
+          TargetGroupArn: !Ref FrontendTargetGroup
+
+  BackendService:
+    Type: AWS::ECS::Service
+    DependsOn:
+      - BackendHTTPSListener
+    Properties:
+      ServiceName: !Join ['-', ['jenkins-ahs-backend', !Ref Environment]]
+      Cluster: !Ref ECSCluster
+      TaskDefinition: !Ref BackendTaskDefinition
+      DesiredCount: 1
+      EnableExecuteCommand: true
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: DISABLED
+          SecurityGroups:
+            - !Ref JenkinsSecurityGroup
+          Subnets: !Ref PrivateSubnets
+      LoadBalancers:
+        - ContainerName: jenkins-ahs-backend
+          ContainerPort: 8000
+          TargetGroupArn: !Ref BackendTargetGroup
+
+  ALBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for ALB
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          FromPort: -1
+          ToPort: -1
+          CidrIp: 0.0.0.0/0
+
+  JenkinsSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for Jenkins AHS application
+      GroupName: !Sub jenkins-ahs-sg-${Environment}-${AWS::StackName}
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          SourceSecurityGroupId: !Ref ALBSecurityGroup
+        - IpProtocol: tcp
+          FromPort: 8000
+          ToPort: 8000
+          SourceSecurityGroupId: !Ref ALBSecurityGroup
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: '-1'
+          FromPort: -1
+          ToPort: -1
+          CidrIp: 0.0.0.0/0
+
+  FrontendTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckEnabled: true
+      HealthCheckIntervalSeconds: 60
+      HealthCheckPath: /
+      HealthCheckTimeoutSeconds: 10
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 5
+      Port: 4000
+      Protocol: HTTP
+      TargetType: ip
+      VpcId: !Ref VpcId
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds
+          Value: '60'
+        - Key: slow_start.duration_seconds
+          Value: '60'
+
+  BackendTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckEnabled: true
+      HealthCheckIntervalSeconds: 60
+      HealthCheckPath: /healthcheck
+      HealthCheckTimeoutSeconds: 10
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 5
+      Port: 8000
+      Protocol: HTTP
+      TargetType: ip
+      VpcId: !Ref VpcId
+
+  ACMCertificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName: !Sub ${DomainName}
+      SubjectAlternativeNames:
+        - !Sub api.${DomainName}
+      ValidationMethod: DNS
+      DomainValidationOptions:
+        - DomainName: !Sub ${DomainName}
+          HostedZoneId: !Ref HostedZoneId
+        - DomainName: !Sub api.${DomainName}
+          HostedZoneId: !Ref HostedZoneId
+
+  DNSRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: !Sub ${DomainName}
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt FrontendALB.DNSName
+        HostedZoneId: !GetAtt FrontendALB.CanonicalHostedZoneID
+
+  APIRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref HostedZoneId
+      Name: !Sub api.${DomainName}
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt BackendALB.DNSName
+        HostedZoneId: !GetAtt BackendALB.CanonicalHostedZoneID
+
+  FrontendALB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Join ['-', ['jenkins-ahs-frontend', !Ref Environment]]
+      Scheme: internet-facing
+      LoadBalancerAttributes:
+        - Key: idle_timeout.timeout_seconds
+          Value: '60'
+      Subnets: !Ref PublicSubnets
+      SecurityGroups:
+        - !Ref ALBSecurityGroup
+
+  BackendALB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Join ['-', ['jenkins-ahs-backend', !Ref Environment]]
+      Scheme: internet-facing
+      LoadBalancerAttributes:
+        - Key: idle_timeout.timeout_seconds
+          Value: '60'
+      Subnets: !Ref PublicSubnets
+      SecurityGroups:
+        - !Ref ALBSecurityGroup
+
+  FrontendHTTPSListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref FrontendTargetGroup
+      LoadBalancerArn: !Ref FrontendALB
+      Port: 443
+      Protocol: HTTPS
+      Certificates:
+        - CertificateArn: !Ref ACMCertificate
+
+  BackendHTTPSListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref BackendTargetGroup
+      LoadBalancerArn: !Ref BackendALB
+      Port: 443
+      Protocol: HTTPS
+      Certificates:
+        - CertificateArn: !Ref ACMCertificate
+
+  FrontendHTTPListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: redirect
+          RedirectConfig:
+            Protocol: HTTPS
+            Port: '443'
+            StatusCode: HTTP_301
+      LoadBalancerArn: !Ref FrontendALB
+      Port: 80
+      Protocol: HTTP
+
+  BackendHTTPListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: redirect
+          RedirectConfig:
+            Protocol: HTTPS
+            Port: '443'
+            StatusCode: HTTP_301
+      LoadBalancerArn: !Ref BackendALB
+      Port: 80
+      Protocol: HTTP 

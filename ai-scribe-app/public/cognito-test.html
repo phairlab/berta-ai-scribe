@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cognito Auth Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin: 10px 0;
+        }
+        pre {
+            background-color: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>AWS Cognito Authentication Test</h1>
+    
+    <p>This page tests direct authentication with AWS Cognito.</p>
+    
+    <div>
+        <button id="loginButton">Login with Cognito</button>
+    </div>
+    
+    <h2>Debug Info:</h2>
+    <pre id="debugInfo">
+Cognito Domain: https://xmgov1.auth.us-west-2.amazoncognito.com
+Client ID: 6lthptetic9l8t4vppc4ej4epu
+Redirect URI: http://localhost:4000/cognito-test.html
+    </pre>
+    
+    <h2>Auth Code (if available):</h2>
+    <pre id="authCode">None</pre>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Configuration
+            const cognitoDomain = 'https://xmgov1.auth.us-west-2.amazoncognito.com';
+            const clientId = '6lthptetic9l8t4vppc4ej4epu';
+            const redirectUri = window.location.origin + '/cognito-test.html';
+            
+            // Check for auth code in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            const error = urlParams.get('error');
+            const errorDescription = urlParams.get('error_description');
+            
+            // Display auth code if available
+            if (code) {
+                document.getElementById('authCode').textContent = code;
+            } else if (error) {
+                document.getElementById('authCode').textContent = `Error: ${error}\nDescription: ${errorDescription || 'None'}`;
+            }
+            
+            // Login button handler
+            document.getElementById('loginButton').addEventListener('click', function() {
+                const authUrl = `${cognitoDomain}/login?client_id=${clientId}&response_type=code&scope=openid+email+profile&redirect_uri=${encodeURIComponent(redirectUri)}`;
+                window.location.href = authUrl;
+            });
+        });
+    </script>
+</body>
+</html> 

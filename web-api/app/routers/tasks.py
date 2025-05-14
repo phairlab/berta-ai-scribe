@@ -1,12 +1,13 @@
 from pathlib import Path
 from typing import Annotated
+import io
 
 from fastapi import APIRouter, BackgroundTasks, Body, Depends, status
 
 import app.errors as errors
 import app.schemas as sch
 import app.tasks as tasks
-from app.config import settings
+from app.config import settings, storage
 from app.config.db import next_sqid, useDatabase
 from app.logging import WebAPILogger, log_generation, log_transcription
 from app.security import authenticate_session, useUserSession
@@ -47,15 +48,30 @@ async def transcribe_audio(
     *,
     recordingId: Annotated[str, Body()],
 ) -> sch.TextResponse:
+    timer = ExecutionTimer()
     try:
         media_type = "audio/mpeg"
         filename = f"{recordingId}.mp3"
-        filepath = Path(settings.RECORDINGS_FOLDER, userSession.username, filename)
-
-        with ExecutionTimer() as timer, open(filepath, mode="rb") as file:
-            transcription_output = await tasks.transcribe_audio(
-                file, filename, media_type
-            )
+        
+        with timer:
+            # Use the storage provider to get the recording file
+            # We need to collect all the streamed chunks into a file-like object
+            file_data = io.BytesIO()
+            try:
+                # Get file from storage provider
+                for chunk in storage.stream_recording(userSession.username, filename):
+                    file_data.write(chunk)
+                
+                # Reset file pointer to beginning
+                file_data.seek(0)
+                
+                # Transcribe the audio
+                transcription_output = await tasks.transcribe_audio(
+                    file_data, filename, media_type
+                )
+            except Exception as e:
+                log.error(f"Error accessing recording file: {str(e)}")
+                raise errors.NotFound(f"Recording file not found: {str(e)}")
 
         backgroundTasks.add_task(
             log_transcription,

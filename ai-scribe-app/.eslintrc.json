@@ -1,0 +1,12 @@
+{
+  "extends": "next/core-web-vitals",
+  "rules": {
+    "import/order": "off",
+    "prettier/prettier": "off",
+    "no-console": "off",
+    "padding-line-between-statements": "off",
+    "react/jsx-sort-props": "off",
+    "react/self-closing-comp": "off",
+    "@typescript-eslint/no-unused-vars": "warn"
+  }
+} 

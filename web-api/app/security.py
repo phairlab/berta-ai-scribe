@@ -61,6 +61,10 @@ def decode_token(token: str, verify_expiry: bool = True) -> WebAPISession:
 async def get_snowflake_context_user(
     sf_context_current_user: Annotated[str | None, Header()] = None
 ) -> str:
+    # In development mode, use a default user
+    if settings.ENVIRONMENT == "development":
+        return "development_user"
+        
     if sf_context_current_user is None or len(sf_context_current_user.strip()) == 0:
         raise BadRequest("Snowflake context user is missing")
 

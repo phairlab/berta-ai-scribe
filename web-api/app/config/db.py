@@ -27,26 +27,24 @@ from app.services.adapters import DatabaseProvider
 from app.services.snowflake import SnowflakeDatabaseProvider
 from app.services.sqlite import SqliteDatabaseProvider
 from app.services.aurora import AuroraPostgresProvider
+from app.config.storage import save_recording, stream_recording, delete_recording
 
 sqids = Sqids(alphabet="ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
 
+def get_database_provider() -> DatabaseProvider:
+    """Get the appropriate database provider based on settings."""
+    if settings.USE_AURORA and settings.AURORA_WRITER_ENDPOINT and settings.DB_USER and settings.DB_PASSWORD:
+        print("Using Aurora PostgreSQL database")
+        return AuroraPostgresProvider()
+    elif settings.ENVIRONMENT == "development" and not settings.USE_AURORA:
+        print("Using SQLite database for development")
+        return SqliteDatabaseProvider()
+    else:
+        print("Using Snowflake database")
+        return SnowflakeDatabaseProvider()
 
-database_provider: DatabaseProvider
-
-if settings.USE_AURORA:
-    database_provider = AuroraPostgresProvider()
-elif settings.ENVIRONMENT == "development":
-    database_provider = SqliteDatabaseProvider()
-else:
-    database_provider = SnowflakeDatabaseProvider()
-
-# if settings.ENVIRONMENT == "development":
-#     database_provider = SqliteDatabaseProvider()
-# elif settings.USE_AURORA:
-#     database_provider = AuroraPostgresProvider()
-# else:
-#     database_provider = SnowflakeDatabaseProvider()
-
+# Initialize database provider and engine
+database_provider = get_database_provider()
 engine: Engine = database_provider.create_engine()
 DatabaseSessionMaker = sessionmaker(engine)
 
@@ -300,60 +298,110 @@ class DataChangeRecord(Base):
     server_task: Mapped[bool] = mapped_column(default=False)
 
 
-# ----------------------------------
-# FILE OPERATIONS
-
-
-def save_recording(file: BinaryIO, username: str, filename: str) -> None:
-    """Writes a file to a user's recordings folder."""
-
-    # Create the user's recordings directory if it does not yet exist.
-    user_folder = Path(settings.RECORDINGS_FOLDER, username)
-    if not os.path.isdir(user_folder):
-        os.mkdir(user_folder)
-
-    # Write the file.
-    with open(Path(user_folder, filename), "wb") as recording_file:
-        recording_file.write(file.read())
-
-
-def stream_recording(username: str, filename: str) -> Generator[bytes, Any, None]:
-    """Streams a file from the user's recordings folder."""
-
-    user_folder = Path(settings.RECORDINGS_FOLDER, username)
-    with open(Path(user_folder, filename), "rb") as recording_file:
-        yield from recording_file
-
-
-def delete_recording(username: str, filename: str) -> None:
-    """Removes a file from the user's recordings folder."""
-
-    user_folder = Path(settings.RECORDINGS_FOLDER, username)
-    os.remove(Path(user_folder, filename))
-
-
 # ---------------------------------
 # CONFIG UPDATES
 
 
 def is_datafolder_initialized() -> bool:
-    return os.path.isdir(settings.DATA_FOLDER)
+    """Check if the data folder and database are properly initialized."""
+    if not os.path.exists(settings.DATA_FOLDER):
+        return False
+    
+    if not os.path.exists(settings.RECORDINGS_FOLDER):
+        return False
+        
+    db_path = os.path.join(settings.DATA_FOLDER, "database.db")
+    if not os.path.exists(db_path):
+        return False
+        
+    # Check if the database has the required tables
+    try:
+        with next(get_database_session()) as database:
+            # Check if users table exists and has the system user
+            result = database.execute(
+                text("SELECT name FROM sqlite_master WHERE type='table' AND name='users'")
+            ).scalar_one_or_none()
+            if not result:
+                return False
+                
+            # Check if system user exists
+            result = database.execute(
+                text("SELECT username FROM users WHERE username = :username"),
+                {"username": settings.SYSTEM_USER}
+            ).scalar_one_or_none()
+            if not result:
+                return False
+                
+            # Check if sqid_sequence table exists and has initial value
+            result = database.execute(
+                text("SELECT name FROM sqlite_master WHERE type='table' AND name='sqid_sequence'")
+            ).scalar_one_or_none()
+            if not result:
+                return False
+                
+            result = database.execute(
+                text("SELECT id FROM sqid_sequence LIMIT 1")
+            ).scalar_one_or_none()
+            if not result:
+                return False
+                
+            return True
+    except Exception as e:
+        print(f"Error checking database initialization: {e}")
+        return False
 
 
 def initialize_dev_datafolder():
-    os.mkdir(settings.DATA_FOLDER)
-    os.mkdir(settings.RECORDINGS_FOLDER)
-    Base.metadata.create_all(engine)
-
-    with next(get_database_session()) as database:
-        database.add(User(username=settings.SYSTEM_USER))
-        database.execute(text("CREATE TABLE sqid_sequence (id INTEGER PRIMARY KEY);"))
-        database.execute(text("INSERT INTO sqid_sequence (id) VALUES (42874);"))
-        database.commit()
+    """Initialize the development data folder and database."""
+    try:
+        print("Initializing development environment...")
+        
+        # Create data folders if they don't exist
+        os.makedirs(settings.DATA_FOLDER, exist_ok=True)
+        os.makedirs(settings.RECORDINGS_FOLDER, exist_ok=True)
+        
+        # Create all database tables
+        print("Creating database tables...")
+        Base.metadata.create_all(engine)
+        
+        # Initialize the database with required data
+        with next(get_database_session()) as database:
+            # Check if system user exists
+            system_user = database.execute(
+                select(User).where(User.username == settings.SYSTEM_USER)
+            ).scalar_one_or_none()
+            
+            if not system_user:
+                print("Creating system user...")
+                database.add(User(username=settings.SYSTEM_USER))
+            
+            # Check if sqid_sequence table exists and has initial value
+            try:
+                database.execute(text("SELECT id FROM sqid_sequence LIMIT 1")).scalar_one()
+            except Exception:
+                print("Initializing sqid_sequence table...")
+                database.execute(text("CREATE TABLE IF NOT EXISTS sqid_sequence (id INTEGER PRIMARY KEY);"))
+                database.execute(text("INSERT INTO sqid_sequence (id) VALUES (42874);"))
+            
+            database.commit()
+            print("Database initialization complete.")
+            
+            # Verify initialization
+            if not is_datafolder_initialized():
+                raise Exception("Database initialization verification failed")
+                
+    except Exception as e:
+        print(f"Error initializing development environment: {e}")
+        import traceback
+        traceback.print_exc()
+        raise
 
 
 def update_builtin_notetypes():
+    """Update the built-in note types in the database."""
     updated = datetime.now(timezone.utc).astimezone()
+    
+    # Get all note type files from the built-in note types directory
     categories = [
         (f.name, f.path)
         for f in os.scandir(settings.BUILTIN_NOTETYPES_FOLDER)
@@ -368,9 +416,10 @@ def update_builtin_notetypes():
     ]
 
     note_titles = {path.stem for (_, path) in filepaths}
+    print(f"Found {len(note_titles)} note types in filesystem")
 
     with next(get_database_session()) as database:
-        # Get the current built-in note types.
+        # Get the current built-in note types
         get_builtin_notetypes = (
             select(NoteDefinition)
             .where(
@@ -383,54 +432,73 @@ def update_builtin_notetypes():
         saved_notetypes = {
             nt.title: nt for nt in database.execute(get_builtin_notetypes).scalars()
         }
+        print(f"Found {len(saved_notetypes)} note types in database")
 
         for category, path in filepaths:
             title = path.stem
+            print(f"Processing note type: {title}")
 
-            with open(path, "r", encoding="utf8") as f:
-                instructions = f.read().strip()
+            try:
+                with open(path, "r", encoding="utf8") as f:
+                    instructions = f.read().strip()
+                print(f"  Read {len(instructions)} characters from file")
 
-            if title in saved_notetypes:
-                if (
-                    saved_notetypes[title].instructions != instructions
-                    or saved_notetypes[title].category != category
-                ):
-                    current_version = saved_notetypes[title]
+                if title in saved_notetypes:
+                    if (
+                        saved_notetypes[title].instructions != instructions
+                        or saved_notetypes[title].category != category
+                    ):
+                        print(f"  Updating existing note type")
+                        current_version = saved_notetypes[title]
+                        sqid = next_sqid(database)
+
+                        new_version = NoteDefinition(
+                            id=current_version.id,
+                            version=sqid,
+                            username=current_version.username,
+                            created=updated,
+                            category=category,
+                            title=current_version.title,
+                            instructions=instructions,
+                            model=settings.DEFAULT_NOTE_GENERATION_MODEL,
+                            output_type="Markdown",
+                        )
+
+                        database.add(new_version)
+                        current_version.inactivated = updated
+                    else:
+                        print(f"  No changes needed")
+                else:
+                    print(f"  Creating new note type")
                     sqid = next_sqid(database)
 
-                    new_version = NoteDefinition(
-                        id=current_version.id,
+                    new_record = NoteDefinition(
+                        id=sqid,
                         version=sqid,
-                        username=current_version.username,
+                        username=settings.SYSTEM_USER,
                         created=updated,
                         category=category,
-                        title=current_version.title,
+                        title=title,
                         instructions=instructions,
                         model=settings.DEFAULT_NOTE_GENERATION_MODEL,
                         output_type="Markdown",
                     )
 
-                    database.add(new_version)
-                    current_version.inactivated = updated
-            else:
-                sqid = next_sqid(database)
+                    database.add(new_record)
 
-                new_record = NoteDefinition(
-                    id=sqid,
-                    version=sqid,
-                    username=settings.SYSTEM_USER,
-                    created=updated,
-                    category=category,
-                    title=title,
-                    instructions=instructions,
-                    model=settings.DEFAULT_NOTE_GENERATION_MODEL,
-                    output_type="Markdown",
-                )
+            except Exception as e:
+                print(f"  Error processing {title}: {e}")
+                continue
 
-                database.add(new_record)
+        # Inactivate any note types that no longer exist
+        for nt in saved_notetypes.values():
+            if nt.title not in note_titles:
+                print(f"Inactivating removed note type: {nt.title}")
+                nt.inactivated = updated
 
-            for nt in saved_notetypes.values():
-                if nt.title not in note_titles:
-                    nt.inactivated = updated
-
+        try:
             database.commit()
+            print("Successfully updated note types in database")
+        except Exception as e:
+            print(f"Error committing changes: {e}")
+            database.rollback()

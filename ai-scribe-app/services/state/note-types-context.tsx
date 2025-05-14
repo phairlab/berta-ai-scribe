@@ -47,24 +47,42 @@ function NoteTypesProvider({ children }: ProviderProps) {
   );
 
   async function prefetch(abortSignal: AbortSignal) {
-    const records = await webApi.noteDefinitions.getAll(abortSignal);
-    const noteTypes = records
-      .map((nt) => convertWebApiRecord.toNoteType(nt))
-      .sort(alphabetically((nt) => nt.title));
-
-    setNoteTypes(noteTypes);
+    console.log("Fetching note types...");
+    try {
+      const records = await webApi.noteDefinitions.getAll(abortSignal);
+      const noteTypes = records
+        .map((nt) => convertWebApiRecord.toNoteType(nt))
+        .sort(alphabetically((nt) => nt.title));
+      console.log("Note types fetched successfully:", noteTypes.length);
+      setNoteTypes(noteTypes);
+    } catch (error) {
+      console.error("Error fetching note types:", error);
+      throw error;
+    }
   }
 
   useEffect(() => {
+    console.log("NoteTypesProvider: Authentication state changed to", authenticationState);
+    
     if (authenticationState === "Authenticated") {
+      console.log("NoteTypesProvider: Starting initialization");
       const controller = new AbortController();
 
       setInitState("Initializing");
       prefetch(controller.signal)
-        .then(() => setInitState("Ready"))
-        .catch(() => setInitState("Failed"));
+        .then(() => {
+          console.log("NoteTypesProvider: Initialization complete");
+          setInitState("Ready");
+        })
+        .catch((error) => {
+          console.error("NoteTypesProvider: Initialization failed", error);
+          setInitState("Failed");
+        });
 
       return () => controller.abort();
+    } else if (authenticationState === "Unauthenticated") {
+      console.log("NoteTypesProvider: Resetting to initial state");
+      setInitState("Initializing");
     }
 
     return;

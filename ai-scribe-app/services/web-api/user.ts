@@ -6,7 +6,7 @@ import { UserInfo } from "./types";
 const getInfo =
   (getAccessToken: () => WebApiToken) =>
   (cancellation?: AbortSignal): Promise<UserInfo> =>
-    httpAction<UserInfo>("GET", "api/user/info", {
+    httpAction<UserInfo>("GET", "/api/user/info", {
       accessToken: getAccessToken(),
       signal: cancellation,
     });
@@ -14,7 +14,7 @@ const getInfo =
 const setDefaultNoteType =
   (getAccessToken: () => WebApiToken) =>
   (id: string, cancellation?: AbortSignal): Promise<void> =>
-    httpAction<void>("PUT", "api/user/default-note-type", {
+    httpAction<void>("PUT", "user/default-note-type", {
       data: id,
       accessToken: getAccessToken(),
       signal: cancellation,
@@ -23,7 +23,7 @@ const setDefaultNoteType =
 const setEnabledNoteTypes =
   (getAccessToken: () => WebApiToken) =>
   (noteTypes: string[], cancellation?: AbortSignal): Promise<void> =>
-    httpAction<void>("PUT", "api/user/enabled-note-types", {
+    httpAction<void>("PUT", "user/enabled-note-types", {
       data: noteTypes,
       accessToken: getAccessToken(),
       signal: cancellation,
@@ -36,7 +36,7 @@ const submitFeedback =
     details: string,
     cancellation?: AbortSignal,
   ): Promise<void> =>
-    httpAction<void>("POST", "api/user/feedback", {
+    httpAction<void>("POST", "user/feedback", {
       data: {
         submitted: submitted.toISOString(),
         details: details,

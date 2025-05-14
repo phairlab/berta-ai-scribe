@@ -1,5 +1,6 @@
 import { headerNames } from "@/config/keys";
 import * as Errors from "@/utility/errors";
+import { API_BASE_URL } from "./common";
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
@@ -66,7 +67,9 @@ async function executeHttpAction<T>(
       };
     }
 
-    let fullPath = path;
+    // Ensure path starts with a forward slash
+    const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+    let fullPath = `${API_BASE_URL}${normalizedPath}`;
 
     if (parameters?.query) {
       const searchParameters = new URLSearchParams(
@@ -99,6 +102,7 @@ async function executeHttpAction<T>(
       body: body,
     };
 
+    console.log(`Making API request to: ${fullPath}`);
     const response = await fetch(fullPath, init);
 
     try {
@@ -151,25 +155,23 @@ async function executeHttpAction<T>(
           );
         }
       }
-    } catch (e: unknown) {
-      if (Errors.isApplicationError(e)) {
-        throw e;
-      } else {
-        throw Errors.BadResponse((e as Error).message);
+    } catch (ex: unknown) {
+      if (Errors.isApplicationError(ex)) {
+        throw ex;
       }
+
+      throw Errors.ServerError(
+        ex instanceof Error ? ex.message : "Unknown error",
+      );
     }
-  } catch (e: unknown) {
-    if (Errors.isApplicationError(e)) {
-      throw e;
-    } else if (e instanceof DOMException && e.name === "TimeoutError") {
-      throw Errors.TimeoutError;
-    } else if (e instanceof DOMException && e.name === "AbortError") {
-      throw Errors.RequestAborted;
-    } else if (e instanceof TypeError) {
-      throw Errors.ServerUnresponsiveError;
-    } else {
-      throw Errors.UnexpectedError((e as Error).message);
+  } catch (ex: unknown) {
+    if (Errors.isApplicationError(ex)) {
+      throw ex;
     }
+
+    throw Errors.ServerError(
+      ex instanceof Error ? ex.message : "Unknown error",
+    );
   }
 }
 

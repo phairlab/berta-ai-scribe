@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     DEFAULT_AUDIO_FORMAT: str = "mp3"
     DEFAULT_AUDIO_BITRATE: str = "96k"
     LOGGING_LEVEL: str = "info"
+    COOKIE_SECURE: bool = True
 
     DATA_FOLDER: str = ".data"
     RECORDINGS_FOLDER: str = f"{DATA_FOLDER}/recordings"
@@ -32,6 +33,7 @@ class Settings(BaseSettings):
 
     DEFAULT_NOTE_GENERATION_MODEL: str = "us.meta.llama3-3-70b-instruct-v1:0"
     LABEL_MODEL: str = "us.meta.llama3-3-70b-instruct-v1:0"
+    
     TRANSCRIPTION_SERVICE: Literal["OpenAI Whisper", "WhisperX", "AWS Transcribe"] = (
         "AWS Transcribe"
     )
@@ -41,6 +43,15 @@ class Settings(BaseSettings):
     AWS_SECRET_ACCESS_KEY: str | None = None
     AWS_REGION: str = "us-west-2"
     S3_BUCKET_NAME: str = "jenkins-ahs"
+    AWS_SECRET_NAME: str | None = None
+
+    # Cognito settings
+    USE_COGNITO: bool = True
+    COGNITO_USER_POOL_ID: str | None = None
+    COGNITO_CLIENT_ID: str | None = None
+    COGNITO_CLIENT_SECRET: str | None = None
+    COGNITO_DOMAIN: str | None = None
+    COGNITO_REDIRECT_URI: str | None = None
 
     ENCOUNTERS_PAGE_SIZE: int = 15
 
@@ -62,7 +73,7 @@ class Settings(BaseSettings):
     AZURE_API_VERSION: str | None = None
     AZURE_OPENAI_ENDPOINT: str | None = None
 
-    USE_AURORA: bool = False
+    USE_AURORA: bool = True
     AURORA_WRITER_ENDPOINT: str | None = None
     DB_NAME: str | None = None
     DB_USER: str | None = None
@@ -85,4 +96,9 @@ is_aws_bedrock_supported = (
 is_aws_transcribe_supported: bool = (
     settings.AWS_ACCESS_KEY_ID is not None
     and settings.AWS_SECRET_ACCESS_KEY is not None
+)
+is_cognito_supported: bool = (
+    settings.USE_COGNITO
+    and settings.COGNITO_USER_POOL_ID is not None
+    and settings.COGNITO_CLIENT_ID is not None
 )

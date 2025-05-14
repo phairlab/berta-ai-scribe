@@ -10,25 +10,17 @@ from app.services.adapters import GenerativeAIService, TranscriptionService
 from app.services.azure_cognitive import AzureCognitiveGenerativeAIService
 from app.services.cortex import CortexGenerativeAIService
 from app.services.openai import OpenAIGenerativeAIService, OpenAITranscriptionService
+from app.services.prompt_service import prompt_service
 from app.services.whisperx import WhisperXTranscriptionService
 from app.services.amazon_transcribe import AmazonTranscribeService
 from app.services.aws_bedrock import BedrockGenerativeAIService
 
 
-with open(
-    f"{settings.PROMPTS_FOLDER}/note-formats/plaintext.txt", "r", encoding="utf-8"
-) as f:
-    PLAINTEXT_NOTE_SYSTEM_PROMPT = f.read()
-
-with open(
-    f"{settings.PROMPTS_FOLDER}/note-formats/markdown.txt", "r", encoding="utf-8"
-) as f:
-    MARKDOWN_NOTE_SYSTEM_PROMPT = f.read()
-
-with open(
-    f"{settings.PROMPTS_FOLDER}/label-transcript.txt", "r", encoding="utf-8"
-) as f:
-    LABEL_TRANSCRIPT_SYSTEM_PROMPT = f.read()
+# Load prompts using the prompt service
+note_format_prompts = prompt_service.get_note_format_prompts()
+PLAINTEXT_NOTE_SYSTEM_PROMPT = note_format_prompts.get('plaintext', '')
+MARKDOWN_NOTE_SYSTEM_PROMPT = note_format_prompts.get('markdown', '')
+LABEL_TRANSCRIPT_SYSTEM_PROMPT = prompt_service.get_label_transcript_prompt()
 
 
 transcription_service: TranscriptionService

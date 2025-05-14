@@ -16,10 +16,11 @@ from fastapi.openapi.docs import (
 )
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 from starlette.background import BackgroundTask
 
 import app.config.db as db
-from app.config import settings
+from app.config import settings, is_cognito_supported
 from app.errors import Unauthorized, WebAPIException
 from app.logging import (
     RequestMetrics,
@@ -38,9 +39,15 @@ from app.routers import (
     tasks,
     user,
 )
+
+if is_cognito_supported:
+    from app.routers import cognito_auth
+
 from app.schemas import SimpleMessage, WebAPIError, WebAPIErrorDetail
 from app.security import WebAPISession, decode_token
 from app.utility.timing import ExecutionTimer
+from app.config.storage import USE_S3_STORAGE
+from app.services.s3_storage import s3_storage
 
 # ----------------------------------
 # LOGGING CONFIG
@@ -75,6 +82,23 @@ app = FastAPI(
     docs_url=None,
     redoc_url=None,
 )
+
+# Add CORS middleware in development mode
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:4000",
+        "http://127.0.0.1:4000"
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["*"],
+)
+print("CORS middleware configured")
 
 # ----------------------------------
 # STATIC FILES
@@ -364,18 +388,53 @@ async def health_check():
 
 
 # API routers
-app.include_router(authorization.router, tags=["Authorization"])
-app.include_router(user.router, prefix="/user", tags=["User"])
-app.include_router(tasks.router, prefix="/tasks", tags=["Tasks"])
+app.include_router(encounters.router, prefix="/encounters", tags=["Encounters"])
 app.include_router(
     note_definitions.router, prefix="/note-definitions", tags=["Note Definitions"]
 )
 app.include_router(
-    sample_recordings.router, prefix="/sample-recordings", tags=["Recordings"]
+    recordings.router, prefix="/recordings", tags=["Recordings"]
 )
-app.include_router(encounters.router, prefix="/encounters", tags=["Encounters"])
-app.include_router(recordings.router, prefix="/recordings", tags=["Recordings"])
-app.include_router(monitoring.router, prefix="/monitoring", tags=["Monitoring"])
+app.include_router(
+    sample_recordings.router, prefix="/sample-recordings", tags=["Sample Recordings"]
+)
+app.include_router(
+    user.router, prefix="/user", tags=["User"]
+)
+app.include_router(
+    tasks.router, prefix="/tasks", tags=["Tasks"]
+)
+app.include_router(
+    monitoring.router, prefix="/monitoring", tags=["Monitoring"]
+)
+
+# Include authentication routers based on environment and configuration
+if settings.ENVIRONMENT == "development":
+    print("Including development auth router...")
+    # In development, use the original working auth setup
+    app.include_router(
+        authorization.router,
+        prefix="/auth",
+        tags=["Authentication"],
+        include_in_schema=True
+    )
+    print("Development auth router included")
+elif is_cognito_supported:
+    # In production with Cognito configured, use Cognito auth
+    app.include_router(
+        cognito_auth.router,
+        prefix="/auth",
+        tags=["Authentication"],
+        include_in_schema=True
+    )
+else:
+    # In production without Cognito, use Snowflake auth
+    app.include_router(
+        authorization.router,
+        prefix="/auth",
+        tags=["Authentication"],
+        include_in_schema=True
+    )
 
 # ----------------------------------
 # FALLBACK
@@ -383,5 +442,89 @@ app.include_router(monitoring.router, prefix="/monitoring", tags=["Monitoring"])
 # Handle case when the app is not run via the uvicorn command
 if __name__ == "__main__":
     import uvicorn
+
+    # Sync local prompts to S3 if AWS is configured 
+    if USE_S3_STORAGE:
+        import os
+        
+        # Log that we're checking S3 for prompts
+        print("AWS credentials detected. Checking if prompts need to be synced to S3...")
+        
+        # Define a function to sync missing prompts
+        def ensure_prompts_in_s3():
+            try:
+                # Check if prompts directory exists locally
+                prompts_dir = Path(settings.PROMPTS_FOLDER)
+                if not prompts_dir.exists():
+                    print(f"Warning: Local prompts directory '{prompts_dir}' not found.")
+                    return
+                    
+                # Basic check: try to list one known prompt file in S3
+                test_file = f"prompts/label-transcript.txt"
+                try:
+                    s3_storage.s3_client.head_object(
+                        Bucket=s3_storage.bucket_name, 
+                        Key=test_file
+                    )
+                    print("Prompts already exist in S3.")
+                except Exception:
+                    print("Prompts not found in S3. Syncing local prompts to S3...")
+                    
+                    # Collect all files to upload
+                    all_files = list(prompts_dir.glob('**/*'))
+                    total_files = sum(1 for f in all_files if f.is_file())
+                    print(f"Found {total_files} files to upload")
+                    
+                    # Print subdirectories being uploaded
+                    directories = set()
+                    for local_path in all_files:
+                        if local_path.is_file():
+                            parent_dir = local_path.parent.relative_to(prompts_dir)
+                            if parent_dir != Path('.'):  # Not in the root directory
+                                directories.add(str(parent_dir))
+                    
+                    if directories:
+                        print(f"Subdirectories: {', '.join(sorted(directories))}")
+                    
+                    # Upload all prompts to S3
+                    files_uploaded = 0
+                    for local_path in all_files:
+                        if local_path.is_file():
+                            relative_path = local_path.relative_to(prompts_dir)
+                            s3_key = f"prompts/{relative_path}"
+                            
+                            try:
+                                print(f"Uploading {local_path} -> s3://{s3_storage.bucket_name}/{s3_key}")
+                                s3_storage.s3_client.upload_file(
+                                    str(local_path), 
+                                    s3_storage.bucket_name, 
+                                    s3_key
+                                )
+                                files_uploaded += 1
+                            except Exception as e:
+                                print(f"Error uploading {local_path}: {e}")
+                    
+                    print(f"Sync complete. {files_uploaded} files uploaded to S3.")
+                    
+                    # Verify one file from each main subdirectory to ensure everything is accessible
+                    for directory in ['builtin-note-types', 'note-formats']:
+                        try:
+                            # List one directory to confirm it's accessible
+                            response = s3_storage.s3_client.list_objects_v2(
+                                Bucket=s3_storage.bucket_name,
+                                Prefix=f"prompts/{directory}/"
+                            )
+                            if 'Contents' in response and len(response['Contents']) > 0:
+                                print(f"✓ Verified: {directory}/ contains {len(response['Contents'])} items")
+                            else:
+                                print(f"⚠️ Warning: {directory}/ appears to be empty")
+                        except Exception as e:
+                            print(f"⚠️ Warning: Could not verify {directory}/: {e}")
+            except Exception as e:
+                print(f"Warning: Failed to sync prompts to S3: {e}")
+                print("Application will continue with local prompt fallback.")
+        
+        # Call the function to ensure prompts are in S3
+        ensure_prompts_in_s3()
 
     uvicorn.run(app, host="0.0.0.0", port=8000)
