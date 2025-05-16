@@ -14,7 +14,7 @@ export async function POST() {
     }
 
     // Forward the request to the backend
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
     const response = await fetch(`${backendUrl}/auth/check-session`, {
       method: 'POST',
       headers: {

@@ -13,6 +13,7 @@ import { HeroUIProvider } from "@heroui/system";
 import { AuthenticationProvider } from "@/services/identity/authentication-provider";
 import { AppContextProviders } from "@/services/state/app-context-providers";
 import { JotaiProvider } from "@/services/state/jotai-provider";
+import { RuntimeConfigProvider } from "@/services/state/runtime-config-context";
 
 export interface ProvidersProps {
   children: React.ReactNode;
@@ -26,9 +27,11 @@ export function Providers({ children, themeProps }: ProvidersProps) {
     <HeroUIProvider navigate={router.push}>
       <NextThemesProvider {...themeProps}>
         <JotaiProvider>
-          <AuthenticationProvider>
-            <AppContextProviders>{children}</AppContextProviders>
-          </AuthenticationProvider>
+          <RuntimeConfigProvider>
+            <AuthenticationProvider>
+              <AppContextProviders>{children}</AppContextProviders>
+            </AuthenticationProvider>
+          </RuntimeConfigProvider>
         </JotaiProvider>
       </NextThemesProvider>
     </HeroUIProvider>

@@ -119,6 +119,31 @@ def add_default_note_types():
             "category": "Other",
             "file": ".prompts/builtin-note-types/Other/Psych.txt"
         },
+        {
+            "title": "Impression and Plan",
+            "category": "Individual Sections",
+            "file": ".prompts/builtin-note-types/Individual Sections/Impression and Plan.txt"
+        },
+        {
+            "title": "History of Presenting Illness",
+            "category": "Individual Sections",
+            "file": ".prompts/builtin-note-types/Individual Sections/History of Presenting Illness.txt"
+        },
+        {
+            "title": "Investigations",
+            "category": "Individual Sections",
+            "file": ".prompts/builtin-note-types/Individual Sections/Investigations.txt"
+        },
+        {
+            "title": "Physical Exam",
+            "category": "Individual Sections",
+            "file": ".prompts/builtin-note-types/Individual Sections/Physical Exam.txt"
+        },
+        {
+            "title": "Mental Status Exam",
+            "category": "Individual Sections",
+            "file": ".prompts/builtin-note-types/Individual Sections/Mental Status Exam.txt"
+        }
     ]
     
     # Add each note type

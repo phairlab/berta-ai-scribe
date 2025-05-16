@@ -135,8 +135,10 @@ class S3StorageProvider(StorageProvider):
         # Convert local path (.prompts/file.txt) to S3 key (prompts/file.txt)
         if prompt_path.startswith('.prompts/'):
             s3_key = 'prompts/' + prompt_path[9:]  # Remove the '.prompts/' prefix
+        elif prompt_path.startswith('prompts/'):
+            s3_key = prompt_path  # Already in correct format
         else:
-            s3_key = prompt_path
+            s3_key = f'prompts/{prompt_path}'  # Add prompts/ prefix if missing
             
         try:
             response = self.s3_client.get_object(Bucket=self.bucket_name, Key=s3_key)
@@ -162,8 +164,10 @@ class S3StorageProvider(StorageProvider):
         # Convert local path (.prompts/directory) to S3 prefix (prompts/directory)
         if directory_path.startswith('.prompts/'):
             s3_prefix = 'prompts/' + directory_path[9:]  # Remove the '.prompts/' prefix
+        elif directory_path.startswith('prompts/'):
+            s3_prefix = directory_path  # Already in correct format
         else:
-            s3_prefix = directory_path
+            s3_prefix = f'prompts/{directory_path}'  # Add prompts/ prefix if missing
             
         # Ensure the prefix ends with a slash for directory-like behavior
         if not s3_prefix.endswith('/'):

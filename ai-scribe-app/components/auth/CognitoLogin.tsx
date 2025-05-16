@@ -5,11 +5,8 @@ import { useRouter } from "next/navigation";
 import { useAtom } from "jotai";
 import { authenticationAtom } from "@/services/identity";
 import { authenticateWithCognito } from "@/services/web-api/authentication";
+import { useRuntimeConfig } from "@/services/state/runtime-config-context";
 
-// Get configuration from environment variables
-const cognitoDomain = process.env.NEXT_PUBLIC_COGNITO_DOMAIN;
-const clientId = process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID;
-const redirectUri = process.env.NEXT_PUBLIC_COGNITO_REDIRECT_URI;
 
 export function CognitoLogin() {
   const router = useRouter();
@@ -17,6 +14,12 @@ export function CognitoLogin() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [debugMessage, setDebugMessage] = useState<string>('');
+
+  // Get runtime config
+  const runtimeConfig = useRuntimeConfig();
+  const cognitoDomain = runtimeConfig.NEXT_PUBLIC_COGNITO_DOMAIN;
+  const clientId = runtimeConfig.NEXT_PUBLIC_COGNITO_CLIENT_ID;
+  const redirectUri = runtimeConfig.NEXT_PUBLIC_COGNITO_REDIRECT_URI;
 
   const addDebug = (message: string) => {
     console.log(message);
@@ -28,11 +31,8 @@ export function CognitoLogin() {
     const checkSession = async () => {
       try {
         addDebug("Checking for existing session...");
-        const response = await fetch('/api/auth/check-session', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+        const response = await fetch(`/api/auth/check-session`, {
+          method: 'POST',  
           credentials: 'include',
         });
 
@@ -103,7 +103,7 @@ export function CognitoLogin() {
     try {
       addDebug("Processing authorization code");
       // Get token from API using the auth code
-      const webApiToken = await authenticateWithCognito(code);
+      const webApiToken = await authenticateWithCognito(code, runtimeConfig.NEXT_PUBLIC_BACKEND_URL);
       
       // Update auth state
       setAuthentication({ state: "Authenticated", token: webApiToken });

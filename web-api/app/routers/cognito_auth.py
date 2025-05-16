@@ -246,7 +246,8 @@ async def authenticate_cognito_user(
             samesite="lax",
             secure=settings.COOKIE_SECURE,  # Only use secure in production
             max_age=3600,  # 1 hour
-            path="/"
+            path="/",
+            domain=".jenkinsaiscribe.com"
         )
         
         # Store Cognito tokens in cookies
@@ -259,7 +260,8 @@ async def authenticate_cognito_user(
                     samesite="lax",
                     secure=settings.COOKIE_SECURE,  # Only use secure in production
                     max_age=3600,  # 1 hour
-                    path="/"
+                    path="/",
+                    domain=".jenkinsaiscribe.com"
                 )
             if 'refresh_token' in cognito_tokens:
                 response.set_cookie(
@@ -269,7 +271,8 @@ async def authenticate_cognito_user(
                     samesite="lax",
                     secure=settings.COOKIE_SECURE,  # Only use secure in production
                     max_age=30 * 24 * 3600,  # 30 days
-                    path="/"
+                    path="/",
+                    domain=".jenkinsaiscribe.com"
                 )
             if 'id_token' in cognito_tokens:
                 response.set_cookie(
@@ -279,7 +282,8 @@ async def authenticate_cognito_user(
                     samesite="lax",
                     secure=settings.COOKIE_SECURE,  # Only use secure in production
                     max_age=3600,  # 1 hour
-                    path="/"
+                    path="/",
+                    domain=".jenkinsaiscribe.com"
                 )
         
         log.info(f"Authentication successful for user: {username}")
@@ -327,7 +331,8 @@ async def check_session(
             samesite="lax",
             secure=settings.COOKIE_SECURE,  # Only use secure in production
             max_age=3600,  # 1 hour
-            path="/"
+            path="/",
+            domain=".jenkinsaiscribe.com"
         )
         
         return sch.Token(accessToken=api_token, tokenType="Cognito")
@@ -347,7 +352,8 @@ async def logout_user(response: Response):
         path="/",
         secure=settings.COOKIE_SECURE,
         httponly=True,
-        samesite="lax"
+        samesite="lax",
+        domain=".jenkinsaiscribe.com"
     )
     # Optionally: Add Cognito global sign-out logic here if needed
     return {"message": "Logged out"} 

@@ -35,7 +35,7 @@ class Settings(BaseSettings):
     LABEL_MODEL: str = "us.meta.llama3-3-70b-instruct-v1:0"
     
     TRANSCRIPTION_SERVICE: Literal["OpenAI Whisper", "WhisperX", "AWS Transcribe"] = (
-        "AWS Transcribe"
+        "OpenAI Whisper"
     )
     LOCAL_WHISPER_SERVICE_URL: str | None = None
 

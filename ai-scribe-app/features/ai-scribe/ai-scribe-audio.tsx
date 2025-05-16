@@ -19,6 +19,7 @@ import {
   WavesurferWidgetControls,
 } from "./wavesurfer-widget";
 
+
 type AIScribeAudioProps = {
   encounter: Encounter | null;
   isSaving: boolean;

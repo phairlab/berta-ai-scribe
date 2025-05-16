@@ -17,6 +17,7 @@ import { useWebApi } from "@/services/web-api/use-web-api";
 import { convertWebApiRecord } from "@/utility/conversion";
 import { InvalidOperationError } from "@/utility/errors";
 import { byDate } from "@/utility/sorting";
+import { useRuntimeConfig } from "@/services/state/runtime-config-context";
 
 import { createEncounter } from "./create-encounter";
 
@@ -36,6 +37,7 @@ const EncountersContext = createContext<ContextValue | undefined>(undefined);
 function EncountersProvider({ children }: ProviderProps) {
   const webApi = useWebApi();
   const authenticationState = useAtomValue(authenticationStateAtom);
+  const runtimeConfig = useRuntimeConfig();
 
   const [initState, setInitState] = useState<InitState>("Initializing");
   const [fetchState, setFetchState] = useState<FetchState>("Fetching More");
@@ -61,19 +63,19 @@ function EncountersProvider({ children }: ProviderProps) {
   }
 
   useEffect(() => {
-    if (authenticationState === "Authenticated") {
+    if (
+      authenticationState === "Authenticated" &&
+      runtimeConfig.NEXT_PUBLIC_BACKEND_URL
+    ) {
       const controller = new AbortController();
-
       setInitState("Initializing");
       prefetch(controller.signal)
         .then(() => setInitState("Ready"))
         .catch(() => setInitState("Failed"));
-
       return () => controller.abort();
     }
-
     return;
-  }, [authenticationState]);
+  }, [authenticationState, runtimeConfig]);
 
   return (
     <EncountersContext.Provider value={value}>

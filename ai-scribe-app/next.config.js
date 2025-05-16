@@ -10,6 +10,14 @@ let nextConfig = {
       ["@swc-jotai/react-refresh", {}],
     ],
   },
+  // Ensure environment variables are properly exposed
+  env: {
+    NEXT_PUBLIC_USE_COGNITO: process.env.NEXT_PUBLIC_USE_COGNITO,
+    NEXT_PUBLIC_COGNITO_DOMAIN: process.env.NEXT_PUBLIC_COGNITO_DOMAIN,
+    NEXT_PUBLIC_COGNITO_CLIENT_ID: process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID,
+    NEXT_PUBLIC_COGNITO_REDIRECT_URI: process.env.NEXT_PUBLIC_COGNITO_REDIRECT_URI,
+    NEXT_PUBLIC_BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL,
+  },
   async headers() {
     return [
       {
@@ -53,6 +61,18 @@ let nextConfig = {
       },
     ];
   },
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'https://api.jenkinsaiscribe.com/api/:path*',
+      },
+      {
+        source: '/auth/:path*',
+        destination: 'https://api.jenkinsaiscribe.com/auth/:path*',
+      },
+    ];
+  },
   // Add this webpack config to fix chunk loading errors
   webpack: (config, { isServer }) => {
     if (!isServer) {
@@ -75,7 +95,7 @@ let nextConfig = {
 };
 
 // Configure development-only settings.
-if (process.env.NODE_ENV == "development") {
+if (process.env.NODE_ENV === "development") {
   // These CSP settings match those imposed by Snowflake, to be used during local development.
   // Doesn't include the injected values for external integrations (which should not be happening through the client in any case).
   // https://docs.snowflake.com/en/developer-guide/snowpark-container-services/additional-considerations-services-jobs#responses-outgoing-to-the-clients

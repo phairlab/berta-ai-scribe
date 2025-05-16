@@ -84,6 +84,166 @@ Resources:
             AllowedOrigins: ['*']
             MaxAge: 3000
 
+  # IAM Role for the Lambda function
+  UploadFilesLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: S3Access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:ListBucket
+                Resource:
+                  - !Sub arn:aws:s3:::${JenkinsS3Bucket}
+                  - !Sub arn:aws:s3:::${JenkinsS3Bucket}/*
+
+  # Lambda function for file uploads
+  UploadFilesLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "${AWS::StackName}-UploadFiles-${Environment}"
+      Description: "Uploads files to S3 when CloudFormation stack is created or updated"
+      Handler: index.handler
+      Role: !GetAtt UploadFilesLambdaRole.Arn
+      Runtime: python3.9
+      Timeout: 300
+      MemorySize: 256
+      Environment:
+        Variables:
+          BUCKET_NAME: !Ref JenkinsS3Bucket
+      Code:
+        ZipFile: |
+          import os
+          import json
+          import boto3
+          import cfnresponse
+          import logging
+          import glob
+          import base64
+          
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+          
+          s3 = boto3.client('s3')
+          
+          def handler(event, context):
+              # Log the received event
+              logger.info('Received event: %s', json.dumps(event))
+              
+              # Get the bucket name from the environment variable
+              bucket_name = os.environ['BUCKET_NAME']
+              response_data = {}
+              
+              try:
+                  # Only process Create and Update events
+                  if event['RequestType'] in ['Create', 'Update']:
+                      logger.info(f'Processing files for bucket: {bucket_name}')
+                      
+                      # Define source directories and target prefixes
+                      upload_map = {
+                          '/Users/samridhivaid/Desktop/jenkins-ahs/web-api/.prompts': 'prompts/',
+                          '/Users/samridhivaid/Desktop/jenkins-ahs/web-api/.sample-recordings': 'sample-recordings/'
+                      }
+                      
+                      file_count = 0
+                      
+                      # Process each source directory
+                      for source_dir, target_prefix in upload_map.items():
+                          if os.path.exists(source_dir):
+                              # Find all files in the directory
+                              files = glob.glob(f"{source_dir}/**/*", recursive=True)
+                              
+                              # Upload each file
+                              for file_path in files:
+                                  if os.path.isfile(file_path):
+                                      # Determine the key (path in S3)
+                                      relative_path = os.path.relpath(file_path, source_dir)
+                                      s3_key = f"{target_prefix}{relative_path}"
+                                      
+                                      logger.info(f'Uploading {file_path} to s3://{bucket_name}/{s3_key}')
+                                      
+                                      # Upload the file
+                                      with open(file_path, 'rb') as file_data:
+                                          s3.put_object(
+                                              Bucket=bucket_name,
+                                              Key=s3_key,
+                                              Body=file_data
+                                          )
+                                      file_count += 1
+                          else:
+                              logger.warning(f'Source directory {source_dir} not found')
+                      
+                      response_data['Status'] = 'SUCCESS'
+                      response_data['FileCount'] = file_count
+                      logger.info(f'Successfully uploaded {file_count} files')
+                      
+                      # Send success response
+                      cfnresponse.send(event, context, cfnresponse.SUCCESS, response_data)
+                  else:
+                      # For Delete events, just return success without doing anything
+                      logger.info('Delete event, no action needed')
+                      cfnresponse.send(event, context, cfnresponse.SUCCESS, response_data)
+                      
+              except Exception as e:
+                  # Log the error and send failure response
+                  logger.error('Error: %s', str(e), exc_info=True)
+                  response_data['Status'] = 'FAILED'
+                  response_data['Error'] = str(e)
+                  cfnresponse.send(event, context, cfnresponse.FAILED, response_data)
+
+  # Custom resource to trigger the Lambda function
+  UploadFilesCustomResource:
+    Type: Custom::UploadFiles
+    DependsOn: JenkinsS3Bucket
+    Properties:
+      ServiceToken: !GetAtt UploadFilesLambda.Arn
+      # Include a version parameter to force updates when redeployed
+      Version: "1.0"
+
+  # Update S3 bucket policy to allow access
+  JenkinsS3BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref JenkinsS3Bucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowECSTaskAccess
+            Effect: Allow
+            Principal:
+              AWS: !GetAtt ECSTaskRole.Arn
+            Action:
+              - s3:GetObject
+              - s3:PutObject
+              - s3:DeleteObject
+              - s3:ListBucket
+            Resource:
+              - !Sub arn:aws:s3:::${JenkinsS3Bucket}
+              - !Sub arn:aws:s3:::${JenkinsS3Bucket}/*
+          - Sid: AllowLambdaAccess
+            Effect: Allow
+            Principal:
+              AWS: !GetAtt UploadFilesLambdaRole.Arn
+            Action:
+              - s3:PutObject
+              - s3:ListBucket
+            Resource:
+              - !Sub arn:aws:s3:::${JenkinsS3Bucket}
+              - !Sub arn:aws:s3:::${JenkinsS3Bucket}/*
+
   # Aurora RDS Cluster
   AuroraDBSubnetGroup:
     Type: AWS::RDS::DBSubnetGroup
@@ -188,6 +348,12 @@ Resources:
         - profile
       AllowedOAuthFlowsUserPoolClient: true
       PreventUserExistenceErrors: ENABLED
+      
+  CognitoUserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      Domain: !Ref AuthDomainPrefix
+      UserPoolId: !Ref CognitoUserPool
 
   ECSCluster:
     Type: AWS::ECS::Cluster
@@ -422,6 +588,10 @@ Resources:
           ToPort: 80
           SourceSecurityGroupId: !Ref ALBSecurityGroup
         - IpProtocol: tcp
+          FromPort: 4000
+          ToPort: 4000
+          SourceSecurityGroupId: !Ref ALBSecurityGroup
+        - IpProtocol: tcp
           FromPort: 8000
           ToPort: 8000
           SourceSecurityGroupId: !Ref ALBSecurityGroup
@@ -573,4 +743,35 @@ Resources:
             StatusCode: HTTP_301
       LoadBalancerArn: !Ref BackendALB
       Port: 80
-      Protocol: HTTP 
+      Protocol: HTTP
+
+Outputs:
+  S3BucketName:
+    Description: Name of the S3 bucket for application files
+    Value: !Ref JenkinsS3Bucket
+    Export:
+      Name: !Sub "${AWS::StackName}-S3BucketName"
+      
+  CognitoUserPoolId:
+    Description: ID of the Cognito User Pool
+    Value: !Ref CognitoUserPool
+    Export:
+      Name: !Sub "${AWS::StackName}-UserPoolId"
+      
+  CognitoAppClientId:
+    Description: ID of the Cognito App Client
+    Value: !Ref CognitoUserPoolClient
+    Export:
+      Name: !Sub "${AWS::StackName}-AppClientId"
+      
+  FrontendURL:
+    Description: URL of the frontend application
+    Value: !Sub "https://${DomainName}"
+    Export:
+      Name: !Sub "${AWS::StackName}-FrontendURL"
+      
+  BackendURL:
+    Description: URL of the backend API
+    Value: !Sub "https://api.${DomainName}"
+    Export:
+      Name: !Sub "${AWS::StackName}-BackendURL"

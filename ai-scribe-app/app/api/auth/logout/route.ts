@@ -6,7 +6,7 @@ export async function POST() {
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
     
     // Call the backend logout endpoint
-    const response = await fetch(`${backendUrl}/api/auth/logout`, {
+    const response = await fetch(`${backendUrl}/auth/logout`, {
       method: 'POST',
       credentials: 'include',
       headers: {

@@ -12,12 +12,15 @@ import {
 } from "@heroui/dropdown";
 
 import { sessionKeys } from "@/config/keys";
+import { useRuntimeConfig } from "@/services/state/runtime-config-context";
+
 
 type SessionDropdownProps = PropsWithChildren;
 
 export const SessionDropdown = ({ children }: SessionDropdownProps) => {
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const runtimeConfig = useRuntimeConfig();
 
   const handleAction = async (key: Key) => {
     if (key === "logout" && !isLoggingOut) {
@@ -26,11 +29,10 @@ export const SessionDropdown = ({ children }: SessionDropdownProps) => {
         // Clear local session storage
         sessionStorage.clear();
         
-        if (process.env.NEXT_PUBLIC_USE_COGNITO === 'true') {
+        if (runtimeConfig.NEXT_PUBLIC_USE_COGNITO === 'true') {
           console.log('Attempting Cognito logout...');
           // Call backend directly to handle Cognito logout
-          const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
-          const response = await fetch(`${backendUrl}/api/auth/logout`, {
+          const response = await fetch(`/auth/logout`, {
             method: 'POST',
             credentials: 'include',
             headers: {
@@ -62,7 +64,9 @@ export const SessionDropdown = ({ children }: SessionDropdownProps) => {
           window.location.reload();
         } else {
           // Snowflake mode
-          await fetch("/sfc-endpoint/logout");
+          await fetch(`/sfc-endpoint/logout`, {
+            credentials: 'include',
+          });
           router.refresh();
         }
       } catch (error) {

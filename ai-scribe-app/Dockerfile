@@ -37,6 +37,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
+# Copy runtime config writer script into production image
+COPY --from=builder /app/write-runtime-config.js ./write-runtime-config.js
+
 # Copy entrypoint script into production image
 COPY --from=builder /app/entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh

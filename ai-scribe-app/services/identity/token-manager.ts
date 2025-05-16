@@ -1,3 +1,4 @@
+
 // Token manager to handle refresh and expiry
 export class TokenManager {
   private static REFRESH_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes before expiry
@@ -56,9 +57,22 @@ export class TokenManager {
   }
   
   private static async refreshTokens(refreshToken: string) {
-    const cognitoDomain = process.env.NEXT_PUBLIC_COGNITO_DOMAIN;
-    const clientId = process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID;
-    
+    let cognitoDomain: string | undefined;
+    let clientId: string | undefined;
+    // Try to use runtime config if in browser
+    if (typeof window !== 'undefined' && window.__NEXT_DATA__) {
+      try {
+        // Use a custom hook if in a React component, otherwise fallback
+        const runtimeConfig = (window as any).__RUNTIME_CONFIG__ || {};
+        cognitoDomain = runtimeConfig.NEXT_PUBLIC_COGNITO_DOMAIN;
+        clientId = runtimeConfig.NEXT_PUBLIC_COGNITO_CLIENT_ID;
+      } catch {
+        // fallback
+      }
+    }
+    // Fallback to process.env for SSR or if runtime config is not available
+    cognitoDomain = cognitoDomain || process.env.NEXT_PUBLIC_COGNITO_DOMAIN;
+    clientId = clientId || process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID;
     if (!cognitoDomain || !clientId) {
       throw new Error('Missing required environment variables for token refresh');
     }

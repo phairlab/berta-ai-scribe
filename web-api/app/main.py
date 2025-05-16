@@ -1,4 +1,5 @@
 import json
+import os
 import traceback
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
@@ -64,6 +65,9 @@ async def lifespan(_: FastAPI):
     if settings.ENVIRONMENT == "development" and not db.is_datafolder_initialized():
         db.initialize_dev_datafolder()
         db.update_builtin_notetypes()
+    else:
+        # Always update built-in note types in production too
+        db.update_builtin_notetypes()
 
     # Run the app.
     yield
@@ -84,10 +88,12 @@ app = FastAPI(
 )
 
 # Add CORS middleware in development mode
+frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:3000")
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
+        frontend_url,
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "http://localhost:4000",

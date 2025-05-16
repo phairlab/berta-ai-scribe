@@ -11,7 +11,7 @@ import psycopg2
 from botocore.exceptions import ClientError
 
 # Secret name and region
-SECRET_NAME = "rds-db-credentials/cluster-5EQ6MFXUTZZPEDTDF6U7MZ7Z6A/app_admin/1746048966003"
+SECRET_NAME = "rds-db-credentials/cluster-5EQ6MFXUTZZPEDTDF6U7MZ7Z6A/mainuser/1746048966003"
 REGION_NAME = "us-west-2"  # Change if your region is different
 
 # Get credentials from environment variables or update directly here if needed

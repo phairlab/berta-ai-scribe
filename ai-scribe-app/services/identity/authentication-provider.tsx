@@ -4,9 +4,11 @@ import { ReactNode, useEffect } from "react";
 import { useAtom } from "jotai";
 
 import { authenticationAtom } from ".";
+import { useRuntimeConfig } from "@/services/state/runtime-config-context";
 
-// Check if Cognito auth is enabled via environment variable
-const isCognitoEnabled = process.env.NEXT_PUBLIC_USE_COGNITO === 'true';
+
+
+
 
 type AuthenticationProviderProps = {
   children: ReactNode;
@@ -16,6 +18,9 @@ export const AuthenticationProvider = ({
   children,
 }: AuthenticationProviderProps) => {
   const [authentication, setAuthentication] = useAtom(authenticationAtom);
+  // Check if Cognito auth is enabled via environment variable
+const runtimeConfig = useRuntimeConfig();
+const isCognitoEnabled = runtimeConfig.NEXT_PUBLIC_USE_COGNITO === 'true';
 
   const startSession = async (): Promise<void> => {
     try {
@@ -23,12 +28,9 @@ export const AuthenticationProvider = ({
       setAuthentication({ state: "Authenticating" });
 
       // Try to authenticate with existing session
-      console.log("[AuthProvider] Checking session with /api/auth/check-session");
-      const response = await fetch('/api/auth/check-session', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      console.log("[AuthProvider] Checking session with backend");
+      const response = await fetch(`/api/auth/check-session`, {
+        method: 'POST', 
         credentials: 'include',
       });
 
