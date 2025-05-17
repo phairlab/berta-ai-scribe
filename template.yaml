@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'CloudFormation template for Jenkins AHS application infrastructure'
+Description: 'CloudFormation template for Jenkins application infrastructure'
 
 Parameters:
   Environment:
@@ -579,8 +579,8 @@ Resources:
   JenkinsSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Security group for Jenkins AHS application
-      GroupName: !Sub jenkins-ahs-sg-${Environment}-${AWS::StackName}
+      GroupDescription: Security group for Jenkins application
+      GroupName: !Sub jenkins-sg-${Environment}-${AWS::StackName}
       VpcId: !Ref VpcId
       SecurityGroupIngress:
         - IpProtocol: tcp

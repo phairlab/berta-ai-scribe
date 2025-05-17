@@ -12,6 +12,7 @@
       "@heroui/react": "2.7.4",
       "@react-aria/ssr": "^3.9.7",
       "@react-aria/visually-hidden": "^3.8.18",
+      "@types/sqlite3": "^5.1.0",
       "@wavesurfer/react": "^1.0.8",
       "clsx": "2.1.1",
       "framer-motion": "^11.15.0",
@@ -27,6 +28,8 @@
       "react-markdown": "^9.0.1",
       "server-only": "^0.0.1",
       "short-uuid": "^5.2.0",
+      "sqlite": "^5.1.1",
+      "sqlite3": "^5.1.7",
       "wavesurfer.js": "^7.8.14"
    },
    "devDependencies": {

@@ -39,7 +39,7 @@ export function useNoteGenerator() {
 
       if (options?.includeFooter) {
         let noteFooter = [
-          "Generated in part by the AHS Jenkins Scribe, with patient consent where applicable.",
+          "Generated in part by Jenkins Scribe, with patient consent where applicable.",
           `Note ID: ${encounter.id}-${draftNote.id}`,
         ]
           .map((line) => `<<${line}>>`)
