@@ -65,11 +65,15 @@ let nextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: 'https://api.jenkinsaiscribe.com/api/:path*',
+        destination: process.env.NODE_ENV === 'development' 
+          ? 'http://localhost:8000/api/:path*'
+          : `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/:path*`,
       },
       {
         source: '/auth/:path*',
-        destination: 'https://api.jenkinsaiscribe.com/auth/:path*',
+        destination: process.env.NODE_ENV === 'development'
+          ? 'http://localhost:8000/auth/:path*'
+          : `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/:path*`,
       },
     ];
   },

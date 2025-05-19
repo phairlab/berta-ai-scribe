@@ -157,7 +157,7 @@ def log_session(
         database.add(session_record)
         database.commit()
     except Exception as e:
-        message = f"Failed to save session log: {str(session_record)}; Error: {str(e)}"
+        message = f"Failed to save session log: {str(e)}"
         log.warning(message, session)
 
 

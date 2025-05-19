@@ -44,14 +44,24 @@ def decode_token(token: str, verify_expiry: bool = True) -> WebAPISession:
             options={"verify_exp": verify_expiry},
         )
 
-        if "username" not in payload or "sessionId" not in payload:
-            raise Unauthorized("Invalid credentials")
+        # Handle both standard and Google auth tokens
+        if "username" in payload and "sessionId" in payload:
+            # Standard token format
+            return WebAPISession(
+                username=payload["username"],
+                sessionId=payload["sessionId"],
+                rights=payload.get("rights") or [],
+            )
+        elif "sub" in payload:
+            # Google auth token format
+            return WebAPISession(
+                username=f"google_{payload['sub']}",
+                sessionId=payload.get("sessionId", "google_session"),
+                rights=payload.get("rights") or [],
+            )
+        else:
+            raise Unauthorized("Invalid token format")
 
-        return WebAPISession(
-            username=payload["username"],
-            sessionId=payload["sessionId"],
-            rights=payload.get("rights") or [],
-        )
     except jwt.ExpiredSignatureError:
         raise Unauthorized("Credentials expired")
     except jwt.InvalidTokenError:

@@ -5,10 +5,15 @@ import { useRouter } from "next/navigation";
 import { useAtom } from "jotai";
 import { authenticationStateAtom } from "@/services/identity";
 import { CognitoLogin } from "@/components/auth/CognitoLogin";
+import { GoogleLogin } from "@/components/auth/GoogleLogin";
 
 export default function LoginPage() {
   const [authState] = useAtom(authenticationStateAtom);
   const router = useRouter();
+  
+  // Read environment variables directly
+  const useCognito = process.env.NEXT_PUBLIC_USE_COGNITO === 'true';
+  const useGoogleAuth = process.env.NEXT_PUBLIC_USE_GOOGLE_AUTH === 'true';
   
   // If already authenticated, redirect to home
   useEffect(() => {
@@ -17,13 +22,28 @@ export default function LoginPage() {
     }
   }, [authState, router]);
   
-  // In development, automatically authenticate
+  // In development, force Google auth if no auth method is enabled
   useEffect(() => {
-    if (process.env.NODE_ENV === "development" && process.env.NEXT_PUBLIC_USE_COGNITO !== 'true') {
-      router.push("/");
+    if (process.env.NODE_ENV === "development" && !useCognito && !useGoogleAuth) {
+      // Force Google auth in development
+      process.env.NEXT_PUBLIC_USE_GOOGLE_AUTH = 'true';
     }
-  }, [router]);
+  }, [router, useCognito, useGoogleAuth]);
   
-  // Show Cognito login UI
-  return <CognitoLogin />;
-} 
+  // Determine which login component to show
+  if (useCognito) {
+    return <CognitoLogin />;
+  } else if (useGoogleAuth) {
+    return <GoogleLogin />;
+  }
+  
+  // Default fallback - should never reach here due to the auto-redirect above
+  return (
+    <div className="flex flex-col items-center justify-center h-screen">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
+        <p className="mt-3">Redirecting...</p>
+      </div>
+    </div>
+  );
+}

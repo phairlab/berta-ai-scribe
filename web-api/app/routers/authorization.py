@@ -46,8 +46,8 @@ async def authenticate_user(
 ) -> sch.Token:
     """
     Validates the current user and begins a session.
-    In development mode without Cognito, creates a default user if none exists.
-    In production or with Cognito, requires proper authentication.
+    In development mode without Cognito or Google Auth, creates a default user if none exists.
+    In production or with Cognito/Google Auth, requires proper authentication.
     """
     print(f"Received {request.method} request to /authenticate")
     print(f"Headers: {request.headers}")
@@ -58,8 +58,8 @@ async def authenticate_user(
     response.headers["Access-Control-Allow-Headers"] = "*"
     response.headers["Access-Control-Allow-Credentials"] = "true"
     
-    # In development mode without Cognito, use a default user
-    if settings.ENVIRONMENT == "development" and not settings.USE_COGNITO:
+    # In development mode without Cognito or Google Auth, use a default user
+    if settings.ENVIRONMENT == "development" and not settings.USE_COGNITO and not settings.USE_GOOGLE_AUTH:
         username = "development_user"
     else:
         if not snowflakeUser:
@@ -108,7 +108,7 @@ async def authenticate_user(
 
     return sch.Token(
         accessToken=token,
-        tokenType="Development" if settings.ENVIRONMENT == "development" and not settings.USE_COGNITO else "Cognito" if settings.USE_COGNITO else "Snowflake Context"
+        tokenType="Development" if settings.ENVIRONMENT == "development" and not settings.USE_COGNITO and not settings.USE_GOOGLE_AUTH else "Cognito" if settings.USE_COGNITO else "Google" if settings.USE_GOOGLE_AUTH else "Snowflake Context"
     )
 
 
@@ -120,13 +120,12 @@ async def check_session(
 ) -> sch.Token:
     """
     Checks if there's an existing valid session.
-    In development mode, creates a new session if none exists.
+    In development mode without Cognito or Google Auth, creates a new session if none exists.
     Returns a new token if the session is valid.
     """
-    if settings.ENVIRONMENT == "development" and not settings.USE_COGNITO:
-        # In development without Cognito, create a new session if none exists
+    # Only auto-create a session in pure development mode (no Cognito, no Google Auth)
+    if settings.ENVIRONMENT == "development" and not settings.USE_COGNITO and not settings.USE_GOOGLE_AUTH:
         username = "development_user"
-        
         # Get or create the user record
         try:
             user = database.get_one(db.User, username)
@@ -137,17 +136,14 @@ async def check_session(
                 database.commit()
             except Exception as e:
                 raise errors.DatabaseError(str(e))
-        
         # Create a new session
         user_session = sch.WebAPISession(
             username=username,
             sessionId=str(uuid.uuid4()),
             rights=[]
         )
-        
         # Generate a new token
         api_token = create_access_token(user_session)
-        
         # Set the new token in a cookie
         response.set_cookie(
             key="jenkins_session",
@@ -158,27 +154,23 @@ async def check_session(
             max_age=3600,  # 1 hour
             path="/"
         )
-        
         return sch.Token(accessToken=api_token, tokenType="Development")
-    
-    # Production mode or Cognito mode - require valid session
+
+    # For Google Auth (even in development), require a valid session
     if not jenkins_session:
         raise HTTPException(status_code=401, detail="No session found")
-    
+
     try:
         # Verify the existing token
         session = decode_token(jenkins_session)
-        
         # Create a new session with the same user
         new_session = sch.WebAPISession(
             username=session.username,
             sessionId=str(uuid.uuid4()),
             rights=session.rights
         )
-        
         # Generate a new token
         api_token = create_access_token(new_session)
-        
         # Set the new token in a cookie
         response.set_cookie(
             key="jenkins_session",
@@ -189,58 +181,32 @@ async def check_session(
             max_age=3600,  # 1 hour
             path="/"
         )
-        
-        return sch.Token(accessToken=api_token, tokenType="Cognito" if settings.USE_COGNITO else "Snowflake Context")
+        return sch.Token(
+            accessToken=api_token,
+            tokenType="Cognito" if settings.USE_COGNITO else "Google" if settings.USE_GOOGLE_AUTH else "Snowflake Context"
+        )
     except Exception as e:
         log.error(f"Session check failed: {str(e)}")
         raise HTTPException(status_code=401, detail="Invalid session")
 
 
 @router.post("/logout")
-async def logout_user(
-    response: Response,
-    session: useUserSession,
-) -> None:
-    """
-    Handles user logout.
-    For Cognito users, signs out from Cognito.
-    For other modes, just clears the session cookie.
-    """
-    try:
-        # Clear the session cookie
-        response.delete_cookie(
-            key="jenkins_session",
-            path="/",
-            secure=settings.COOKIE_SECURE,
-            httponly=True,
-            samesite="lax"
-        )
-
-        # If using Cognito, sign out from Cognito
-        if settings.USE_COGNITO and settings.COGNITO_USER_POOL_ID and settings.COGNITO_CLIENT_ID:
-            try:
-                # Initialize Cognito client
-                cognito_client = boto3.client(
-                    'cognito-idp',
-                    region_name=settings.AWS_REGION,
-                    aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-                    aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY
-                )
-
-                # Sign out from Cognito
-                cognito_client.global_sign_out(
-                    AccessToken=session.sessionId
-                )
-                log.info(f"User {session.username} signed out from Cognito")
-            except ClientError as e:
-                log.error(f"Error signing out from Cognito: {str(e)}")
-                # Continue with logout even if Cognito signout fails
-            except Exception as e:
-                log.error(f"Unexpected error during Cognito signout: {str(e)}")
-                # Continue with logout even if Cognito signout fails
-
-    except Exception as e:
-        log.error(f"Error during logout: {str(e)}")
-        raise HTTPException(status_code=500, detail="Logout failed")
-
-    return None
+async def logout_user(response: Response, session: useUserSession):
+    # Add CORS headers
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "*"
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    
+    # Delete the session cookie
+    response.delete_cookie(
+        key="jenkins_session",
+        path="/",
+        secure=settings.COOKIE_SECURE,
+        httponly=True,
+        samesite="lax",
+        domain=".jenkinsaiscribe.com" if not settings.ENVIRONMENT == "development" else None
+    )
+    
+    # Return success response
+    return {"message": "Logged out successfully"}

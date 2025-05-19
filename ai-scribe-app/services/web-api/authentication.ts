@@ -84,3 +84,47 @@ export async function authenticateWithCognito(token: string, backendUrl?: string
   }
   return data.accessToken;
 }
+/**
+ * Authenticates using Google token or authorization code
+ * @param token The Google ID token or authorization code
+ * @param backendUrl Optional backend URL
+ * @param isAuthCode Whether the token is an authorization code (default: false)
+ * @returns A Web API token for the current session
+ */
+export async function authenticateWithGoogle(token: string, backendUrl?: string, isAuthCode: boolean = false): Promise<WebApiToken> {
+  console.log("Sending Google token to backend for authentication");
+
+  // If backendUrl is provided and is a full URL, use fetch directly
+  if (backendUrl && (backendUrl.startsWith('http://') || backendUrl.startsWith('https://'))) {
+    const url = `${backendUrl}/auth/authenticate-google`;
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ token, isAuthCode }),
+      credentials: 'include',
+    });
+    const data = await response.json();
+    if (typeof data.accessToken !== "string") {
+      throw Error("The response from the server did not include a valid token");
+    }
+    return data.accessToken;
+  }
+  
+  // Otherwise, use fetchWithError with a relative path
+  const response = await fetchWithError('/auth/authenticate-google', {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ token, isAuthCode }),
+    credentials: 'include',
+  });
+  
+  const data = await response.json();
+  if (typeof data.accessToken !== "string") {
+    throw Error("The response from the server did not include a valid token");
+  }
+  return data.accessToken;
+}

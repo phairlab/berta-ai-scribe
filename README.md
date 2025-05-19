@@ -1,245 +1,422 @@
-***NOTE**: THIS DOCUMENTATION IS UNDER DEVELOPMENT AND CURRENTLY OUT OF DATE*
+# Jenkins AI Scribe v0.9.0-beta
 
-# "Jenkins" AI Scribe
+Jenkins AI Scribe is an advanced medical documentation assistant designed to help healthcare providers efficiently create clinical notes from audio recordings of patient encounters. The system uses state-of-the-art AI transcription services and language models to transform medical conversations into well-structured clinical documentation.
 
-## Prerequisites
+## Table of Contents
+- [Overview](#overview)
+- [Features](#features)
+- [Architecture](#architecture)
+- [Technical Components](#technical-components)
+  - [Transcription Services](#transcription-services)
+  - [Language Model Services](#language-model-services)
+- [Storage Configuration](#storage-configuration)
+- [Database Configuration](#database-configuration)
+- [Local Development Setup](#local-development-setup)
+  - [Prerequisites](#prerequisites)
+  - [Backend Setup](#backend-setup)
+  - [Frontend Setup](#frontend-setup)
+  - [Verification](#verification)
+- [AWS Deployment](#aws-deployment)
+  - [AWS Prerequisites](#aws-prerequisites)
+  - [Infrastructure Overview](#infrastructure-overview)
+  - [Deployment Steps](#deployment-steps)
+  - [Post-Deployment Setup](#post-deployment-setup)
+  - [Environment Variables Automatically Configured](#environment-variables-automatically-configured)
+  - [Customization Options](#customization-options)
+  - [Cost Considerations](#cost-considerations)
+- [Security](#security)
+- [Troubleshooting](#troubleshooting)
+  - [Common Issues](#common-issues)
+  - [Logs and Diagnostics](#logs-and-diagnostics)
+- [Contributors](#contributors)
+- [License](#license)
 
-- Docker and Docker Compose (both are available as part of [Docker Desktop](https://www.docker.com/products/docker-desktop/))
-- [Node.js](https://nodejs.org/en) 20+ (for local development)
-- [Python 3.11](https://www.python.org/downloads/) (for local development)
-- [FFmpeg](https://www.ffmpeg.org/download.html) (for local development)
-- Snowflake account
-- OpenAI API Key
+## Overview
 
-**Note:** FFmpeg is used for certain audio processing features, such as normalizing file sizes before transcribing audio tracks. It is installed automatically as part of the Docker build, but must be set up and configured independently when running the app in a local development environment.  On certain platforms (such as Windows), the install process is not as simple as with other software.  Please reach out for assistance if needed.
+Jenkins AI Scribe aims to reduce the documentation burden on healthcare providers by:
+- Automatically transcribing patient encounters
+- Generating structured clinical notes based on transcriptions
+- Supporting various note templates for different clinical scenarios
+- Providing a user-friendly interface for review and editing
 
-## Setup
+## Features
 
-The following steps assume you are using [Visual Studio Code](https://code.visualstudio.com/) with the [Python extension](https://code.visualstudio.com/docs/languages/python) installed.
+- **Audio Recording & Transcription**: Record patient encounters or upload existing audio files
+- **AI-Powered Note Generation**: Generate comprehensive clinical notes from transcripts
+- **Multiple Note Templates**: Support for various note formats (Full Visit, Narrative, Handover Notes, etc.)
+- **Custom Note Types**: Create and save your own note templates
+- **Multi-Environment Support**: Runs on AWS, Snowflake, or local development environments
+- **Secure Authentication**: Google OAuth, AWS Cognito or Snowflake context-based authentication
 
-1. Clone the repository:
+## Architecture
 
-    Using VS Code, <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> and select **Git: Clone**.
+The project consists of two main components:
 
-2. In the `backend` folder, copy the `env.example` file to `.env` and fill in the required environment variables.
+1. **Backend (web-api)**: A FastAPI-based service that handles:
+   - Authentication
+   - Audio processing and transcription
+   - Note generation via LLMs
+   - Database operations
+   - File storage
 
-3. In the `frontend` folder, copy the `env.local.example` file to `.env.local` and fill in the required environment variables.
+2. **Frontend (ai-scribe-app)**: A Next.js-based web application that provides:
+   - User interface for recording or uploading audio
+   - Note type selection and configuration
+   - Review and editing of generated notes
+   - User authentication flows
 
-### Configure Local Development Environment
+### Basic Architecture
 
-**Note:** These steps are not required to run the app locally using Docker.
+The system follows a modern web application architecture with several layers:
 
-#### Python Setup
+![Jenkins Architecture 002](https://github.com/user-attachments/assets/e4c96a82-1d2b-41e7-81ca-051c8de7a803)
 
-3. (Optional) Configure pycache directory for local development.
 
-    This only needs to be done once in an environment and applies to all Python projects.
-    
-    By default, `__pycache__` folders will be created within every module directory in the project when a Python app is run, which can clutter the file navigation during development.  This will collect all the compiled code into a root `.dev-pycache` folder instead.
+- **Web Browser**: The client interface accessed by users
+- **Next.js Frontend**: Server-side rendered React application
+- **Load Balancer**: Distributes traffic across backend instances
+- **Python FastAPI Backend**: Handles API requests and business logic
+- **Virtualization Layer**: Contains:
+  - **vLLM Inference Engine**: For AI model inference
+  - **Speech-to-text (ASR)**: For audio transcription
+- **Hardware Layer**: GPU Cluster for high-performance computing
+- **Virtual Private Cloud**: Secure network environment
 
-    To do this, set the PYTHONPYCACHEPREFIX environment variable on your account.  For example, on Windows you can use the following command on the console:
+## Technical Components
 
-    ```console
-    setx PYTHONPYCACHEPREFIX .dev-pycache
-    ```
+### Transcription Services
 
-    Note that you must restart the VS Code process for it to pick up the new environment variable.  This means closing *all* VS Code windows before reopening.
+Jenkins Scribe supports three transcription services:
 
-4. Create a Python virtual environment:
+1. **AWS Transcribe**: High-accuracy transcription service from AWS with medical terminology support
+2. **OpenAI Whisper**: State-of-the-art speech recognition model with high accuracy and multilingual support
+3. **WhisperX**: Enhanced version of Whisper optimized for medical terminology and faster processing
 
-    Using VS Code, <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> and select **Python: Select Interpreter** and then **Create Virtual Environment...** and follow the directions, ensuring you select Python 3.11 if more than one version is installed in your environment.
+The transcription service is configurable via the `TRANSCRIPTION_SERVICE` environment variable.
 
-5. Install Python packages:
+### Language Model Services
 
-    Press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>\`</kbd> to open a new terminal. The prompt should now be prefixed with `(.venv)` indicating it is using the virtual environment created in Step 3.
+The application can work with multiple language model providers:
 
-    Install the required packages using the following command:
+1. **OpenAI Models**: Integration with GPT models via OpenAI API
+2. **Azure Cognitive Services**: Microsoft's AI services for text processing
+3. **AWS Bedrock**: Access to foundation models via AWS Bedrock including Llama 3 and Claude 3
+4. **Cortex Models**: Integration with specialized models for medical text generation
 
-    ```console
-    pip install -r requirements.txt
-    ```
+The system will automatically use the best available model based on your configuration. For the local deployment we will be using gpt-4o via OpenAI API and for the AWS deployment we will be using Llama3.3 70b.
 
-#### Node & NextUI Setup
+## Storage Configuration
 
-6. Install the NextUI CLI:
+Jenkins Scribe supports two storage options:
 
-    ```console
-    npm install -g nextui-cli
-    ```
+1. **Local Storage** (Development):
+   - Files stored in `.data/recordings`
+   - Automatically configured for local development
 
-7. Navigate to the `frontend/` folder and install the required Node packages:
+2. **S3 Storage** (AWS Production):
+   - Files stored in configured S3 bucket
+   - Requires AWS credentials and bucket configuration
 
-    ```console
-    cd frontend
-    npm install
-    ```
+The storage provider is automatically selected based on environment variables.
 
-8. If opening the entire project as a monorepo in VSCode (rather than opening only the frontend or backend folders in separate workspaces), refer to the advice here for configuring ESLint settings in VSCode: https://www.codalas.com/en/2311/configuring-vscode-for-subfolder-projects-to-ensure-correct-eslint-operation.
+## Database Configuration
 
-## Local Development
+The application supports three database options:
 
-With either of the following options, the app can be accessed at the following addresses:
+1. **SQLite** (Development):
+   - Automatically configured for local development
+   - Database file stored in `.data/database.db`
 
-- **App**: http://localhost:3000
-- **API Docs** (depending on preference)
-    - Swagger: http://localhost:8000/docs
-    - ReDoc: http://localhost:8000/redoc 
+2. **Aurora PostgreSQL** (AWS Production):
+   - Configure using `USE_AURORA=true`
+   - Requires Aurora writer endpoint and credentials
 
-### Option 1: Run Locally Using Docker
+3. **Snowflake** (AHS Production):
+   - Configured for AHS production environment
+   - Requires Snowflake credentials and configuration
 
-Open a terminal window and run the following commands:
+## Local Development Setup
 
-```console
-docker compose build
-docker compose up
+### Prerequisites
+
+- Python 3.11+
+- Node.js 18+ and npm
+- FFmpeg (for audio processing)
+- Docker (optional, for container-based deployment)
+- AWS Account (optional, for AWS-based services)
+- Snowflake Account (optional, for Snowflake deployment)
+
+### Backend Setup
+
+1. Create a `.env` file in the root of the web-api directory:
+
+```env
+# Core Settings
+ENVIRONMENT=development
+COOKIE_SECURE=false
+LOGGING_LEVEL=DEBUG
+
+# JWT Configuration
+ACCESS_TOKEN_SECRET=your_secure_random_string
+ACCESS_TOKEN_EXPIRE_MINUTES=1440
+
+# Authentication Configuration
+USE_COGNITO=false
+USE_GOOGLE_AUTH=true  # If using Google auth
+
+# Google OAuth Configuration (if using Google auth)
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+GOOGLE_REDIRECT_URI=http://localhost:4000/login
+
+# LLM Configuration
+DEFAULT_NOTE_GENERATION_MODEL=gpt-4o
+LABEL_MODEL=gpt-4o
+
+# OpenAI API Key (required for GPT models)
+OPENAI_API_KEY=your_openai_api_key
+
+# Database Configuration
+USE_AURORA=false
+# SQLite database will be used automatically in development mode
+
+# Transcription Service - Choose one
+TRANSCRIPTION_SERVICE=OpenAI Whisper
+# TRANSCRIPTION_SERVICE=WhisperX
+# TRANSCRIPTION_SERVICE=AWS Transcribe
 ```
 
-Rerun these commands after any changes to the code.
+2. Start the backend server:
+```bash
+cd web-api
+uvicorn app.main:app --reload --port 8000
+```
 
-### Option 2: Run the App in a Local Development Environment
+### Frontend Setup
 
-1. Open a terminal with <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>\`</kbd>.
+1. Create a `.env.local` file in the root of the ai-scribe-app directory:
 
-2. Start the backend.
+```env
+# Backend API URL
+NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
 
-    ```console
-    cd backend
-    uvicorn app.main:app --reload
-    ```
+# Authentication Configuration
+NEXT_PUBLIC_USE_COGNITO=false
+NEXT_PUBLIC_USE_GOOGLE_AUTH=true  # If using Google auth
 
-3. Open a second terminal with <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>5</kbd>.
+# Google OAuth Configuration (if using Google auth)
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_REDIRECT_URI=http://localhost:4000/login
+```
 
-4. Start the frontend.
+2. Generate runtime configuration:
+```bash
+node write-runtime-config.js
+```
 
-    ```console
-    cd frontend
-    npm run dev
-    ```
+3. Start the frontend development server:
+```bash
+cd ai-scribe-app
+npm run dev
+```
 
-To enable trace logging for the frontend, change the NEXT_LOGGING_LEVEL environment variable to `trace` in `.env.local`.
+### Verification
 
-## Deployment
+To verify your configuration is working:
 
-In a Snowflake SQL worksheet:
+1. Navigate to `http://localhost:4000` (or whatever port your frontend is using)
+2. Click the login button
+3. You should be redirected to the authentication page (Google or dev auth)
+4. After successful authentication, you should be redirected back to the application
 
-1. Create a SECRET to hold the OpenAI API Key:
+If you encounter any issues, check the console logs for both the frontend and backend services for error messages.
 
-    ```sql
-    CREATE SECRET openai_api_key
-        TYPE = GENERIC_STRING
-        SECRET_STRING = '<your_api_key>';
-    ```
+## AWS Deployment
 
-2. Create an IMAGE REPOSITORY:
+## Architecture
+![AWS Architecture](https://github.com/user-attachments/assets/2dd32f5a-d89a-4119-8cc0-baaa9f5a8190)
 
-    ```sql
-    CREATE IMAGE REPOSITORY IF NOT EXISTS jenkins_app;
-    SHOW IMAGE REPOSITORIES;
-    ```
-    Record the name of the `repository_url` field.
+### One-click Deployment
+| Service | Button |
+|---------|--------|
+| AWS | [![AWS CloudFormation Launch Stack SVG Button](https://cdn.rawgit.com/buildkite/cloudformation-launch-stack-button-svg/master/launch-stack.svg)](https://console.aws.amazon.com/cloudformation/home?#/stacks/new?stackName=BertaScribe&templateURL=https://s3.us-west-2.amazonaws.com/cf-templates-14rwubwevbsfc-us-west-2/2024-12-09T045542.687Zj22-BertaScribe.json) |
 
-In your VS Code terminal:
+### AWS Prerequisites
 
-3. Run the app using Docker Compose to build the required images:
+Before you begin the deployment, ensure you have:
 
-    ```console
-    docker compose up --build
-    ```
+- AWS Account with administrative access
+- AWS CLI installed and configured
+- Domain name registered in Route53 (optional, for custom domain)
+- Docker installed for building container images
 
-3. Tag the Docker images with the repository URL:
+### Infrastructure Overview
 
-    ```console
-    docker tag jenkins-ahs-backend:latest <repository_url>/backend:latest
-    docker tag jenkins-ahs-frontend:latest <repository_url>/frontend:latest
-    ```
+The CloudFormation template creates a complete AWS infrastructure including:
 
-4. Authenticate docker to Snowflake:
+- S3 bucket for storing recordings and prompt files
+- Amazon Cognito for user authentication
+- Aurora PostgreSQL database for data storage
+- ECS Fargate clusters for running containerized applications
+- Application Load Balancers (ALB) for both frontend and backend
+- ACM certificates for HTTPS/TLS
+- Route53 DNS configuration (if using a custom domain)
+- Security groups and IAM roles
 
-    ```console
-    docker login <registry_hostname> -u <username>
-    ```
+### Deployment Steps
 
-    Enter your password when prompted.
-    The `registry_hostname` is the `repository_url` up to "snowflake.computing.com"
+#### 1. Prepare Your Domain and DNS (Optional)
 
-5. Push the images to the Snowflake repository:
+1. Ensure your domain is registered and managed by Route53
+2. Note your Route53 Hosted Zone ID (found in the Route53 console under "Hosted Zones")
 
-    ```console
-    docker push <repository_url>/backend:latest
-    docker push <repository_url>/frontend:latest
-    ```
+#### 2. Set Up Your VPC and Subnets
 
-In your Snowflake SQL worksheet:
+You need an existing VPC with both public and private subnets:
 
-6. Ensure the COMPUTE POOL is running and execute the following to create the service:
+1. Navigate to the VPC console in AWS
+2. Note your VPC ID
+3. Identify at least 2 public subnets (for the load balancers)
+4. Identify at least 2 private subnets (for the Fargate tasks)
 
-    ```sql
-    CREATE SERVICE jenkins_app
-    IN COMPUTE POOL CPU_X64_XS
-    EXTERNAL_ACCESS_INTEGRATIONS = (OPENAI_API_EXT_INT)
-    FROM SPECIFICATION $$
-      spec:
-        containers:
-        - name: backend
-          image: <repository_url>/backend:latest
-          readinessProbe:
-            port: 8000
-            path: /healthcheck
-          secrets:
-          - snowflakeSecret: <db_name>.<schema_name>.openai_api_key
-            secretKeyRef: secret_string
-            envVarName: OPENAI_API_KEY
-        - name: frontend
-          image: <repository_url>/frontend:latest
-          readinessProbe:
-            port: 3000
-            path: /healthcheck
-          env:
-            APP_API_URL: http://localhost:8000/api
-        endpoints:
-        - name: api
-          port: 8000
-          public: true
-        - name: app
-          port: 3000
-          public: true
-    $$;
-    ```
+#### 3. Click the "Deploy to AWS" button below to launch the CloudFormation stack creation wizard: [Deploy to AWS](https://console.aws.amazon.com/cloudformation/home#/stacks/new?stackName=jenkins-ai-scribe&templateURL=https://jenkins-ai-scribe-templates.s3.amazonaws.com/jenkins-scribe-stack.yaml) 
 
-7. Wait for the service to boot up and navigate to the site:
+#### 4. Enter the following required parameters:
 
-    The status and logs of the service can be queried with the following commands:
+   | Parameter | Description | Example |
+   |-----------|-------------|---------|
+   | **EnvironmentName** | Name for your environment | `Production` |
+   | **DatabaseUsername** | Username for the Aurora database | `admin` |
+   | **DatabasePassword** | Password for the Aurora database | `(Create a secure password)` |
+   | **CognitoEmailDomain** | Email domain to use for admin accounts | `yourdomain.com` |
+   | **AdminEmailAddress** | Email address for the admin user | `admin@yourdomain.com` |
 
-    ```sql
-    SELECT SYSTEM$GET_SERVICE_STATUS('jenkins_app');
-    SELECT SYSTEM$GET_SERVICE_LOGS('jenkins_app', 0, 'backend');
-    SELECT SYSTEM$GET_SERVICE_LOGS('jenkins_app', 0, 'frontend');
-    ```
+#### 5. Click "Next" to proceed to the stack options page
+#### 6. (Optional) Add any tags or configure advanced options
+#### 7. Click "Next" to review your configuration
+#### 8. Check the acknowledgment box for IAM resource creation
+#### 9. Click "Create stack"
 
-    The endpoints take some time to provision, their status and final addressed can be queried with the following command:
+The deployment will take approximately 15-20 minutes.
 
-    ```sql
-    SHOW ENDPOINTS IN SERVICE jenkins_app;
-    ```
+### Post-Deployment Setup
 
-## Testing
-### Dr. Weldon minimally viable test script
+After the stack is created:
 
-1. Recording 
-   - 10sec recording
-   - Pause, stop, reset functions
-   - Active recording notification
-2. Basic Transcription/Summarization
-   - 1-2min recording
-   - Latency in transcription 
-   - Latency in note generation (from pushing "submit" <10s ideal, <30sec good, <1min tolerable)
-3. Full Summarization
-   - 5+ minute recording, confirm latency numbers at AHS facility
-   - Check all note types for continuity and quality
-   - Format of notes is useable in copy/paste with no editing
-   - Copy button working
-4. Live Testing
-   - Try on shift (when approved)
-5. Other
-   - Authentication
-   - Multiple concurrent users
+1. Check your email for a temporary password from AWS Cognito
+2. Navigate to the FrontendURL provided in the stack outputs
+3. Log in with your admin email address and the temporary password
+4. You'll be prompted to create a new password on first login
+5. The application is now ready to use!
+
+## Environment Variables Automatically Configured
+
+The CloudFormation template automatically configures all necessary environment variables for both the frontend and backend, including:
+
+- Authentication settings
+- Database connection details
+- Storage configuration
+- Service endpoints
+
+No manual environment configuration is required.
+
+## Customization Options
+
+Advanced users can customize the deployment by:
+
+1. Downloading the CloudFormation template
+2. Modifying parameters or resources as needed
+3. Deploying the modified template through the AWS Console or CLI
+
+## Cost Considerations
+
+This deployment creates several AWS resources that will incur charges:
+
+- Aurora PostgreSQL database (db.t4g.medium instance)
+- ECS Fargate containers
+- Application Load Balancers
+- S3 storage
+- Amazon Cognito user pool
+
+Estimated monthly cost: $150-$300 USD depending on usage patterns.
+
+To minimize costs:
+- Consider using a smaller database instance for non-production environments
+- Delete the stack when not in use for extended periods
+
+## Troubleshooting
+
+If you encounter issues during deployment:
+
+1. Check the CloudFormation events tab for specific error messages
+2. Verify your AWS account has sufficient permissions to create all resources
+3. Ensure you've entered valid parameter values
+4. Check that your AWS account limits can accommodate the resources being created
+
+For application-specific issues after deployment, refer to CloudWatch logs for the ECS tasks.
+
+
+
+## Security
+
+Jenkins Scribe implements robust security measures:
+
+- Secure authentication through Cognito, Google OAuth, or Snowflake
+- HTTPS for all external communication
+- JWT tokens for API security
+- Secure cookie handling
+- Database encryption at rest
+- S3 bucket encryption and private access
+- Proper IAM roles and security groups in AWS
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Authentication Failures**:
+   - Check that your authentication configuration is correct
+   - Verify that the domain and redirect URIs are properly set
+   - For Google OAuth, ensure the consent screen is configured properly
+
+2. **Database Connection Issues**:
+   - Ensure your database credentials are correct
+   - Check that the database exists and is accessible from your deployment environment
+   - For local development, ensure the `.data` directory exists
+   - For Aurora, verify security group rules allow traffic from ECS tasks
+
+3. **Transcription Service Errors**:
+   - Verify that the selected transcription service is properly configured
+   - Check that the required environment variables for the service are set
+   - Ensure your audio file format is supported
+
+4. **S3 Storage Issues**:
+   - Confirm your AWS credentials have proper S3 access
+   - Verify the S3 bucket exists and is accessible
+   - Check the S3 bucket policy allows the required operations
+
+5. **ECS Task Failures**:
+   - Check CloudWatch Logs for container errors
+   - Verify task definition environment variables
+   - Check IAM roles for proper permissions
+
+### Logs and Diagnostics
+
+- **Backend Logs**: Available in CloudWatch (AWS) or Snowflake query history
+- **Frontend Logs**: Check browser console for client-side issues
+- **Container Logs**: Access via AWS ECS logs or Docker logs
+- **Database Logs**: Available in RDS/Aurora console or Snowflake query history
+
+## Contributors
+
+* [Mike Weldon MD MSc](https://github.com/majweldon)
+* [Ross Mitchell PhD](https://sites.google.com/view/j-ross-mitchell/)
+* [Jesse Dunn](https://github.com/dataxuf)
+* [Samridhi Vaid MSc](https://github.com/SamridhiVaid)
+* [Jake Hayward MD MPH](https://www.linkedin.com/in/jake-hayward-b37846128/?originalSubdomain=ca)
+* [Kevin Lonergan](https://github.com/lonergan123)
+* [Henry Li](https://github.com/lih34525)
+* [Jeffrey Franc](https://apps.ualberta.ca/directory/person/jfranc)
+
+## License
+
+[Apache License](/LICENSE)

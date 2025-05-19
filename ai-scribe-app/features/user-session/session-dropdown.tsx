@@ -29,6 +29,9 @@ export const SessionDropdown = ({ children }: SessionDropdownProps) => {
         // Clear local session storage
         sessionStorage.clear();
         
+        // Get the current session token
+        const sessionToken = sessionStorage.getItem(sessionKeys.AccessToken);
+        
         if (runtimeConfig.NEXT_PUBLIC_USE_COGNITO === 'true') {
           console.log('Attempting Cognito logout...');
           // Call backend directly to handle Cognito logout
@@ -37,7 +40,37 @@ export const SessionDropdown = ({ children }: SessionDropdownProps) => {
             credentials: 'include',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${sessionStorage.getItem(sessionKeys.AccessToken)}`,
+              'Authorization': `Bearer ${sessionToken}`,
+            },
+          });
+          
+          if (!response.ok) {
+            const errorData = await response.json();
+            console.error('Logout response error:', {
+              status: response.status,
+              statusText: response.statusText,
+              error: errorData
+            });
+            throw new Error(errorData.detail || 'Logout failed');
+          }
+          
+          // Clear all cookies
+          document.cookie.split(";").forEach(function(c) { 
+            document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+          });
+          
+          console.log('Logout successful, redirecting to login...');
+          // Redirect to login page
+          window.location.href = '/login';
+        } else if (process.env.NEXT_PUBLIC_USE_GOOGLE_AUTH === 'true') {
+          // Handle Google auth logout
+          console.log('Attempting Google auth logout...');
+          const response = await fetch(`/auth/logout`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${sessionToken}`,
             },
           });
           
@@ -66,16 +99,14 @@ export const SessionDropdown = ({ children }: SessionDropdownProps) => {
           // Snowflake mode
           await fetch(`/sfc-endpoint/logout`, {
             credentials: 'include',
+            headers: {
+              'Authorization': `Bearer ${sessionToken}`,
+            },
           });
           router.refresh();
         }
       } catch (error) {
         console.error('Logout error:', error);
-        // Show error to user
-        alert('Failed to logout. Please try again.');
-        // Still try to redirect to login on error
-        window.location.href = '/login';
-      } finally {
         setIsLoggingOut(false);
       }
     }

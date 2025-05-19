@@ -45,7 +45,20 @@ class Settings(BaseSettings):
     S3_BUCKET_NAME: str = "jenkins-ahs"
     AWS_SECRET_NAME: str | None = None
 
+    # Google authentication settings
+    USE_GOOGLE_AUTH: bool = False
+    GOOGLE_CLIENT_ID: str | None = None
+    GOOGLE_CLIENT_SECRET: str | None = None
+    GOOGLE_REDIRECT_URI: str | None = None
+
     # Cognito settings
+    USE_COGNITO: bool = True
+    COGNITO_USER_POOL_ID: str | None = None
+    COGNITO_CLIENT_ID: str | None = None
+    COGNITO_CLIENT_SECRET: str | None = None
+    COGNITO_DOMAIN: str | None = None
+    COGNITO_REDIRECT_URI: str | None = None
+    
     USE_COGNITO: bool = True
     COGNITO_USER_POOL_ID: str | None = None
     COGNITO_CLIENT_ID: str | None = None

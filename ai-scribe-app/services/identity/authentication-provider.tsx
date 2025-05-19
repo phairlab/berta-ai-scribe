@@ -4,11 +4,6 @@ import { ReactNode, useEffect } from "react";
 import { useAtom } from "jotai";
 
 import { authenticationAtom } from ".";
-import { useRuntimeConfig } from "@/services/state/runtime-config-context";
-
-
-
-
 
 type AuthenticationProviderProps = {
   children: ReactNode;
@@ -18,9 +13,9 @@ export const AuthenticationProvider = ({
   children,
 }: AuthenticationProviderProps) => {
   const [authentication, setAuthentication] = useAtom(authenticationAtom);
-  // Check if Cognito auth is enabled via environment variable
-const runtimeConfig = useRuntimeConfig();
-const isCognitoEnabled = runtimeConfig.NEXT_PUBLIC_USE_COGNITO === 'true';
+  // Check if auth is enabled via environment variables
+  const isCognitoEnabled = process.env.NEXT_PUBLIC_USE_COGNITO === 'true';
+  const isGoogleAuthEnabled = process.env.NEXT_PUBLIC_USE_GOOGLE_AUTH === 'true';
 
   const startSession = async (): Promise<void> => {
     try {
@@ -54,11 +49,13 @@ const isCognitoEnabled = runtimeConfig.NEXT_PUBLIC_USE_COGNITO === 'true';
     } catch (ex: unknown) {
       console.error("[AuthProvider] Authentication failed:", ex);
       
-      if (process.env.NODE_ENV === "development") {
-        console.log("[AuthProvider] Retrying authentication in development mode...");
-        setTimeout(() => {
-          setAuthentication({ state: "Unauthenticated" });
-        }, 1000);
+      // Only auto-authenticate in development if no auth methods are enabled
+      if (process.env.NODE_ENV === "development" && !isCognitoEnabled && !isGoogleAuthEnabled) {
+        console.log("[AuthProvider] Auto-authenticating in development mode...");
+        setAuthentication({ 
+          state: "Authenticated", 
+          token: "development_token" 
+        });
       } else {
         setAuthentication({ state: "Failed" });
       }
@@ -70,7 +67,7 @@ const isCognitoEnabled = runtimeConfig.NEXT_PUBLIC_USE_COGNITO === 'true';
     if (authentication.state === "Unauthenticated" && !window.location.pathname.startsWith('/login')) {
       console.log("[AuthProvider] Current path:", window.location.pathname);
       
-      if (isCognitoEnabled) {
+      if (isCognitoEnabled || isGoogleAuthEnabled) {
         // Check if we have a session cookie before redirecting
         const hasSessionCookie = document.cookie.includes('jenkins_session=');
         console.log("[AuthProvider] Session cookie present:", hasSessionCookie);
@@ -82,6 +79,13 @@ const isCognitoEnabled = runtimeConfig.NEXT_PUBLIC_USE_COGNITO === 'true';
         }
         // If we have a session cookie, try to authenticate
         startSession();
+      } else if (process.env.NODE_ENV === "development") {
+        // Only auto-authenticate in development if no auth methods are enabled
+        console.log("[AuthProvider] Auto-authenticating in development mode...");
+        setAuthentication({ 
+          state: "Authenticated", 
+          token: "development_token" 
+        });
       } else {
         startSession();
       }

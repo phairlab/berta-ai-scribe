@@ -53,18 +53,6 @@ export default async function RootLayout({
           <div className="relative flex flex-col min-h-screen w-full max-w-6xl mx-auto">
             <Navbar />
             <main className="w-full grow pt-3 sm:pt-6 px-6">{children}</main>
-            <footer className="w-full flex flex-row gap-6 items-end justify-center py-3">
-              <p className="text-sm text-center text-default-400 mb-1">
-                &copy; {new Date().getFullYear()} Alberta Health Services
-              </p>
-              <Image
-                alt="AHS Logo"
-                height={30}
-                priority={true}
-                src="/ahs-color-logo.png"
-                width={100}
-              />
-            </footer>
           </div>
         </Providers>
       </body>

@@ -6,6 +6,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import cast
 from uuid import uuid4
+import app.routers.google_auth as google_auth
+
 
 from fastapi import FastAPI, Request, Response, status
 from fastapi.encoders import jsonable_encoder
@@ -88,14 +90,12 @@ app = FastAPI(
 )
 
 # Add CORS middleware in development mode
-frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:3000")
+frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:4000")
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         frontend_url,
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
         "http://localhost:4000",
         "http://127.0.0.1:4000"
     ],
@@ -141,6 +141,12 @@ if settings.ENVIRONMENT == "development":
             redoc_js_url="api/static/redoc.standalone.js",
         )
 
+if settings.USE_GOOGLE_AUTH:
+    app.include_router(
+        google_auth.router,
+        prefix="/auth",
+        tags=["Authentication"],
+    )
 
 # ----------------------------------
 # EXCEPTION HANDLERS
