@@ -420,3 +420,30 @@ Jenkins Scribe implements robust security measures:
 ## License
 
 [Apache License](/LICENSE)
+
+### Third-Party Licenses
+
+   This project uses third-party libraries and models, including:
+   
+   - **WhisperX**: Licensed under the BSD 2-Clause License.
+   - **Meta Llama 3.3**: Licensed under the Meta Llama 3.3 Community License Agreement.
+   
+   For the full text of these licenses, please see the [THIRD_PARTY_LICENSES](THIRD_PARTY_LICENSES) file in this repository.
+   
+   ### Llama 3.3 License Notice
+   
+   This project uses Meta Llama 3.3 As per the Llama 3.3 license requirements:
+   
+   - This project is "Built with Meta Llama 3.3".
+   - Any AI models created, trained, or fine-tuned using Llama 3.3 as part of this project will include "Llama 3.3" at the beginning of the model name.
+   - Use of Llama 3.3 in this project complies with the [Meta Llama 3.3 Acceptable Use Policy](https://www.llama.com/llama3_3/use-policy/).
+   
+   For the complete Meta Llama 3.3 Community License Agreement, refer to the [THIRD_PARTY_LICENSES](THIRD_PARTY_LICENSES) file.
+
+## Medical Disclaimer
+
+> [!IMPORTANT]
+> The Licensed Work is provided as a support tool only and is not intended as a substitute for the guidance or care of a health professional.
+
+> [!CAUTION]
+> The authors disclaim all warranties, expressed or implied. In particular, but without limitation, the Licensed Work is provided WITHOUT WARRANTY OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE, EITHER EXPRESSED OR IMPLIED. The user assumes all responsibility for losses, costs, claims, damages or liability of any kind whatsoever which may arise from use of the Licensed Work.
