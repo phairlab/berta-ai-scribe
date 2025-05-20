@@ -1,6 +1,6 @@
-# Jenkins AI Scribe v0.9.0-beta
+# OS Jenkins AI Scribe v0.9.0-beta
 
-Jenkins AI Scribe is an advanced medical documentation assistant designed to help healthcare providers efficiently create clinical notes from audio recordings of patient encounters. The system uses state-of-the-art AI transcription services and language models to transform medical conversations into well-structured clinical documentation.
+OS Jenkins AI Scribe is an advanced medical documentation assistant designed to help healthcare providers efficiently create clinical notes from audio recordings of patient encounters. The system uses state-of-the-art AI transcription services and language models to transform medical conversations into well-structured clinical documentation.
 
 ## Table of Contents
 - [Overview](#overview)
@@ -33,7 +33,7 @@ Jenkins AI Scribe is an advanced medical documentation assistant designed to hel
 
 ## Overview
 
-Jenkins AI Scribe aims to reduce the documentation burden on healthcare providers by:
+OS Jenkins AI Scribe aims to reduce the documentation burden on healthcare providers by:
 - Automatically transcribing patient encounters
 - Generating structured clinical notes based on transcriptions
 - Supporting various note templates for different clinical scenarios
@@ -45,8 +45,8 @@ Jenkins AI Scribe aims to reduce the documentation burden on healthcare provider
 - **AI-Powered Note Generation**: Generate comprehensive clinical notes from transcripts
 - **Multiple Note Templates**: Support for various note formats (Full Visit, Narrative, Handover Notes, etc.)
 - **Custom Note Types**: Create and save your own note templates
-- **Multi-Environment Support**: Runs on AWS, Snowflake, or local development environments
-- **Secure Authentication**: Google OAuth, AWS Cognito or Snowflake context-based authentication
+- **Multi-Environment Support**: Runs on AWS or local development environments
+- **Secure Authentication**: Google OAuth or AWS Cognito context-based authentication
 
 ## Architecture
 
@@ -86,7 +86,7 @@ The system follows a modern web application architecture with several layers:
 
 ### Transcription Services
 
-Jenkins Scribe supports three transcription services:
+OS Jenkins Scribe supports three transcription services:
 
 1. **AWS Transcribe**: High-accuracy transcription service from AWS with medical terminology support
 2. **OpenAI Whisper**: State-of-the-art speech recognition model with high accuracy and multilingual support
@@ -107,7 +107,7 @@ The system will automatically use the best available model based on your configu
 
 ## Storage Configuration
 
-Jenkins Scribe supports two storage options:
+OS Jenkins Scribe supports two storage options:
 
 1. **Local Storage** (Development):
    - Files stored in `.data/recordings`
@@ -131,10 +131,6 @@ The application supports three database options:
    - Configure using `USE_AURORA=true`
    - Requires Aurora writer endpoint and credentials
 
-3. **Snowflake** (AHS Production):
-   - Configured for AHS production environment
-   - Requires Snowflake credentials and configuration
-
 ## Local Development Setup
 
 ### Prerequisites
@@ -144,7 +140,6 @@ The application supports three database options:
 - FFmpeg (for audio processing)
 - Docker (optional, for container-based deployment)
 - AWS Account (optional, for AWS-based services)
-- Snowflake Account (optional, for Snowflake deployment)
 
 ### Backend Setup
 
@@ -359,52 +354,15 @@ For application-specific issues after deployment, refer to CloudWatch logs for t
 
 ## Security
 
-Jenkins Scribe implements robust security measures:
+OS Jenkins Scribe implements robust security measures:
 
-- Secure authentication through Cognito, Google OAuth, or Snowflake
+- Secure authentication through Cognito or Google OAuth
 - HTTPS for all external communication
 - JWT tokens for API security
 - Secure cookie handling
 - Database encryption at rest
 - S3 bucket encryption and private access
 - Proper IAM roles and security groups in AWS
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Authentication Failures**:
-   - Check that your authentication configuration is correct
-   - Verify that the domain and redirect URIs are properly set
-   - For Google OAuth, ensure the consent screen is configured properly
-
-2. **Database Connection Issues**:
-   - Ensure your database credentials are correct
-   - Check that the database exists and is accessible from your deployment environment
-   - For local development, ensure the `.data` directory exists
-   - For Aurora, verify security group rules allow traffic from ECS tasks
-
-3. **Transcription Service Errors**:
-   - Verify that the selected transcription service is properly configured
-   - Check that the required environment variables for the service are set
-   - Ensure your audio file format is supported
-
-4. **S3 Storage Issues**:
-   - Confirm your AWS credentials have proper S3 access
-   - Verify the S3 bucket exists and is accessible
-   - Check the S3 bucket policy allows the required operations
-
-5. **ECS Task Failures**:
-   - Check CloudWatch Logs for container errors
-   - Verify task definition environment variables
-   - Check IAM roles for proper permissions
-
-### Logs and Diagnostics
-
-- **Backend Logs**: Available in CloudWatch (AWS) or Snowflake query history
-- **Frontend Logs**: Check browser console for client-side issues
-- **Container Logs**: Access via AWS ECS logs or Docker logs
-- **Database Logs**: Available in RDS/Aurora console or Snowflake query history
 
 ## Contributors
 
