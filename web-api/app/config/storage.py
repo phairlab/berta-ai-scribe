@@ -1,7 +1,7 @@
 from app.config import settings
 from app.services.adapters import StorageProvider
 from app.services.local_storage import local_storage
-from app.services.s3_storage import s3_storage
+from app.services.s3_storage import S3StorageProvider
 
 # Flag to determine if we should use S3 storage
 USE_S3_STORAGE = (
@@ -16,6 +16,7 @@ USE_S3_STORAGE = (
 # Select the storage provider based on configuration
 storage_provider: StorageProvider
 if USE_S3_STORAGE:
+    s3_storage = S3StorageProvider()
     storage_provider = s3_storage
     # Ensure the S3 bucket exists
     s3_storage.ensure_storage_exists()

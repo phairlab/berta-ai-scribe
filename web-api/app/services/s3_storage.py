@@ -13,6 +13,12 @@ class S3StorageProvider(StorageProvider):
 
     def __init__(self):
         """Initialize the S3 client."""
+        if settings.ENVIRONMENT == "development":
+            print("Development mode: S3 client will be initialized lazily when needed")
+            self.s3_client = None
+            self.bucket_name = settings.S3_BUCKET_NAME
+            return
+
         print(f"Initializing S3 client with region: {settings.AWS_REGION}")
         print(f"Using AWS Access Key ID: {settings.AWS_ACCESS_KEY_ID}")
         print(f"Using S3 bucket: {settings.S3_BUCKET_NAME}")
@@ -25,8 +31,26 @@ class S3StorageProvider(StorageProvider):
         )
         self.bucket_name = settings.S3_BUCKET_NAME
 
+    def _ensure_client(self):
+        """Ensure S3 client is initialized."""
+        if self.s3_client is None:
+            print("Initializing S3 client for development mode")
+            self.s3_client = boto3.client(
+                "s3",
+                region_name=settings.AWS_REGION,
+                aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+                aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+            )
+
     def save_recording(self, file: BinaryIO, username: str, filename: str) -> None:
         """Uploads a file to the user's recordings folder in S3."""
+        if settings.ENVIRONMENT == "development":
+            print("Development mode: Using local storage instead of S3")
+            from app.services.local_storage import local_storage
+            local_storage.save_recording(file, username, filename)
+            return
+
+        self._ensure_client()
         s3_key = f"recordings/{username}/{filename}"
         try:
             self.s3_client.upload_fileobj(file, self.bucket_name, s3_key)
@@ -224,6 +248,11 @@ class S3StorageProvider(StorageProvider):
 
     def ensure_storage_exists(self) -> None:
         """Ensures that the S3 bucket exists, creating it if necessary."""
+        if settings.ENVIRONMENT == "development":
+            print("Development mode: Skipping S3 bucket check")
+            return
+
+        self._ensure_client()
         try:
             self.s3_client.head_bucket(Bucket=self.bucket_name)
             print(f"Successfully connected to S3 bucket: {self.bucket_name}")

@@ -31,12 +31,13 @@ class Settings(BaseSettings):
     SYSTEM_USER: str = "BUILTIN"
     DEFAULT_NOTE_DEFINITION: str = "Full Visit"
 
-    DEFAULT_NOTE_GENERATION_MODEL: str = "us.meta.llama3-3-70b-instruct-v1:0"
-    LABEL_MODEL: str = "us.meta.llama3-3-70b-instruct-v1:0"
+    DEFAULT_NOTE_GENERATION_MODEL: str = "llama3.1:8b"
+    LABEL_MODEL: str = "llama3.1:8b"
     
-    TRANSCRIPTION_SERVICE: Literal["OpenAI Whisper", "WhisperX", "AWS Transcribe"] = (
-        "OpenAI Whisper"
+    TRANSCRIPTION_SERVICE: Literal["OpenAI Whisper", "WhisperX", "AWS Transcribe", "Parakeet MLX"] = (
+        "Parakeet MLX"
     )
+    GENERATIVE_AI_SERVICE: Literal["Ollama", "Cortex", "Azure Cognitive", "OpenAI", "AWS Bedrock"] = "Ollama"
     LOCAL_WHISPER_SERVICE_URL: str | None = None
 
     AWS_ACCESS_KEY_ID: str | None = None

@@ -10,3 +10,6 @@
 # RSA Keys
 *.p8
 *.pub
+
+parakeet-tdt-0.6b-v2
+models/parakeet/
