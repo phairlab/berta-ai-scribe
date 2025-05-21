@@ -5,7 +5,6 @@ import * as React from "react";
 import clsx from "clsx";
 
 import { Metadata, Viewport } from "next";
-import Image from "next/image";
 
 import { fontSans } from "@/config/fonts";
 import { siteConfig } from "@/config/site";

@@ -61,22 +61,6 @@ let nextConfig = {
       },
     ];
   },
-  async rewrites() {
-    return [
-      {
-        source: '/api/:path*',
-        destination: process.env.NODE_ENV === 'development' 
-          ? 'http://localhost:8000/api/:path*'
-          : `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/:path*`,
-      },
-      {
-        source: '/auth/:path*',
-        destination: process.env.NODE_ENV === 'development'
-          ? 'http://localhost:8000/auth/:path*'
-          : `${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/:path*`,
-      },
-    ];
-  },
   // Add this webpack config to fix chunk loading errors
   webpack: (config, { isServer }) => {
     if (!isServer) {

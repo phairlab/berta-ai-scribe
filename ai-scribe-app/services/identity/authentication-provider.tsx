@@ -2,6 +2,7 @@
 
 import { ReactNode, useEffect } from "react";
 import { useAtom } from "jotai";
+import { useRuntimeConfig } from "@/services/state/runtime-config-context";
 
 import { authenticationAtom } from ".";
 
@@ -13,8 +14,10 @@ export const AuthenticationProvider = ({
   children,
 }: AuthenticationProviderProps) => {
   const [authentication, setAuthentication] = useAtom(authenticationAtom);
-  // Check if auth is enabled via environment variables
-  const isCognitoEnabled = process.env.NEXT_PUBLIC_USE_COGNITO === 'true';
+  const runtimeConfig = useRuntimeConfig();
+  
+  // Check if auth is enabled via runtime config
+  const isCognitoEnabled = runtimeConfig.NEXT_PUBLIC_USE_COGNITO === 'true';
   const isGoogleAuthEnabled = process.env.NEXT_PUBLIC_USE_GOOGLE_AUTH === 'true';
 
   const startSession = async (): Promise<void> => {

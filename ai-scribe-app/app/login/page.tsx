@@ -6,13 +6,15 @@ import { useAtom } from "jotai";
 import { authenticationStateAtom } from "@/services/identity";
 import { CognitoLogin } from "@/components/auth/CognitoLogin";
 import { GoogleLogin } from "@/components/auth/GoogleLogin";
+import { useRuntimeConfig } from "@/services/state/runtime-config-context";
 
 export default function LoginPage() {
   const [authState] = useAtom(authenticationStateAtom);
   const router = useRouter();
+  const runtimeConfig = useRuntimeConfig();
   
-  // Read environment variables directly
-  const useCognito = process.env.NEXT_PUBLIC_USE_COGNITO === 'true';
+  // Read from runtime config
+  const useCognito = runtimeConfig.NEXT_PUBLIC_USE_COGNITO === 'true';
   const useGoogleAuth = process.env.NEXT_PUBLIC_USE_GOOGLE_AUTH === 'true';
   
   // If already authenticated, redirect to home
