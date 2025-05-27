@@ -1,14 +1,10 @@
 from app.config import (
-    is_azure_cognitive_supported,
-    is_cortex_supported,
     is_openai_supported,
     is_aws_transcribe_supported,
     is_aws_bedrock_supported,
     settings,
 )
 from app.services.adapters import GenerativeAIService, TranscriptionService
-from app.services.azure_cognitive import AzureCognitiveGenerativeAIService
-from app.services.cortex import CortexGenerativeAIService
 from app.services.openai import OpenAIGenerativeAIService, OpenAITranscriptionService
 from app.services.prompt_service import prompt_service
 from app.services.whisperx import WhisperXTranscriptionService
@@ -51,12 +47,6 @@ generative_ai_services: list[GenerativeAIService] = []
 match settings.GENERATIVE_AI_SERVICE:
     case "Ollama":
         generative_ai_services.append(OllamaGenerativeAIService())
-    case "Cortex":
-        if is_cortex_supported:
-            generative_ai_services.append(CortexGenerativeAIService())
-    case "Azure Cognitive":
-        if is_azure_cognitive_supported:
-            generative_ai_services.append(AzureCognitiveGenerativeAIService())
     case "OpenAI":
         if is_openai_supported:
             generative_ai_services.append(OpenAIGenerativeAIService())
