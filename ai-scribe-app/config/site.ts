@@ -9,7 +9,7 @@ export type SiteConfig = {
 type NavItems = { [label: string]: string };
 
 export const siteConfig: SiteConfig = {
-  name: '"Jenkins" Scribe',
+  name: 'OS "Jenkins" Scribe',
   description:
     "Record patient conversations and use Generative AI to create draft notes.",
   navItems: {},

@@ -114,7 +114,7 @@ export function GoogleLogin() {
       <div className="min-h-screen flex flex-col justify-center items-center bg-gradient-to-b from-blue-50 to-white dark:from-slate-900 dark:to-slate-800">
         <div className="animate-spin rounded-full h-12 w-12 border-4 border-t-transparent border-blue-600" />
         <h2 className="mt-4 font-medium text-xl text-blue-700 dark:text-blue-400">
-          Jenkins Scribe
+          OS Jenkins Scribe
         </h2>
       </div>
     );
@@ -154,9 +154,6 @@ export function GoogleLogin() {
             </svg>
             {isProcessingCode ? "Processing..." : "Sign in with Google"}
           </button>
-          <div className="mt-4 text-center text-xs text-gray-500 dark:text-gray-500">
-            Alberta Health Services &copy; {new Date().getFullYear()}
-          </div>
         </div>
       </div>
     </div>
