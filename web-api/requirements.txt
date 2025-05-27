@@ -11,7 +11,7 @@ pydantic-settings==2.6.0
 pydub==0.25.1
 PyJWT==2.9.0
 python-dotenv==1.0.1
-python-multipart==0.0.12,
+python-multipart==0.0.12
 sqids==0.5.0
 SQLAlchemy==2.0.36
 uvicorn==0.32.0
