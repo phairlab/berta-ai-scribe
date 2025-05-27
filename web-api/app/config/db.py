@@ -24,7 +24,6 @@ from sqlalchemy.orm import mapped_column, relationship, sessionmaker
 
 from app.config import settings
 from app.services.adapters import DatabaseProvider
-from app.services.snowflake import SnowflakeDatabaseProvider
 from app.services.sqlite import SqliteDatabaseProvider
 from app.services.aurora import AuroraPostgresProvider
 from app.config.storage import save_recording, stream_recording, delete_recording

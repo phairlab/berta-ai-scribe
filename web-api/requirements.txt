@@ -11,11 +11,7 @@ pydantic-settings==2.6.0
 pydub==0.25.1
 PyJWT==2.9.0
 python-dotenv==1.0.1
-python-multipart==0.0.12
-snowflake==0.13.1
-snowflake-ml-python>=1.7.0
-snowflake-snowpark-python==1.23.0
-snowflake-sqlalchemy==1.6.1
+python-multipart==0.0.12,
 sqids==0.5.0
 SQLAlchemy==2.0.36
 uvicorn==0.32.0

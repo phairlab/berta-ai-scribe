@@ -6,7 +6,6 @@ from uuid import uuid4
 
 from fastapi import Depends, Header
 from pydantic import BaseModel
-from snowflake.connector.secret_detector import SecretDetector
 
 import app.config.db as db
 from app.config import settings
@@ -48,19 +47,13 @@ def configure_logging():
     snowflake_level = (
         LOGGING_LEVEL + 1 if LOGGING_LEVEL <= logging.INFO else LOGGING_LEVEL
     )
-    logging.getLogger("snowflake.connector.cursor").disabled = True
+    
     for logger_name in [
-        "snowflake.connector",
-        "snowflake.connector.connection",
-        "snowflake.snowpark.session",
         "botocore",
         "boto3",
     ]:
         logger = logging.getLogger(logger_name)
         logger.setLevel(snowflake_level)
-        for handler in logger.handlers:
-            # Prevent secrets from leaking into logs
-            handler.setFormatter(SecretDetector())
 
 
 class RequestMetrics(BaseModel):

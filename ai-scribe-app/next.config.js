@@ -86,7 +86,6 @@ let nextConfig = {
 if (process.env.NODE_ENV === "development") {
   // These CSP settings match those imposed by Snowflake, to be used during local development.
   // Doesn't include the injected values for external integrations (which should not be happening through the client in any case).
-  // https://docs.snowflake.com/en/developer-guide/snowpark-container-services/additional-considerations-services-jobs#responses-outgoing-to-the-clients
   const developmentCSPSettings = `
   default-src 'self' 'unsafe-inline' 'unsafe-eval' blob: data:;
   object-src 'none';
