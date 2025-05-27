@@ -1,0 +1,10 @@
+{
+  "python.analysis.extraPaths": ["web-api/", "whisper-service/"],
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter",
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit"
+    },
+    "editor.formatOnSave": true,
+  },
+}

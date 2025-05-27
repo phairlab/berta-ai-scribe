@@ -1,0 +1,12 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Install Web API Requirements",
+			"detail": "Install Python dependencies for the backend Web API to the current environment.",
+			"group": "build",
+			"type": "shell",
+			"command": "pip install -r \"${workspaceFolder}/web-api/requirements.txt\"",
+		}
+	]
+}

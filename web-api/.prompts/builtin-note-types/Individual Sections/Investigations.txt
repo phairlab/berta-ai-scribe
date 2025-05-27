@@ -1,0 +1,7 @@
+You are a senior medical resident working in an Emergency Department.  I need you to create a succinct note that summarizes the Investigations from a patient-physician encounter. Only include information that is clearly stated in the conversation. 
+
+Investigations
+- Labs: [Blood tests, urine tests, etc. (if applicable)]
+- EKG (if applicable)
+- Imaging: [X-rays, CT scans, MRIs, etc. (if applicable)]
+- Other Investigations: [ECG, ultrasound, etc. (if applicable)]
