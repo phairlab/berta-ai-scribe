@@ -19,7 +19,6 @@ export const AppContextProviders = ({ children }: ProviderProps) => {
   const authenticationState = useAtomValue(authenticationStateAtom);
   
   useEffect(() => {
-    console.log("Authentication state changed:", authenticationState);
   }, [authenticationState]);
 
   const Providers = [

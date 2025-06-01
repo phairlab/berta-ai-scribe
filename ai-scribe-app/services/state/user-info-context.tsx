@@ -59,39 +59,31 @@ function UserInfoProvider({ children }: ProviderProps) {
   );
 
   async function prefetch(abortSignal: AbortSignal) {
-    console.log("Fetching user info...");
     try {
       const record = await webApi.user.getInfo(abortSignal);
       const userInfo = convertWebApiRecord.toUserInfo(record);
-      console.log("User info fetched successfully:", userInfo);
       setUserInfo(userInfo);
     } catch (error) {
-      console.error("Error fetching user info:", error);
       throw error;
     }
   }
 
   useEffect(() => {
-    console.log("UserInfoProvider: Authentication state changed to", authenticationState);
     
     if (authenticationState === "Authenticated") {
-      console.log("UserInfoProvider: Starting initialization");
       const controller = new AbortController();
 
       setInitState("Initializing");
       prefetch(controller.signal)
         .then(() => {
-          console.log("UserInfoProvider: Initialization complete");
           setInitState("Ready");
         })
         .catch((error) => {
-          console.error("UserInfoProvider: Initialization failed", error);
           setInitState("Failed");
         });
 
       return () => controller.abort();
     } else if (authenticationState === "Unauthenticated") {
-      console.log("UserInfoProvider: Resetting to initial state");
       setInitState("Initializing");
     }
 

@@ -54,16 +54,12 @@ export const RuntimeConfigProvider: React.FC<{ children: React.ReactNode }> = ({
                     runtimeConfig = await response.json();
                 }
 
-                if (runtimeConfig.NEXT_PUBLIC_BACKEND_URL === '') {
-                    console.warn('NEXT_PUBLIC_BACKEND_URL is not set in runtime config');
-                }
 
                 setConfig(runtimeConfig);
                 if (typeof window !== 'undefined') {
                     window.__RUNTIME_CONFIG__ = runtimeConfig;
                 }
             } catch (err) {
-                console.error('Error loading runtime config:', err);
                 setError(err instanceof Error ? err : new Error('Failed to load runtime config'));
                 const defaultConfig = {
                     NEXT_PUBLIC_USE_COGNITO: 'false',
@@ -90,7 +86,6 @@ export const RuntimeConfigProvider: React.FC<{ children: React.ReactNode }> = ({
     }
 
     if (error) {
-        console.error('Runtime config error:', error);
     }
 
     return (
