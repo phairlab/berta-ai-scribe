@@ -27,9 +27,7 @@ OS Jenkins AI Scribe is an advanced medical documentation assistant designed to 
   - [Step 4: Deploy the Application](#step-4-deploy-the-application)
   - [Step 5: Post-Deployment Configuration](#step-5-post-deployment-configuration)
 - [Available Services Reference](#available-services-reference)
-- [Environment Variables Reference](#environment-variables-reference)
 - [Security](#security)
-- [Troubleshooting](#troubleshooting)
 - [Contributors](#contributors)
 - [License](#license)
   - [Third-Party Licenses](#third-party-licenses)
@@ -565,7 +563,7 @@ If you already have a VPC set up like in your screenshots:
 
    **Basic Settings:**
    - **Resources to create**: Select `VPC and more` (not "VPC only")
-   - **Name tag auto-generation**: Check the box ✅
+   - **Name tag auto-generation**: Check the box 
    - **Auto-generate**: `jenkins` (or your preferred name)
 
    **Network Configuration:**
@@ -611,12 +609,14 @@ If you already have a VPC set up like in your screenshots:
    **Write these down - you'll need them in Step 4!**
 
 ### Step 4: Deploy the Application
-
-1. **Use the one-click deployment link**:
+Use the one-click deployment link:
    
-   [![Deploy to AWS](https://img.shields.io/badge/Deploy%20to-AWS-orange?style=for-the-badge&logo=amazon-aws)](https://us-west-2.console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/quickcreate?stackName=os-jenkins-ai-scribe&templateURL=https://cf-templates-14rwubwevbsfc-us-west-2.s3.us-west-2.amazonaws.com/2025-06-01T072716.376Zklu-template.yaml)
+**One-click Deployment**
+| Service | Button |
+|---------|--------|
+| AWS     | [![AWS CloudFormation Launch Stack SVG Button](https://cdn.rawgit.com/buildkite/cloudformation-launch-stack-button-svg/master/launch-stack.svg)](https://us-west-2.console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/quickcreate?stackName=os-jenkins-ai-scribe&templateURL=https://cf-templates-14rwubwevbsfc-us-west-2.s3.us-west-2.amazonaws.com/2025-06-01T072716.376Zklu-template.yaml)
 
-2. **Fill in the required parameters**:
+**Fill in the required parameters**:
 
    | Parameter | Description | Example |
    |-----------|-------------|---------|
@@ -657,10 +657,6 @@ This will show:
   - **OpenAI**: `gpt-4o`, `gpt-3.5-turbo`
   - **VLLM**: Custom models you've configured
 
-## Environment Variables Reference
-
-*This section would contain a comprehensive list of all environment variables used in the application.*
-
 ## Security
 
 OS Jenkins Scribe implements robust security measures:
@@ -672,10 +668,6 @@ OS Jenkins Scribe implements robust security measures:
 - Database encryption at rest
 - S3 bucket encryption and private access
 - Proper IAM roles and security groups in AWS
-
-## Troubleshooting
-
-*This section would contain common issues and their solutions.*
 
 ## Contributors
 
