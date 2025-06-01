@@ -19,17 +19,12 @@ SAMPLES_DIRECTORY = ".sample-recordings"
 
 @router.get("")
 def list_samples() -> list[sch.SampleRecording]:
-    # Get sample recordings from storage provider
     filenames = storage.list_sample_recordings()
     
-    # Get transcripts
     transcripts = {}
     try:
-        # Try to get transcripts from the storage provider
         if settings.AWS_ACCESS_KEY_ID and settings.AWS_SECRET_ACCESS_KEY and settings.S3_BUCKET_NAME:
-            # Use S3 storage
             try:
-                # Get transcripts from S3
                 transcript_stream = storage.get_sample_recording("transcripts.json")
                 transcript_data = b""
                 for chunk in transcript_stream:
@@ -37,11 +32,9 @@ def list_samples() -> list[sch.SampleRecording]:
                 transcripts = json.loads(transcript_data.decode('utf-8'))
             except Exception as e:
                 print(f"Error loading transcripts from S3: {str(e)}, falling back to local")
-                # Fall back to local file
                 with open(".sample-recordings/transcripts.json", "r", encoding="utf-8") as f:
                     transcripts = json.loads(f.read())
         else:
-            # Use local storage
             with open(".sample-recordings/transcripts.json", "r", encoding="utf-8") as f:
                 transcripts = json.loads(f.read())
     except Exception as e:
@@ -67,12 +60,9 @@ def list_samples() -> list[sch.SampleRecording]:
 )
 def download_sample(filename: str):
     if settings.AWS_ACCESS_KEY_ID and settings.AWS_SECRET_ACCESS_KEY and settings.S3_BUCKET_NAME:
-        # Use S3 storage provider
         try:
-            # Stream the file from S3
             file_stream = storage.get_sample_recording(filename)
             
-            # Return a streaming response
             return StreamingResponse(
                 content=file_stream,
                 media_type="audio/mpeg",
@@ -91,11 +81,8 @@ def download_sample(filename: str):
 
 @router.get("/{filename}/transcript")
 def get_sample_transcript(filename: str) -> sch.TextResponse:
-    # Try to get transcripts from the storage provider
     if settings.AWS_ACCESS_KEY_ID and settings.AWS_SECRET_ACCESS_KEY and settings.S3_BUCKET_NAME:
-        # Use S3 storage
         try:
-            # Get transcripts from S3
             transcript_stream = storage.get_sample_recording("transcripts.json")
             transcript_data = b""
             for chunk in transcript_stream:
@@ -108,7 +95,6 @@ def get_sample_transcript(filename: str) -> sch.TextResponse:
             return sch.TextResponse(text=transcripts[filename])
         except Exception as e:
             print(f"Error loading transcripts from S3: {str(e)}, falling back to local")
-            # Fall back to local file
             try:
                 with open(".sample-recordings/transcripts.json", "r", encoding="utf-8") as f:
                     transcripts = json.loads(f.read())
@@ -120,7 +106,6 @@ def get_sample_transcript(filename: str) -> sch.TextResponse:
             except Exception as nested_e:
                 raise errors.NotFound(f"Transcript not found: {str(nested_e)}")
     else:
-        # Use local storage
         try:
             with open(".sample-recordings/transcripts.json", "r", encoding="utf-8") as f:
                 transcripts = json.loads(f.read())

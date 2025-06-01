@@ -44,16 +44,13 @@ def decode_token(token: str, verify_expiry: bool = True) -> WebAPISession:
             options={"verify_exp": verify_expiry},
         )
 
-        # Handle both standard and Google auth tokens
         if "username" in payload and "sessionId" in payload:
-            # Standard token format
             return WebAPISession(
                 username=payload["username"],
                 sessionId=payload["sessionId"],
                 rights=payload.get("rights") or [],
             )
         elif "sub" in payload:
-            # Google auth token format
             return WebAPISession(
                 username=f"google_{payload['sub']}",
                 sessionId=payload.get("sessionId", "google_session"),
@@ -71,7 +68,6 @@ def decode_token(token: str, verify_expiry: bool = True) -> WebAPISession:
 async def get_snowflake_context_user(
     sf_context_current_user: Annotated[str | None, Header()] = None
 ) -> str:
-    # In development mode, use a default user
     if settings.ENVIRONMENT == "development":
         return "development_user"
         

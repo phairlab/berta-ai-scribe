@@ -25,7 +25,7 @@ export const AuthenticationProvider = ({
       console.log("[AuthProvider] Starting authentication session...");
       setAuthentication({ state: "Authenticating" });
 
-      // Try to authenticate with existing session
+
       console.log("[AuthProvider] Checking session with backend");
       const response = await fetch(`/api/auth/check-session`, {
         method: 'POST', 
@@ -52,7 +52,6 @@ export const AuthenticationProvider = ({
     } catch (ex: unknown) {
       console.error("[AuthProvider] Authentication failed:", ex);
       
-      // Only auto-authenticate in development if no auth methods are enabled
       if (process.env.NODE_ENV === "development" && !isCognitoEnabled && !isGoogleAuthEnabled) {
         console.log("[AuthProvider] Auto-authenticating in development mode...");
         setAuthentication({ 
@@ -66,12 +65,10 @@ export const AuthenticationProvider = ({
   };
 
   useEffect(() => {
-    // Only start authentication if we're not already on the login page
     if (authentication.state === "Unauthenticated" && !window.location.pathname.startsWith('/login')) {
       console.log("[AuthProvider] Current path:", window.location.pathname);
       
       if (isCognitoEnabled || isGoogleAuthEnabled) {
-        // Check if we have a session cookie before redirecting
         const hasSessionCookie = document.cookie.includes('jenkins_session=');
         console.log("[AuthProvider] Session cookie present:", hasSessionCookie);
         
@@ -80,10 +77,8 @@ export const AuthenticationProvider = ({
           window.location.href = '/login';
           return;
         }
-        // If we have a session cookie, try to authenticate
         startSession();
       } else if (process.env.NODE_ENV === "development") {
-        // Only auto-authenticate in development if no auth methods are enabled
         console.log("[AuthProvider] Auto-authenticating in development mode...");
         setAuthentication({ 
           state: "Authenticated", 

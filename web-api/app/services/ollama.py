@@ -1,6 +1,8 @@
 from collections.abc import Iterable
 from datetime import datetime
-from typing import BinaryIO, cast
+from typing import BinaryIO, cast, List, Dict
+import requests
+import logging
 
 import aiohttp
 from openai import AsyncOpenAI, NotGiven, OpenAI
@@ -15,23 +17,37 @@ from app.schemas import GenerationOutput, LanguageModel
 from app.services.adapters import GenerativeAIService
 from app.utility.timing import ExecutionTimer
 
+logger = logging.getLogger(__name__)
 
 class OllamaGenerativeAIService(GenerativeAIService):
     def __init__(self, service_url: str = "http://localhost:11434"):
         self._service_url = service_url
+        self._available_models = self._get_available_models()
 
     @property
     def service_name(self):
         return "Ollama"
 
+    def _get_available_models(self) -> List[Dict]:
+        """Fetch available models from Ollama API."""
+        try:
+            response = requests.get(f"{self._service_url}/api/tags")
+            if response.status_code == 200:
+                return response.json().get('models', [])
+            else:
+                logger.error(f"Error fetching Ollama models: {response.status_code}")
+                logger.error(response.text)
+                return []
+        except Exception as e:
+            logger.error(f"Error connecting to Ollama: {str(e)}")
+            return []
+
     @property
     def models(self):
+        """Get list of available models from Ollama."""
         return [
-            LanguageModel(name="llama3.1:8b", size="Large"),
-            LanguageModel(name="llama3.3:70b", size="Large"),
-            LanguageModel(name="llama3.3:70b-instruct-q2_K", size="Large"),
-            LanguageModel(name="llama3.1:8b-instruct-fp16", size="Large"),
-        
+            LanguageModel(name=model['name'], size="Large")
+            for model in self._available_models
         ]
 
     def complete(

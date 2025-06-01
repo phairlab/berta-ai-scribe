@@ -67,7 +67,7 @@ async function executeHttpAction<T>(
       };
     }
 
-    // Ensure path starts with a forward slash
+    
     const normalizedPath = path.startsWith('/') ? path : `/${path}`;
     let fullPath = `${API_BASE_URL}${normalizedPath}`;
 
@@ -114,22 +114,22 @@ async function executeHttpAction<T>(
       if (response.ok) {
         return data;
       } else {
-        // Convert any server error responses into a standard format.
+        
         if (Errors.isWebApiError(data)) {
           if (
             Array.isArray(data.detail) &&
             data.detail.every((e) => Errors.isServerValidationError(e))
           ) {
-            // Convert multi-validation errors from server format.
+            
             throw Errors.ValidationError(data.detail);
           } else if (Errors.isServerValidationError(data.detail)) {
-            // Convert single-validation errors from server format.
+            
             throw Errors.ValidationError([data.detail]);
           } else if (Errors.isApplicationError(data.detail)) {
-            // This is the normal, expected type of error the web API would return.
+            
             throw data.detail;
           } else {
-            // Handle real web API errors that are not in the normal form.
+            
             const errorMessage =
               typeof data.detail === "string"
                 ? data.detail
@@ -141,15 +141,15 @@ async function executeHttpAction<T>(
               response.status !== 405 &&
               response.status !== 429
             ) {
-              // Fatal errors.
+              
               throw Errors.RequestRejected(errorMessage);
             } else {
-              // Potentially retriable errors.
+              
               throw Errors.ServerError(errorMessage);
             }
           }
         } else {
-          // Handle cases where an error is emitted in an unexpected format, for example a severe Internal Server Error.
+          
           throw Errors.ServerError(
             typeof data === "string" ? data : JSON.stringify(data),
           );

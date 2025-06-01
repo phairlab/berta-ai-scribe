@@ -35,7 +35,6 @@ def get_encounters(
     Gets all saved encounters for the current user.
     """
 
-    # Fetch the encounter records for the current user.
     get_encounters_batch = select(db.Encounter)
 
     if earlierThan is not None:
@@ -96,10 +95,8 @@ def create_encounter(
                 audio.file, format="mp3", bitrate=settings.DEFAULT_AUDIO_BITRATE
             )
 
-        # Determine the reformatted file size.
         reformatted_file_size = get_file_size(reformatted)
 
-        # Log the audio conversion.
         backgroundTasks.add_task(
             log_audio_conversion,
             database=database,
@@ -111,7 +108,6 @@ def create_encounter(
             task_type="NEW RECORDING",
         )
 
-        # Compute waveform peaks.
         peaks = compute_peaks(reformatted)
     except Exception as e:
         audio_error = errors.AudioProcessingError(str(e))
@@ -129,7 +125,6 @@ def create_encounter(
 
         raise audio_error
 
-    # Create the encounter record and associate it to the current user.
     try:
         recording = db.Recording(
             id=recording_id,
@@ -152,7 +147,6 @@ def create_encounter(
 
         database.add(encounter)
 
-        # Save the recording file.
         try:
             filename = f"{recording_id}.mp3"
             db.save_recording(reformatted, userSession.username, filename)
@@ -164,7 +158,6 @@ def create_encounter(
         reformatted.close()
         raise errors.DatabaseError(str(e))
 
-    # Record the change.
     backgroundTasks.add_task(
         log_data_change,
         database=database,
@@ -175,7 +168,6 @@ def create_encounter(
         entity_id=encounter_id,
     )
 
-    # Return the created encounter.
     return ConvertToSchema.encounter(encounter)
 
 

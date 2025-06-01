@@ -2,6 +2,7 @@ from app.config import (
     is_openai_supported,
     is_aws_transcribe_supported,
     is_aws_bedrock_supported,
+    is_vllm_supported,
     settings,
 )
 from app.services.adapters import GenerativeAIService, TranscriptionService
@@ -12,9 +13,9 @@ from app.services.amazon_transcribe import AmazonTranscribeService
 from app.services.aws_bedrock import BedrockGenerativeAIService
 from app.services.ollama import OllamaGenerativeAIService
 from app.services.parakeet_mlx import ParakeetMLXTranscriptionService
+from app.services.vllm_service import VLLMService
 
 
-# Load prompts using the prompt service
 note_format_prompts = prompt_service.get_note_format_prompts()
 PLAINTEXT_NOTE_SYSTEM_PROMPT = note_format_prompts.get('plaintext', '')
 MARKDOWN_NOTE_SYSTEM_PROMPT = note_format_prompts.get('markdown', '')
@@ -55,6 +56,10 @@ match settings.GENERATIVE_AI_SERVICE:
             generative_ai_services.append(
                 BedrockGenerativeAIService(region_name=settings.AWS_REGION)
             )
+    case "VLLM":
+        if is_vllm_supported:
+            api_url = f"http://{settings.VLLM_SERVER_NAME}:{settings.VLLM_SERVER_PORT}/v1"
+            generative_ai_services.append(VLLMService(api_url=api_url))
     case _:
         raise ValueError(
             f"{settings.GENERATIVE_AI_SERVICE} is not a valid generative AI service"

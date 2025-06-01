@@ -420,10 +420,8 @@ app.include_router(
     monitoring.router, prefix="/monitoring", tags=["Monitoring"]
 )
 
-# Include authentication routers based on environment and configuration
 if settings.ENVIRONMENT == "development":
     print("Including development auth router...")
-    # In development, use the original working auth setup
     app.include_router(
         authorization.router,
         prefix="/auth",
@@ -432,7 +430,6 @@ if settings.ENVIRONMENT == "development":
     )
     print("Development auth router included")
 elif is_cognito_supported:
-    # In production with Cognito configured, use Cognito auth
     app.include_router(
         cognito_auth.router,
         prefix="/auth",
@@ -440,7 +437,6 @@ elif is_cognito_supported:
         include_in_schema=True
     )
 else:
-    # In production without Cognito, use Snowflake auth
     app.include_router(
         authorization.router,
         prefix="/auth",
@@ -455,14 +451,12 @@ else:
 if __name__ == "__main__":
     import uvicorn
 
-    # Sync local prompts to S3 if AWS is configured 
     if USE_S3_STORAGE:
         import os
         
-        # Log that we're checking S3 for prompts
         print("AWS credentials detected. Checking if prompts need to be synced to S3...")
         
-        # Define a function to sync missing prompts
+        
         def ensure_prompts_in_s3():
             try:
                 # Check if prompts directory exists locally

@@ -2,10 +2,8 @@ import { NextResponse } from 'next/server';
 
 export async function POST() {
   try {
-    // Get the backend URL from environment variable or use default
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
     
-    // Call the backend logout endpoint
     const response = await fetch(`${backendUrl}/auth/logout`, {
       method: 'POST',
       credentials: 'include',
@@ -24,7 +22,6 @@ export async function POST() {
       throw new Error(errorData.detail || `Backend logout failed: ${response.statusText}`);
     }
 
-    // Return success response
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Logout API error:', error);

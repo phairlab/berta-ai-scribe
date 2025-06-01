@@ -119,12 +119,10 @@ export const WavesurferWidget = ({
     }
   }, [loadedAudio]);
 
-  // React to changes to Wavesurfer options.
   useEffect(() => {
     wavesurfer.current?.setOptions(options);
   }, [options]);
 
-  // React to changes to player interactive state.
   useEffect(() => {
     setOptions({
       ...options,
@@ -132,7 +130,6 @@ export const WavesurferWidget = ({
     });
   }, [isReady]);
 
-  // React to theme changes.
   useEffect(() => {
     setOptions({
       ...options,

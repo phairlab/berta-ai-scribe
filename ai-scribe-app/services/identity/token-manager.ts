@@ -1,7 +1,6 @@
 
-// Token manager to handle refresh and expiry
 export class TokenManager {
-  private static REFRESH_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes before expiry
+  private static REFRESH_THRESHOLD_MS = 5 * 60 * 1000; 
   
   static async refreshTokenIfNeeded() {
     if (typeof window === 'undefined') return false;
@@ -14,13 +13,11 @@ export class TokenManager {
     }
     
     try {
-      // Check if token is expired or about to expire
       const payload = this.parseJwt(accessToken);
-      const expiryTime = payload.exp * 1000; // Convert to milliseconds
+      const expiryTime = payload.exp * 1000; 
       const currentTime = Date.now();
       
       if (expiryTime - currentTime < this.REFRESH_THRESHOLD_MS) {
-        // Token is about to expire, refresh it
         const newTokens = await this.refreshTokens(refreshToken);
         
         localStorage.setItem('cognitoAccessToken', newTokens.access_token);
@@ -35,7 +32,7 @@ export class TokenManager {
       return false;
     }
     
-    return true; // Token is valid and not about to expire
+    return true; 
   }
   
   private static parseJwt(token: string) {
@@ -52,25 +49,22 @@ export class TokenManager {
       return JSON.parse(jsonPayload);
     } catch (error) {
       console.error('Error parsing JWT token:', error);
-      return { exp: 0 }; // Return a token that will trigger refresh
+      return { exp: 0 }; 
     }
   }
   
   private static async refreshTokens(refreshToken: string) {
     let cognitoDomain: string | undefined;
     let clientId: string | undefined;
-    // Try to use runtime config if in browser
     if (typeof window !== 'undefined' && window.__NEXT_DATA__) {
       try {
-        // Use a custom hook if in a React component, otherwise fallback
         const runtimeConfig = (window as any).__RUNTIME_CONFIG__ || {};
         cognitoDomain = runtimeConfig.NEXT_PUBLIC_COGNITO_DOMAIN;
         clientId = runtimeConfig.NEXT_PUBLIC_COGNITO_CLIENT_ID;
       } catch {
-        // fallback
+        
       }
     }
-    // Fallback to process.env for SSR or if runtime config is not available
     cognitoDomain = cognitoDomain || process.env.NEXT_PUBLIC_COGNITO_DOMAIN;
     clientId = clientId || process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID;
     if (!cognitoDomain || !clientId) {

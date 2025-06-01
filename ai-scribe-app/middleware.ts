@@ -2,7 +2,6 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 export function middleware(request: NextRequest) {
-  // Handle API requests
   if (request.nextUrl.pathname.startsWith("/api") || request.nextUrl.pathname.startsWith("/auth")) {
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
     if (!backendUrl) {
@@ -23,7 +22,6 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // Update headers if needed
   const requestHeaders = new Headers(request.headers);
   if (process.env.SNOWFLAKE_CONTEXT_USER) {
     requestHeaders.set(

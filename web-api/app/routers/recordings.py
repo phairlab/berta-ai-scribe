@@ -12,7 +12,6 @@ import app.errors as errors
 from app.config import settings, storage
 from app.security import authenticate_session_cookie, useCookieUserSession
 
-# Set up logging
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
@@ -25,7 +24,6 @@ async def get_recording_file(
     recordingId: str
 ):
     if settings.AWS_ACCESS_KEY_ID and settings.AWS_SECRET_ACCESS_KEY and settings.S3_BUCKET_NAME:
-        # Use S3 storage provider with range request support
         s3_key = f"recordings/{userSession.username}/{recordingId}.mp3"
         
         try:
@@ -36,7 +34,6 @@ async def get_recording_file(
                 aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
             )
             
-            # Get object info to determine file size
             head_response = s3_client.head_object(
                 Bucket=settings.S3_BUCKET_NAME,
                 Key=s3_key
@@ -44,14 +41,12 @@ async def get_recording_file(
             file_size = head_response['ContentLength']
             logger.debug(f"File size: {file_size} bytes")
             
-            # Parse range header if it exists
             range_header = request.headers.get('Range')
             logger.debug(f"Range header: {range_header}")
             
             start = 0
             end = file_size - 1
             
-            # Process range header if present
             if range_header:
                 range_match = re.search(r'bytes=(\d+)-(\d*)', range_header)
                 if range_match:
@@ -63,50 +58,39 @@ async def get_recording_file(
                         end = file_size - 1
                     logger.debug(f"Parsed range: start={start}, end={end}")
             
-            # Calculate content length for the response
             content_length = end - start + 1
             
-            # Create a range string for S3 request
             byte_range = f'bytes={start}-{end}'
             logger.debug(f"Requesting S3 range: {byte_range}")
             
-            # Create response headers
             headers = {
                 'Accept-Ranges': 'bytes',
                 'Content-Length': str(content_length),
                 'Content-Type': 'audio/mpeg',
                 'Content-Disposition': f'attachment; filename={recordingId}.mp3',
                 'Cache-Control': 'no-cache',
-                # CORS headers are critical for range requests to work
                 'Access-Control-Allow-Origin': '*',
                 'Access-Control-Allow-Methods': 'GET, OPTIONS',
                 'Access-Control-Allow-Headers': 'Range, Content-Type, Accept, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization',
                 'Access-Control-Expose-Headers': 'Content-Range, Accept-Ranges, Content-Length, Content-Type',
             }
             
-            # Add Content-Range header only for partial content responses
             if range_header:
                 headers['Content-Range'] = f'bytes {start}-{end}/{file_size}'
             
-            # Determine response status code
             status_code = status.HTTP_206_PARTIAL_CONTENT if range_header else status.HTTP_200_OK
             
-            # Create a streaming response generator
             async def s3_range_stream():
-                # Get S3 parameters
                 params = {
                     'Bucket': settings.S3_BUCKET_NAME,
                     'Key': s3_key,
                 }
                 
-                # Add Range parameter only if needed
                 if range_header:
                     params['Range'] = byte_range
                 
-                # Make the request to S3
                 response = s3_client.get_object(**params)
                 
-                # Stream the response in chunks
                 body = response['Body']
                 chunk_size = 8192  # 8KB chunks
                 
@@ -137,7 +121,6 @@ async def get_recording_file(
             logger.error(f"Unexpected error serving recording: {str(e)}", exc_info=True)
             raise errors.ExternalServiceError("Audio Streaming", str(e))
     else:
-        # Use local file system
         filepath = Path(
             settings.RECORDINGS_FOLDER, userSession.username, f"{recordingId}.mp3"
         )
@@ -147,7 +130,6 @@ async def get_recording_file(
 
         return FileResponse(filepath)
 
-# Add an OPTIONS endpoint to respond to preflight requests
 @router.options("/{recordingId}/download", dependencies=[Depends(authenticate_session_cookie)])
 async def options_recording_download(recordingId: str):
     headers = {

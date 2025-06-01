@@ -21,7 +21,6 @@ import { TitledParagraph } from "@/core/titled-paragraph";
 export const TermsOfUse = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
 
-  // If terms have not been agreed this session, open the modal.
   useEffect(() => {
     let termsAgreed: string | null = sessionStorage.getItem(
       sessionKeys.TermsAgreed,
@@ -33,7 +32,6 @@ export const TermsOfUse = () => {
   }, []);
 
   const handleAgreed = () => {
-    // Note agreement in session storage.
     sessionStorage.setItem(sessionKeys.TermsAgreed, "Yes");
     onClose();
   };
