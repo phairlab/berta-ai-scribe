@@ -15,15 +15,15 @@ OS Jenkins AI Scribe is an advanced medical documentation assistant designed to 
   - [Prerequisites](#prerequisites)
   - [Local Development Options](#local-development-options)
   - [Option 1: Basic Local Setup (Recommended)](#option-1-basic-local-setup-recommended)
-  - [Option 2: Local with AWS Services (Hybrid)](#option-2-local-with-aws-services-hybrid)
-  - [Option 3: Local with Advanced AI Services](#option-3-local-with-advanced-ai-services)
-  - [Option 4: Local GPU Setup with VLLM (Complete Privacy)](#option-4-local-gpu-setup-with-vllm-complete-privacy)
+  - [Option 2: OpenAI Setup](#option-2-openai-setup)
+  - [Option 3: Local GPU Setup (VLLM)](#option-3-local-gpu-setup-vllm)
+  - [Start the Backend](#start-the-backend)
   - [Frontend Setup](#frontend-setup)
   - [Verification](#verification)
 - [AWS Deployment](#aws-deployment)
   - [Step 1: AWS Account Setup](#step-1-aws-account-setup)
   - [Step 2: Domain Setup](#step-2-domain-setup)
-  - [Step 3: VPC and Network Setup](#step-3-vpc-and-network-setup)
+  - [Step 3: Create VPC Infrastructure (AWS Console)](#step-3-create-vpc-infrastructure-aws-console)
   - [Step 4: Deploy the Application](#step-4-deploy-the-application)
   - [Step 5: Post-Deployment Configuration](#step-5-post-deployment-configuration)
 - [Available Services Reference](#available-services-reference)
@@ -32,6 +32,10 @@ OS Jenkins AI Scribe is an advanced medical documentation assistant designed to 
 - [Troubleshooting](#troubleshooting)
 - [Contributors](#contributors)
 - [License](#license)
+  - [Third-Party Licenses](#third-party-licenses)
+  - [Llama 3.3 License Notice](#llama-33-license-notice)
+  - [Attribution Notices](#attribution-notices)
+- [Medical Disclaimer](#medical-disclaimer)
 
 ## Overview
 
@@ -73,7 +77,6 @@ The system follows a modern web application architecture with several layers:
 
 ![Jenkins Architecture 002](https://github.com/user-attachments/assets/e4c96a82-1d2b-41e7-81ca-051c8de7a803)
 
-
 - **Web Browser**: The client interface accessed by users
 - **Next.js Frontend**: Server-side rendered React application
 - **Load Balancer**: Distributes traffic across backend instances
@@ -94,7 +97,6 @@ OS Jenkins Scribe supports four transcription services:
 2. **OpenAI Whisper**: State-of-the-art speech recognition via OpenAI API
 3. **WhisperX**: Enhanced local Whisper with better accuracy and speed
 4. **AWS Transcribe**: Cloud-based transcription with medical terminology support
-
 
 The transcription service is configurable via the `TRANSCRIPTION_SERVICE` environment variable.
 
@@ -135,24 +137,6 @@ The application supports three database options:
    - Configure using `USE_AURORA=true`
    - Requires Aurora writer endpoint and credentials
 
-## Available Services Reference
-
-You can view all available services and models by running:
-
-```bash
-cd web-api
-python -m app.cli.list_services
-```
-
-This will show:
-- **Transcription Services**: Parakeet MLX, OpenAI Whisper, WhisperX, AWS Transcribe
-- **AI Services**: Ollama (with your installed models), OpenAI, AWS Bedrock, VLLM
-- **Available Models**: 
-  - **Ollama**: All models from your `ollama list` output
-  - **AWS Bedrock**: `us.meta.llama3-3-70b-instruct-v1:0`, `meta.llama3-1-405b-instruct-v1:0`, `meta.llama3-1-70b-instruct-v1:0`, `anthropic.claude-3-7-sonnet-20250219-v1:0`
-  - **OpenAI**: `gpt-4o`, `gpt-3.5-turbo`
-  - **VLLM**: Custom models you've configured
-
 ## Local Development Setup
 
 ### Prerequisites
@@ -181,6 +165,7 @@ brew install ffmpeg
 ```bash
 # Using Chocolatey
 choco install ffmpeg
+```
 
 **Verify installation:**
 ```bash
@@ -490,9 +475,8 @@ uvicorn app.main:app --reload --port 8000
 
 ## AWS Deployment
 
-## Architecture
-![AWS Architecture](https://github.com/user-attachments/assets/2dd32f5a-d89a-4119-8cc0-baaa9f5a8190)
-
+### Architecture
+![AWS Architecture](https://github.com/user-attachments/assets/02cece57-7e3c-44d3-8488-ecd078026c35)
 
 ### Step 1: AWS Account Setup
 
@@ -555,9 +539,10 @@ uvicorn app.main:app --reload --port 8000
    ```bash
    aws route53 list-hosted-zones --query "HostedZones[?Name=='yourdomain.com.'].Id" --output text
    ```
-## Step 3: Create VPC Infrastructure (AWS Console)
 
-### Option A: Use Existing VPC (If You Have One)
+### Step 3: Create VPC Infrastructure (AWS Console)
+
+#### Option A: Use Existing VPC (If You Have One)
 
 If you already have a VPC set up like in your screenshots:
 
@@ -568,9 +553,9 @@ If you already have a VPC set up like in your screenshots:
 
 2. **Skip to Step 4** and use these values in the deployment form
 
-### Option B: Create New VPC (Recommended for New Users)
+#### Option B: Create New VPC (Recommended for New Users)
 
-** Use AWS VPC Wizard **
+**Use AWS VPC Wizard**
 
 1. **Go to VPC Console**:
    - Open [VPC Console](https://console.aws.amazon.com/vpc/)
@@ -650,9 +635,31 @@ If you already have a VPC set up like in your screenshots:
 ### Step 5: Post-Deployment Configuration
 
 **Test the application**:
-   - Navigate to the Frontend URL
-   - Complete Cognito authentication
-   - Test audio recording and note generation
+- Navigate to the Frontend URL
+- Complete Cognito authentication
+- Test audio recording and note generation
+
+## Available Services Reference
+
+You can view all available services and models by running:
+
+```bash
+cd web-api
+python -m app.cli.list_services
+```
+
+This will show:
+- **Transcription Services**: Parakeet MLX, OpenAI Whisper, WhisperX, AWS Transcribe
+- **AI Services**: Ollama (with your installed models), OpenAI, AWS Bedrock, VLLM
+- **Available Models**: 
+  - **Ollama**: All models from your `ollama list` output
+  - **AWS Bedrock**: `us.meta.llama3-3-70b-instruct-v1:0`, `meta.llama3-1-405b-instruct-v1:0`, `meta.llama3-1-70b-instruct-v1:0`, `anthropic.claude-3-7-sonnet-20250219-v1:0`
+  - **OpenAI**: `gpt-4o`, `gpt-3.5-turbo`
+  - **VLLM**: Custom models you've configured
+
+## Environment Variables Reference
+
+*This section would contain a comprehensive list of all environment variables used in the application.*
 
 ## Security
 
@@ -665,6 +672,10 @@ OS Jenkins Scribe implements robust security measures:
 - Database encryption at rest
 - S3 bucket encryption and private access
 - Proper IAM roles and security groups in AWS
+
+## Troubleshooting
+
+*This section would contain common issues and their solutions.*
 
 ## Contributors
 
