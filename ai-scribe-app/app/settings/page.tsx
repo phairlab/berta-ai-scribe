@@ -1,9 +1,6 @@
 "use client";
 
 import { useState } from "react";
-
-import { Link } from "@heroui/react";
-
 import { NoteTypeSelector } from "@/core/note-type-selector";
 import { subtitle, title } from "@/core/primitives";
 import { IncompleteNoteType, NoteType } from "@/core/types";
@@ -99,17 +96,9 @@ export default function Settings() {
         <h2 className={`${subtitle()} text-center`}>Custom Note Types</h2>
         <div className="flex flex-col gap-3 text-justify sm:text-left text-small text-zinc-500 max-w-[90%] sm:max-w-[600px]">
           <p>
-            Use the following options to configure a custom note type. For
-            assistance, please reach out to the project team at:&nbsp;
+            Use the following options to configure a custom note type.
             <br className="sm:hidden mb-1" />
             <span className="text-nowrap">
-              <Link
-                className="text-sm ms-2 sm:ms-0"
-                href="mailto:digitalscribe.team@albertahealthservices.ca"
-              >
-                digitalscribe.team@albertahealthservices.ca
-              </Link>
-              .
             </span>
           </p>
         </div>
