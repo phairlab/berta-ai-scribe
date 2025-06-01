@@ -576,7 +576,8 @@ If you already have a VPC set up like in your screenshots:
 
    **Basic Settings:**
    - **Resources to create**: Select `VPC and more` (not "VPC only")
-   - **Name tag auto-generation**: Check the box 
+   - **Name tag auto-generation**: Check the box ✅
+
    - **Auto-generate**: `jenkins` (or your preferred name)
 
    **Network Configuration:**
