@@ -109,6 +109,11 @@ The application supports four language model providers:
 
 The system will automatically use the best available model based on your configuration. For the local deployment we will be using gpt-4o via OpenAI API and for the AWS deployment we will be using Llama3.3 70b.
 
+> [!NOTE]
+> The main note generation uses the model specified in your environment configuration. Additionally, the application provides custom settings where you can test different note instructions against various models:
+> - **Local Development**: All models from your `ollama list` appear as testing options in custom settings
+> - **AWS Deployment**: A fixed set of Bedrock models (Meta Llama 3.3 70B, Llama 3.1 405B/70B, Claude 3.7 Sonnet) are available for testing custom note instructions
+
 ## Storage Configuration
 
 OS Jenkins Scribe supports two storage options:
@@ -233,11 +238,15 @@ For local development, you'll need Google OAuth credentials:
    - Copy the **Client ID** and **Client Secret**
    - You'll need these for your environment files
 
-**Important**: The redirect URIs must match exactly. If you change the frontend port, update the redirect URIs accordingly.
+> [!IMPORTANT]
+> The redirect URIs must match exactly. If you change the frontend port, update the redirect URIs accordingly.
 
 ### Local Development Options
 
 All local setups use **SQLite database**, **local file storage**, and **Google OAuth authentication**. Create the below .env in web-api directory. Choose based on your AI service preference:
+
+> [!IMPORTANT]
+> If you're switching between different AI models or services, delete the `.data` folder in the `web-api` directory to clear any cached model data and ensure a clean start with your new configuration.
 
 #### Option 1: Basic Local Setup (Recommended)
 
@@ -268,6 +277,9 @@ All local setups use **SQLite database**, **local file storage**, and **Google O
    # Optional: For better quality (requires more RAM)
    # ollama pull llama3.3:70b
    ```
+
+> [!NOTE]
+> Any models you have already downloaded with Ollama (visible in `ollama list`) will automatically appear as options in the application's custom settings, allowing you to test different note instructions with various models.
 
 3. **Create backend environment file** (`web-api/.env`):
    ```env
@@ -461,7 +473,8 @@ uvicorn app.main:app --reload --port 8000
    npm run dev
    ```
 
-**Note**: The `GOOGLE_CLIENT_ID` should be the same in both frontend and backend environment files.
+> [!NOTE]
+> The `GOOGLE_CLIENT_ID` should be the same in both frontend and backend environment files.
 
 ### Verification
 
@@ -563,7 +576,7 @@ If you already have a VPC set up like in your screenshots:
 
    **Basic Settings:**
    - **Resources to create**: Select `VPC and more` (not "VPC only")
-   - **Name tag auto-generation**: Check the box 
+   - **Name tag auto-generation**: Check the box ✅
    - **Auto-generate**: `jenkins` (or your preferred name)
 
    **Network Configuration:**
@@ -609,12 +622,18 @@ If you already have a VPC set up like in your screenshots:
    **Write these down - you'll need them in Step 4!**
 
 ### Step 4: Deploy the Application
+
 Use the one-click deployment link:
    
 **One-click Deployment**
 | Service | Button |
 |---------|--------|
 | AWS     | [![AWS CloudFormation Launch Stack SVG Button](https://cdn.rawgit.com/buildkite/cloudformation-launch-stack-button-svg/master/launch-stack.svg)](https://us-west-2.console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/quickcreate?stackName=os-jenkins-ai-scribe&templateURL=https://cf-templates-14rwubwevbsfc-us-west-2.s3.us-west-2.amazonaws.com/2025-06-01T072716.376Zklu-template.yaml)
+
+**Custom Deployment**: If you need to modify the CloudFormation template (e.g., change instance sizes, add custom configurations), you can use the `template.yaml` file included in this repository. Download the template, make your modifications, and deploy it manually through the AWS CloudFormation console or AWS CLI instead of using the one-click deployment above.
+
+> [!IMPORTANT]
+> If you modify the `template.yaml` file and deploy it manually, you cannot use the one-click deployment button. You must deploy your custom template through the AWS CloudFormation console or CLI.
 
 **Fill in the required parameters**:
 
@@ -638,6 +657,18 @@ Use the one-click deployment link:
 - Navigate to the Frontend URL
 - Complete Cognito authentication
 - Test audio recording and note generation
+
+**Docker Images**: The CloudFormation template uses pre-built Docker images hosted on AWS Public ECR:
+- **Frontend**: `public.ecr.aws/s9f8j1d3/jenkins-os-frontend:latest`
+- **Backend**: `public.ecr.aws/s9f8j1d3/jenkins-os-backend:latest`
+
+These images are automatically pulled during deployment and contain the latest stable versions of the application components.
+
+**Updates**: When new releases are available, we update the images at the same URLs. To get the latest version, simply restart your ECS services:
+```bash
+aws ecs update-service --cluster jenkins-os-cluster-production --service jenkins-os-frontend-production --force-new-deployment
+aws ecs update-service --cluster jenkins-os-cluster-production --service jenkins-os-backend-production --force-new-deployment
+```
 
 ## Available Services Reference
 

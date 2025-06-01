@@ -9,6 +9,7 @@
       "lint": "next lint"
    },
    "dependencies": {
+      "@headlessui/react": "^2.2.4",
       "@heroui/react": "2.7.4",
       "@react-aria/ssr": "^3.9.7",
       "@react-aria/visually-hidden": "^3.8.18",
