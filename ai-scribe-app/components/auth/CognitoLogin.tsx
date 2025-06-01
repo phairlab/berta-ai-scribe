@@ -21,7 +21,6 @@ export function CognitoLogin() {
   const redirectUri = runtimeConfig.NEXT_PUBLIC_COGNITO_REDIRECT_URI;
 
   const addDebug = (message: string) => {
-    console.log(message);
     setDebugMessage(prev => prev + '\n' + message);
   };
 
@@ -46,7 +45,6 @@ export function CognitoLogin() {
         addDebug("No valid session found, redirecting to Cognito login");
         redirectToCognito();
       } catch (err) {
-        console.error('Session check failed:', err);
         addDebug(`Session check failed: ${err instanceof Error ? err.message : String(err)}`);
         redirectToCognito();
       }
@@ -86,7 +84,6 @@ export function CognitoLogin() {
         addDebug(`Using redirect URI: ${redirectUri}`);
         window.location.href = authUrl;
       } catch (err) {
-        console.error("Error redirecting to Cognito:", err);
         setError("Failed to redirect to login page");
         setIsLoading(false);
       }
@@ -104,7 +101,6 @@ export function CognitoLogin() {
       
       router.push('/');
     } catch (err) {
-      console.error("Authentication error:", err);
       const errorMessage = err instanceof Error ? err.message : String(err);
       setError(`Authentication failed: ${errorMessage}`);
       addDebug(`Auth error: ${errorMessage}`);
@@ -145,7 +141,6 @@ export function CognitoLogin() {
                 addDebug(`Manual redirect to: ${authUrl}`);
                 window.location.href = authUrl;
               } catch (err) {
-                console.error("Error redirecting to Cognito:", err);
                 setError("Failed to redirect to login page");
                 setIsLoading(false);
               }

@@ -28,7 +28,6 @@ export class TokenManager {
         return true;
       }
     } catch (error) {
-      console.error('Error checking/refreshing token:', error);
       return false;
     }
     

@@ -102,7 +102,6 @@ async function executeHttpAction<T>(
       body: body,
     };
 
-    console.log(`Making API request to: ${fullPath}`);
     const response = await fetch(fullPath, init);
 
     try {

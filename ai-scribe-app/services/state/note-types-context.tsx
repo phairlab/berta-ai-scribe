@@ -47,41 +47,33 @@ function NoteTypesProvider({ children }: ProviderProps) {
   );
 
   async function prefetch(abortSignal: AbortSignal) {
-    console.log("Fetching note types...");
     try {
       const records = await webApi.noteDefinitions.getAll(abortSignal);
       const noteTypes = records
         .map((nt) => convertWebApiRecord.toNoteType(nt))
         .sort(alphabetically((nt) => nt.title));
-      console.log("Note types fetched successfully:", noteTypes.length);
       setNoteTypes(noteTypes);
     } catch (error) {
-      console.error("Error fetching note types:", error);
       throw error;
     }
   }
 
   useEffect(() => {
-    console.log("NoteTypesProvider: Authentication state changed to", authenticationState);
     
     if (authenticationState === "Authenticated") {
-      console.log("NoteTypesProvider: Starting initialization");
       const controller = new AbortController();
 
       setInitState("Initializing");
       prefetch(controller.signal)
         .then(() => {
-          console.log("NoteTypesProvider: Initialization complete");
           setInitState("Ready");
         })
         .catch((error) => {
-          console.error("NoteTypesProvider: Initialization failed", error);
           setInitState("Failed");
         });
 
       return () => controller.abort();
     } else if (authenticationState === "Unauthenticated") {
-      console.log("NoteTypesProvider: Resetting to initial state");
       setInitState("Initializing");
     }
 
@@ -136,12 +128,10 @@ function useNoteTypes() {
         ? noteTypes[0]
         : undefined;
 
-  /** Gets a note type if it exists. */
   function get(id: string) {
     return custom.find((nt) => nt.id === id);
   }
 
-  /** Adds or replaces a note type by id. */
   function put(id: string, noteType: NoteType) {
     setNoteTypes((noteTypes) => [
       ...noteTypes.filter((nt) => nt.id !== id),
@@ -149,11 +139,7 @@ function useNoteTypes() {
     ]);
   }
 
-  /**
-   * Saves a custom note type and persists the changes.
-   *
-   * Persistence Strategy: Synchronous.
-   */
+ 
   async function save(noteType: NoteType) {
     const modified = new Date().toISOString();
     const id = noteType.id;
