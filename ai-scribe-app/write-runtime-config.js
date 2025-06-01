@@ -14,19 +14,11 @@ const config = {
   NEXT_PUBLIC_BACKEND_URL: process.env.NEXT_PUBLIC_BACKEND_URL || '',
 };
 
-
-console.log('Writing runtime config with values:', {
-  ...config,
-  NEXT_PUBLIC_COGNITO_CLIENT_ID: config.NEXT_PUBLIC_COGNITO_CLIENT_ID ? '[REDACTED]' : '',
-});
-
 try {
   fs.writeFileSync(
     path.join(publicDir, 'runtime-config.json'),
     JSON.stringify(config, null, 2)
   );
-  console.log('Successfully wrote runtime config');
 } catch (error) {
-  console.error('Failed to write runtime config:', error);
   process.exit(1);
 } 

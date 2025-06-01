@@ -3,7 +3,6 @@ export type WebApiToken = string;
 
 export async function authenticate(): Promise<WebApiToken> {
   try {
-    console.log("Attempting authentication...");
     
     const response = await fetchWithError('/auth/authenticate', {
       method: "POST",
@@ -14,25 +13,20 @@ export async function authenticate(): Promise<WebApiToken> {
       credentials: 'include',
     });
     
-    console.log("Authentication response received:", response.status);
     const data = await response.json();
     
     if (typeof data.accessToken === "string") {
-      console.log("Authentication successful");
       return data.accessToken;
     }
     
-    console.error("Invalid authentication response:", data);
     throw Error("Authentication failed - invalid response format");
   } catch (error) {
-    console.error("Authentication error:", error);
     throw error;
   }
 }
 
 
 export async function authenticateWithCognito(token: string, backendUrl?: string): Promise<WebApiToken> {
-  console.log("Sending token to backend for authentication");
 
   
   if (backendUrl && (backendUrl.startsWith('http://') || backendUrl.startsWith('https://'))) {
@@ -67,7 +61,6 @@ export async function authenticateWithCognito(token: string, backendUrl?: string
 }
 
 export async function authenticateWithGoogle(token: string, backendUrl?: string, isAuthCode: boolean = false): Promise<WebApiToken> {
-  console.log("Sending Google token to backend for authentication");
 
   
   if (backendUrl && (backendUrl.startsWith('http://') || backendUrl.startsWith('https://'))) {

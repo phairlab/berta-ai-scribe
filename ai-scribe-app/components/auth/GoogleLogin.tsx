@@ -16,7 +16,6 @@ export function GoogleLogin() {
 
   const logDebug = (message: string) => {
     if (process.env.NODE_ENV === 'development') {
-      console.log(message);
     }
   };
 
@@ -40,7 +39,6 @@ export function GoogleLogin() {
       logDebug("No valid session found, showing Google login");
       setIsLoading(false);
     } catch (err) {
-      console.error('Session check failed:', err);
       logDebug(`Session check failed: ${err instanceof Error ? err.message : String(err)}`);
       setIsLoading(false);
     }
@@ -64,7 +62,6 @@ export function GoogleLogin() {
       
       router.push('/');
     } catch (err) {
-      console.error("Authentication error:", err);
       const errorMessage = err instanceof Error ? err.message : String(err);
       setError(`Authentication failed: ${errorMessage}`);
       setIsLoading(false);

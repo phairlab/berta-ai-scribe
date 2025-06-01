@@ -31,7 +31,6 @@ export const SessionDropdown = ({ children }: SessionDropdownProps) => {
         const sessionToken = sessionStorage.getItem(sessionKeys.AccessToken);
         
         if (runtimeConfig.NEXT_PUBLIC_USE_COGNITO === 'true') {
-          console.log('Attempting Cognito logout...');
           const response = await fetch(`/auth/logout`, {
             method: 'POST',
             credentials: 'include',
@@ -43,11 +42,6 @@ export const SessionDropdown = ({ children }: SessionDropdownProps) => {
           
           if (!response.ok) {
             const errorData = await response.json();
-            console.error('Logout response error:', {
-              status: response.status,
-              statusText: response.statusText,
-              error: errorData
-            });
             throw new Error(errorData.detail || 'Logout failed');
           }
           
@@ -55,10 +49,8 @@ export const SessionDropdown = ({ children }: SessionDropdownProps) => {
             document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
           });
           
-          console.log('Logout successful, redirecting to login...');
           window.location.href = '/login';
         } else if (process.env.NEXT_PUBLIC_USE_GOOGLE_AUTH === 'true') {
-          console.log('Attempting Google auth logout...');
           const response = await fetch(`/auth/logout`, {
             method: 'POST',
             credentials: 'include',
@@ -70,11 +62,6 @@ export const SessionDropdown = ({ children }: SessionDropdownProps) => {
           
           if (!response.ok) {
             const errorData = await response.json();
-            console.error('Logout response error:', {
-              status: response.status,
-              statusText: response.statusText,
-              error: errorData
-            });
             throw new Error(errorData.detail || 'Logout failed');
           }
           
@@ -82,7 +69,6 @@ export const SessionDropdown = ({ children }: SessionDropdownProps) => {
             document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
           });
           
-          console.log('Logout successful, redirecting to login...');
           window.location.href = '/login';
         } else if (process.env.NODE_ENV === "development") {
           window.location.reload();
@@ -96,7 +82,6 @@ export const SessionDropdown = ({ children }: SessionDropdownProps) => {
           router.refresh();
         }
       } catch (error) {
-        console.error('Logout error:', error);
         setIsLoggingOut(false);
       }
     }

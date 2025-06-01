@@ -33,7 +33,6 @@ export async function POST() {
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error('Session check error:', error);
     return new NextResponse(
       JSON.stringify({ error: 'Internal server error' }),
       { status: 500 }

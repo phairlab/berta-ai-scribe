@@ -15,29 +15,22 @@ export function getBackendUrl(): string {
     const runtimeConfig = (window as any).__RUNTIME_CONFIG__ || {};
     let url = runtimeConfig.NEXT_PUBLIC_BACKEND_URL || '';
     
-    if (!url) {
-      console.warn('[getBackendUrl] NEXT_PUBLIC_BACKEND_URL not set in runtime config');
-      return '';
-    }
 
     
     if (url.startsWith('http://') || url.startsWith('https://')) {
       
       url = url.endsWith('/') ? url.slice(0, -1) : url;
-      console.log('[getBackendUrl] Using full backend URL:', url);
       return url;
     }
 
     if (process.env.NODE_ENV === 'production') {
       const origin = window.location.origin;
       url = `${origin}/${url}`.replace(/\/+/g, '/');
-      console.log('[getBackendUrl] Using origin-based backend URL:', url);
       return url;
     }
 
     return url;
   } catch (error) {
-    console.error('[getBackendUrl] Error accessing runtime config:', error);
     return '';
   }
 }
@@ -67,7 +60,6 @@ export async function fetchWithError(
     }
   }
   
-  console.log(`Making API request to: ${fullPath}`);
   
   try {
     const response = await fetch(fullPath, {
@@ -87,7 +79,6 @@ export async function fetchWithError(
 
     return response;
   } catch (error) {
-    console.error("API request error:", error);
     throw error;
   }
 } 
