@@ -274,7 +274,7 @@ You need an existing VPC with both public and private subnets:
 3. Identify at least 2 public subnets (for the load balancers)
 4. Identify at least 2 private subnets (for the Fargate tasks)
 
-#### 3. Click the "Deploy to AWS" button below to launch the CloudFormation stack creation wizard: [Deploy to AWS](https://console.aws.amazon.com/cloudformation/home#/stacks/new?stackName=jenkins-ai-scribe&templateURL=https://jenkins-ai-scribe-templates.s3.amazonaws.com/jenkins-scribe-stack.yaml) 
+#### 3. Click the "Deploy to AWS" button below to launch the CloudFormation stack creation wizard: [Deploy to AWS](https://console.aws.amazon.com/cloudformation/home#/stacks/create/review?stackName=os-jenkins-ai-scribe&templateURL=https://cf-templates-14rwubwevbsfc-us-west-2.s3.us-west-2.amazonaws.com/2025-06-01T072716.376Zklu-template.yaml) 
 
 #### 4. Enter the following required parameters:
 
