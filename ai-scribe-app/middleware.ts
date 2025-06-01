@@ -5,7 +5,6 @@ export function middleware(request: NextRequest) {
   if (request.nextUrl.pathname.startsWith("/api") || request.nextUrl.pathname.startsWith("/auth")) {
     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
     if (!backendUrl) {
-      console.error('NEXT_PUBLIC_BACKEND_URL environment variable is not set');
       return NextResponse.next();
     }
 
@@ -17,7 +16,6 @@ export function middleware(request: NextRequest) {
       url.port = destination.port;
       return NextResponse.rewrite(url);
     } catch (error) {
-      console.error('Error handling API rewrite:', error);
       return NextResponse.next();
     }
   }
