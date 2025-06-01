@@ -234,7 +234,7 @@ If you encounter any issues, check the console logs for both the frontend and ba
 ### One-click Deployment
 | Service | Button |
 |---------|--------|
-| AWS | [![AWS CloudFormation Launch Stack SVG Button](https://cdn.rawgit.com/buildkite/cloudformation-launch-stack-button-svg/master/launch-stack.svg)](https://console.aws.amazon.com/cloudformation/home?#/stacks/new?stackName=BertaScribe&templateURL=https://s3.us-west-2.amazonaws.com/cf-templates-14rwubwevbsfc-us-west-2/2024-12-09T045542.687Zj22-BertaScribe.json) |
+| AWS | [![AWS CloudFormation Launch Stack SVG Button](https://cdn.rawgit.com/buildkite/cloudformation-launch-stack-button-svg/master/launch-stack.svg)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/review?stackName=os-jenkins-ai-scribe&templateURL=https://cf-templates-14rwubwevbsfc-us-west-2.s3.us-west-2.amazonaws.com/2025-06-01T072716.376Zklu-template.yaml) |
 
 ### AWS Prerequisites
 
