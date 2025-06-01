@@ -11,12 +11,10 @@ class LocalStorageProvider(StorageProvider):
     
     def save_recording(self, file: BinaryIO, username: str, filename: str) -> None:
         """Writes a file to a user's recordings folder."""
-        # Create the user's recordings directory if it does not yet exist.
         user_folder = Path(settings.RECORDINGS_FOLDER, username)
         if not os.path.isdir(user_folder):
             os.makedirs(user_folder, exist_ok=True)
 
-        # Write the file.
         with open(Path(user_folder, filename), "wb") as recording_file:
             recording_file.write(file.read())
 
@@ -73,5 +71,4 @@ class LocalStorageProvider(StorageProvider):
         if not os.path.isdir(settings.RECORDINGS_FOLDER):
             os.makedirs(settings.RECORDINGS_FOLDER, exist_ok=True)
 
-# Create a global instance of the local storage provider
 local_storage = LocalStorageProvider() 

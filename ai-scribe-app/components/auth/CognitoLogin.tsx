@@ -15,7 +15,6 @@ export function CognitoLogin() {
   const [error, setError] = useState<string | null>(null);
   const [debugMessage, setDebugMessage] = useState<string>('');
 
-  // Get runtime config
   const runtimeConfig = useRuntimeConfig();
   const cognitoDomain = runtimeConfig.NEXT_PUBLIC_COGNITO_DOMAIN;
   const clientId = runtimeConfig.NEXT_PUBLIC_COGNITO_CLIENT_ID;
@@ -26,7 +25,6 @@ export function CognitoLogin() {
     setDebugMessage(prev => prev + '\n' + message);
   };
 
-  // Check for existing session
   useEffect(() => {
     const checkSession = async () => {
       try {
@@ -63,7 +61,6 @@ export function CognitoLogin() {
       setIsLoading(false);
       return;
     }
-    // Check for code in URL (we're returning from Cognito)
     const params = new URLSearchParams(window.location.search);
     const code = params.get('code');
     const errorParam = params.get('error');
@@ -79,10 +76,8 @@ export function CognitoLogin() {
     }
 
     if (code) {
-      // We have a code, process it
       handleAuthCode(code);
     } else {
-      // No code, redirect to Cognito login
       try {
         const safeClientId = encodeURIComponent(clientId);
         const safeRedirectUri = encodeURIComponent(redirectUri);
@@ -98,20 +93,15 @@ export function CognitoLogin() {
     }
   };
   
-  // Handle the auth code from Cognito
   const handleAuthCode = async (code: string) => {
     try {
       addDebug("Processing authorization code");
-      // Get token from API using the auth code
       const webApiToken = await authenticateWithCognito(code, runtimeConfig.NEXT_PUBLIC_BACKEND_URL);
       
-      // Update auth state
       setAuthentication({ state: "Authenticated", token: webApiToken });
       
-      // Clear URL params
       window.history.replaceState({}, document.title, window.location.pathname);
       
-      // Redirect to main app
       router.push('/');
     } catch (err) {
       console.error("Authentication error:", err);
@@ -122,7 +112,6 @@ export function CognitoLogin() {
     }
   };
 
-  // Only show this if there's an error and we're not redirecting
   if (isLoading && !error) {
     return (
       <div className="flex flex-col items-center justify-center h-screen">

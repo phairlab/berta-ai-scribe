@@ -14,14 +14,12 @@ export function GoogleLogin() {
   const [error, setError] = useState<string | null>(null);
   const [isProcessingCode, setIsProcessingCode] = useState(false);
 
-  // Hidden debug logging - only logs to console, not displayed in UI
   const logDebug = (message: string) => {
     if (process.env.NODE_ENV === 'development') {
       console.log(message);
     }
   };
 
-  // Check for existing session
   const checkExistingSession = async () => {
     try {
       logDebug("Checking for existing session...");
@@ -48,7 +46,6 @@ export function GoogleLogin() {
     }
   };
 
-  // Handle the auth code from Google (for redirect flow)
   const handleAuthCode = async (code: string) => {
     if (isProcessingCode) {
       logDebug("Already processing an authorization code");
@@ -59,16 +56,12 @@ export function GoogleLogin() {
       setIsProcessingCode(true);
       logDebug("Processing authorization code");
       
-      // Clear URL params immediately to prevent multiple attempts
       window.history.replaceState({}, document.title, window.location.pathname);
       
-      // Exchange code for token using your backend
       const webApiToken = await authenticateWithGoogle(code, undefined, true);
       
-      // Update auth state
       setAuthentication({ state: "Authenticated", token: webApiToken });
       
-      // Redirect to main app
       router.push('/');
     } catch (err) {
       console.error("Authentication error:", err);
@@ -81,7 +74,6 @@ export function GoogleLogin() {
   };
 
   useEffect(() => {
-    // Check for code in URL (we're returning from Google redirect flow)
     const params = new URLSearchParams(window.location.search);
     const code = params.get('code');
     const errorParam = params.get('error');
@@ -96,16 +88,13 @@ export function GoogleLogin() {
     }
 
     if (code) {
-      // We have a code, process it
       handleAuthCode(code);
     } else {
-      // No code, check for existing session
       checkExistingSession();
     }
   }, []);
 
   const handleGoogleLogin = () => {
-    // Redirect to our backend's Google login endpoint
     window.location.href = '/auth/google-login';
   };
 
@@ -160,7 +149,6 @@ export function GoogleLogin() {
   );
 }
 
-// Add TypeScript interface for the Google global object
 declare global {
   interface Window {
     google?: {

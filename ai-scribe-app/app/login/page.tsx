@@ -39,7 +39,6 @@ export default function LoginPage() {
     return <GoogleLogin />;
   }
   
-  // Default fallback - should never reach here due to the auto-redirect above
   return (
     <div className="flex flex-col items-center justify-center h-screen">
       <div className="text-center">

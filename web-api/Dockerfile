@@ -54,7 +54,7 @@ RUN apt-get update && apt-get install -y \
 # Copy requirements first to leverage Docker cache
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt \
-    && pip install --no-cache-dir psycopg2-binary
+    && pip install --no-cache-dir psycopg2-binary boto3 botocore
 
 # Copy the rest of the application
 COPY . .

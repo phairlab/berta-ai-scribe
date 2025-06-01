@@ -1,15 +1,17 @@
-from typing import Literal
+from typing import Literal, Optional
+from pydantic_settings import BaseSettings, SettingsConfigDict
+from functools import lru_cache
+import logging
 
 from dotenv import load_dotenv
-from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# Load the .env settings into environment variables
 load_dotenv()
 
+logger = logging.getLogger(__name__)
 
 class Settings(BaseSettings):
     ENVIRONMENT: Literal["production", "development"] = "production"
-    APP_NAME: str = ' "Jenkins" Scribe'
+    APP_NAME: str = ' "OS Jenkins" Scribe'
     APP_VERSION: str = "0.6.0"
 
     DEFAULT_AUDIO_FORMAT: str = "mp3"
@@ -37,22 +39,20 @@ class Settings(BaseSettings):
     TRANSCRIPTION_SERVICE: Literal["OpenAI Whisper", "WhisperX", "AWS Transcribe", "Parakeet MLX"] = (
         "Parakeet MLX"
     )
-    GENERATIVE_AI_SERVICE: Literal["Ollama", "Cortex", "Azure Cognitive", "OpenAI", "AWS Bedrock"] = "Ollama"
+    GENERATIVE_AI_SERVICE: Literal["Ollama", "OpenAI", "AWS Bedrock", "VLLM"] = "Ollama"
     LOCAL_WHISPER_SERVICE_URL: str | None = None
 
     AWS_ACCESS_KEY_ID: str | None = None
     AWS_SECRET_ACCESS_KEY: str | None = None
     AWS_REGION: str = "us-west-2"
-    S3_BUCKET_NAME: str = "jenkins-ahs"
+    S3_BUCKET_NAME: str = "jenkins-os"
     AWS_SECRET_NAME: str | None = None
 
-    # Google authentication settings
     USE_GOOGLE_AUTH: bool = False
     GOOGLE_CLIENT_ID: str | None = None
     GOOGLE_CLIENT_SECRET: str | None = None
     GOOGLE_REDIRECT_URI: str | None = None
 
-    # Cognito settings
     USE_COGNITO: bool = True
     COGNITO_USER_POOL_ID: str | None = None
     COGNITO_CLIENT_ID: str | None = None
@@ -78,16 +78,21 @@ class Settings(BaseSettings):
     DB_PASSWORD: str | None = None
     DB_PORT: int = 5432
 
+    VLLM_ENABLED: bool = False
+    VLLM_SERVER_NAME: str = "localhost"
+    VLLM_SERVER_PORT: int = 8080
+    VLLM_MODEL_NAME: str = "meta-llama/Meta-Llama-3.3-70B-Instruct"
+    HUGGINGFACE_TOKEN: str | None = None
+
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True)
 
 
-settings = Settings()  # type: ignore
+settings = Settings()  
 
 is_openai_supported: bool = settings.OPENAI_API_KEY is not None
 is_aws_bedrock_supported = (
-    bool(settings.AWS_ACCESS_KEY_ID)
-    and bool(settings.AWS_SECRET_ACCESS_KEY)
-    and bool(settings.AWS_REGION)
+    (bool(settings.AWS_ACCESS_KEY_ID) and bool(settings.AWS_SECRET_ACCESS_KEY) and bool(settings.AWS_REGION))
+    or (settings.ENVIRONMENT == "production" and bool(settings.AWS_REGION))
 )
 is_aws_transcribe_supported: bool = (
     settings.AWS_ACCESS_KEY_ID is not None
@@ -98,3 +103,61 @@ is_cognito_supported: bool = (
     and settings.COGNITO_USER_POOL_ID is not None
     and settings.COGNITO_CLIENT_ID is not None
 )
+
+is_vllm_supported: bool = (
+    settings.VLLM_ENABLED
+    and settings.VLLM_SERVER_NAME is not None
+    and settings.VLLM_SERVER_PORT is not None
+    and settings.VLLM_MODEL_NAME is not None
+)
+
+def get_available_services() -> dict:
+    """Get a dictionary of all available services and their options."""
+    return {
+        "TRANSCRIPTION_SERVICE": {
+            "description": "Service for transcribing audio to text",
+            "options": ["OpenAI Whisper", "WhisperX", "AWS Transcribe", "Parakeet MLX"],
+            "default": "Parakeet MLX",
+            "models": {
+                "OpenAI Whisper": ["whisper-1"],
+                "WhisperX": ["large-v3"],
+                "AWS Transcribe": ["default"],
+                "Parakeet MLX": ["mlx-large"]
+            }
+        },
+        "GENERATIVE_AI_SERVICE": {
+            "description": "Service for generating text completions",
+            "options": ["Ollama", "OpenAI", "AWS Bedrock", "VLLM"],
+            "default": "Ollama",
+            "models": {
+                "Ollama": ["llama3.1:8b", "llama3.1:70b", "llama3.2:8b", "llama3.2:70b"],
+                "OpenAI": ["gpt-4", "gpt-3.5-turbo"],
+                "AWS Bedrock": [
+                    "us.meta.llama3-3-70b-instruct-v1:0",
+                    "meta.llama3-1-405b-instruct-v1:0",
+                    "meta.llama3-1-70b-instruct-v1:0",
+                    "anthropic.claude-3-7-sonnet-20250219-v1:0",
+                    "anthropic.claude-3-5-sonnet-20241022-v2:0",
+                    "anthropic.claude-3-haiku-20240307-v1:0"
+                ],
+                "VLLM": ["meta-llama/Meta-Llama-3.3-70B-Instruct"]
+            }
+        }
+    }
+
+def print_available_services() -> None:
+    """Print all available services and their options in a formatted way."""
+    services = get_available_services()
+    
+    print("\n=== Available Services ===\n")
+    for service_name, info in services.items():
+        print(f" {service_name}")
+        print(f"   Description: {info['description']}")
+        print(f"   Options: {', '.join(info['options'])}")
+        print(f"   Default: {info['default']}")
+        print("\n   Available Models:")
+        for provider, models in info['models'].items():
+            print(f"      {provider}:")
+            for model in models:
+                print(f"         - {model}")
+        print()

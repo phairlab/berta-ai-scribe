@@ -19,3 +19,6 @@ numpy>=2.2.5
 mlx>=0.0.7
 parakeet-mlx>=0.2.7
 httpx>=0.27.0
+
+# Optional dependencies for local development
+# vllm>=0.3.0  # Uncomment for local development with VLLM

@@ -6,10 +6,18 @@ Parameters:
     Type: String
     Default: production
     AllowedValues:
-      - dev
-      - staging
       - production
     Description: Environment name for resource naming
+
+  DefaultModel:
+    Type: String
+    Default: us.meta.llama3-3-70b-instruct-v1:0
+    Description: Default model to use for note generation and labeling
+    AllowedValues:
+      - us.meta.llama3-3-70b-instruct-v1:0
+      - meta.llama3-1-405b-instruct-v1:0
+      - meta.llama3-1-70b-instruct-v1:0
+      - anthropic.claude-3-7-sonnet-20250219-v1:0
 
   HostedZoneId:
     Type: AWS::Route53::HostedZone::Id
@@ -26,14 +34,6 @@ Parameters:
   PrivateSubnets:
     Type: List<AWS::EC2::Subnet::Id>
     Description: Private subnets for Fargate tasks
-
-  FrontendImageUri:
-    Type: String
-    Description: URI of the frontend container image
-
-  BackendImageUri:
-    Type: String
-    Description: URI of the backend container image
 
   DomainName:
     Type: String
@@ -61,20 +61,11 @@ Parameters:
     NoEcho: true
     Description: Aurora master password
 
-  AWSAccessKeyId:
-    Type: String
-    Description: AWS Access Key ID
-
-  AWSSecretAccessKey:
-    Type: String
-    NoEcho: true
-    Description: AWS Secret Access Key
-
 Resources:
   JenkinsS3Bucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub jenkins-ahs-${AWS::AccountId}
+      BucketName: !Sub jenkins-os-${AWS::AccountId}
       VersioningConfiguration:
         Status: Enabled
       CorsConfiguration:
@@ -106,16 +97,19 @@ Resources:
                 Action:
                   - s3:PutObject
                   - s3:ListBucket
+                  - s3:GetObject
                 Resource:
                   - !Sub arn:aws:s3:::${JenkinsS3Bucket}
                   - !Sub arn:aws:s3:::${JenkinsS3Bucket}/*
+                  - arn:aws:s3:::os-jenkins-copy
+                  - arn:aws:s3:::os-jenkins-copy/*
 
-  # Lambda function for file uploads
+  # Lambda function for file uploads - CORRECTED VERSION
   UploadFilesLambda:
     Type: AWS::Lambda::Function
     Properties:
       FunctionName: !Sub "${AWS::StackName}-UploadFiles-${Environment}"
-      Description: "Uploads files to S3 when CloudFormation stack is created or updated"
+      Description: "Copies prompts and sample-recordings folders from public S3 bucket to Jenkins S3 bucket"
       Handler: index.handler
       Role: !GetAtt UploadFilesLambdaRole.Arn
       Runtime: python3.9
@@ -124,6 +118,7 @@ Resources:
       Environment:
         Variables:
           BUCKET_NAME: !Ref JenkinsS3Bucket
+          SOURCE_BUCKET: "os-jenkins-copy"
       Code:
         ZipFile: |
           import os
@@ -131,8 +126,6 @@ Resources:
           import boto3
           import cfnresponse
           import logging
-          import glob
-          import base64
           
           logger = logging.getLogger()
           logger.setLevel(logging.INFO)
@@ -140,65 +133,74 @@ Resources:
           s3 = boto3.client('s3')
           
           def handler(event, context):
-              # Log the received event
               logger.info('Received event: %s', json.dumps(event))
               
-              # Get the bucket name from the environment variable
-              bucket_name = os.environ['BUCKET_NAME']
+              target_bucket = os.environ['BUCKET_NAME']
+              source_bucket = os.environ['SOURCE_BUCKET']
               response_data = {}
               
               try:
-                  # Only process Create and Update events
                   if event['RequestType'] in ['Create', 'Update']:
-                      logger.info(f'Processing files for bucket: {bucket_name}')
+                      logger.info(f'Copying specific folders from {source_bucket} to {target_bucket}')
                       
-                      # Define source directories and target prefixes
-                      upload_map = {
-                          '/Users/samridhivaid/Desktop/jenkins-ahs/web-api/.prompts': 'prompts/',
-                          '/Users/samridhivaid/Desktop/jenkins-ahs/web-api/.sample-recordings': 'sample-recordings/'
-                      }
+                      # Only copy these specific folders
+                      folders_to_copy = [
+                          'prompts/',
+                          'sample-recordings/'
+                      ]
                       
-                      file_count = 0
+                      total_files = 0
                       
-                      # Process each source directory
-                      for source_dir, target_prefix in upload_map.items():
-                          if os.path.exists(source_dir):
-                              # Find all files in the directory
-                              files = glob.glob(f"{source_dir}/**/*", recursive=True)
-                              
-                              # Upload each file
-                              for file_path in files:
-                                  if os.path.isfile(file_path):
-                                      # Determine the key (path in S3)
-                                      relative_path = os.path.relpath(file_path, source_dir)
-                                      s3_key = f"{target_prefix}{relative_path}"
-                                      
-                                      logger.info(f'Uploading {file_path} to s3://{bucket_name}/{s3_key}')
-                                      
-                                      # Upload the file
-                                      with open(file_path, 'rb') as file_data:
-                                          s3.put_object(
-                                              Bucket=bucket_name,
-                                              Key=s3_key,
-                                              Body=file_data
+                      for folder in folders_to_copy:
+                          logger.info(f'Copying folder: {folder}')
+                          folder_files = 0
+                          
+                          try:
+                              # List all objects in this specific folder
+                              paginator = s3.get_paginator('list_objects_v2')
+                              for page in paginator.paginate(Bucket=source_bucket, Prefix=folder):
+                                  if 'Contents' in page:
+                                      for obj in page['Contents']:
+                                          source_key = obj['Key']
+                                          
+                                          # Skip if it's just the folder itself (ends with /)
+                                          if source_key.endswith('/'):
+                                              continue
+                                          
+                                          # Copy the file
+                                          copy_source = {
+                                              'Bucket': source_bucket,
+                                              'Key': source_key
+                                          }
+                                          
+                                          logger.info(f'Copying: {source_key}')
+                                          s3.copy_object(
+                                              CopySource=copy_source,
+                                              Bucket=target_bucket,
+                                              Key=source_key  # Keep same path structure
                                           )
-                                      file_count += 1
-                          else:
-                              logger.warning(f'Source directory {source_dir} not found')
+                                          folder_files += 1
+                                          total_files += 1
+                              
+                              logger.info(f'Copied {folder_files} files from {folder}')
+                              
+                          except Exception as folder_error:
+                              logger.error(f'Error copying folder {folder}: {folder_error}')
+                              # Continue with next folder instead of failing completely
                       
                       response_data['Status'] = 'SUCCESS'
-                      response_data['FileCount'] = file_count
-                      logger.info(f'Successfully uploaded {file_count} files')
+                      response_data['FileCount'] = total_files
+                      response_data['FoldersCopied'] = folders_to_copy
+                      logger.info(f'Successfully copied {total_files} files from {len(folders_to_copy)} folders')
                       
-                      # Send success response
                       cfnresponse.send(event, context, cfnresponse.SUCCESS, response_data)
+                      
                   else:
-                      # For Delete events, just return success without doing anything
+                      # Delete event - no action needed
                       logger.info('Delete event, no action needed')
                       cfnresponse.send(event, context, cfnresponse.SUCCESS, response_data)
                       
               except Exception as e:
-                  # Log the error and send failure response
                   logger.error('Error: %s', str(e), exc_info=True)
                   response_data['Status'] = 'FAILED'
                   response_data['Error'] = str(e)
@@ -240,11 +242,12 @@ Resources:
             Action:
               - s3:PutObject
               - s3:ListBucket
+              - s3:GetObject
             Resource:
               - !Sub arn:aws:s3:::${JenkinsS3Bucket}
               - !Sub arn:aws:s3:::${JenkinsS3Bucket}/*
 
-  # Aurora RDS Cluster
+  # Aurora RDS Cluster - Updated for Serverless v2
   AuroraDBSubnetGroup:
     Type: AWS::RDS::DBSubnetGroup
     Properties:
@@ -271,7 +274,7 @@ Resources:
     Type: AWS::RDS::DBCluster
     Properties:
       Engine: aurora-postgresql
-      EngineVersion: '15.4'
+      EngineVersion: '16.6'
       EngineMode: provisioned
       MasterUsername: !Ref DBUser
       MasterUserPassword: !Ref DBPassword
@@ -280,13 +283,19 @@ Resources:
       VpcSecurityGroupIds:
         - !Ref AuroraSecurityGroup
       BackupRetentionPeriod: 7
-      PreferredBackupWindow: '03:00-04:00'
-      PreferredMaintenanceWindow: 'sun:04:00-sun:05:00'
+      PreferredBackupWindow: '06:34-07:04'
+      PreferredMaintenanceWindow: 'sun:12:14-sun:12:44'
       StorageEncrypted: true
       DeletionProtection: true
       EnableHttpEndpoint: false
       EnableIAMDatabaseAuthentication: false
       Port: 5432
+      EnableCloudwatchLogsExports:
+        - postgresql
+      # Serverless v2 scaling configuration
+      ServerlessV2ScalingConfiguration:
+        MinCapacity: 0.5
+        MaxCapacity: 2
       Tags:
         - Key: Environment
           Value: !Ref Environment
@@ -296,29 +305,47 @@ Resources:
     Properties:
       Engine: aurora-postgresql
       DBClusterIdentifier: !Ref AuroraCluster
-      DBInstanceClass: db.t4g.medium
+      DBInstanceClass: db.serverless
       PubliclyAccessible: false
+      EnablePerformanceInsights: true
+      PerformanceInsightsRetentionPeriod: 731  # Maximum allowed retention period (731 days)
+      MonitoringInterval: 60
+      MonitoringRoleArn: !GetAtt EnhancedMonitoringRole.Arn
       Tags:
         - Key: Environment
           Value: !Ref Environment
+
+  # IAM Role for Enhanced Monitoring
+  EnhancedMonitoringRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: monitoring.rds.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole
 
   # ECR Repositories
   FrontendECRRepository:
     Type: AWS::ECR::Repository
     Properties:
-      RepositoryName: !Join ['-', ['jenkins-ahs-frontend', !Ref Environment]]
+      RepositoryName: !Join ['-', ['jenkins-os-frontend', !Ref Environment]]
       ImageTagMutability: MUTABLE
 
   BackendECRRepository:
     Type: AWS::ECR::Repository
     Properties:
-      RepositoryName: !Join ['-', ['jenkins-ahs-backend', !Ref Environment]]
+      RepositoryName: !Join ['-', ['jenkins-os-backend', !Ref Environment]]
       ImageTagMutability: MUTABLE
 
   CognitoUserPool:
     Type: AWS::Cognito::UserPool
     Properties:
-      UserPoolName: !Join ['-', ['JenkinsAHS', !Ref Environment]]
+      UserPoolName: !Join ['-', ['JenkinsOS', !Ref Environment]]
       AdminCreateUserConfig:
         AllowAdminCreateUserOnly: false
       AutoVerifiedAttributes:
@@ -326,28 +353,57 @@ Resources:
       UsernameAttributes:
         - email
       MfaConfiguration: "OFF"
+      # Enable standard attributes for OpenID Connect scopes
+      Schema:
+        - Name: email
+          AttributeDataType: String
+          Required: true
+          Mutable: true
+        - Name: given_name
+          AttributeDataType: String
+          Required: false
+          Mutable: true
+        - Name: family_name
+          AttributeDataType: String
+          Required: false
+          Mutable: true
 
   CognitoUserPoolClient:
     Type: AWS::Cognito::UserPoolClient
     Properties:
       UserPoolId: !Ref CognitoUserPool
-      ClientName: !Join ['-', ['jenkins-ahs-client', !Ref Environment]]
+      ClientName: !Join ['-', ['jenkins-os-client', !Ref Environment]]
       GenerateSecret: false
+      # Auth flows for user authentication
       ExplicitAuthFlows:
         - ALLOW_USER_SRP_AUTH
         - ALLOW_REFRESH_TOKEN_AUTH
+      # OAuth 2.0 settings
       CallbackURLs:
         - !Sub https://${DomainName}/login
       LogoutURLs:
         - !Sub https://${DomainName}
+      # OAuth grant types - Authorization code grant
       AllowedOAuthFlows:
         - code
+      # OpenID Connect scopes - email, openid, profile
       AllowedOAuthScopes:
         - email
         - openid
         - profile
       AllowedOAuthFlowsUserPoolClient: true
+      # Additional security settings
       PreventUserExistenceErrors: ENABLED
+      SupportedIdentityProviders:
+        - COGNITO  # Cognito user pool directory as identity provider
+      # Token validity settings
+      AccessTokenValidity: 60  # 1 hour
+      IdTokenValidity: 60      # 1 hour
+      RefreshTokenValidity: 30 # 30 days
+      TokenValidityUnits:
+        AccessToken: minutes
+        IdToken: minutes
+        RefreshToken: days
       
   CognitoUserPoolDomain:
     Type: AWS::Cognito::UserPoolDomain
@@ -358,7 +414,7 @@ Resources:
   ECSCluster:
     Type: AWS::ECS::Cluster
     Properties:
-      ClusterName: !Join ['-', ['jenkins-ahs-cluster', !Ref Environment]]
+      ClusterName: !Join ['-', ['jenkins-os-cluster', !Ref Environment]]
       CapacityProviders:
         - FARGATE
 
@@ -376,7 +432,16 @@ Resources:
         - arn:aws:iam::aws:policy/AmazonS3FullAccess
         - arn:aws:iam::aws:policy/AmazonTranscribeFullAccess
         - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
-        - arn:aws:iam::aws:policy/AmazonBedrockFullAccess
+      Policies:
+        - PolicyName: BedrockAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - bedrock:InvokeModel
+                  - bedrock:InvokeModelWithResponseStream
+                Resource: "*"
 
   ECSExecutionRole:
     Type: AWS::IAM::Role
@@ -395,7 +460,7 @@ Resources:
   FrontendTaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      Family: !Join ['-', ['jenkins-ahs-frontend', !Ref Environment]]
+      Family: !Join ['-', ['jenkins-os-frontend', !Ref Environment]]
       Cpu: '512'
       Memory: '1024'
       NetworkMode: awsvpc
@@ -404,12 +469,12 @@ Resources:
       ExecutionRoleArn: !Ref ECSExecutionRole
       TaskRoleArn: !Ref ECSTaskRole
       ContainerDefinitions:
-        - Name: jenkins-ahs-frontend
-          Image: 034039014574.dkr.ecr.us-west-2.amazonaws.com/jenkins-ahs-frontend:latest
+        - Name: jenkins-os-frontend
+          Image: public.ecr.aws/s9f8j1d3/jenkins-os-frontend:latest
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: /ecs/jenkins-ahs-frontend
+              awslogs-group: /ecs/jenkins-os-frontend
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: ecs
               awslogs-create-group: 'true'
@@ -431,11 +496,13 @@ Resources:
               Value: !Sub https://${DomainName}
             - Name: NEXT_PUBLIC_USE_COGNITO
               Value: 'true'
+            - Name: NEXT_PUBLIC_USE_GOOGLE_AUTH
+              Value: 'false'
 
   BackendTaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      Family: !Join ['-', ['jenkins-ahs-backend', !Ref Environment]]
+      Family: !Join ['-', ['jenkins-os-backend', !Ref Environment]]
       Cpu: '1024'
       Memory: '2048'
       NetworkMode: awsvpc
@@ -444,12 +511,12 @@ Resources:
       ExecutionRoleArn: !Ref ECSExecutionRole
       TaskRoleArn: !Ref ECSTaskRole
       ContainerDefinitions:
-        - Name: jenkins-ahs-backend
-          Image: 034039014574.dkr.ecr.us-west-2.amazonaws.com/jenkins-ahs-backend:latest
+        - Name: jenkins-os-backend
+          Image: public.ecr.aws/s9f8j1d3/jenkins-os-backend:latest
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: /ecs/jenkins-ahs-backend
+              awslogs-group: /ecs/jenkins-os-backend
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: ecs
               awslogs-create-group: 'true'
@@ -461,6 +528,8 @@ Resources:
               Value: !Sub https://${DomainName}
             - Name: ALLOWED_ORIGINS
               Value: !Sub https://${DomainName}
+            - Name: GENERATIVE_AI_SERVICE
+              Value: "AWS Bedrock"
             - Name: AWS_REGION
               Value: !Ref AWS::Region
             - Name: AWS_BUCKET_NAME
@@ -484,9 +553,9 @@ Resources:
             - Name: LOGGING_LEVEL
               Value: DEBUG
             - Name: DEFAULT_NOTE_GENERATION_MODEL
-              Value: us.meta.llama3-3-70b-instruct-v1:0
+              Value: !Ref DefaultModel
             - Name: LABEL_MODEL
-              Value: us.meta.llama3-3-70b-instruct-v1:0
+              Value: !Ref DefaultModel
             - Name: S3_BUCKET_NAME
               Value: !Ref JenkinsS3Bucket
             - Name: AURORA_WRITER_ENDPOINT
@@ -507,17 +576,15 @@ Resources:
               Value: !Sub https://${DomainName}/login
             - Name: TRANSCRIPTION_SERVICE
               Value: "AWS Transcribe"
-            - Name: AWS_ACCESS_KEY_ID
-              Value: !Ref AWSAccessKeyId
-            - Name: AWS_SECRET_ACCESS_KEY
-              Value: !Ref AWSSecretAccessKey
+
 
   FrontendService:
     Type: AWS::ECS::Service
     DependsOn:
       - FrontendHTTPSListener
+      - UploadFilesCustomResource
     Properties:
-      ServiceName: !Join ['-', ['jenkins-ahs-frontend', !Ref Environment]]
+      ServiceName: !Join ['-', ['jenkins-os-frontend', !Ref Environment]]
       Cluster: !Ref ECSCluster
       TaskDefinition: !Ref FrontendTaskDefinition
       DesiredCount: 1
@@ -530,7 +597,7 @@ Resources:
             - !Ref JenkinsSecurityGroup
           Subnets: !Ref PrivateSubnets
       LoadBalancers:
-        - ContainerName: jenkins-ahs-frontend
+        - ContainerName: jenkins-os-frontend
           ContainerPort: 4000
           TargetGroupArn: !Ref FrontendTargetGroup
 
@@ -538,8 +605,10 @@ Resources:
     Type: AWS::ECS::Service
     DependsOn:
       - BackendHTTPSListener
+      - UploadFilesCustomResource
+      - AuroraInstance
     Properties:
-      ServiceName: !Join ['-', ['jenkins-ahs-backend', !Ref Environment]]
+      ServiceName: !Join ['-', ['jenkins-os-backend', !Ref Environment]]
       Cluster: !Ref ECSCluster
       TaskDefinition: !Ref BackendTaskDefinition
       DesiredCount: 1
@@ -552,7 +621,7 @@ Resources:
             - !Ref JenkinsSecurityGroup
           Subnets: !Ref PrivateSubnets
       LoadBalancers:
-        - ContainerName: jenkins-ahs-backend
+        - ContainerName: jenkins-os-backend
           ContainerPort: 8000
           TargetGroupArn: !Ref BackendTargetGroup
 
@@ -674,7 +743,7 @@ Resources:
   FrontendALB:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
-      Name: !Join ['-', ['jenkins-ahs-frontend', !Ref Environment]]
+      Name: !Join ['-', ['jenkins-os-frontend', !Ref Environment]]
       Scheme: internet-facing
       LoadBalancerAttributes:
         - Key: idle_timeout.timeout_seconds
@@ -686,7 +755,7 @@ Resources:
   BackendALB:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
-      Name: !Join ['-', ['jenkins-ahs-backend', !Ref Environment]]
+      Name: !Join ['-', ['jenkins-os-backend', !Ref Environment]]
       Scheme: internet-facing
       LoadBalancerAttributes:
         - Key: idle_timeout.timeout_seconds
@@ -775,3 +844,9 @@ Outputs:
     Value: !Sub "https://api.${DomainName}"
     Export:
       Name: !Sub "${AWS::StackName}-BackendURL"
+      
+  DatabaseEndpoint:
+    Description: Aurora cluster endpoint
+    Value: !GetAtt AuroraCluster.Endpoint.Address
+    Export:
+      Name: !Sub "${AWS::StackName}-DatabaseEndpoint"

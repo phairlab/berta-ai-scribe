@@ -36,21 +36,19 @@ class BedrockGenerativeAIService(GenerativeAIService):
             LanguageModel(name="us.meta.llama3-3-70b-instruct-v1:0", size="Large"),
             LanguageModel(name="meta.llama3-1-405b-instruct-v1:0", size="Large"),
             LanguageModel(name="meta.llama3-1-70b-instruct-v1:0", size="Large"),
-            LanguageModel(name="meta.llama3-8b-instruct-v1:0", size="Medium"),
-            LanguageModel(name="anthropic.claude-3-sonnet-20240229-v1:0", size="Large"),
-            LanguageModel(name="anthropic.claude-3-haiku-20240307-v1:0", size="Medium"),
+            LanguageModel(name="anthropic.claude-3-7-sonnet-20250219-v1:0", size="Large"),
         ]
 
     @staticmethod
     def _count_tokens(
         _,
-        __,  # keeping the parameter list identical
-        ___,  # to the Snowflake version
+        __, 
+        ___,  
         response: str,
     ) -> tuple[int, int]:
         """Rough token heuristic – 4 chars ≈ 1 token."""
         total_chars = len(response)
-        return (total_chars // 4, 0)  # prompt-only heuristic
+        return (total_chars // 4, 0)  
 
     def _batch_complete(
         self,
@@ -132,7 +130,6 @@ class BedrockGenerativeAIService(GenerativeAIService):
         messages: List[Dict[str, str]],
         temperature: int = 0,
     ) -> GenerationOutput:
-        # mirror the simplification in the Snowflake example
         system_message = "\n\n".join(
             m["content"] for m in messages if m["role"] == "system"
         )
@@ -155,7 +152,7 @@ class BedrockGenerativeAIService(GenerativeAIService):
     ) -> Dict[str, Any]:
         """Minimal prompt building for Claude 3 and Llama 3."""
         if model.startswith("anthropic.claude-3"):
-            # Claude 3 format
+        
             return {
                 "anthropic_version": "bedrock-2023-05-31",
                 "max_tokens": 4096,
@@ -169,7 +166,7 @@ class BedrockGenerativeAIService(GenerativeAIService):
                 ],
             }
 
-        # Llama 3 prompt (Meta format)
+       
         prompt = "<|begin_of_text|>"
         for m in cast(List[Dict[str, str]], messages):
             role_tag = m["role"]

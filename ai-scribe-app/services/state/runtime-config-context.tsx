@@ -8,7 +8,6 @@ export type RuntimeConfig = {
     NEXT_PUBLIC_BACKEND_URL?: string;
 };
 
-// Declare the global window type
 declare global {
     interface Window {
         __RUNTIME_CONFIG__: RuntimeConfig;
@@ -39,7 +38,6 @@ export const RuntimeConfigProvider: React.FC<{ children: React.ReactNode }> = ({
                 let runtimeConfig: RuntimeConfig;
                 
                 if (process.env.NODE_ENV === 'development') {
-                    // In development, use environment variables
                     runtimeConfig = {
                         NEXT_PUBLIC_USE_COGNITO: process.env.NEXT_PUBLIC_USE_COGNITO,
                         NEXT_PUBLIC_COGNITO_DOMAIN: process.env.NEXT_PUBLIC_COGNITO_DOMAIN,
@@ -56,12 +54,10 @@ export const RuntimeConfigProvider: React.FC<{ children: React.ReactNode }> = ({
                     runtimeConfig = await response.json();
                 }
 
-                // Validate required fields
                 if (runtimeConfig.NEXT_PUBLIC_BACKEND_URL === '') {
                     console.warn('NEXT_PUBLIC_BACKEND_URL is not set in runtime config');
                 }
 
-                // Set the config in both state and window object
                 setConfig(runtimeConfig);
                 if (typeof window !== 'undefined') {
                     window.__RUNTIME_CONFIG__ = runtimeConfig;
@@ -69,7 +65,6 @@ export const RuntimeConfigProvider: React.FC<{ children: React.ReactNode }> = ({
             } catch (err) {
                 console.error('Error loading runtime config:', err);
                 setError(err instanceof Error ? err : new Error('Failed to load runtime config'));
-                // Set default config to prevent app from breaking
                 const defaultConfig = {
                     NEXT_PUBLIC_USE_COGNITO: 'false',
                     NEXT_PUBLIC_BACKEND_URL: '',
@@ -96,7 +91,6 @@ export const RuntimeConfigProvider: React.FC<{ children: React.ReactNode }> = ({
 
     if (error) {
         console.error('Runtime config error:', error);
-        // Still render children with default config to prevent app from breaking
     }
 
     return (

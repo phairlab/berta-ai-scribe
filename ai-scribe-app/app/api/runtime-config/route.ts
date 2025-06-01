@@ -8,7 +8,6 @@ export async function GET() {
   try {
     config = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
   } catch (e) {
-    // If the file doesn't exist or is invalid, return an empty object
     config = {};
   }
   return NextResponse.json(config);

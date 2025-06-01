@@ -7,7 +7,7 @@ from app.schemas import TranscriptionOutput
 from app.services.adapters import TranscriptionService
 from app.errors import ExternalServiceError
 
-MODEL_ID = "mlx-community/parakeet-tdt-0.6b-v2"    # HF repo **or** local folder path
+MODEL_ID = "mlx-community/parakeet-tdt-0.6b-v2"    
 
 class ParakeetMLXTranscriptionService(TranscriptionService):
     def __init__(self, model_id: str | Path = MODEL_ID):

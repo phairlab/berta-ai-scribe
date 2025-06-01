@@ -26,15 +26,12 @@ export const SessionDropdown = ({ children }: SessionDropdownProps) => {
     if (key === "logout" && !isLoggingOut) {
       try {
         setIsLoggingOut(true);
-        // Clear local session storage
         sessionStorage.clear();
         
-        // Get the current session token
         const sessionToken = sessionStorage.getItem(sessionKeys.AccessToken);
         
         if (runtimeConfig.NEXT_PUBLIC_USE_COGNITO === 'true') {
           console.log('Attempting Cognito logout...');
-          // Call backend directly to handle Cognito logout
           const response = await fetch(`/auth/logout`, {
             method: 'POST',
             credentials: 'include',
@@ -54,16 +51,13 @@ export const SessionDropdown = ({ children }: SessionDropdownProps) => {
             throw new Error(errorData.detail || 'Logout failed');
           }
           
-          // Clear all cookies
           document.cookie.split(";").forEach(function(c) { 
             document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
           });
           
           console.log('Logout successful, redirecting to login...');
-          // Redirect to login page
           window.location.href = '/login';
         } else if (process.env.NEXT_PUBLIC_USE_GOOGLE_AUTH === 'true') {
-          // Handle Google auth logout
           console.log('Attempting Google auth logout...');
           const response = await fetch(`/auth/logout`, {
             method: 'POST',
@@ -84,19 +78,15 @@ export const SessionDropdown = ({ children }: SessionDropdownProps) => {
             throw new Error(errorData.detail || 'Logout failed');
           }
           
-          // Clear all cookies
           document.cookie.split(";").forEach(function(c) { 
             document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
           });
           
           console.log('Logout successful, redirecting to login...');
-          // Redirect to login page
           window.location.href = '/login';
         } else if (process.env.NODE_ENV === "development") {
-          // Development mode - just reload
           window.location.reload();
         } else {
-          // Snowflake mode
           await fetch(`/sfc-endpoint/logout`, {
             credentials: 'include',
             headers: {
