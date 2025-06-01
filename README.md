@@ -13,21 +13,23 @@ OS Jenkins AI Scribe is an advanced medical documentation assistant designed to 
 - [Database Configuration](#database-configuration)
 - [Local Development Setup](#local-development-setup)
   - [Prerequisites](#prerequisites)
-  - [Backend Setup](#backend-setup)
+  - [Local Development Options](#local-development-options)
+  - [Option 1: Basic Local Setup (Recommended)](#option-1-basic-local-setup-recommended)
+  - [Option 2: Local with AWS Services (Hybrid)](#option-2-local-with-aws-services-hybrid)
+  - [Option 3: Local with Advanced AI Services](#option-3-local-with-advanced-ai-services)
+  - [Option 4: Local GPU Setup with VLLM (Complete Privacy)](#option-4-local-gpu-setup-with-vllm-complete-privacy)
   - [Frontend Setup](#frontend-setup)
   - [Verification](#verification)
 - [AWS Deployment](#aws-deployment)
-  - [AWS Prerequisites](#aws-prerequisites)
-  - [Infrastructure Overview](#infrastructure-overview)
-  - [Deployment Steps](#deployment-steps)
-  - [Post-Deployment Setup](#post-deployment-setup)
-  - [Environment Variables Automatically Configured](#environment-variables-automatically-configured)
-  - [Customization Options](#customization-options)
-  - [Cost Considerations](#cost-considerations)
+  - [Step 1: AWS Account Setup](#step-1-aws-account-setup)
+  - [Step 2: Domain Setup](#step-2-domain-setup)
+  - [Step 3: VPC and Network Setup](#step-3-vpc-and-network-setup)
+  - [Step 4: Deploy the Application](#step-4-deploy-the-application)
+  - [Step 5: Post-Deployment Configuration](#step-5-post-deployment-configuration)
+- [Available Services Reference](#available-services-reference)
+- [Environment Variables Reference](#environment-variables-reference)
 - [Security](#security)
 - [Troubleshooting](#troubleshooting)
-  - [Common Issues](#common-issues)
-  - [Logs and Diagnostics](#logs-and-diagnostics)
 - [Contributors](#contributors)
 - [License](#license)
 
@@ -86,22 +88,24 @@ The system follows a modern web application architecture with several layers:
 
 ### Transcription Services
 
-OS Jenkins Scribe supports three transcription services:
+OS Jenkins Scribe supports four transcription services:
 
-1. **AWS Transcribe**: High-accuracy transcription service from AWS with medical terminology support
-2. **OpenAI Whisper**: State-of-the-art speech recognition model with high accuracy and multilingual support
-3. **WhisperX**: Enhanced version of Whisper optimized for medical terminology and faster processing
+1. **Parakeet MLX** (Default): Local, fast transcription using Apple's MLX framework
+2. **OpenAI Whisper**: State-of-the-art speech recognition via OpenAI API
+3. **WhisperX**: Enhanced local Whisper with better accuracy and speed
+4. **AWS Transcribe**: Cloud-based transcription with medical terminology support
+
 
 The transcription service is configurable via the `TRANSCRIPTION_SERVICE` environment variable.
 
 ### Language Model Services
 
-The application can work with multiple language model providers:
+The application supports four language model providers:
 
-1. **OpenAI Models**: Integration with GPT models via OpenAI API
-2. **Azure Cognitive Services**: Microsoft's AI services for text processing
-3. **AWS Bedrock**: Access to foundation models via AWS Bedrock including Llama 3 and Claude 3
-4. **Cortex Models**: Integration with specialized models for medical text generation
+1. **Ollama** (Default): Local open-source models (any models available in `ollama list`)
+2. **OpenAI**: GPT-4o via OpenAI API
+3. **AWS Bedrock**: Meta Llama 3.3 70B, Llama 3.1 405B/70B, Claude 3.7 Sonnet
+4. **VLLM**: Self-hosted inference server for large models
 
 The system will automatically use the best available model based on your configuration. For the local deployment we will be using gpt-4o via OpenAI API and for the AWS deployment we will be using Llama3.3 70b.
 
@@ -131,6 +135,24 @@ The application supports three database options:
    - Configure using `USE_AURORA=true`
    - Requires Aurora writer endpoint and credentials
 
+## Available Services Reference
+
+You can view all available services and models by running:
+
+```bash
+cd web-api
+python -m app.cli.list_services
+```
+
+This will show:
+- **Transcription Services**: Parakeet MLX, OpenAI Whisper, WhisperX, AWS Transcribe
+- **AI Services**: Ollama (with your installed models), OpenAI, AWS Bedrock, VLLM
+- **Available Models**: 
+  - **Ollama**: All models from your `ollama list` output
+  - **AWS Bedrock**: `us.meta.llama3-3-70b-instruct-v1:0`, `meta.llama3-1-405b-instruct-v1:0`, `meta.llama3-1-70b-instruct-v1:0`, `anthropic.claude-3-7-sonnet-20250219-v1:0`
+  - **OpenAI**: `gpt-4o`, `gpt-3.5-turbo`
+  - **VLLM**: Custom models you've configured
+
 ## Local Development Setup
 
 ### Prerequisites
@@ -138,13 +160,170 @@ The application supports three database options:
 - Python 3.11+
 - Node.js 18+ and npm
 - FFmpeg (for audio processing)
-- Docker (optional, for container-based deployment)
-- AWS Account (optional, for AWS-based services)
+- **audiowaveform v1.10+** (for audio visualization)
+- **Google OAuth credentials** (for local authentication)
 
-### Backend Setup
+#### Installing FFmpeg
 
-1. Create a `.env` file in the root of the web-api directory:
+**Ubuntu/Debian:**
+```bash
+sudo apt update
+sudo apt install ffmpeg
+```
 
+**macOS:**
+```bash
+# Using Homebrew
+brew install ffmpeg
+```
+
+**Windows:**
+```bash
+# Using Chocolatey
+choco install ffmpeg
+
+**Verify installation:**
+```bash
+ffmpeg -version
+# Should show FFmpeg version information
+```
+
+#### Installing audiowaveform
+
+**Ubuntu/Debian:**
+```bash
+sudo add-apt-repository ppa:chris-needham/ppa
+sudo apt-get update
+sudo apt-get install audiowaveform
+```
+
+**macOS:**
+```bash
+brew install audiowaveform
+```
+
+**Windows:**
+Download from [BBC audiowaveform releases](https://github.com/bbc/audiowaveform/releases) or use WSL with Ubuntu instructions.
+
+**Verify installation:**
+```bash
+audiowaveform --version
+# Should show version 1.10 or higher
+```
+
+#### Setting up Google OAuth
+
+For local development, you'll need Google OAuth credentials:
+
+1. **Go to the [Google Cloud Console](https://console.cloud.google.com/)**
+
+2. **Create a new project** (or select existing one):
+   - Click "Select a project" → "New Project"
+   - Enter project name (e.g., "Jenkins Scribe Local")
+   - Click "Create"
+
+3. **Navigate to "APIs & Services" → "Credentials"**
+
+4. **Configure OAuth consent screen**:
+   - Click "OAuth consent screen"
+   - Select "External" user type (for testing)
+   - Fill in required fields:
+     - App name: "Jenkins Scribe"
+     - User support email: Your email
+     - Developer contact information: Your email
+   - Click "Save and Continue"
+   - Skip scopes (click "Save and Continue")
+   - Add test users if needed, or skip
+   - Click "Back to Dashboard"
+
+5. **Create OAuth credentials**:
+   - Click "Create Credentials" → "OAuth client ID"
+   - Choose "Web application"
+   - Name: "Jenkins Scribe Local"
+   - **Authorized JavaScript origins**:
+     - `http://localhost:4000`
+   - **Authorized redirect URIs**:
+     - `http://localhost:4000/login`
+   - Click "Create"
+
+6. **Note your credentials**:
+   - Copy the **Client ID** and **Client Secret**
+   - You'll need these for your environment files
+
+**Important**: The redirect URIs must match exactly. If you change the frontend port, update the redirect URIs accordingly.
+
+### Local Development Options
+
+All local setups use **SQLite database**, **local file storage**, and **Google OAuth authentication**. Create the below .env in web-api directory. Choose based on your AI service preference:
+
+#### Option 1: Basic Local Setup (Recommended)
+
+**Best for**: First-time users, completely offline setup
+**Uses**: Parakeet MLX transcription + Ollama models
+
+**Requirements**:
+- No external API keys needed
+- Works completely offline
+- Google OAuth credentials (setup below)
+
+**Setup Steps**:
+
+1. **Install Ollama**:
+   ```bash
+   # macOS
+   brew install ollama
+   
+   # Linux
+   curl -fsSL https://ollama.ai/install.sh | sh
+   
+   # Windows - Download from https://ollama.ai/download
+   ```
+
+2. **Pull Ollama models**:
+   ```bash
+   ollama pull llama3.1:8b
+   # Optional: For better quality (requires more RAM)
+   # ollama pull llama3.3:70b
+   ```
+
+3. **Create backend environment file** (`web-api/.env`):
+   ```env
+   # Core Settings
+   ENVIRONMENT=development
+   COOKIE_SECURE=false
+   LOGGING_LEVEL=DEBUG
+   
+   # JWT Configuration
+   ACCESS_TOKEN_SECRET=your_secure_random_string_here
+   ACCESS_TOKEN_EXPIRE_MINUTES=1440
+   
+   # Authentication (Google OAuth)
+   USE_COGNITO=false
+   USE_GOOGLE_AUTH=true
+   GOOGLE_CLIENT_ID=your_google_client_id_from_oauth_setup
+   GOOGLE_CLIENT_SECRET=your_google_client_secret_from_oauth_setup
+   GOOGLE_REDIRECT_URI=http://localhost:4000/login
+   
+   # AI Services (Local)
+   TRANSCRIPTION_SERVICE=Parakeet MLX
+   GENERATIVE_AI_SERVICE=Ollama
+   DEFAULT_NOTE_GENERATION_MODEL=llama3.1:8b
+   LABEL_MODEL=llama3.1:8b
+   
+   # Database (Local SQLite)
+   USE_AURORA=false
+   ```
+
+#### Option 2: OpenAI Setup
+
+**Best for**: Users who want highest quality AI models
+**Uses**: OpenAI Whisper transcription + GPT-4o models
+
+**Requirements**:
+- OpenAI API key
+- Google OAuth credentials
+
+**Environment file** (`web-api/.env`):
 ```env
 # Core Settings
 ENVIRONMENT=development
@@ -152,205 +331,328 @@ COOKIE_SECURE=false
 LOGGING_LEVEL=DEBUG
 
 # JWT Configuration
-ACCESS_TOKEN_SECRET=your_secure_random_string
+ACCESS_TOKEN_SECRET=your_secure_random_string_here
 ACCESS_TOKEN_EXPIRE_MINUTES=1440
 
-# Authentication Configuration
+# Authentication (Google OAuth)
 USE_COGNITO=false
-USE_GOOGLE_AUTH=true  # If using Google auth
-
-# Google OAuth Configuration (if using Google auth)
-GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CLIENT_SECRET=your_google_client_secret
+USE_GOOGLE_AUTH=true
+GOOGLE_CLIENT_ID=your_google_client_id_from_oauth_setup
+GOOGLE_CLIENT_SECRET=your_google_client_secret_from_oauth_setup
 GOOGLE_REDIRECT_URI=http://localhost:4000/login
 
-# LLM Configuration
+# AI Services (OpenAI)
+TRANSCRIPTION_SERVICE=OpenAI Whisper
+GENERATIVE_AI_SERVICE=OpenAI
 DEFAULT_NOTE_GENERATION_MODEL=gpt-4o
 LABEL_MODEL=gpt-4o
 
-# OpenAI API Key (required for GPT models)
+# OpenAI API Key
 OPENAI_API_KEY=your_openai_api_key
 
-# Database Configuration
+# Database (Local SQLite)
 USE_AURORA=false
-# SQLite database will be used automatically in development mode
-
-# Transcription Service - Choose one
-TRANSCRIPTION_SERVICE=OpenAI Whisper
-# TRANSCRIPTION_SERVICE=WhisperX
-# TRANSCRIPTION_SERVICE=AWS Transcribe
 ```
 
-2. Start the backend server:
+#### Option 3: Local GPU Setup (VLLM)
+
+**Best for**: Users with powerful GPUs, maximum performance and privacy
+**Uses**: VLLM inference + Parakeet MLX or WhisperX transcription
+
+**Requirements**:
+- NVIDIA GPU with 8GB+ VRAM
+- CUDA toolkit installed
+- Google OAuth credentials
+- Hugging Face token
+
+**Setup Steps**:
+
+1. **Install CUDA toolkit** (if not installed):
+   ```bash
+   # Check if CUDA is installed
+   nvidia-smi
+   
+   # Ubuntu/Debian installation
+   wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb
+   sudo dpkg -i cuda-keyring_1.1-1_all.deb
+   sudo apt-get update
+   sudo apt-get install cuda-toolkit-12-4
+   ```
+
+2. **Install VLLM**:
+   ```bash
+   cd web-api
+   pip install vllm[cuda] huggingface_hub transformers torch
+   ```
+
+3. **Environment file** (`web-api/.env`):
+   ```env
+   # Core Settings
+   ENVIRONMENT=development
+   COOKIE_SECURE=false
+   LOGGING_LEVEL=DEBUG
+   
+   # JWT Configuration
+   ACCESS_TOKEN_SECRET=your_secure_random_string_here
+   ACCESS_TOKEN_EXPIRE_MINUTES=1440
+   
+   # Authentication (Google OAuth)
+   USE_COGNITO=false
+   USE_GOOGLE_AUTH=true
+   GOOGLE_CLIENT_ID=your_google_client_id_from_oauth_setup
+   GOOGLE_CLIENT_SECRET=your_google_client_secret_from_oauth_setup
+   GOOGLE_REDIRECT_URI=http://localhost:4000/login
+   
+   # AI Services (Local GPU)
+   TRANSCRIPTION_SERVICE=Parakeet MLX
+   # Alternative: TRANSCRIPTION_SERVICE=WhisperX
+   GENERATIVE_AI_SERVICE=VLLM
+   
+   # VLLM Configuration
+   VLLM_ENABLED=true
+   VLLM_SERVER_NAME=localhost
+   VLLM_SERVER_PORT=8080
+   
+   # Model Selection (choose based on GPU memory)
+   # For 24GB+ VRAM:
+   VLLM_MODEL_NAME=meta-llama/Meta-Llama-3.1-70B-Instruct
+   DEFAULT_NOTE_GENERATION_MODEL=meta-llama/Meta-Llama-3.1-70B-Instruct
+   LABEL_MODEL=meta-llama/Meta-Llama-3.1-70B-Instruct
+   
+   # For 8-16GB VRAM:
+   # VLLM_MODEL_NAME=meta-llama/Meta-Llama-3.1-8B-Instruct
+   # DEFAULT_NOTE_GENERATION_MODEL=meta-llama/Meta-Llama-3.1-8B-Instruct
+   # LABEL_MODEL=meta-llama/Meta-Llama-3.1-8B-Instruct
+   
+   # Hugging Face token (required for model downloads)
+   HUGGINGFACE_TOKEN=your_huggingface_token
+   
+   # Database (Local SQLite)
+   USE_AURORA=false
+   ```
+
+4. **Get Hugging Face token**:
+   - Go to [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)
+   - Create a new token with "Read" permissions
+   - Accept the Llama model license at [huggingface.co/meta-llama](https://huggingface.co/meta-llama)
+
+5. **Start VLLM server**:
+   ```bash
+   # Start VLLM server in separate terminal
+   python -m vllm.entrypoints.openai.api_server \
+     --model meta-llama/Meta-Llama-3.1-70B-Instruct \
+     --host localhost \
+     --port 8080 \
+     --gpu-memory-utilization 0.95
+   ```
+
+### Start the Backend
+
+For all options:
 ```bash
 cd web-api
+pip install -r requirements.txt
 uvicorn app.main:app --reload --port 8000
 ```
 
 ### Frontend Setup
 
-1. Create a `.env.local` file in the root of the ai-scribe-app directory:
+1. **Create frontend environment file** (`ai-scribe-app/.env`):
+   ```env
+   # Backend API URL
+   NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
+   
+   # Authentication Configuration
+   NEXT_PUBLIC_USE_COGNITO=false
+   NEXT_PUBLIC_USE_GOOGLE_AUTH=true
+   
+   # Google OAuth Configuration (use same Client ID from backend setup)
+   GOOGLE_CLIENT_ID=your_google_client_id_from_step_above
+   GOOGLE_REDIRECT_URI=http://localhost:4000/login
+   ```
 
-```env
-# Backend API URL
-NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
+2. **Install dependencies and start**:
+   ```bash
+   cd ai-scribe-app
+   npm install
+   npm run dev
+   ```
 
-# Authentication Configuration
-NEXT_PUBLIC_USE_COGNITO=false
-NEXT_PUBLIC_USE_GOOGLE_AUTH=true  # If using Google auth
-
-# Google OAuth Configuration (if using Google auth)
-GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_REDIRECT_URI=http://localhost:4000/login
-```
-
-2. Generate runtime configuration:
-```bash
-node write-runtime-config.js
-```
-
-3. Start the frontend development server:
-```bash
-cd ai-scribe-app
-npm run dev
-```
+**Note**: The `GOOGLE_CLIENT_ID` should be the same in both frontend and backend environment files.
 
 ### Verification
 
-To verify your configuration is working:
-
-1. Navigate to `http://localhost:4000` (or whatever port your frontend is using)
+1. Navigate to `http://localhost:4000`
 2. Click the login button
-3. You should be redirected to the authentication page (Google or dev auth)
-4. After successful authentication, you should be redirected back to the application
-
-If you encounter any issues, check the console logs for both the frontend and backend services for error messages.
+3. Complete authentication flow
+4. Test audio recording or file upload
+5. Verify note generation works
 
 ## AWS Deployment
 
 ## Architecture
 ![AWS Architecture](https://github.com/user-attachments/assets/2dd32f5a-d89a-4119-8cc0-baaa9f5a8190)
 
-### One-click Deployment
-| Service | Button |
-|---------|--------|
-| AWS | [![AWS CloudFormation Launch Stack SVG Button](https://cdn.rawgit.com/buildkite/cloudformation-launch-stack-button-svg/master/launch-stack.svg)](https://console.aws.amazon.com/cloudformation/home#/stacks/create/review?stackName=os-jenkins-ai-scribe&templateURL=https://cf-templates-14rwubwevbsfc-us-west-2.s3.us-west-2.amazonaws.com/2025-06-01T072716.376Zklu-template.yaml) |
 
-### AWS Prerequisites
+### Step 1: AWS Account Setup
 
-Before you begin the deployment, ensure you have:
+1. **Create AWS Account**: If you don't have one, sign up at [aws.amazon.com](https://aws.amazon.com)
 
-- AWS Account with administrative access
-- AWS CLI installed and configured
-- Domain name registered in Route53 (optional, for custom domain)
-- Docker installed for building container images
+2. **Install AWS CLI**:
+   ```bash
+   # macOS
+   brew install awscli
+   
+   # Linux
+   curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+   unzip awscliv2.zip
+   sudo ./aws/install
+   
+   # Windows - Download from AWS website
+   ```
 
-### Infrastructure Overview
+3. **Configure AWS CLI**:
+   ```bash
+   aws configure
+   # Enter your Access Key ID
+   # Enter your Secret Access Key
+   # Default region: us-west-2 (recommended)
+   # Default output format: json
+   ```
 
-The CloudFormation template creates a complete AWS infrastructure including:
+4. **Enable Bedrock Model Access**:
+   - Go to AWS Bedrock Console
+   - Navigate to "Model access" in the left sidebar
+   - Request access to:
+     - **Meta Llama 3.3 70B Instruct** (`us.meta.llama3-3-70b-instruct-v1:0`)
+     - **Meta Llama 3.1 405B Instruct** (`meta.llama3-1-405b-instruct-v1:0`) 
+     - **Meta Llama 3.1 70B Instruct** (`meta.llama3-1-70b-instruct-v1:0`)
+     - **Anthropic Claude 3.7 Sonnet** (`anthropic.claude-3-7-sonnet-20250219-v1:0`)
 
-- S3 bucket for storing recordings and prompt files
-- Amazon Cognito for user authentication
-- Aurora PostgreSQL database for data storage
-- ECS Fargate clusters for running containerized applications
-- Application Load Balancers (ALB) for both frontend and backend
-- ACM certificates for HTTPS/TLS
-- Route53 DNS configuration (if using a custom domain)
-- Security groups and IAM roles
+### Step 2: Domain Setup
 
-### Deployment Steps
+1. **Register a Domain**:
 
-#### 1. Prepare Your Domain and DNS (Optional)
+   **Option 1: Register through Route53 Console (Recommended)**:
+   - Go to [Route53 Console](https://us-east-1.console.aws.amazon.com/route53/v2/home#Dashboard)
+   - Click "Register Domain"
+   - Search for your desired domain name
+   - Follow the registration process (requires contact information and payment)
+   - Domain registration can take up to 48 hours to complete
 
-1. Ensure your domain is registered and managed by Route53
-2. Note your Route53 Hosted Zone ID (found in the Route53 console under "Hosted Zones")
+   **Option 2: Use existing domain with Route53**:
+   ```bash
+   # If you have a domain registered elsewhere, create a hosted zone
+   aws route53 create-hosted-zone \
+     --name yourdomain.com \
+     --caller-reference $(date +%s) \
+     --hosted-zone-config Comment="Jenkins Scribe hosted zone"
+   
+   # Note: You'll need to update your domain's nameservers to point to Route53
+   ```
 
-#### 2. Set Up Your VPC and Subnets
+2. **Note your Hosted Zone ID**:
+   ```bash
+   aws route53 list-hosted-zones --query "HostedZones[?Name=='yourdomain.com.'].Id" --output text
+   ```
+## Step 3: Create VPC Infrastructure (AWS Console)
 
-You need an existing VPC with both public and private subnets:
+### Option A: Use Existing VPC (If You Have One)
 
-1. Navigate to the VPC console in AWS
-2. Note your VPC ID
-3. Identify at least 2 public subnets (for the load balancers)
-4. Identify at least 2 private subnets (for the Fargate tasks)
+If you already have a VPC set up like in your screenshots:
 
-#### 3. Click the "Deploy to AWS" button below to launch the CloudFormation stack creation wizard: [Deploy to AWS](https://console.aws.amazon.com/cloudformation/home#/stacks/create/review?stackName=os-jenkins-ai-scribe&templateURL=https://cf-templates-14rwubwevbsfc-us-west-2.s3.us-west-2.amazonaws.com/2025-06-01T072716.376Zklu-template.yaml) 
+1. **Note Your VPC Details**:
+   - **VPC ID**: `vpc-01e9a055781f7820` (your actual ID)
+   - **Public Subnets**: Copy the subnet IDs from your public subnets
+   - **Private Subnets**: Copy the subnet IDs from your private subnets
 
-#### 4. Enter the following required parameters:
+2. **Skip to Step 4** and use these values in the deployment form
+
+### Option B: Create New VPC (Recommended for New Users)
+
+** Use AWS VPC Wizard **
+
+1. **Go to VPC Console**:
+   - Open [VPC Console](https://console.aws.amazon.com/vpc/)
+   - Click "Create VPC"
+
+2. **VPC Settings - Choose "VPC and more"**:
+
+   **Basic Settings:**
+   - **Resources to create**: Select `VPC and more` (not "VPC only")
+   - **Name tag auto-generation**: Check the box ✅
+   - **Auto-generate**: `jenkins` (or your preferred name)
+
+   **Network Configuration:**
+   - **IPv4 CIDR block**: `10.0.0.0/16`
+   - **IPv6 CIDR block**: Select `No IPv6 CIDR block`
+   - **Tenancy**: `Default`
+
+   **Availability Zones & Subnets:**
+   - **Number of Availability Zones (AZs)**: `2` (recommended)
+   - **Number of public subnets**: `2`
+   - **Number of private subnets**: `2`
+
+   **NAT Gateway Configuration:**
+   - **NAT gateways**: `In 1 AZ` (saves costs vs "1 per AZ")
+
+   **VPC Endpoints:**
+   - **VPC endpoints**: `S3 Gateway` (helps reduce data transfer costs)
+
+   **DNS Options:**
+   - **Enable DNS hostnames**: (checked)
+   - **Enable DNS resolution**: (checked)
+
+3. **Review the Preview** - You should see:
+   - 4 subnets (2 public, 2 private)
+   - 3 route tables
+   - 3 network connections (IGW, NAT Gateway, VPC-S3)
+
+4. **Click "Create VPC"** - AWS creates everything automatically!
+
+5. **Note Your Resource IDs** (you'll need these for deployment):
+
+   After VPC creation, go to your VPC dashboard and collect these values:
+
+   **From VPC Details Tab:**
+   - **VPC ID**: `vpc-01e9a055781f7820` (copy your actual VPC ID)
+
+   **From Subnets Section:**
+   - **Public Subnet IDs**: Look for subnets with "public" in the name
+     - Example: `subnet-xxxxx, subnet-yyyyy`
+   - **Private Subnet IDs**: Look for subnets with "private" in the name  
+     - Example: `subnet-aaaaa, subnet-bbbbb`
+
+   **Write these down - you'll need them in Step 4!**
+
+### Step 4: Deploy the Application
+
+1. **Use the one-click deployment link**:
+   
+   [![Deploy to AWS](https://img.shields.io/badge/Deploy%20to-AWS-orange?style=for-the-badge&logo=amazon-aws)](https://us-west-2.console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/quickcreate?stackName=os-jenkins-ai-scribe&templateURL=https://cf-templates-14rwubwevbsfc-us-west-2.s3.us-west-2.amazonaws.com/2025-06-01T072716.376Zklu-template.yaml)
+
+2. **Fill in the required parameters**:
 
    | Parameter | Description | Example |
    |-----------|-------------|---------|
-   | **EnvironmentName** | Name for your environment | `Production` |
-   | **DatabaseUsername** | Username for the Aurora database | `admin` |
-   | **DatabasePassword** | Password for the Aurora database | `(Create a secure password)` |
-   | **CognitoEmailDomain** | Email domain to use for admin accounts | `yourdomain.com` |
-   | **AdminEmailAddress** | Email address for the admin user | `admin@yourdomain.com` |
+   | **Environment** | Deployment environment | `production` |
+   | **HostedZoneId** | Route53 Hosted Zone ID | `Z1D633PJN98FT9` |
+   | **VpcId** | VPC ID from Step 3 | `vpc-12345678` |
+   | **PublicSubnets** | Public subnet IDs (comma-separated) | `subnet-12345,subnet-67890` |
+   | **PrivateSubnets** | Private subnet IDs (comma-separated) | `subnet-abcde,subnet-fghij` |
+   | **DomainName** | Your domain name | `yourdomain.com` |
+   | **AuthDomainPrefix** | Cognito auth subdomain | `auth-jenkins` |
+   | **AccessTokenSecret** | JWT signing secret | Generate with `openssl rand -base64 32` |
+   | **DBName** | Database name | `jenkins` |
+   | **DBUser** | Database username | `admin` |
+   | **DBPassword** | Database password | Generate secure password |
 
-#### 5. Click "Next" to proceed to the stack options page
-#### 6. (Optional) Add any tags or configure advanced options
-#### 7. Click "Next" to review your configuration
-#### 8. Check the acknowledgment box for IAM resource creation
-#### 9. Click "Create stack"
+### Step 5: Post-Deployment Configuration
 
-The deployment will take approximately 15-20 minutes.
-
-### Post-Deployment Setup
-
-After the stack is created:
-
-1. Check your email for a temporary password from AWS Cognito
-2. Navigate to the FrontendURL provided in the stack outputs
-3. Log in with your admin email address and the temporary password
-4. You'll be prompted to create a new password on first login
-5. The application is now ready to use!
-
-## Environment Variables Automatically Configured
-
-The CloudFormation template automatically configures all necessary environment variables for both the frontend and backend, including:
-
-- Authentication settings
-- Database connection details
-- Storage configuration
-- Service endpoints
-
-No manual environment configuration is required.
-
-## Customization Options
-
-Advanced users can customize the deployment by:
-
-1. Downloading the CloudFormation template
-2. Modifying parameters or resources as needed
-3. Deploying the modified template through the AWS Console or CLI
-
-## Cost Considerations
-
-This deployment creates several AWS resources that will incur charges:
-
-- Aurora PostgreSQL database (db.t4g.medium instance)
-- ECS Fargate containers
-- Application Load Balancers
-- S3 storage
-- Amazon Cognito user pool
-
-Estimated monthly cost: $150-$300 USD depending on usage patterns.
-
-To minimize costs:
-- Consider using a smaller database instance for non-production environments
-- Delete the stack when not in use for extended periods
-
-## Troubleshooting
-
-If you encounter issues during deployment:
-
-1. Check the CloudFormation events tab for specific error messages
-2. Verify your AWS account has sufficient permissions to create all resources
-3. Ensure you've entered valid parameter values
-4. Check that your AWS account limits can accommodate the resources being created
-
-For application-specific issues after deployment, refer to CloudWatch logs for the ECS tasks.
-
-
+**Test the application**:
+   - Navigate to the Frontend URL
+   - Complete Cognito authentication
+   - Test audio recording and note generation
 
 ## Security
 
@@ -381,22 +683,30 @@ OS Jenkins Scribe implements robust security measures:
 
 ### Third-Party Licenses
 
-   This project uses third-party libraries and models, including:
-   
-   - **WhisperX**: Licensed under the BSD 2-Clause License.
-   - **Meta Llama 3.3**: Licensed under the Meta Llama 3.3 Community License Agreement.
-   
-   For the full text of these licenses, please see the [THIRD_PARTY_LICENSES](THIRD_PARTY_LICENSES) file in this repository.
-   
-   ### Llama 3.3 License Notice
-   
-   This project uses Meta Llama 3.3 As per the Llama 3.3 license requirements:
-   
-   - This project is "Built with Meta Llama 3.3".
-   - Any AI models created, trained, or fine-tuned using Llama 3.3 as part of this project will include "Llama 3.3" at the beginning of the model name.
-   - Use of Llama 3.3 in this project complies with the [Meta Llama 3.3 Acceptable Use Policy](https://www.llama.com/llama3_3/use-policy/).
-   
-   For the complete Meta Llama 3.3 Community License Agreement, refer to the [THIRD_PARTY_LICENSES](THIRD_PARTY_LICENSES) file.
+This project uses third-party libraries and models, including:
+
+- **WhisperX**: Licensed under the BSD 2-Clause License.
+- **Meta Llama 3.3**: Licensed under the Meta Llama 3.3 Community License Agreement.
+- **Ollama**: Licensed under the MIT License.
+- **vLLM**: Licensed under the Apache License 2.0.
+- **Parakeet Models**: Licensed under the Creative Commons Attribution 4.0 International License (CC-BY-4.0).
+
+For the full text of these licenses, please see the [THIRD_PARTY_LICENSES](THIRD_PARTY_LICENSES) file in this repository.
+
+### Llama 3.3 License Notice
+
+This project uses Meta Llama 3.3. As per the Llama 3.3 license requirements:
+
+- This project is "Built with Meta Llama 3.3".
+- Any AI models created, trained, or fine-tuned using Llama 3.3 as part of this project will include "Llama 3.3" at the beginning of the model name.
+- Use of Llama 3.3 in this project complies with the [Meta Llama 3.3 Acceptable Use Policy](https://www.llama.com/llama3_3/use-policy/).
+
+For the complete Meta Llama 3.3 Community License Agreement, refer to the [THIRD_PARTY_LICENSES](THIRD_PARTY_LICENSES) file.
+
+### Attribution Notices
+
+- **Built with Meta Llama 3.3** (as required by Meta's license)
+- **Parakeet models by NVIDIA Corporation** (as required by CC-BY-4.0)
 
 ## Medical Disclaimer
 
