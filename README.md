@@ -648,8 +648,8 @@ Use the one-click deployment link:
    | **DomainName** | Your domain name | `yourdomain.com` |
    | **AuthDomainPrefix** | Cognito auth subdomain | `auth-jenkins` |
    | **AccessTokenSecret** | JWT signing secret | Generate with `openssl rand -base64 32` |
-   | **DBName** | Database name | `jenkins` |
-   | **DBUser** | Database username | `admin` |
+   | **DBName** | Database name | `os_jenkins` |
+   | **DBUser** | Database username | `jenkins_admin` |
    | **DBPassword** | Database password | Generate secure password |
 
 ### Step 5: Post-Deployment Configuration
