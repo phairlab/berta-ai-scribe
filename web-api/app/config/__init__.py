@@ -4,6 +4,7 @@ from functools import lru_cache
 import logging
 
 from dotenv import load_dotenv
+from app.config.package_checks import VLLM_AVAILABLE
 
 load_dotenv()
 
@@ -39,7 +40,7 @@ class Settings(BaseSettings):
     TRANSCRIPTION_SERVICE: Literal["OpenAI Whisper", "WhisperX", "AWS Transcribe", "Parakeet MLX"] = (
         "Parakeet MLX"
     )
-    GENERATIVE_AI_SERVICE: Literal["Ollama", "OpenAI", "AWS Bedrock", "VLLM"] = "Ollama"
+    GENERATIVE_AI_SERVICE: Literal["Ollama", "OpenAI", "AWS Bedrock", "VLLM", "LM Studio"] = "Ollama"
     LOCAL_WHISPER_SERVICE_URL: str | None = None
 
     AWS_ACCESS_KEY_ID: str | None = None
@@ -78,11 +79,13 @@ class Settings(BaseSettings):
     DB_PASSWORD: str | None = None
     DB_PORT: int = 5432
 
-    VLLM_ENABLED: bool = False
     VLLM_SERVER_NAME: str = "localhost"
     VLLM_SERVER_PORT: int = 8080
     VLLM_MODEL_NAME: str = "meta-llama/Meta-Llama-3.3-70B-Instruct"
     HUGGINGFACE_TOKEN: str | None = None
+
+    # LM Studio defaults to http://localhost:1234
+    LM_STUDIO_SERVER_URL: str | None = "http://localhost:1234"
 
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True)
 
@@ -105,11 +108,13 @@ is_cognito_supported: bool = (
 )
 
 is_vllm_supported: bool = (
-    settings.VLLM_ENABLED
+    VLLM_AVAILABLE
     and settings.VLLM_SERVER_NAME is not None
     and settings.VLLM_SERVER_PORT is not None
     and settings.VLLM_MODEL_NAME is not None
 )
+
+is_lm_studio_supported: bool = settings.LM_STUDIO_SERVER_URL is not None
 
 def get_available_services() -> dict:
     """Get a dictionary of all available services and their options."""
@@ -127,7 +132,7 @@ def get_available_services() -> dict:
         },
         "GENERATIVE_AI_SERVICE": {
             "description": "Service for generating text completions",
-            "options": ["Ollama", "OpenAI", "AWS Bedrock", "VLLM"],
+            "options": ["Ollama", "OpenAI", "AWS Bedrock", "VLLM", "LM Studio"],
             "default": "Ollama",
             "models": {
                 "Ollama": ["llama3.1:8b", "llama3.1:70b", "llama3.2:8b", "llama3.2:70b"],
@@ -140,7 +145,8 @@ def get_available_services() -> dict:
                     "anthropic.claude-3-5-sonnet-20241022-v2:0",
                     "anthropic.claude-3-haiku-20240307-v1:0"
                 ],
-                "VLLM": ["meta-llama/Meta-Llama-3.3-70B-Instruct"]
+                "VLLM": ["meta-llama/Meta-Llama-3.3-70B-Instruct"],
+                "LM Studio": ["dynamic"]  # Models are loaded dynamically from LM Studio server
             }
         }
     }

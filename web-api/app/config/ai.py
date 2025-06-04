@@ -3,6 +3,7 @@ from app.config import (
     is_aws_transcribe_supported,
     is_aws_bedrock_supported,
     is_vllm_supported,
+    is_lm_studio_supported,
     settings,
 )
 from app.services.adapters import GenerativeAIService, TranscriptionService
@@ -14,6 +15,7 @@ from app.services.aws_bedrock import BedrockGenerativeAIService
 from app.services.ollama import OllamaGenerativeAIService
 from app.services.parakeet_mlx import ParakeetMLXTranscriptionService
 from app.services.vllm_service import VLLMService
+from app.services.lm_studio import LMStudioGenerativeAIService
 
 
 note_format_prompts = prompt_service.get_note_format_prompts()
@@ -60,6 +62,11 @@ match settings.GENERATIVE_AI_SERVICE:
         if is_vllm_supported:
             api_url = f"http://{settings.VLLM_SERVER_NAME}:{settings.VLLM_SERVER_PORT}/v1"
             generative_ai_services.append(VLLMService(api_url=api_url))
+    case "LM Studio":
+        if is_lm_studio_supported:
+            generative_ai_services.append(
+                LMStudioGenerativeAIService(service_url=settings.LM_STUDIO_SERVER_URL)
+            )
     case _:
         raise ValueError(
             f"{settings.GENERATIVE_AI_SERVICE} is not a valid generative AI service"
