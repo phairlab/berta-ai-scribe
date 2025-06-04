@@ -6,18 +6,18 @@ import logging
 import os
 from pathlib import Path
 
-try:
-    from vllm import LLM, SamplingParams
-    from vllm.outputs import RequestOutput
-    VLLM_AVAILABLE = True
-except ImportError:
-    VLLM_AVAILABLE = False
-
+from app.config.package_checks import VLLM_AVAILABLE
 from app.errors import ExternalServiceError
 from app.schemas import GenerationOutput, LanguageModel
 from app.services.adapters import GenerativeAIService
 from app.utility.timing import ExecutionTimer
 from app.config import settings
+
+try:
+    from vllm import LLM, SamplingParams
+    from vllm.outputs import RequestOutput
+except ImportError:
+    VLLM_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
@@ -25,16 +25,9 @@ class VLLMService(GenerativeAIService):
     
     def __init__(self, api_url: Optional[str] = None):
         self.api_url = api_url
-        self.enabled = settings.VLLM_ENABLED
         
-        if not self.enabled:
-            logger.info("VLLM service is disabled")
-            self._available_models = []
-            return
-            
         if not self.api_url and not VLLM_AVAILABLE:
             logger.warning("VLLM package not installed. Only API server mode is available.")
-            self.enabled = False
             self._available_models = []
             return
 
@@ -103,9 +96,6 @@ class VLLMService(GenerativeAIService):
         return headers
     
     def _get_available_models(self) -> List[Dict]:
-        if not self.enabled:
-            return []
-            
         if self.api_url:
             try:
                 response = requests.get(
@@ -130,9 +120,6 @@ class VLLMService(GenerativeAIService):
     
     @property
     def models(self) -> List[LanguageModel]:
-        if not self.enabled:
-            return []
-            
         return [
             LanguageModel(name=model['id'], size="Large")
             for model in self._available_models
@@ -144,10 +131,10 @@ class VLLMService(GenerativeAIService):
         messages: List[Dict[str, str]],
         temperature: int = 0,
     ) -> GenerationOutput:
-        if not self.enabled:
+        if not self._available_models:
             raise ExternalServiceError(
                 self.service_name,
-                "VLLM service is disabled. Set VLLM_ENABLED=true to enable."
+                "VLLM service is not properly configured. Check server URL or local setup."
             )
             
         try:
