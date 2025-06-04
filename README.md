@@ -17,6 +17,7 @@ OS Jenkins AI Scribe is an advanced medical documentation assistant designed to 
   - [Option 1: Basic Local Setup (Recommended)](#option-1-basic-local-setup-recommended)
   - [Option 2: OpenAI Setup](#option-2-openai-setup)
   - [Option 3: Local GPU Setup (VLLM)](#option-3-local-gpu-setup-vllm)
+  - [Option 4: LM Studio Setup](#option-4-lm-studio-setup)
   - [Start the Backend](#start-the-backend)
   - [Frontend Setup](#frontend-setup)
   - [Verification](#verification)
@@ -100,18 +101,21 @@ The transcription service is configurable via the `TRANSCRIPTION_SERVICE` enviro
 
 ### Language Model Services
 
-The application supports four language model providers:
+The application supports five language model providers:
 
 1. **Ollama** (Default): Local open-source models (any models available in `ollama list`)
 2. **OpenAI**: GPT-4o via OpenAI API
 3. **AWS Bedrock**: Meta Llama 3.3 70B, Llama 3.1 405B/70B, Claude 3.7 Sonnet
 4. **VLLM**: Self-hosted inference server for large models
+5. **LM Studio**: Local inference with user-friendly GUI and model management
 
 The system will automatically use the best available model based on your configuration. For the local deployment we will be using gpt-4o via OpenAI API and for the AWS deployment we will be using Llama3.3 70b.
 
 > [!NOTE]
 > The main note generation uses the model specified in your environment configuration. Additionally, the application provides custom settings where you can test different note instructions against various models:
-> - **Local Development**: All models from your `ollama list` appear as testing options in custom settings
+> - **Local Development**: 
+>   - **Ollama**: All models from your `ollama list` appear as testing options in custom settings
+>   - **LM Studio**: Only currently loaded models in LM Studio appear as testing options (unlike Ollama which shows all downloaded models)
 > - **AWS Deployment**: A fixed set of Bedrock models (Meta Llama 3.3 70B, Llama 3.1 405B/70B, Claude 3.7 Sonnet) are available for testing custom note instructions
 
 ## Storage Configuration
@@ -243,10 +247,37 @@ For local development, you'll need Google OAuth credentials:
 
 ### Local Development Options
 
-All local setups use **SQLite database**, **local file storage**, and **Google OAuth authentication**. Create the below .env in web-api directory. Choose based on your AI service preference:
+All local setups use **SQLite database**, **local file storage**, and **Google OAuth authentication**. Choose based on your AI service preference:
 
 > [!IMPORTANT]
 > If you're switching between different AI models or services, delete the `.data` folder in the `web-api` directory to clear any cached model data and ensure a clean start with your new configuration.
+
+#### Common Environment Variables
+
+First, create the base environment file (`web-api/.env`) with these common settings:
+
+```env
+# Core Settings
+ENVIRONMENT=development
+COOKIE_SECURE=false
+LOGGING_LEVEL=DEBUG
+
+# JWT Configuration
+ACCESS_TOKEN_SECRET=your_secure_random_string_here
+ACCESS_TOKEN_EXPIRE_MINUTES=1440
+
+# Authentication (Google OAuth)
+USE_COGNITO=false
+USE_GOOGLE_AUTH=true
+GOOGLE_CLIENT_ID=your_google_client_id_from_oauth_setup
+GOOGLE_CLIENT_SECRET=your_google_client_secret_from_oauth_setup
+GOOGLE_REDIRECT_URI=http://localhost:4000/login
+
+# Database (Local SQLite)
+USE_AURORA=false
+```
+
+Then, add the AI service-specific variables based on your chosen option below:
 
 #### Option 1: Basic Local Setup (Recommended)
 
@@ -256,7 +287,7 @@ All local setups use **SQLite database**, **local file storage**, and **Google O
 **Requirements**:
 - No external API keys needed
 - Works completely offline
-- Google OAuth credentials (setup below)
+- Google OAuth credentials
 
 **Setup Steps**:
 
@@ -281,32 +312,13 @@ All local setups use **SQLite database**, **local file storage**, and **Google O
 > [!NOTE]
 > Any models you have already downloaded with Ollama (visible in `ollama list`) will automatically appear as options in the application's custom settings, allowing you to test different note instructions with various models.
 
-3. **Create backend environment file** (`web-api/.env`):
+3. **Add to your environment file**:
    ```env
-   # Core Settings
-   ENVIRONMENT=development
-   COOKIE_SECURE=false
-   LOGGING_LEVEL=DEBUG
-   
-   # JWT Configuration
-   ACCESS_TOKEN_SECRET=your_secure_random_string_here
-   ACCESS_TOKEN_EXPIRE_MINUTES=1440
-   
-   # Authentication (Google OAuth)
-   USE_COGNITO=false
-   USE_GOOGLE_AUTH=true
-   GOOGLE_CLIENT_ID=your_google_client_id_from_oauth_setup
-   GOOGLE_CLIENT_SECRET=your_google_client_secret_from_oauth_setup
-   GOOGLE_REDIRECT_URI=http://localhost:4000/login
-   
-   # AI Services (Local)
+   # AI Services (Ollama)
    TRANSCRIPTION_SERVICE=Parakeet MLX
    GENERATIVE_AI_SERVICE=Ollama
    DEFAULT_NOTE_GENERATION_MODEL=llama3.1:8b
    LABEL_MODEL=llama3.1:8b
-   
-   # Database (Local SQLite)
-   USE_AURORA=false
    ```
 
 #### Option 2: OpenAI Setup
@@ -318,24 +330,8 @@ All local setups use **SQLite database**, **local file storage**, and **Google O
 - OpenAI API key
 - Google OAuth credentials
 
-**Environment file** (`web-api/.env`):
+**Add to your environment file**:
 ```env
-# Core Settings
-ENVIRONMENT=development
-COOKIE_SECURE=false
-LOGGING_LEVEL=DEBUG
-
-# JWT Configuration
-ACCESS_TOKEN_SECRET=your_secure_random_string_here
-ACCESS_TOKEN_EXPIRE_MINUTES=1440
-
-# Authentication (Google OAuth)
-USE_COGNITO=false
-USE_GOOGLE_AUTH=true
-GOOGLE_CLIENT_ID=your_google_client_id_from_oauth_setup
-GOOGLE_CLIENT_SECRET=your_google_client_secret_from_oauth_setup
-GOOGLE_REDIRECT_URI=http://localhost:4000/login
-
 # AI Services (OpenAI)
 TRANSCRIPTION_SERVICE=OpenAI Whisper
 GENERATIVE_AI_SERVICE=OpenAI
@@ -344,9 +340,6 @@ LABEL_MODEL=gpt-4o
 
 # OpenAI API Key
 OPENAI_API_KEY=your_openai_api_key
-
-# Database (Local SQLite)
-USE_AURORA=false
 ```
 
 #### Option 3: Local GPU Setup (VLLM)
@@ -380,31 +373,19 @@ USE_AURORA=false
    pip install vllm[cuda] huggingface_hub transformers torch
    ```
 
-3. **Environment file** (`web-api/.env`):
+3. **Get Hugging Face token**:
+   - Go to [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)
+   - Create a new token with "Read" permissions
+   - Accept the Llama model license at [huggingface.co/meta-llama](https://huggingface.co/meta-llama)
+
+4. **Add to your environment file**:
    ```env
-   # Core Settings
-   ENVIRONMENT=development
-   COOKIE_SECURE=false
-   LOGGING_LEVEL=DEBUG
-   
-   # JWT Configuration
-   ACCESS_TOKEN_SECRET=your_secure_random_string_here
-   ACCESS_TOKEN_EXPIRE_MINUTES=1440
-   
-   # Authentication (Google OAuth)
-   USE_COGNITO=false
-   USE_GOOGLE_AUTH=true
-   GOOGLE_CLIENT_ID=your_google_client_id_from_oauth_setup
-   GOOGLE_CLIENT_SECRET=your_google_client_secret_from_oauth_setup
-   GOOGLE_REDIRECT_URI=http://localhost:4000/login
-   
-   # AI Services (Local GPU)
+   # AI Services (VLLM)
    TRANSCRIPTION_SERVICE=Parakeet MLX
    # Alternative: TRANSCRIPTION_SERVICE=WhisperX
    GENERATIVE_AI_SERVICE=VLLM
    
    # VLLM Configuration
-   VLLM_ENABLED=true
    VLLM_SERVER_NAME=localhost
    VLLM_SERVER_PORT=8080
    
@@ -421,15 +402,7 @@ USE_AURORA=false
    
    # Hugging Face token (required for model downloads)
    HUGGINGFACE_TOKEN=your_huggingface_token
-   
-   # Database (Local SQLite)
-   USE_AURORA=false
    ```
-
-4. **Get Hugging Face token**:
-   - Go to [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)
-   - Create a new token with "Read" permissions
-   - Accept the Llama model license at [huggingface.co/meta-llama](https://huggingface.co/meta-llama)
 
 5. **Start VLLM server**:
    ```bash
@@ -440,6 +413,61 @@ USE_AURORA=false
      --port 8080 \
      --gpu-memory-utilization 0.95
    ```
+
+#### Option 4: LM Studio Setup
+
+**Best for**: Users who want a GUI for model management and high-quality local inference
+**Uses**: Parakeet MLX transcription + LM Studio models
+
+**Requirements**:
+- LM Studio installed
+- Google OAuth credentials
+- No external API keys needed
+
+**Setup Steps**:
+
+1. **Install LM Studio**:
+   - Download from [lmstudio.ai](https://lmstudio.ai/)
+   - Install and launch LM Studio
+
+2. **Download models in LM Studio**:
+   - Open LM Studio
+   - Go to "Search" tab
+   - Download models like:
+     - `llama-3.1-8b-instruct` (faster, 8GB RAM)
+     - `llama-3.3-70b-instruct` (higher quality, 64GB+ RAM)
+     - `mistral-7b-instruct-v0.3` (good balance)
+
+3. **Load a model**:
+   - Go to "Chat" tab in LM Studio
+   - Click "Select a model to load"
+   - Choose your preferred model and click "Load Model"
+   - Wait for the model to load completely
+
+4. **Start LM Studio server**:
+   - In LM Studio, go to "Local Server" tab
+   - Click "Start Server"
+   - Note the server URL (usually `http://localhost:1234`)
+
+> [!NOTE]
+> Unlike Ollama which shows all downloaded models in custom settings, LM Studio only shows the currently loaded model as an option for testing different note instructions. You must load the desired model in LM Studio's interface before it becomes available in the application.
+
+5. **Add to your environment file**:
+   ```env
+   # AI Services (LM Studio)
+   TRANSCRIPTION_SERVICE=Parakeet MLX
+   GENERATIVE_AI_SERVICE=LM Studio
+   
+   # LM Studio Configuration
+   LM_STUDIO_URL=http://localhost:1234
+   
+   # Model Selection (use the name of the loaded model in LM Studio)
+   DEFAULT_NOTE_GENERATION_MODEL=llama-3.1-8b-instruct
+   LABEL_MODEL=llama-3.1-8b-instruct
+   ```
+
+> [!IMPORTANT]
+> Make sure LM Studio server is running and a model is loaded before starting the backend. The model name in your environment file should match the loaded model in LM Studio.
 
 ### Start the Backend
 
@@ -682,9 +710,10 @@ python -m app.cli.list_services
 
 This will show:
 - **Transcription Services**: Parakeet MLX, OpenAI Whisper, WhisperX, AWS Transcribe
-- **AI Services**: Ollama (with your installed models), OpenAI, AWS Bedrock, VLLM
+- **AI Services**: Ollama (with your installed models), OpenAI, AWS Bedrock, VLLM, LM Studio
 - **Available Models**: 
   - **Ollama**: All models from your `ollama list` output
+  - **LM Studio**: Only currently loaded models in LM Studio (must be loaded in LM Studio interface first)
   - **AWS Bedrock**: `us.meta.llama3-3-70b-instruct-v1:0`, `meta.llama3-1-405b-instruct-v1:0`, `meta.llama3-1-70b-instruct-v1:0`, `anthropic.claude-3-7-sonnet-20250219-v1:0`
   - **OpenAI**: `gpt-4o`, `gpt-3.5-turbo`
   - **VLLM**: Custom models you've configured
