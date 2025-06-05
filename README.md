@@ -767,6 +767,15 @@ This project uses Meta Llama 3.3. As per the Llama 3.3 license requirements:
 
 For the complete Meta Llama 3.3 Community License Agreement, refer to the [THIRD_PARTY_LICENSES](THIRD_PARTY_LICENSES) file.
 
+### External Service Dependencies
+
+This project integrates with external services that users install and manage separately:
+
+- **LM Studio**: Users install LM Studio independently. Users are responsible for compliance with LM Studio's terms of service and the licenses of any models they download through LM Studio.
+- **OpenAI API**: Users provide their own API keys and are responsible for compliance with OpenAI's terms of service.
+- **AWS Services**: When deployed on AWS, users are responsible for compliance with AWS terms of service.
+
+
 ### Attribution Notices
 
 - **Built with Meta Llama 3.3** (as required by Meta's license)
