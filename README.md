@@ -13,6 +13,7 @@ OS Jenkins AI Scribe is an advanced medical documentation assistant designed to 
 - [Database Configuration](#database-configuration)
 - [Local Development Setup](#local-development-setup)
   - [Prerequisites](#prerequisites)
+  - [Backend Environment Setup](#backend-environment-setup)
   - [Local Development Options](#local-development-options)
   - [Option 1: Basic Local Setup (Recommended)](#option-1-basic-local-setup-recommended)
   - [Option 2: OpenAI Setup](#option-2-openai-setup)
@@ -245,14 +246,170 @@ For local development, you'll need Google OAuth credentials:
 > [!IMPORTANT]
 > The redirect URIs must match exactly. If you change the frontend port, update the redirect URIs accordingly.
 
-### Local Development Options
+# Local Development Setup
+
+## Prerequisites
+
+- **Python 3.11+** (managed with uv)
+- **uv** (modern Python package and project manager)
+- **Node.js 18+** and npm
+- **FFmpeg** (for audio processing)
+- **audiowaveform v1.10+** (for audio visualization)
+- **Google OAuth credentials** (for local authentication)
+
+### Installing uv (Python Package Manager)
+
+**macOS/Linux:**
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+**Windows:**
+```bash
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+**Alternative (using pip):**
+```bash
+pip install uv
+```
+
+**Verify installation:**
+```bash
+uv --version
+# Should show uv version information
+```
+
+### Installing FFmpeg
+
+**Ubuntu/Debian:**
+```bash
+sudo apt update
+sudo apt install ffmpeg
+```
+
+**macOS:**
+```bash
+# Using Homebrew
+brew install ffmpeg
+```
+
+**Windows:**
+```bash
+# Using Chocolatey
+choco install ffmpeg
+```
+
+**Verify installation:**
+```bash
+ffmpeg -version
+# Should show FFmpeg version information
+```
+
+### Installing audiowaveform
+
+**Ubuntu/Debian:**
+```bash
+sudo add-apt-repository ppa:chris-needham/ppa
+sudo apt-get update
+sudo apt-get install audiowaveform
+```
+
+**macOS:**
+```bash
+brew install audiowaveform
+```
+
+**Windows:**
+Download from [BBC audiowaveform releases](https://github.com/bbc/audiowaveform/releases) or use WSL with Ubuntu instructions.
+
+**Verify installation:**
+```bash
+audiowaveform --version
+# Should show version 1.10 or higher
+```
+
+### Setting up Google OAuth
+
+For local development, you'll need Google OAuth credentials:
+
+1. **Go to the [Google Cloud Console](https://console.cloud.google.com/)**
+
+2. **Create a new project** (or select existing one):
+   - Click "Select a project" → "New Project"
+   - Enter project name (e.g., "Jenkins Scribe Local")
+   - Click "Create"
+
+3. **Navigate to "APIs & Services" → "Credentials"**
+
+4. **Configure OAuth consent screen**:
+   - Click "OAuth consent screen"
+   - Select "External" user type (for testing)
+   - Fill in required fields:
+     - App name: "Jenkins Scribe"
+     - User support email: Your email
+     - Developer contact information: Your email
+   - Click "Save and Continue"
+   - Skip scopes (click "Save and Continue")
+   - Add test users if needed, or skip
+   - Click "Back to Dashboard"
+
+5. **Create OAuth credentials**:
+   - Click "Create Credentials" → "OAuth client ID"
+   - Choose "Web application"
+   - Name: "Jenkins Scribe Local"
+   - **Authorized JavaScript origins**:
+     - `http://localhost:4000`
+   - **Authorized redirect URIs**:
+     - `http://localhost:4000/login`
+   - Click "Create"
+
+6. **Note your credentials**:
+   - Copy the **Client ID** and **Client Secret**
+   - You'll need these for your environment files
+
+> [!IMPORTANT]
+> The redirect URIs must match exactly. If you change the frontend port, update the redirect URIs accordingly.
+
+## Backend Environment Setup
+
+Before configuring specific AI services, set up the Python backend environment:
+
+1. **Navigate to backend directory**:
+   ```bash
+   cd web-api
+   ```
+
+2. **Create Python virtual environment with uv**:
+   ```bash
+   uv venv --python 3.11
+   ```
+
+3. **Activate the virtual environment**:
+   ```bash
+   # macOS/Linux
+   source .venv/bin/activate
+   
+   # Windows
+   .venv\Scripts\activate
+   ```
+
+4. **Install dependencies**:
+   ```bash
+   uv pip install -r requirements.txt
+   ```
+
+> [!NOTE]
+> Keep this terminal open with the virtual environment activated for the remaining setup steps.
+
+## Local Development Options
 
 All local setups use **SQLite database**, **local file storage**, and **Google OAuth authentication**. Choose based on your AI service preference:
 
 > [!IMPORTANT]
 > If you're switching between different AI models or services, delete the `.data` folder in the `web-api` directory to clear any cached model data and ensure a clean start with your new configuration.
 
-#### Common Environment Variables
+### Common Environment Variables
 
 First, create the base environment file (`web-api/.env`) with these common settings:
 
@@ -279,7 +436,7 @@ USE_AURORA=false
 
 Then, add the AI service-specific variables based on your chosen option below:
 
-#### Option 1: Basic Local Setup (Recommended)
+### Option 1: Basic Local Setup (Recommended)
 
 **Best for**: First-time users, completely offline setup
 **Uses**: Parakeet MLX transcription + Ollama models
@@ -302,17 +459,35 @@ Then, add the AI service-specific variables based on your chosen option below:
    # Windows - Download from https://ollama.ai/download
    ```
 
-2. **Pull Ollama models**:
+2. **Start Ollama service**:
+   ```bash
+   # Start Ollama service (required for the application to work)
+   ollama serve
+   
+   # The service will run on http://localhost:11434
+   # Keep this terminal open or run as a background service
+   ```
+
+3. **Pull Ollama models** (in a new terminal):
    ```bash
    ollama pull llama3.1:8b
    # Optional: For better quality (requires more RAM)
    # ollama pull llama3.3:70b
    ```
 
+4. **Verify Ollama is working**:
+   ```bash
+   ollama list
+   # Should show your downloaded models
+   
+   curl http://localhost:11434/api/tags
+   # Should return JSON with available models
+   ```
+
 > [!NOTE]
 > Any models you have already downloaded with Ollama (visible in `ollama list`) will automatically appear as options in the application's custom settings, allowing you to test different note instructions with various models.
 
-3. **Add to your environment file**:
+5. **Add to your environment file**:
    ```env
    # AI Services (Ollama)
    TRANSCRIPTION_SERVICE=Parakeet MLX
@@ -321,7 +496,7 @@ Then, add the AI service-specific variables based on your chosen option below:
    LABEL_MODEL=llama3.1:8b
    ```
 
-#### Option 2: OpenAI Setup
+### Option 2: OpenAI Setup
 
 **Best for**: Users who want highest quality AI models
 **Uses**: OpenAI Whisper transcription + GPT-4o models
@@ -342,7 +517,7 @@ LABEL_MODEL=gpt-4o
 OPENAI_API_KEY=your_openai_api_key
 ```
 
-#### Option 3: Local GPU Setup (VLLM)
+### Option 3: Local GPU Setup (VLLM)
 
 **Best for**: Users with powerful GPUs, maximum performance and privacy
 **Uses**: VLLM inference + Parakeet MLX or WhisperX transcription
@@ -367,10 +542,10 @@ OPENAI_API_KEY=your_openai_api_key
    sudo apt-get install cuda-toolkit-12-4
    ```
 
-2. **Install VLLM**:
+2. **Install VLLM** (in the Python virtual environment):
    ```bash
    cd web-api
-   pip install vllm[cuda] huggingface_hub transformers torch
+   uv add vllm[cuda] huggingface_hub transformers torch
    ```
 
 3. **Get Hugging Face token**:
@@ -414,7 +589,7 @@ OPENAI_API_KEY=your_openai_api_key
      --gpu-memory-utilization 0.95
    ```
 
-#### Option 4: LM Studio Setup
+### Option 4: LM Studio Setup
 
 **Best for**: Users who want a GUI for model management and high-quality local inference
 **Uses**: Parakeet MLX transcription + LM Studio models
@@ -469,16 +644,27 @@ OPENAI_API_KEY=your_openai_api_key
 > [!IMPORTANT]
 > Make sure LM Studio server is running and a model is loaded before starting the backend. The model name in your environment file should match the loaded model in LM Studio.
 
-### Start the Backend
+## Start the Backend
 
-For all options:
-```bash
-cd web-api
-pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8000
-```
+After completing your chosen AI service setup above:
 
-### Frontend Setup
+1. **Ensure your virtual environment is activated**:
+   ```bash
+   # If not already activated from the Backend Environment Setup
+   cd web-api
+   source .venv/bin/activate  # macOS/Linux
+   # or .venv\Scripts\activate  # Windows
+   ```
+
+2. **Start the backend server**:
+   ```bash
+   uvicorn app.main:app --reload --port 8000
+   ```
+
+> [!NOTE]
+> For Ollama users: Make sure you have started the Ollama service (`ollama serve`) in a separate terminal before starting the backend server.
+
+## Frontend Setup
 
 1. **Create frontend environment file** (`ai-scribe-app/.env`):
    ```env
@@ -504,13 +690,32 @@ uvicorn app.main:app --reload --port 8000
 > [!NOTE]
 > The `GOOGLE_CLIENT_ID` should be the same in both frontend and backend environment files.
 
-### Verification
+## Verification
 
 1. Navigate to `http://localhost:4000`
 2. Click the login button
 3. Complete authentication flow
 4. Test audio recording or file upload
 5. Verify note generation works
+
+## Troubleshooting
+
+### Common Issues
+
+**Ollama Connection Issues**:
+- Ensure `ollama serve` is running in a separate terminal
+- Check that Ollama is accessible at `http://localhost:11434`
+- Verify models are downloaded with `ollama list`
+
+**Python Environment Issues**:
+- Make sure you're using Python 3.11+ with `python --version`
+- Activate the virtual environment before installing dependencies
+- If uv installation fails, try the pip alternative: `pip install uv`
+
+**Authentication Issues**:
+- Verify Google OAuth redirect URIs match exactly
+- Check that both frontend and backend have the same Google Client ID
+- Ensure the frontend is running on the port specified in OAuth settings (default: 4000)
 
 ## AWS Deployment
 
