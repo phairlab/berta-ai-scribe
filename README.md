@@ -643,12 +643,8 @@ OPENAI_API_KEY=your_openai_api_key
 
 ## Start the Backend
 
-### CRITICAL: Before Starting the Backend
-
 ### For ALL Users
-- Add Google OAuth Client ID and Secret to **BOTH** `.env` files:
-  - `web-api/.env` (backend)
-  - `ai-scribe-app/.env` (frontend)
+- Add Google OAuth Client ID and Secret to `web-api/.env` (backend) file
 
 ### For Ollama Users (Option 1)
 **Start Ollama service FIRST**:
@@ -684,12 +680,8 @@ After completing your chosen AI service setup above:
    ```bash
    uvicorn app.main:app --reload --port 8000
    ```
-
-> [!NOTE]
-> For Ollama users: Make sure you have started the Ollama service (`ollama serve`) in a separate terminal before starting the backend server.
-
-> [!NOTE]
-> For LM Studio users: Make sure you have started LM Studio server and loaded your model before starting the backend server.
+> [!IMPORTANT]
+> If you're switching between different AI models or services, delete the `.data` folder in the `web-api` directory to clear any cached model data and ensure a clean start with your new configuration.
 
 ## Frontend Setup
 
