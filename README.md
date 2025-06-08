@@ -645,6 +645,10 @@ OPENAI_API_KEY=your_openai_api_key
 
 ### For ALL Users
 - Add Google OAuth Client ID and Secret to `web-api/.env` (backend) file
+- **If switching AI services**: 
+  - Delete the `.data` folder in `web-api` directory
+  - Clear browser cache and storage for `localhost:4000` (F12 → Application tab → Clear storage)
+
 
 ### For Ollama Users (Option 1)
 **Start Ollama service FIRST**:
@@ -680,8 +684,6 @@ After completing your chosen AI service setup above:
    ```bash
    uvicorn app.main:app --reload --port 8000
    ```
-> [!IMPORTANT]
-> If you're switching between different AI models or services, delete the `.data` folder in the `web-api` directory to clear any cached model data and ensure a clean start with your new configuration.
 
 ## Frontend Setup
 
