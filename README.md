@@ -632,10 +632,7 @@ OPENAI_API_KEY=your_openai_api_key
    # AI Services (LM Studio)
    TRANSCRIPTION_SERVICE=Parakeet MLX
    GENERATIVE_AI_SERVICE=LM Studio
-   
-   # LM Studio Configuration
-   LM_STUDIO_URL=http://localhost:1234
-   
+
    # Model Selection (use the name of the loaded model in LM Studio)
    DEFAULT_NOTE_GENERATION_MODEL=llama-3.1-8b-instruct
    LABEL_MODEL=llama-3.1-8b-instruct
@@ -645,6 +642,32 @@ OPENAI_API_KEY=your_openai_api_key
 > Make sure LM Studio server is running and a model is loaded before starting the backend. The model name in your environment file should match the loaded model in LM Studio.
 
 ## Start the Backend
+
+# CRITICAL: Before Starting the Backend
+
+## For ALL Users
+- Add Google OAuth Client ID and Secret to **BOTH** `.env` files:
+  - `web-api/.env` (backend)
+  - `ai-scribe-app/.env` (frontend)
+
+## For Ollama Users (Option 1)
+**Start Ollama service FIRST**:
+```bash
+ollama serve
+# Keep this terminal open, then start backend in new terminal
+```
+
+## For LM Studio Users (Option 4)
+**Before starting backend**:
+1. Open LM Studio
+2. Load your model (from Chat tab)
+3. Start server (from Local Server tab, use default settings)
+4. Model name in `.env` must match exactly what's loaded in LM Studio
+
+## Startup Order
+1. Start AI service (Ollama/LM Studio)
+2. Start backend (`uvicorn app.main:app --reload --port 8000`)
+3. Start frontend (`npm run dev`)
 
 After completing your chosen AI service setup above:
 
@@ -657,12 +680,16 @@ After completing your chosen AI service setup above:
    ```
 
 2. **Start the backend server**:
+
    ```bash
    uvicorn app.main:app --reload --port 8000
    ```
 
 > [!NOTE]
 > For Ollama users: Make sure you have started the Ollama service (`ollama serve`) in a separate terminal before starting the backend server.
+
+> [!NOTE]
+> For LM Studio users: Make sure you have started LM Studio server and loaded your model before starting the backend server.
 
 ## Frontend Setup
 
