@@ -43,6 +43,9 @@ class Settings(BaseSettings):
     GENERATIVE_AI_SERVICE: Literal["Ollama", "OpenAI", "AWS Bedrock", "VLLM", "LM Studio"] = "Ollama"
     LOCAL_WHISPER_SERVICE_URL: str | None = None
 
+    # WhisperX Configuration
+    WHISPERX_DEVICE: str = "cpu"  # Can be "cpu" or "cuda" or "cuda:0", "cuda:1", etc.
+
     AWS_ACCESS_KEY_ID: str | None = None
     AWS_SECRET_ACCESS_KEY: str | None = None
     AWS_REGION: str = "us-west-2"
@@ -81,8 +84,8 @@ class Settings(BaseSettings):
 
     VLLM_SERVER_NAME: str = "localhost"
     VLLM_SERVER_PORT: int = 8080
-    VLLM_MODEL_NAME: str = "meta-llama/Meta-Llama-3.3-70B-Instruct"
     HUGGINGFACE_TOKEN: str | None = None
+    VLLM_MODEL_NAME: str | None = None  # Optional model name for downloading from Hugging Face
 
     # LM Studio defaults to http://localhost:1234
     LM_STUDIO_SERVER_URL: str | None = "http://localhost:1234"
@@ -111,7 +114,6 @@ is_vllm_supported: bool = (
     VLLM_AVAILABLE
     and settings.VLLM_SERVER_NAME is not None
     and settings.VLLM_SERVER_PORT is not None
-    and settings.VLLM_MODEL_NAME is not None
 )
 
 is_lm_studio_supported: bool = settings.LM_STUDIO_SERVER_URL is not None
@@ -145,7 +147,7 @@ def get_available_services() -> dict:
                     "anthropic.claude-3-5-sonnet-20241022-v2:0",
                     "anthropic.claude-3-haiku-20240307-v1:0"
                 ],
-                "VLLM": ["meta-llama/Meta-Llama-3.3-70B-Instruct"],
+                "VLLM": ["dynamic"],  # Models are loaded dynamically from VLLM server
                 "LM Studio": ["dynamic"]  # Models are loaded dynamically from LM Studio server
             }
         }
