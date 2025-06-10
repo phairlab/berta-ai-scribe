@@ -573,13 +573,14 @@ OPENAI_API_KEY=your_openai_api_key
    # Hugging Face token (required for model downloads)
    HUGGINGFACE_TOKEN=your_huggingface_token
    ```
+   
    > [!NOTE]
    > To use WhisperX instead of Parakeet MLX for transcription, change `TRANSCRIPTION_SERVICE=WhisperX` and set the `WHISPERX_DEVICE` variable above. WhisperX provides higher accuracy but requires additional dependencies.
 
    > [!IMPORTANT]
    > **All three model variables must have the same value:**
    > - `VLLM_MODEL_NAME` - Specifies which model to download from Hugging Face
-   > - `DEFAULT_NOTE_GENERATION_MODEL` - Model used for generating clinical notes  
+   > - `DEFAULT_NOTE_GENERATION_MODEL` - Model used for generating clinical notes
    > - `LABEL_MODEL` - Model used for note labeling and classification
    > 
    > These must match exactly for VLLM to work properly.
