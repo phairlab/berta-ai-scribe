@@ -545,7 +545,9 @@ OPENAI_API_KEY=your_openai_api_key
 2. **Install VLLM** (in the Python virtual environment):
    ```bash
    cd web-api
-   uv add vllm[cuda] huggingface_hub transformers torch
+   uv pip install -r requirements.txt
+   # Or install manually:
+   uv pip install vllm[cuda] torch>=2.5.0,<3.0.0 torchaudio>=2.5.0,<3.0.0
    ```
 
 3. **Get Hugging Face token**:
@@ -564,20 +566,23 @@ OPENAI_API_KEY=your_openai_api_key
    VLLM_SERVER_NAME=localhost
    VLLM_SERVER_PORT=8080
    
-   # Model Selection (choose based on GPU memory)
-   # For 24GB+ VRAM:
    VLLM_MODEL_NAME=meta-llama/Meta-Llama-3.1-70B-Instruct
    DEFAULT_NOTE_GENERATION_MODEL=meta-llama/Meta-Llama-3.1-70B-Instruct
    LABEL_MODEL=meta-llama/Meta-Llama-3.1-70B-Instruct
    
-   # For 8-16GB VRAM:
-   # VLLM_MODEL_NAME=meta-llama/Meta-Llama-3.1-8B-Instruct
-   # DEFAULT_NOTE_GENERATION_MODEL=meta-llama/Meta-Llama-3.1-8B-Instruct
-   # LABEL_MODEL=meta-llama/Meta-Llama-3.1-8B-Instruct
-   
    # Hugging Face token (required for model downloads)
    HUGGINGFACE_TOKEN=your_huggingface_token
    ```
+   > [!NOTE]
+   > To use WhisperX instead of Parakeet MLX for transcription, change `TRANSCRIPTION_SERVICE=WhisperX` and set the `WHISPERX_DEVICE` variable above. WhisperX provides higher accuracy but requires additional dependencies.
+
+   > [!IMPORTANT]
+   > **All three model variables must have the same value:**
+   > - `VLLM_MODEL_NAME` - Specifies which model to download from Hugging Face
+   > - `DEFAULT_NOTE_GENERATION_MODEL` - Model used for generating clinical notes  
+   > - `LABEL_MODEL` - Model used for note labeling and classification
+   > 
+   > These must match exactly for VLLM to work properly.
 
 5. **Start VLLM server**:
    ```bash

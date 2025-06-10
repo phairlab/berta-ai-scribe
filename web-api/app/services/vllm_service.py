@@ -24,41 +24,32 @@ logger = logging.getLogger(__name__)
 class VLLMService(GenerativeAIService):
     
     def __init__(self, api_url: Optional[str] = None):
-        self.api_url = api_url
+        self.api_url = api_url or f"http://{settings.VLLM_SERVER_NAME}:{settings.VLLM_SERVER_PORT}"
         
-        if not self.api_url and not VLLM_AVAILABLE:
-            logger.warning("VLLM package not installed. Only API server mode is available.")
+        if not self.api_url:
+            logger.warning("VLLM API URL not configured")
             self._available_models = []
             return
 
-        self.model_dir = Path(".models")
-        self.model_dir.mkdir(exist_ok=True)
-        
-        if self.api_url:
-            logger.info(f"VLLM service initialized with API URL: {self.api_url}")
+        logger.info(f"VLLM service initialized with API URL: {self.api_url}")
+        try:
             self._available_models = self._get_available_models()
-        else:
-            try:
-                self._download_model()
-                
-                self.llm = LLM(
-                    model=str(self.model_dir / settings.VLLM_MODEL_NAME),
-                    trust_remote_code=True
-                )
-                logger.info("VLLM service initialized with direct integration")
-                self._available_models = self._get_local_models()
-            except Exception as e:
-                logger.error(f"Error initializing VLLM: {str(e)}")
-                raise ExternalServiceError("VLLM", str(e))
+            logger.info(f"Successfully connected to VLLM server. Available models: {self._available_models}")
+        except Exception as e:
+            logger.error(f"Failed to connect to VLLM server: {str(e)}")
+            raise ExternalServiceError("VLLM", f"Failed to connect to VLLM server: {str(e)}")
     
     def _download_model(self) -> None:
         if not settings.HUGGINGFACE_TOKEN:
             raise ExternalServiceError(
                 "VLLM",
-                "Hugging Face token is required. Set HUGGINGFACE_TOKEN in your environment."
+                "Hugging Face token is required. Set HUGGINGFACE_TOKEN in your environment.",
             )
             
-        model_path = self.model_dir / settings.VLLM_MODEL_NAME
+        # Extract model name from path if it's a full path
+        model_name = settings.VLLM_MODEL_NAME.split("/")[-1]
+        model_path = self.model_dir / model_name
+        
         if model_path.exists():
             logger.info(f"Model already exists at {model_path}")
             return
@@ -70,49 +61,49 @@ class VLLMService(GenerativeAIService):
                 repo_id=settings.VLLM_MODEL_NAME,
                 token=settings.HUGGINGFACE_TOKEN,
                 local_dir=str(model_path),
-                local_dir_use_symlinks=False
+                local_dir_use_symlinks=False,
             )
             logger.info("Model download completed")
         except ImportError:
             raise ExternalServiceError(
                 "VLLM",
-                "huggingface_hub package is required for model downloading. Install it with: pip install huggingface_hub"
+                "huggingface_hub package is required for model downloading. Install it with: pip install huggingface_hub",
             )
         except Exception as e:
             logger.error(f"Error downloading model: {str(e)}")
             raise ExternalServiceError("VLLM", f"Failed to download model: {str(e)}")
     
     def _get_local_models(self) -> List[Dict]:
-        return [{"id": settings.VLLM_MODEL_NAME}]
+        model_name = settings.VLLM_MODEL_NAME.split("/")[-1]
+        return [{"id": model_name}]
     
     def _get_headers(self) -> Dict[str, str]:
-        headers = {
-            "Content-Type": "application/json"
-        }
-        
-        if settings.HUGGINGFACE_TOKEN:
-            headers["Authorization"] = f"Bearer {settings.HUGGINGFACE_TOKEN}"
-            
-        return headers
+        return {"Content-Type": "application/json"}
     
     def _get_available_models(self) -> List[Dict]:
-        if self.api_url:
-            try:
-                response = requests.get(
-                    f"{self.api_url}/models",
-                    headers=self._get_headers()
-                )
-                if response.status_code == 200:
-                    return response.json()['data']
-                else:
-                    logger.error(f"Error getting models: {response.status_code}")
-                    logger.error(response.text)
-                    return []
-            except Exception as e:
-                logger.error(f"Error connecting to VLLM server: {str(e)}")
-                return []
-        else:
-            return self._get_local_models()
+        try:
+            logger.info(f"Fetching available models from {self.api_url}/models")
+            response = requests.get(
+                f"{self.api_url}/models",
+                headers=self._get_headers(),
+                timeout=10
+            )
+            if response.status_code == 200:
+                models = response.json()['data']
+                logger.info(f"Available models: {json.dumps(models, indent=2)}")
+                return models
+            else:
+                error_msg = f"Error getting models: {response.status_code} - {response.text}"
+                logger.error(error_msg)
+                raise ExternalServiceError(self.service_name, error_msg)
+        except requests.exceptions.ConnectionError as e:
+            error_msg = f"Could not connect to VLLM server at {self.api_url}. Is the server running?"
+            logger.error(error_msg)
+            raise ExternalServiceError(self.service_name, error_msg)
+        except Exception as e:
+            error_msg = f"Error connecting to VLLM server: {str(e)}"
+            logger.error(error_msg)
+            raise ExternalServiceError(self.service_name, error_msg)
     
     @property
     def service_name(self) -> str:
@@ -140,8 +131,19 @@ class VLLMService(GenerativeAIService):
         try:
             with ExecutionTimer() as timer:
                 if self.api_url:
+                    available_model = next(
+                        (m for m in self._available_models if m['id'].endswith(model.split('/')[-1])),
+                        None
+                    )
+                    
+                    if not available_model:
+                        raise ExternalServiceError(
+                            self.service_name,
+                            f"Model {model} not found in available models: {[m['id'] for m in self._available_models]}"
+                        )
+                    
                     data = {
-                        "model": model,
+                        "model": available_model['id'],  
                         "messages": messages,
                         "temperature": temperature,
                         "max_tokens": 4096
@@ -150,21 +152,31 @@ class VLLMService(GenerativeAIService):
                     logger.info(f"Sending request to {self.api_url}/chat/completions")
                     logger.debug(f"Request data: {json.dumps(data, indent=2)}")
                     
-                    response = requests.post(
-                        f"{self.api_url}/chat/completions",
-                        headers=self._get_headers(),
-                        json=data
-                    )
-                    
-                    if response.status_code == 200:
-                        result = response.json()
-                        text = result['choices'][0]['message']['content']
-                        usage = result.get('usage', {})
-                        completion_tokens = usage.get('completion_tokens', 0)
-                        prompt_tokens = usage.get('prompt_tokens', 0)
-                    else:
-                        error_msg = f"VLLM API error: {response.status_code}"
-                        logger.error(f"{error_msg} - {response.text}")
+                    try:
+                        response = requests.post(
+                            f"{self.api_url}/chat/completions",
+                            headers=self._get_headers(),
+                            json=data,
+                            timeout=30
+                        )
+                        
+                        if response.status_code == 200:
+                            result = response.json()
+                            text = result['choices'][0]['message']['content']
+                            usage = result.get('usage', {})
+                            completion_tokens = usage.get('completion_tokens', 0)
+                            prompt_tokens = usage.get('prompt_tokens', 0)
+                        else:
+                            error_msg = f"VLLM API error: {response.status_code} - {response.text}"
+                            logger.error(error_msg)
+                            raise ExternalServiceError(self.service_name, error_msg)
+                    except requests.exceptions.ConnectionError as e:
+                        error_msg = f"Could not connect to VLLM server at {self.api_url}. Is the server running?"
+                        logger.error(error_msg)
+                        raise ExternalServiceError(self.service_name, error_msg)
+                    except requests.exceptions.Timeout as e:
+                        error_msg = f"Request to VLLM server timed out after 30 seconds"
+                        logger.error(error_msg)
                         raise ExternalServiceError(self.service_name, error_msg)
                 else:
                     if not VLLM_AVAILABLE:
