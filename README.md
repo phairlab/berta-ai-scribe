@@ -403,25 +403,25 @@ Then, add the AI service-specific variables based on your chosen option below:
    LABEL_MODEL=llama3.1:8b
    ```
 
-**For Intel/Linux/Windows with NVIDIA GPU:**
-```env
-# AI Services (Ollama + WhisperX GPU)
-TRANSCRIPTION_SERVICE=WhisperX
-WHISPERX_DEVICE=cuda  # Fast GPU transcription
-GENERATIVE_AI_SERVICE=Ollama
-DEFAULT_NOTE_GENERATION_MODEL=llama3.1:8b
-LABEL_MODEL=llama3.1:8b
-```
+   **For Intel/Linux/Windows with NVIDIA GPU:**
+   ```env
+   # AI Services (Ollama + WhisperX GPU)
+   TRANSCRIPTION_SERVICE=WhisperX
+   WHISPERX_DEVICE=cuda  # Fast GPU transcription
+   GENERATIVE_AI_SERVICE=Ollama
+   DEFAULT_NOTE_GENERATION_MODEL=llama3.1:8b
+   LABEL_MODEL=llama3.1:8b
+   ```
 
-**For Intel/Linux/Windows CPU-only:**
-```env
-# AI Services (Ollama + WhisperX CPU)
-TRANSCRIPTION_SERVICE=WhisperX
-WHISPERX_DEVICE=cpu  # Warning: Slow transcription (consider Option 2 instead)
-GENERATIVE_AI_SERVICE=Ollama
-DEFAULT_NOTE_GENERATION_MODEL=llama3.1:8b
-LABEL_MODEL=llama3.1:8b
-```
+   **For Intel/Linux/Windows CPU-only:**
+   ```env
+   # AI Services (Ollama + WhisperX CPU)
+   TRANSCRIPTION_SERVICE=WhisperX
+   WHISPERX_DEVICE=cpu  # Warning: Slow transcription (consider Option 2 instead)
+   GENERATIVE_AI_SERVICE=Ollama
+   DEFAULT_NOTE_GENERATION_MODEL=llama3.1:8b
+   LABEL_MODEL=llama3.1:8b
+   ```
 
 > [!WARNING]
 > **Performance Notes:**
