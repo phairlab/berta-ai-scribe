@@ -15,8 +15,8 @@ OS Jenkins AI Scribe is an advanced medical documentation assistant designed to 
   - [Prerequisites](#prerequisites)
   - [Backend Environment Setup](#backend-environment-setup)
   - [Local Development Options](#local-development-options)
-  - [Option 1: Basic Local Setup](#option-1-basic-local-setup-recommended)
-  - [Option 2: OpenAI Setup](#option-2-openai-setup)
+  - [Option 1: OpenAI Setup (Easiest)](#option-1-openai-setup-easiest)
+  - [Option 2: Basic Local Setup (Offline)](#option-2-basic-local-setup-offline)
   - [Option 3: Local GPU Setup (VLLM)](#option-3-local-gpu-setup-vllm)
   - [Option 4: LM Studio Setup](#option-4-lm-studio-setup)
   - [Start the Backend](#start-the-backend)
@@ -340,7 +340,42 @@ USE_AURORA=false
 
 Then, add the AI service-specific variables based on your chosen option below:
 
-### Option 1: Basic Local Setup
+### Option 1: OpenAI Setup (Easiest)
+
+**Best for**: Quick start, highest quality AI models, minimal setup
+**Uses**: OpenAI Whisper transcription + GPT-4o models
+
+**Requirements**:
+- OpenAI API key (get one at [platform.openai.com](https://platform.openai.com))
+- Google OAuth credentials
+- No local AI software needed!
+
+**Setup Steps**:
+
+1. **Get OpenAI API Key**:
+   - Go to [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
+   - Create new secret key
+   - Copy and save it securely
+
+2. **Append these lines to your `web-api/.env` file** (below the common settings):
+   ```env
+   # AI Services (OpenAI)
+   TRANSCRIPTION_SERVICE=OpenAI Whisper
+   GENERATIVE_AI_SERVICE=OpenAI
+   DEFAULT_NOTE_GENERATION_MODEL=gpt-4o
+   LABEL_MODEL=gpt-4o
+
+   # OpenAI API Key
+   OPENAI_API_KEY=your_openai_api_key_here
+   ```
+
+3. **That's it!** No additional software to install or configure.
+
+> [!NOTE]
+> **Costs**: OpenAI charges approximately $0.36 per hour of audio transcribed. GPT-4o usage is additional but typically minimal for note generation.
+
+
+### Option 2: Basic Local Setup (Offline)
 
 **Best for**: First-time users, completely offline setup
 **Uses**: Parakeet MLX transcription + Ollama models
@@ -394,7 +429,8 @@ Then, add the AI service-specific variables based on your chosen option below:
 > [!NOTE]
 > Any models you have already downloaded with Ollama (visible in `ollama list`) will automatically appear as options in the application's custom settings, allowing you to test different note instructions with various models.
 
-5. **Append these lines to your `web-api/.env` file** (below the common settings) For Apple Silicon Mac:
+5. **Append these lines to your `web-api/.env` file** (below the common settings):
+  **For Apple Silicon Mac:**
    ```env
    # AI Services (Ollama)
    TRANSCRIPTION_SERVICE=Parakeet MLX
@@ -417,7 +453,7 @@ Then, add the AI service-specific variables based on your chosen option below:
    ```env
    # AI Services (Ollama + WhisperX CPU)
    TRANSCRIPTION_SERVICE=WhisperX
-   WHISPERX_DEVICE=cpu  # Warning: Slow transcription (consider Option 2 instead)
+   WHISPERX_DEVICE=cpu  # Warning: Slow transcription (consider Option 1 instead)
    GENERATIVE_AI_SERVICE=Ollama
    DEFAULT_NOTE_GENERATION_MODEL=llama3.1:8b
    LABEL_MODEL=llama3.1:8b
@@ -427,32 +463,10 @@ Then, add the AI service-specific variables based on your chosen option below:
 > **Performance Notes:**
 > - **Parakeet MLX** (Apple Silicon): Fast, efficient transcription
 > - **WhisperX GPU** (NVIDIA): Fast transcription, comparable to Parakeet
-> - **WhisperX CPU**: Very slow (5-20x slower than real-time). Consider using Option 2 (OpenAI) for better performance if you don't have Apple Silicon or NVIDIA GPU.
+> - **WhisperX CPU**: Very slow (5-20x slower than real-time). Consider using Option 1 (OpenAI) for better performance if you don't have Apple Silicon or NVIDIA GPU.
 
 > [!NOTE]
 > Any models you have already downloaded with Ollama (visible in `ollama list`) will automatically appear as options in the application's custom settings, allowing you to test different note instructions with various models.
-
-
-### Option 2: OpenAI Setup
-
-**Best for**: Users who want highest quality AI models
-**Uses**: OpenAI Whisper transcription + GPT-4o models
-
-**Requirements**:
-- OpenAI API key
-- Google OAuth credentials
-
-**Append these lines to your `web-api/.env` file** (below the common settings):
-```env
-# AI Services (OpenAI)
-TRANSCRIPTION_SERVICE=OpenAI Whisper
-GENERATIVE_AI_SERVICE=OpenAI
-DEFAULT_NOTE_GENERATION_MODEL=gpt-4o
-LABEL_MODEL=gpt-4o
-
-# OpenAI API Key
-OPENAI_API_KEY=your_openai_api_key
-```
 
 ### Option 3: Local GPU Setup (VLLM)
 
@@ -595,7 +609,7 @@ OPENAI_API_KEY=your_openai_api_key
   - Clear browser cache and storage for `localhost:4000` (F12 → Application tab → Clear storage)
 
 
-### For Ollama Users (Option 1)
+### For Ollama Users (Option 2)
 **Start Ollama service FIRST**:
 ```bash
 ollama serve
