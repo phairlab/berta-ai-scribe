@@ -425,6 +425,8 @@ Then, add the AI service-specific variables based on your chosen option below:
    curl http://localhost:11434/api/tags
    # Should return JSON with available models
    ```
+> [!IMPORTANT]
+> **Apple Silicon users**: Make sure you uncommented the `mlx` and `parakeet-mlx` lines in `requirements.txt` before installing dependencies (as mentioned in Backend Environment Setup step 4).
 
 > [!NOTE]
 > Any models you have already downloaded with Ollama (visible in `ollama list`) will automatically appear as options in the application's custom settings, allowing you to test different note instructions with various models.
@@ -493,13 +495,17 @@ Then, add the AI service-specific variables based on your chosen option below:
    sudo apt-get install cuda-toolkit-12-4
    ```
 
-2. **Install VLLM** (in the Python virtual environment):
+2. **Modify requirements.txt and install VLLM** (in the Python virtual environment):
    ```bash
    cd web-api
+   # First, uncomment these lines in requirements.txt:
+   # vllm>=0.3.0
+   # torch>=2.5.0,<3.0.0
+   # torchaudio>=2.5.0,<3.0.0
+   # nvidia-cudnn-cu12>=9.0.0  # Optional but recommended
+   
+   # Then install:
    uv pip install -r requirements.txt
-   # Or install manually:
-   uv pip install vllm[cuda] torch>=2.5.0,<3.0.0 torchaudio>=2.5.0,<3.0.0
-   ```
 
 3. **Get Hugging Face token**:
    - Go to [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)
