@@ -82,9 +82,9 @@ class VLLMService(GenerativeAIService):
     
     def _get_available_models(self) -> List[Dict]:
         try:
-            logger.info(f"Fetching available models from {self.api_url}/models")
+            logger.info(f"Fetching available models from {self.api_url}/v1/models")
             response = requests.get(
-                f"{self.api_url}/models",
+                f"{self.api_url}/v1/models",
                 headers=self._get_headers(),
                 timeout=10
             )
@@ -146,18 +146,18 @@ class VLLMService(GenerativeAIService):
                         "model": available_model['id'],  
                         "messages": messages,
                         "temperature": temperature,
-                        "max_tokens": 4096
+                        "max_tokens": 1024
                     }
                     
-                    logger.info(f"Sending request to {self.api_url}/chat/completions")
+                    logger.info(f"Sending request to {self.api_url}/v1/chat/completions")
                     logger.debug(f"Request data: {json.dumps(data, indent=2)}")
                     
                     try:
                         response = requests.post(
-                            f"{self.api_url}/chat/completions",
+                            f"{self.api_url}/v1/chat/completions",
                             headers=self._get_headers(),
                             json=data,
-                            timeout=30
+                            timeout=120
                         )
                         
                         if response.status_code == 200:
@@ -175,7 +175,7 @@ class VLLMService(GenerativeAIService):
                         logger.error(error_msg)
                         raise ExternalServiceError(self.service_name, error_msg)
                     except requests.exceptions.Timeout as e:
-                        error_msg = f"Request to VLLM server timed out after 30 seconds"
+                        error_msg = f"Request to VLLM server timed out after 120 seconds"
                         logger.error(error_msg)
                         raise ExternalServiceError(self.service_name, error_msg)
                 else:
