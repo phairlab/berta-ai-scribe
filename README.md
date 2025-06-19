@@ -666,15 +666,26 @@ After completing your chosen AI service setup above:
    GOOGLE_REDIRECT_URI=http://localhost:4000/login
    ```
 
-2. **Install dependencies and start**:
+2. **Navigate to frontend directory**:
    ```bash
    cd ai-scribe-app
+   ```
+
+3. **Install dependencies**:
+   ```bash
    npm install
+   ```
+
+4. **Start the frontend development server**:
+   ```bash
    npm run dev
    ```
 
+   The frontend will be available at `http://localhost:4000`
+
 > [!NOTE]
 > The `GOOGLE_CLIENT_ID` should be the same in both frontend and backend environment files.
+
 
 ## Verification
 
