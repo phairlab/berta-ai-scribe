@@ -386,7 +386,7 @@ Then, add the AI service-specific variables based on your chosen option below:
 > [!NOTE]
 > Any models you have already downloaded with Ollama (visible in `ollama list`) will automatically appear as options in the application's custom settings, allowing you to test different note instructions with various models.
 
-5. **Add to your backend .env file**:
+5. **Append these lines to your `web-api/.env` file** (below the common settings):
    ```env
    # AI Services (Ollama)
    TRANSCRIPTION_SERVICE=Parakeet MLX
@@ -404,7 +404,7 @@ Then, add the AI service-specific variables based on your chosen option below:
 - OpenAI API key
 - Google OAuth credentials
 
-**Add to your environment file**:
+**Append these lines to your `web-api/.env` file** (below the common settings):
 ```env
 # AI Services (OpenAI)
 TRANSCRIPTION_SERVICE=OpenAI Whisper
@@ -454,7 +454,7 @@ OPENAI_API_KEY=your_openai_api_key
    - Create a new token with "Read" permissions
    - Accept the Llama model license at [huggingface.co/meta-llama](https://huggingface.co/meta-llama)
 
-4. **Add to your environment file**:
+4. **Append these lines to your `web-api/.env` file** (below the common settings):
    ```env
    # AI Services (VLLM)
    TRANSCRIPTION_SERVICE=Parakeet MLX
@@ -534,7 +534,7 @@ OPENAI_API_KEY=your_openai_api_key
 > [!NOTE]
 > Unlike Ollama which shows all downloaded models in custom settings, LM Studio only shows the currently loaded model as an option for testing different note instructions. You must load the desired model in LM Studio's interface before it becomes available in the application.
 
-5. **Add to your environment file**:
+5. **Append these lines to your `web-api/.env` file** (below the common settings):
    ```env
    # AI Services (LM Studio)
    TRANSCRIPTION_SERVICE=Parakeet MLX
