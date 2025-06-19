@@ -473,7 +473,7 @@ Then, add the AI service-specific variables based on your chosen option below:
 ### Option 3: Local GPU Setup (VLLM)
 
 **Best for**: Users with powerful GPUs, maximum performance and privacy
-**Uses**: VLLM inference + Parakeet MLX or WhisperX transcription
+**Uses**: VLLM inference + WhisperX transcription
 
 **Requirements**:
 - NVIDIA GPU with 8GB+ VRAM
@@ -515,8 +515,7 @@ Then, add the AI service-specific variables based on your chosen option below:
 4. **Append these lines to your `web-api/.env` file** (below the common settings):
    ```env
    # AI Services (VLLM)
-   TRANSCRIPTION_SERVICE=Parakeet MLX
-   # Alternative: TRANSCRIPTION_SERVICE=WhisperX
+   TRANSCRIPTION_SERVICE=WhisperX
    GENERATIVE_AI_SERVICE=VLLM
    
    # VLLM Configuration
@@ -531,11 +530,8 @@ Then, add the AI service-specific variables based on your chosen option below:
    HUGGINGFACE_TOKEN=your_huggingface_token
 
    # WhisperX device (if using WhisperX): cuda, cpu, or cuda:0
-   # WHISPERX_DEVICE=cuda
+   WHISPERX_DEVICE=cuda
    ```
-   
-> [!NOTE]
-> To use WhisperX instead of Parakeet MLX for transcription, change `TRANSCRIPTION_SERVICE=WhisperX` and set the `WHISPERX_DEVICE` variable above. WhisperX provides higher accuracy but requires additional dependencies.
 
 > [!IMPORTANT]
 > **All three model variables must have the same value:**
@@ -563,6 +559,11 @@ Then, add the AI service-specific variables based on your chosen option below:
 - LM Studio installed
 - Google OAuth credentials
 - No external API keys needed
+
+> [!IMPORTANT]
+> **Apple Silicon users**: Make sure you uncommented the `mlx` and `parakeet-mlx` lines in `requirements.txt` before installing dependencies.
+> **Non-Apple Silicon users**: Change `TRANSCRIPTION_SERVICE` to `WhisperX` or `OpenAI Whisper` in step 5, as Parakeet MLX only works on Apple Silicon.
+
 
 **Setup Steps**:
 
