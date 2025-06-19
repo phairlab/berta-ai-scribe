@@ -36,27 +36,32 @@ class WhisperXConfig(BaseModel):
     compute_type: str = "float32"
     model_version: str = "large-v3"
 
-    def validate_cuda(self) -> bool:
-        """Validate CUDA availability and compatibility."""
+    def validate_device(self) -> bool:
+        """Validate device availability and compatibility."""
         if not WHISPERX_AVAILABLE:
             return True
 
-        if not torch.cuda.is_available():
-            raise RuntimeError("CUDA is not available. Please check your NVIDIA drivers.")
+        if self.device == "cpu":
+            logger.info("Using CPU for WhisperX transcription")
+            logger.warning("CPU transcription will be significantly slower than GPU. Consider using CUDA if available.")
+            return True
 
-        try:
-            if self.device == "cuda" and self.device_index >= torch.cuda.device_count():
-                raise RuntimeError(f"CUDA device {self.device_index} not available")
+        if self.device == "cuda":
+            if not torch.cuda.is_available():
+                raise RuntimeError("CUDA is not available. Please check your NVIDIA drivers or use CPU instead.")
 
-            if self.device == "cuda":
+            try:
+                if self.device_index >= torch.cuda.device_count():
+                    raise RuntimeError(f"CUDA device {self.device_index} not available")
+
                 torch.cuda.set_device(self.device_index)
                 test_tensor = torch.zeros(1, device=f"cuda:{self.device_index}")
                 del test_tensor
                 logger.info(f"Successfully validated CUDA device {self.device_index}")
                 return True
 
-        except Exception as e:
-            raise RuntimeError(f"CUDA validation failed: {str(e)}")
+            except Exception as e:
+                raise RuntimeError(f"CUDA validation failed: {str(e)}")
 
         return True
 
@@ -68,13 +73,13 @@ class WhisperXTranscriptionService(TranscriptionService):
 
         self.config = WhisperXConfig(
             device=settings.WHISPERX_DEVICE.split(":")[0] if ":" in settings.WHISPERX_DEVICE else settings.WHISPERX_DEVICE,
-            device_index=int(settings.WHISPERX_DEVICE.split(":")[1]) if ":" in settings.WHISPERX_DEVICE else 0,
-            batch_size=16,
+            device_index=int(settings.WHISPERX_DEVICE.split(":")[1]) if ":" in settings.WHISPERX_DEVICE and settings.WHISPERX_DEVICE.split(":")[0] == "cuda" else 0,
+            batch_size=1 if settings.WHISPERX_DEVICE.split(":")[0] == "cpu" else 16,
             compute_type="float32",
             model_version="large-v3"
         )
         
-        self.config.validate_cuda()
+        self.config.validate_device()
         
         self.model = None
         self._load_model()
@@ -92,17 +97,26 @@ class WhisperXTranscriptionService(TranscriptionService):
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore")
                     
-                logger.info(f"Loading WhisperX model on CUDA device {self.config.device_index}")
-                self.model = whisperx.load_model(
-                    self.config.model_version,
-                    self.config.device,
-                    device_index=self.config.device_index,
-                    compute_type=self.config.compute_type
-                )
+                if self.config.device == "cpu":
+                    logger.info("Loading WhisperX model on CPU")
+                    self.model = whisperx.load_model(
+                        self.config.model_version,
+                        "cpu",
+                        compute_type=self.config.compute_type
+                    )
+                else:
+                    logger.info(f"Loading WhisperX model on CUDA device {self.config.device_index}")
+                    self.model = whisperx.load_model(
+                        self.config.model_version,
+                        self.config.device,
+                        device_index=self.config.device_index,
+                        compute_type=self.config.compute_type
+                    )
             except Exception as e:
+                device_type = "CPU" if self.config.device == "cpu" else "GPU"
                 raise ExternalServiceError(
                     self.service_name,
-                    f"Failed to load WhisperX model on GPU: {str(e)}. Please ensure cuDNN is properly installed."
+                    f"Failed to load WhisperX model on {device_type}: {str(e)}."
                 )
 
     async def transcribe(
