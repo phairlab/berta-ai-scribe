@@ -394,7 +394,7 @@ Then, add the AI service-specific variables based on your chosen option below:
 > [!NOTE]
 > Any models you have already downloaded with Ollama (visible in `ollama list`) will automatically appear as options in the application's custom settings, allowing you to test different note instructions with various models.
 
-5. **Append these lines to your `web-api/.env` file** (below the common settings):
+5. **Append these lines to your `web-api/.env` file** (below the common settings) For Apple Silicon Mac:
    ```env
    # AI Services (Ollama)
    TRANSCRIPTION_SERVICE=Parakeet MLX
@@ -402,6 +402,36 @@ Then, add the AI service-specific variables based on your chosen option below:
    DEFAULT_NOTE_GENERATION_MODEL=llama3.1:8b
    LABEL_MODEL=llama3.1:8b
    ```
+
+**For Intel/Linux/Windows with NVIDIA GPU:**
+```env
+# AI Services (Ollama + WhisperX GPU)
+TRANSCRIPTION_SERVICE=WhisperX
+WHISPERX_DEVICE=cuda  # Fast GPU transcription
+GENERATIVE_AI_SERVICE=Ollama
+DEFAULT_NOTE_GENERATION_MODEL=llama3.1:8b
+LABEL_MODEL=llama3.1:8b
+```
+
+**For Intel/Linux/Windows CPU-only:**
+```env
+# AI Services (Ollama + WhisperX CPU)
+TRANSCRIPTION_SERVICE=WhisperX
+WHISPERX_DEVICE=cpu  # Warning: Slow transcription (consider Option 2 instead)
+GENERATIVE_AI_SERVICE=Ollama
+DEFAULT_NOTE_GENERATION_MODEL=llama3.1:8b
+LABEL_MODEL=llama3.1:8b
+```
+
+> [!WARNING]
+> **Performance Notes:**
+> - **Parakeet MLX** (Apple Silicon): Fast, efficient transcription
+> - **WhisperX GPU** (NVIDIA): Fast transcription, comparable to Parakeet
+> - **WhisperX CPU**: Very slow (5-20x slower than real-time). Consider using Option 2 (OpenAI) for better performance if you don't have Apple Silicon or NVIDIA GPU.
+
+> [!NOTE]
+> Any models you have already downloaded with Ollama (visible in `ollama list`) will automatically appear as options in the application's custom settings, allowing you to test different note instructions with various models.
+
 
 ### Option 2: OpenAI Setup
 
