@@ -28,11 +28,15 @@ httpx>=0.27.0
 matplotlib>=3.5.0
 psutil>=5.9.0
 
+
+# Uncomment these only on Apple Silicon Macs (M1/M2/M3)
+# mlx>=0.0.7  # For Apple Silicon development
+# parakeet-mlx>=0.2.7  # For Apple Silicon development
+
 # Optional dependencies for local development
 # Uncomment these only for local development with GPU support
 # vllm>=0.3.0  # For local VLLM development
 # torch>=2.5.0,<3.0.0  # For local GPU support
 # torchaudio>=2.5.0,<3.0.0  # For local GPU support
 # nvidia-cudnn-cu12>=9.0.0  # For local GPU support
-# mlx>=0.0.7  # For Apple Silicon development
-# parakeet-mlx>=0.2.7  # For Apple Silicon development
+
