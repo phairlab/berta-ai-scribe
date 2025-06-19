@@ -15,7 +15,7 @@ OS Jenkins AI Scribe is an advanced medical documentation assistant designed to 
   - [Prerequisites](#prerequisites)
   - [Backend Environment Setup](#backend-environment-setup)
   - [Local Development Options](#local-development-options)
-  - [Option 1: Basic Local Setup (Recommended)](#option-1-basic-local-setup-recommended)
+  - [Option 1: Basic Local Setup](#option-1-basic-local-setup-recommended)
   - [Option 2: OpenAI Setup](#option-2-openai-setup)
   - [Option 3: Local GPU Setup (VLLM)](#option-3-local-gpu-setup-vllm)
   - [Option 4: LM Studio Setup](#option-4-lm-studio-setup)
@@ -295,6 +295,11 @@ Before configuring specific AI services, set up the Python backend environment:
 
 4. **Install dependencies**:
    ```bash
+   # BEFORE installing, check if you need to uncomment any dependencies:
+   # - VLLM users: Uncomment vllm, torch, torchaudio lines
+   # - Apple Silicon users: Uncomment mlx, parakeet-mlx lines
+   # - Everyone else: No changes needed
+
    uv pip install -r requirements.txt
    ```
 
@@ -335,10 +340,13 @@ USE_AURORA=false
 
 Then, add the AI service-specific variables based on your chosen option below:
 
-### Option 1: Basic Local Setup (Recommended)
+### Option 1: Basic Local Setup
 
 **Best for**: First-time users, completely offline setup
 **Uses**: Parakeet MLX transcription + Ollama models
+
+> [!WARNING]
+> **Parakeet MLX requires Apple Silicon (M1/M2/M3 Macs)**. If you're on Intel Mac, Linux, or Windows, you must change the transcription service in step 5 below.
 
 **Requirements**:
 - No external API keys needed
