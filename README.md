@@ -386,7 +386,7 @@ Then, add the AI service-specific variables based on your chosen option below:
 > [!NOTE]
 > Any models you have already downloaded with Ollama (visible in `ollama list`) will automatically appear as options in the application's custom settings, allowing you to test different note instructions with various models.
 
-5. **Add to your environment file**:
+5. **Add to your backend .env file**:
    ```env
    # AI Services (Ollama)
    TRANSCRIPTION_SERVICE=Parakeet MLX
