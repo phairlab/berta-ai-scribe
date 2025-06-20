@@ -132,7 +132,7 @@ class VLLMService(GenerativeAIService):
             with ExecutionTimer() as timer:
                 if self.api_url:
                     available_model = next(
-                        (m for m in self._available_models if m['id'].endswith(model.split('/')[-1])),
+                        (m for m in self._available_models if m['id'] == model),
                         None
                     )
                     
