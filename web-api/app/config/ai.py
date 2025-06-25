@@ -13,7 +13,6 @@ from app.services.whisperx import WhisperXTranscriptionService
 from app.services.amazon_transcribe import AmazonTranscribeService
 from app.services.aws_bedrock import BedrockGenerativeAIService
 from app.services.ollama import OllamaGenerativeAIService
-from app.services.parakeet_mlx import ParakeetMLXTranscriptionService
 from app.services.vllm_service import VLLMService
 from app.services.lm_studio import LMStudioGenerativeAIService
 import os
@@ -40,6 +39,7 @@ match settings.TRANSCRIPTION_SERVICE:
             aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
         )
     case "Parakeet MLX":
+        from app.services.parakeet_mlx import ParakeetMLXTranscriptionService
         transcription_service = ParakeetMLXTranscriptionService()
     case _:
         raise ValueError(
