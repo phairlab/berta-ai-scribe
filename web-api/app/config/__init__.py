@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     DEFAULT_AUDIO_BITRATE: str = "96k"
     LOGGING_LEVEL: str = "info"
     COOKIE_SECURE: bool = True
+    COOKIE_DOMAIN: str | None = None  # Optional domain for cookies, set via env var
 
     DATA_FOLDER: str = ".data"
     RECORDINGS_FOLDER: str = f"{DATA_FOLDER}/recordings"

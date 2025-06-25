@@ -90,7 +90,8 @@ async def authenticate_user(
         samesite="lax",
         secure=settings.COOKIE_SECURE,  # Use settings value
         max_age=3600,  # 1 hour
-        path="/"
+        path="/",
+        domain=settings.COOKIE_DOMAIN if settings.COOKIE_DOMAIN else None
     )
 
     return sch.Token(
@@ -129,7 +130,8 @@ async def check_session(
             samesite="lax",
             secure=False,  
             max_age=3600,  
-            path="/"
+            path="/",
+            domain=settings.COOKIE_DOMAIN if settings.COOKIE_DOMAIN else None
         )
         return sch.Token(accessToken=api_token, tokenType="Development")
 
@@ -151,7 +153,8 @@ async def check_session(
             samesite="lax",
             secure=settings.COOKIE_SECURE,  
             max_age=3600,  
-            path="/"
+            path="/",
+            domain=settings.COOKIE_DOMAIN if settings.COOKIE_DOMAIN else None
         )
         return sch.Token(
             accessToken=api_token,
@@ -175,7 +178,7 @@ async def logout_user(response: Response, session: useUserSession):
         secure=settings.COOKIE_SECURE,
         httponly=True,
         samesite="lax",
-        domain=".bertascribe.com" if not settings.ENVIRONMENT == "development" else None
+        domain=settings.COOKIE_DOMAIN if settings.COOKIE_DOMAIN else None
     )
     
     return {"message": "Logged out successfully"}

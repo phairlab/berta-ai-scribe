@@ -19,14 +19,12 @@ class S3StorageProvider(StorageProvider):
             return
 
         print(f"Initializing S3 client with region: {settings.AWS_REGION}")
-        print(f"Using AWS Access Key ID: {settings.AWS_ACCESS_KEY_ID}")
         print(f"Using S3 bucket: {settings.S3_BUCKET_NAME}")
         
+        # Let boto3 use IAM role credentials automatically
         self.s3_client = boto3.client(
             "s3",
-            region_name=settings.AWS_REGION,
-            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+            region_name=settings.AWS_REGION
         )
         self.bucket_name = settings.S3_BUCKET_NAME
 

@@ -576,7 +576,8 @@ Resources:
               Value: !Sub https://${DomainName}/login
             - Name: TRANSCRIPTION_SERVICE
               Value: "AWS Transcribe"
-
+            - Name: COOKIE_DOMAIN
+              Value: !Sub ".${DomainName}"  # Used for backend cookie domain configuration
 
   FrontendService:
     Type: AWS::ECS::Service

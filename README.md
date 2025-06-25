@@ -860,7 +860,7 @@ Use the one-click deployment link:
 **One-click Deployment**
 | Service | Button |
 |---------|--------|
-| AWS     | [![AWS CloudFormation Launch Stack SVG Button](https://cdn.rawgit.com/buildkite/cloudformation-launch-stack-button-svg/master/launch-stack.svg)](https://us-west-2.console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/quickcreate?stackName=os-jenkins-ai-scribe&templateURL=https://cf-templates-14rwubwevbsfc-us-west-2.s3.us-west-2.amazonaws.com/2025-06-01T072716.376Zklu-template.yaml)
+| AWS     | [![AWS CloudFormation Launch Stack SVG Button](https://cdn.rawgit.com/buildkite/cloudformation-launch-stack-button-svg/master/launch-stack.svg)](https://us-west-2.console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/quickcreate?stackName=os-jenkins-ai-scribe&templateURL=https://cf-templates-14rwubwevbsfc-us-west-2.s3.us-west-2.amazonaws.com/2025-06-25T005018.211Zo9q-template.yaml)
 
 **Custom Deployment**: If you need to modify the CloudFormation template (e.g., change instance sizes, add custom configurations), you can use the `template.yaml` file included in this repository. Download the template, make your modifications, and deploy it manually through the AWS CloudFormation console or AWS CLI instead of using the one-click deployment above.
 
