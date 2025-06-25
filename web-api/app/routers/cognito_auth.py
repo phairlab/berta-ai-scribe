@@ -218,7 +218,7 @@ async def authenticate_cognito_user(
             secure=settings.COOKIE_SECURE,  
             max_age=3600,  
             path="/",
-            domain=".bertascribe.com"
+            domain=settings.COOKIE_DOMAIN if settings.COOKIE_DOMAIN else None
         )
         
         if cognito_tokens:
@@ -231,7 +231,7 @@ async def authenticate_cognito_user(
                     secure=settings.COOKIE_SECURE,  
                     max_age=3600,  
                     path="/",
-                    domain=".bertascribe.com"
+                    domain=settings.COOKIE_DOMAIN if settings.COOKIE_DOMAIN else None
                 )
             if 'refresh_token' in cognito_tokens:
                 response.set_cookie(
@@ -242,7 +242,7 @@ async def authenticate_cognito_user(
                     secure=settings.COOKIE_SECURE,  
                     max_age=30 * 24 * 3600,  
                     path="/",
-                    domain=".bertascribe.com"
+                    domain=settings.COOKIE_DOMAIN if settings.COOKIE_DOMAIN else None
                 )
             if 'id_token' in cognito_tokens:
                 response.set_cookie(
@@ -253,7 +253,7 @@ async def authenticate_cognito_user(
                     secure=settings.COOKIE_SECURE,  
                     max_age=3600,   
                     path="/",
-                    domain=".bertascribe.com"
+                    domain=settings.COOKIE_DOMAIN if settings.COOKIE_DOMAIN else None
                 )
         
         log.info(f"Authentication successful for user: {username}")
@@ -294,7 +294,7 @@ async def check_session(
             secure=settings.COOKIE_SECURE,  
             max_age=3600,  
             path="/",
-            domain=".bertascribe.com"
+            domain=settings.COOKIE_DOMAIN if settings.COOKIE_DOMAIN else None
         )
         
         return sch.Token(accessToken=api_token, tokenType="Cognito")
@@ -311,6 +311,6 @@ async def logout_user(response: Response):
         secure=settings.COOKIE_SECURE,
         httponly=True,
         samesite="lax",
-        domain=".bertascribe.com"
+        domain=settings.COOKIE_DOMAIN if settings.COOKIE_DOMAIN else None
     )
     return {"message": "Logged out"} 

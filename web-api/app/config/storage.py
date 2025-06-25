@@ -5,8 +5,6 @@ from app.services.s3_storage import S3StorageProvider
 
 USE_S3_STORAGE = (
     settings.ENVIRONMENT != "development"
-    and settings.AWS_ACCESS_KEY_ID is not None
-    and settings.AWS_SECRET_ACCESS_KEY is not None
     and settings.S3_BUCKET_NAME is not None
     and settings.AWS_REGION is not None
 )
