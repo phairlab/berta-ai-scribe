@@ -75,7 +75,7 @@ The project consists of two main components:
 
 The system follows a modern web application architecture with several layers:
 
-![Jenkins Architecture 002](https://github.com/user-attachments/assets/e4c96a82-1d2b-41e7-81ca-051c8de7a803)
+![Jenkins_Arch](https://github.com/user-attachments/assets/ecb3cf72-24e9-478a-99ec-75e8bb82f426)
 
 - **Web Browser**: The client interface accessed by users
 - **Next.js Frontend**: Server-side rendered React application
