@@ -79,7 +79,6 @@ The system follows a modern web application architecture with several layers:
 
 - **Web Browser**: The client interface accessed by users
 - **Next.js Frontend**: Server-side rendered React application
-- **Load Balancer**: Distributes traffic across backend instances
 - **Python FastAPI Backend**: Handles API requests and business logic
 - **Virtualization Layer**: Contains:
   - **vLLM Inference Engine**: For AI model inference
