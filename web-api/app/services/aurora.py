@@ -11,7 +11,6 @@ from datetime import datetime, timezone
 from app.config import settings
 from app.services.adapters import DatabaseProvider
 
-# Set up logging
 logger = logging.getLogger(__name__)
 
 class AuroraPostgresProvider(DatabaseProvider):
@@ -26,7 +25,9 @@ class AuroraPostgresProvider(DatabaseProvider):
             "port": settings.DB_PORT,
             "dbname": settings.DB_NAME or "postgres",
             "user": settings.DB_USER,
-            "password": settings.DB_PASSWORD
+            "password": settings.DB_PASSWORD,
+            "connect_timeout": 10,
+            "options": "-c statement_timeout=300000"  # 5 minute query timeout
         }
         
         # Log the connection attempt (hide password)
@@ -38,21 +39,27 @@ class AuroraPostgresProvider(DatabaseProvider):
             else:
                 safe_params['password'] = '******'
         
-        logger.info(f"Creating database connection to Aurora PostgreSQL:")
+        logger.info(f"Creating database connection to Aurora PostgreSQL with connection pooling:")
         logger.info(f"  Host: {safe_params.get('host')}")
         logger.info(f"  Port: {safe_params.get('port')}")
         logger.info(f"  Database: {safe_params.get('dbname')}")
         logger.info(f"  User: {safe_params.get('user')}")
+        logger.info(f"  Pool size: 20 connections (+ 10 overflow)")
         
         try:
             database_engine = create_sqlalchemy_engine(
                 f"postgresql://",
                 connect_args=connection_params,
-                pool_pre_ping=True,
-                pool_size=10, 
-                max_overflow=20,
-                pool_timeout=30,
-                pool_recycle=1800,
+                
+                # Connection pool configuration optimized for production
+                pool_size=20,           # Base number of connections to maintain
+                max_overflow=10,        # Additional connections when pool is exhausted
+                pool_timeout=30,        # Seconds to wait for available connection
+                pool_recycle=3600,      # Recycle connections after 1 hour (AWS Aurora timeout)
+                pool_pre_ping=True,     # Test connections before using them
+                
+                # Additional performance optimizations
+                echo_pool=False,        # Set to True only for debugging connection pool
             )
             
             
@@ -63,6 +70,13 @@ class AuroraPostgresProvider(DatabaseProvider):
                         result = conn.execute(text("SELECT 1")).scalar_one()
                         if result == 1:
                             logger.info("Successfully connected to Aurora PostgreSQL")
+                            
+                            # Log connection pool status
+                            pool = database_engine.pool
+                            logger.info(f"Connection pool status - Size: {pool.size()}, "
+                                      f"Checked out: {pool.checked_out_connections()}, "
+                                      f"Overflow: {pool.overflow()}, "
+                                      f"Total: {pool.size() + pool.overflow()}")
                             
                             AuroraPostgresProvider._ensure_database_initialized(database_engine)
                             

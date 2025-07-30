@@ -21,6 +21,20 @@ export async function httpAction<T>(
     try {
       return await executeHttpAction<T>(method, path, parameters);
     } catch (ex: unknown) {
+      // Check if it's a rate limit error
+      if (ex instanceof Response && ex.status === 429) {
+        const retryAfter = ex.headers.get('Retry-After');
+        const waitTime = retryAfter ? parseInt(retryAfter) * 1000 : 60000; // Default 60s
+        
+        // Only retry if we have retries left and wait time is reasonable
+        if (retries.length > 0 && waitTime <= 120000) { // Max 2 minutes
+          console.warn(`Rate limited. Waiting ${waitTime/1000}s before retry...`);
+          await new Promise((resolve) => setTimeout(resolve, waitTime));
+          retries = retries.slice(1); // Remove one retry
+          continue;
+        }
+      }
+      
       // Verify any retries remaining.
       if (retries.length === 0) {
         throw ex;

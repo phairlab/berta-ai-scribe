@@ -12,7 +12,7 @@ import app.schemas as sch
 from app.config import settings
 from app.config.db import useDatabase
 from app.logging import WebAPILogger, log_session, useUserAgent
-from app.security import create_access_token, useSnowflakeContextUser, decode_token
+from app.security import create_access_token, decode_token
 from app.security import useUserSession
 
 log = WebAPILogger(__name__)
@@ -41,7 +41,6 @@ async def authenticate_user(
     database: useDatabase,
     response: Response,
     backgroundTasks: BackgroundTasks,
-    snowflakeUser: useSnowflakeContextUser = None,
 ) -> sch.Token:
    
     print(f"Received {request.method} request to /authenticate")
@@ -52,12 +51,12 @@ async def authenticate_user(
     response.headers["Access-Control-Allow-Headers"] = "*"
     response.headers["Access-Control-Allow-Credentials"] = "true"
     
+    # This endpoint is deprecated - use Google OAuth or Cognito instead
     if settings.ENVIRONMENT == "development" and not settings.USE_COGNITO and not settings.USE_GOOGLE_AUTH:
         username = "development_user"
     else:
-        if not snowflakeUser:
-            raise errors.BadRequest("Snowflake context user is missing")
-        username = snowflakeUser
+        # In production, authentication should go through Cognito or Google OAuth
+        raise errors.BadRequest("Direct authentication not supported. Please use Google OAuth or AWS Cognito.")
 
     try:
         user = database.get_one(db.User, username)
@@ -87,9 +86,9 @@ async def authenticate_user(
         key="jenkins_session",
         value=token,
         httponly=True,
-        samesite="lax",
+        samesite="strict" if settings.ENVIRONMENT == "production" else "lax",
         secure=settings.COOKIE_SECURE,  # Use settings value
-        max_age=3600,  # 1 hour
+        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,  # Use consistent timeout
         path="/",
         domain=settings.COOKIE_DOMAIN if settings.COOKIE_DOMAIN else None
     )
@@ -127,9 +126,9 @@ async def check_session(
             key="jenkins_session",
             value=api_token,
             httponly=True,
-            samesite="lax",
-            secure=False,  
-            max_age=3600,  
+            samesite="lax",  # Keep lax for dev
+            secure=False,  # False for local development
+            max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,  # Use consistent timeout
             path="/",
             domain=settings.COOKIE_DOMAIN if settings.COOKIE_DOMAIN else None
         )
@@ -150,9 +149,9 @@ async def check_session(
             key="jenkins_session",
             value=api_token,
             httponly=True,
-            samesite="lax",
+            samesite="strict" if settings.ENVIRONMENT == "production" else "lax",
             secure=settings.COOKIE_SECURE,  
-            max_age=3600,  
+            max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,  # Use consistent timeout
             path="/",
             domain=settings.COOKIE_DOMAIN if settings.COOKIE_DOMAIN else None
         )
@@ -177,7 +176,7 @@ async def logout_user(response: Response, session: useUserSession):
         path="/",
         secure=settings.COOKIE_SECURE,
         httponly=True,
-        samesite="lax",
+        samesite="strict" if settings.ENVIRONMENT == "production" else "lax",
         domain=settings.COOKIE_DOMAIN if settings.COOKIE_DOMAIN else None
     )
     
