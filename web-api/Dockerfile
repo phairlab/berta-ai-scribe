@@ -24,6 +24,7 @@ RUN apt-get update && apt-get install -y \
     libboost-test-dev \
     libboost-thread-dev \
     wget \
+    libmagic1 \
     && git clone https://github.com/bbc/audiowaveform.git \
     && cd audiowaveform \
     && git checkout 1.10.0 \

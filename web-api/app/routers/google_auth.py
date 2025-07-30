@@ -188,10 +188,11 @@ async def authenticate_google_user(
             key="jenkins_session",
             value=api_token,
             httponly=True,
-            samesite="lax",
+            samesite="strict" if settings.ENVIRONMENT == "production" else "lax",
             secure=settings.COOKIE_SECURE,
-            max_age=3600,  
-            path="/"
+            max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,  # Use consistent session timeout
+            path="/",
+            domain=settings.COOKIE_DOMAIN  # Allow setting domain for AWS
         )
         
         log.info(f"Google authentication successful for user: {username}")

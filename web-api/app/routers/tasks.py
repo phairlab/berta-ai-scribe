@@ -58,7 +58,6 @@ async def transcribe_audio(
             # We need to collect all the streamed chunks into a file-like object
             file_data = io.BytesIO()
             try:
-                # Get file from storage provider
                 for chunk in storage.stream_recording(userSession.username, filename):
                     file_data.write(chunk)
                 

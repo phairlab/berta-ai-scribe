@@ -51,17 +51,12 @@ from app.security import WebAPISession, decode_token
 from app.utility.timing import ExecutionTimer
 from app.config.storage import USE_S3_STORAGE
 from app.services.s3_storage import s3_storage
-
-# ----------------------------------
-# LOGGING CONFIG
+from app.middleware.rate_limiter import rate_limit_middleware
+from app.middleware.security_headers import security_headers_middleware
+from app.middleware.csrf_protection import csrf_middleware
 
 configure_logging()
 
-# ----------------------------------
-# WEB SETUP
-
-
-# Define startup / shutdown behaviour
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     if settings.ENVIRONMENT == "development" and not db.is_datafolder_initialized():
@@ -78,7 +73,6 @@ async def lifespan(_: FastAPI):
     db.engine.dispose()
 
 
-# Create the app
 app = FastAPI(
     lifespan=lifespan,
     title=f"{settings.APP_NAME} API",
@@ -89,7 +83,25 @@ app = FastAPI(
     redoc_url=None,
 )
 
-# Add CORS middleware in development mode
+# Middleware order: last added = first executed
+if settings.ENVIRONMENT == "production":
+    @app.middleware("http")
+    async def add_csrf_protection(request: Request, call_next):
+        return await csrf_middleware(request, call_next)
+    print("CSRF protection middleware configured for production")
+
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    return await security_headers_middleware(request, call_next)
+print("Security headers middleware configured")
+
+if settings.ENVIRONMENT == "production":
+    @app.middleware("http")
+    async def add_rate_limiting(request: Request, call_next):
+        return await rate_limit_middleware(request, call_next)
+    print("Rate limiting middleware configured for production")
+
+# CORS middleware must be last to run first and add headers to all responses
 frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:4000")
 
 app.add_middleware(
@@ -106,15 +118,9 @@ app.add_middleware(
 )
 print("CORS middleware configured")
 
-# ----------------------------------
-# STATIC FILES
-
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# ----------------------------------
-# OPENAPI DOCS
-
-# Active in development only.
+# OpenAPI docs active in development only
 if settings.ENVIRONMENT == "development":
 
     @app.get("/docs", include_in_schema=False)
@@ -148,11 +154,6 @@ if settings.USE_GOOGLE_AUTH:
         tags=["Authentication"],
     )
 
-# ----------------------------------
-# EXCEPTION HANDLERS
-
-
-# Basic Errors
 @app.exception_handler(WebAPIException)
 async def webapi_exception_handler(request: Request, exc: WebAPIException):
     stack_trace = " ".join(traceback.TracebackException.from_exception(exc).format())
@@ -295,10 +296,6 @@ async def fallback_exception_handler(request: Request, exc: Exception):
     )
 
 
-# ----------------------------------
-# MIDDLEWARE
-
-
 @app.middleware("http")
 async def request_logging_middleware(request: Request, call_next):
     log = WebAPILogger("app.http")
@@ -377,29 +374,21 @@ async def request_logging_middleware(request: Request, call_next):
     return response
 
 
-# ----------------------------------
-# ENDPOINTS
-
-
-# Root
 @app.get("/", response_model=SimpleMessage, tags=["Miscellaneous"])
 async def root():
     return {"message": f"Welcome to the {settings.APP_NAME} API"}
 
 
-# Favicon
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon():
     return FileResponse(Path("static/favicon.ico"))
 
 
-# Readiness Probe
 @app.get("/healthcheck", response_model=SimpleMessage, tags=["Miscellaneous"])
 async def health_check():
     return {"message": "Ready"}
 
 
-# API routers
 app.include_router(encounters.router, prefix="/encounters", tags=["Encounters"])
 app.include_router(
     note_definitions.router, prefix="/note-definitions", tags=["Note Definitions"]
@@ -443,9 +432,6 @@ else:
         tags=["Authentication"],
         include_in_schema=True
     )
-
-# ----------------------------------
-# FALLBACK
 
 # Handle case when the app is not run via the uvicorn command
 if __name__ == "__main__":

@@ -64,13 +64,6 @@ class Settings(BaseSettings):
     COGNITO_CLIENT_SECRET: str | None = None
     COGNITO_DOMAIN: str | None = None
     COGNITO_REDIRECT_URI: str | None = None
-    
-    USE_COGNITO: bool = True
-    COGNITO_USER_POOL_ID: str | None = None
-    COGNITO_CLIENT_ID: str | None = None
-    COGNITO_CLIENT_SECRET: str | None = None
-    COGNITO_DOMAIN: str | None = None
-    COGNITO_REDIRECT_URI: str | None = None
 
     ENCOUNTERS_PAGE_SIZE: int = 15
 

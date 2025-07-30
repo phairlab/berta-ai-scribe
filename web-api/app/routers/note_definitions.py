@@ -57,7 +57,6 @@ def create_note_definition(
     """
     Creates and saves a new custom note definition for the current user.
     """
-    # Create the new note definition and associate to the current user.
     try:
         created = datetime.now(timezone.utc).astimezone()
         sqid = db.next_sqid(database)
@@ -77,7 +76,6 @@ def create_note_definition(
         database.add(record)
         database.commit()
 
-        # Record the change.
         backgroundTasks.add_task(
             log_data_change,
             database=database,
