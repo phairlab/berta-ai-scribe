@@ -29,7 +29,6 @@ from app.services.sqlite import SqliteDatabaseProvider
 from app.services.aurora import AuroraPostgresProvider
 from app.config.storage import save_recording, stream_recording, delete_recording
 
-# Set up logging
 logger = logging.getLogger(__name__)
 
 sqids = Sqids(alphabet="ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
@@ -46,7 +45,6 @@ def get_database_provider() -> DatabaseProvider:
         logger.error("No valid database configuration found")
         raise ValueError("Database configuration is invalid")
 
-# Initialize database provider and engine
 database_provider = get_database_provider()
 engine: Engine = database_provider.create_engine()
 DatabaseSessionMaker = sessionmaker(engine)
@@ -81,10 +79,6 @@ def uuid_column(primary_key: bool = False):
 
 class Base(DeclarativeBase):
     pass
-
-
-# ----------------------------------
-# LOG TABLES
 
 
 class SessionRecord(Base):

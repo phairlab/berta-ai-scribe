@@ -14,6 +14,7 @@ import app.errors as errors
 import app.schemas as sch
 from app.config import settings
 from app.config.db import useDatabase
+from app.services.file_validation import file_validator
 from app.logging import log_audio_conversion, log_data_change, log_generation
 from app.security import authenticate_session, useUserSession
 from app.services.audio_processing import append_audio, compute_peaks, reformat_audio
@@ -80,6 +81,14 @@ def create_encounter(
 
     if audio.size is None or audio.content_type is None:
         raise errors.BadRequest("Audio file metadata is missing")
+    
+    # Validate the uploaded audio file
+    try:
+        is_valid, error_message = file_validator.validate_audio_file(audio.file, audio.filename)
+        if not is_valid:
+            raise errors.BadRequest(error_message)
+    except ValueError as e:
+        raise errors.BadRequest(str(e))
 
     created = datetime.now(timezone.utc).astimezone()
 
@@ -186,11 +195,18 @@ def append_recording(
 
     if audio.size is None or audio.content_type is None:
         raise errors.BadRequest("Audio file metadata is missing")
+    
+    # Validate the uploaded audio file
+    try:
+        is_valid, error_message = file_validator.validate_audio_file(audio.file, audio.filename)
+        if not is_valid:
+            raise errors.BadRequest(error_message)
+    except ValueError as e:
+        raise errors.BadRequest(str(e))
 
     modified = datetime.now(timezone.utc).astimezone()
     reformatted_media_type = "audio/mpeg"
 
-    # Get the encounter record.
     try:
         get_encounter = (
             select(db.Encounter)
@@ -208,7 +224,6 @@ def append_recording(
 
     recording_id = encounter.recording.id
 
-    # Get the recording file pointer.
     recording_path = Path(
         settings.RECORDINGS_FOLDER, userSession.username, f"{recording_id}.mp3"
     )
@@ -243,7 +258,6 @@ def append_recording(
         # Compute waveform peaks.
         peaks = compute_peaks(combined)
 
-        # Record the new start of segment.
         if encounter.recording.segments is not None:
             segments: list[int] = json.loads(encounter.recording.segments)
         else:
@@ -265,7 +279,6 @@ def append_recording(
 
         raise audio_error
 
-    # Update the encounter record.
     try:
         encounter.modified = modified
         encounter.recording.transcript = None
@@ -277,14 +290,12 @@ def append_recording(
         combined.close()
         raise errors.DatabaseError(str(e))
 
-    # Save the recording file.
     try:
         filename = f"{recording_id}.mp3"
         db.save_recording(combined, userSession.username, filename)
     finally:
         combined.close()
 
-    # Record the change.
     backgroundTasks.add_task(
         log_data_change,
         database=database,
@@ -295,7 +306,6 @@ def append_recording(
         entity_id=encounterId,
     )
 
-    # Return the created encounter.
     return ConvertToSchema.encounter(encounter)
 
 
@@ -314,7 +324,6 @@ def update_encounter(
     Saves updates to a saved encounter for the current user.
     """
 
-    # Get the encounter record.
     try:
         get_encounter = (
             select(db.Encounter)
@@ -388,7 +397,6 @@ def update_encounter(
     except Exception as e:
         raise errors.DatabaseError(str(e))
 
-    # Record the change.
     backgroundTasks.add_task(
         log_data_change,
         database=database,
@@ -399,7 +407,6 @@ def update_encounter(
         entity_id=encounter.id,
     )
 
-    # Return the updated encounter.
     return ConvertToSchema.encounter(encounter)
 
 
@@ -439,29 +446,23 @@ def delete_encounter(
     except NoResultFound:
         raise errors.NotFound("Record not found")
 
-    # Delete the encounter.
     deleted = datetime.now(timezone.utc).astimezone()
     filename = f"{encounter.recording.id}.mp3"
 
     try:
-        # Delete the saved recording.
         try:
             db.delete_recording(userSession.username, filename)
         except OSError:
             pass
 
-        # Delete the transcript.
         encounter.recording.transcript = ""
 
-        # Delete the textual context.
         encounter.context = ""
 
-        # Delete the content and context of any saved notes and inactivate them.
         for draft_note in encounter.draft_notes:
             draft_note.content = ""
             draft_note.inactivated = deleted
 
-        # Record the deletion on the encounter
         encounter.inactivated = deleted
         encounter.purged = deleted
 
@@ -529,7 +530,6 @@ def create_draft_note(
     except NoResultFound:
         raise errors.NotFound("Note definition not found")
 
-    # Save the note.
     try:
         saved = datetime.now(timezone.utc).astimezone()
 
@@ -605,7 +605,6 @@ def delete_draft_note(
     except NoResultFound:
         raise errors.NotFound("Draft note not found")
 
-    # Delete the draft note.
     try:
         inactivated = datetime.now(timezone.utc).astimezone()
         draft_note.inactivated = inactivated
@@ -663,7 +662,6 @@ def set_note_flag(
     except NoResultFound:
         raise errors.NotFound("Draft note not found")
 
-    # Update the draft note.
     try:
         modified = datetime.now(timezone.utc).astimezone()
         draft_note.is_flagged = isFlagged

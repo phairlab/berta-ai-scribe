@@ -12,7 +12,7 @@ from app.schemas import WebAPISession
 
 log = WebAPILogger(__name__)
 
-security_scheme = HTTPBearer(scheme_name="Snowflake Context")
+security_scheme = HTTPBearer(scheme_name="Bearer")
 useCredentials = Annotated[HTTPAuthorizationCredentials, Depends(security_scheme)]
 
 
@@ -65,19 +65,7 @@ def decode_token(token: str, verify_expiry: bool = True) -> WebAPISession:
         raise Unauthorized("Could not validate credentials")
 
 
-async def get_snowflake_context_user(
-    sf_context_current_user: Annotated[str | None, Header()] = None
-) -> str:
-    if settings.ENVIRONMENT == "development":
-        return "development_user"
-        
-    if sf_context_current_user is None or len(sf_context_current_user.strip()) == 0:
-        raise BadRequest("Snowflake context user is missing")
-
-    return sf_context_current_user
-
-
-useSnowflakeContextUser = Annotated[str, Depends(get_snowflake_context_user)]
+# Snowflake authentication removed - using Google OAuth and AWS Cognito instead
 
 
 async def authenticate_session(credentials: useCredentials) -> WebAPISession:
