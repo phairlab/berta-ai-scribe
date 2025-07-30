@@ -53,7 +53,6 @@ from app.config.storage import USE_S3_STORAGE
 from app.services.s3_storage import s3_storage
 from app.middleware.rate_limiter import rate_limit_middleware
 from app.middleware.security_headers import security_headers_middleware
-from app.middleware.csrf_protection import csrf_middleware
 
 configure_logging()
 
@@ -84,11 +83,6 @@ app = FastAPI(
 )
 
 # Middleware order: last added = first executed
-if settings.ENVIRONMENT == "production":
-    @app.middleware("http")
-    async def add_csrf_protection(request: Request, call_next):
-        return await csrf_middleware(request, call_next)
-    print("CSRF protection middleware configured for production")
 
 @app.middleware("http")
 async def add_security_headers(request: Request, call_next):

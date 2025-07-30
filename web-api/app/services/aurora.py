@@ -74,7 +74,7 @@ class AuroraPostgresProvider(DatabaseProvider):
                             # Log connection pool status
                             pool = database_engine.pool
                             logger.info(f"Connection pool status - Size: {pool.size()}, "
-                                      f"Checked out: {pool.checked_out_connections()}, "
+                                      f"Checked out: {pool.checkedout()}, "
                                       f"Overflow: {pool.overflow()}, "
                                       f"Total: {pool.size() + pool.overflow()}")
                             
