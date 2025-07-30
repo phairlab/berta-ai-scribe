@@ -54,7 +54,7 @@ async def get_recording_file(
             'Cache-Control': 'no-cache',
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Methods': 'GET, OPTIONS',
-            'Access-Control-Allow-Headers': 'Range, Content-Type, Accept, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization',
+            'Access-Control-Allow-Headers': 'Range, Content-Type, Accept, Content-Length, Accept-Encoding, Authorization',
             'Access-Control-Expose-Headers': 'Content-Range, Accept-Ranges, Content-Length, Content-Type',
         }
         
@@ -122,7 +122,7 @@ async def options_recording_download(recordingId: str):
         'Accept-Ranges': 'bytes',
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, OPTIONS',
-        'Access-Control-Allow-Headers': 'Range, Content-Type, Accept, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization',
+        'Access-Control-Allow-Headers': 'Range, Content-Type, Accept, Content-Length, Accept-Encoding, Authorization',
         'Access-Control-Expose-Headers': 'Content-Range, Accept-Ranges, Content-Length, Content-Type',
     }
     return Response(status_code=200, headers=headers)

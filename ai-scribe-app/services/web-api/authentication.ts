@@ -31,11 +31,13 @@ export async function authenticateWithCognito(token: string, backendUrl?: string
   
   if (backendUrl && (backendUrl.startsWith('http://') || backendUrl.startsWith('https://'))) {
     const url = `${backendUrl}/auth/authenticate`;
+    const headers = {
+      "Content-Type": "application/json",
+    };
+    
     const response = await fetch(url, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers,
       body: JSON.stringify({ token }),
       credentials: 'include',
     });
@@ -65,11 +67,13 @@ export async function authenticateWithGoogle(token: string, backendUrl?: string,
   
   if (backendUrl && (backendUrl.startsWith('http://') || backendUrl.startsWith('https://'))) {
     const url = `${backendUrl}/auth/authenticate-google`;
+    const headers = {
+      "Content-Type": "application/json",
+    };
+    
     const response = await fetch(url, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers,
       body: JSON.stringify({ token, isAuthCode }),
       credentials: 'include',
     });

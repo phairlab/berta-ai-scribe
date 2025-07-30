@@ -6,6 +6,7 @@ import { useAtom } from "jotai";
 import { authenticationAtom } from "@/services/identity";
 import { authenticateWithCognito } from "@/services/web-api/authentication";
 import { useRuntimeConfig } from "@/services/state/runtime-config-context";
+import { getBackendUrl } from "@/services/web-api/common";
 
 
 export function CognitoLogin() {
@@ -28,9 +29,13 @@ export function CognitoLogin() {
     const checkSession = async () => {
       try {
         addDebug("Checking for existing session...");
-        const response = await fetch(`/api/auth/check-session`, {
+        
+        const response = await fetch(`${getBackendUrl()}/auth/check-session`, {
           method: 'POST',  
           credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
         });
 
         if (response.ok) {
