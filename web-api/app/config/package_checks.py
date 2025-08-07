@@ -1,9 +1,9 @@
 """Package availability checks for optional dependencies."""
 
-VLLM_AVAILABLE = False
+from importlib.util import find_spec
+
+# Do not import optional packages at module import time. Only check presence.
 try:
-    import vllm
-    _ = vllm.__version__
-    VLLM_AVAILABLE = True
-except (ImportError, AttributeError):
-    pass 
+    VLLM_AVAILABLE = find_spec("vllm") is not None
+except Exception:
+    VLLM_AVAILABLE = False
