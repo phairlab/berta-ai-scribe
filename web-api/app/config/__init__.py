@@ -104,10 +104,11 @@ is_cognito_supported: bool = (
     and settings.COGNITO_CLIENT_ID is not None
 )
 
+# VLLM is supported if either a server endpoint is configured OR the Python
+# package is installed for local inference.
 is_vllm_supported: bool = (
-    VLLM_AVAILABLE
-    and settings.VLLM_SERVER_NAME is not None
-    and settings.VLLM_SERVER_PORT is not None
+    (settings.VLLM_SERVER_NAME is not None and settings.VLLM_SERVER_PORT is not None)
+    or VLLM_AVAILABLE
 )
 
 is_lm_studio_supported: bool = settings.LM_STUDIO_SERVER_URL is not None

@@ -13,7 +13,7 @@ from app.services.whisperx import WhisperXTranscriptionService
 from app.services.amazon_transcribe import AmazonTranscribeService
 from app.services.aws_bedrock import BedrockGenerativeAIService
 from app.services.ollama import OllamaGenerativeAIService
-from app.services.vllm_service import VLLMService
+# Import VLLMService lazily inside the VLLM branch to avoid importing vllm at startup
 from app.services.lm_studio import LMStudioGenerativeAIService
 import os
 import logging
@@ -62,6 +62,7 @@ match settings.GENERATIVE_AI_SERVICE:
     case "VLLM":
         if is_vllm_supported:
             try:
+                from app.services.vllm_service import VLLMService  # lazy import
                 api_url = f"http://{settings.VLLM_SERVER_NAME}:{settings.VLLM_SERVER_PORT}"
                 service = VLLMService(api_url=api_url)
                 if settings.VLLM_MODEL_NAME and settings.HUGGINGFACE_TOKEN:
