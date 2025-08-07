@@ -16,7 +16,9 @@ from app.config import settings
 try:
     from vllm import LLM, SamplingParams
     from vllm.outputs import RequestOutput
-except ImportError:
+except Exception:
+    # Any import-time error (including transformers registration conflicts)
+    # should not break API startup when using HTTP mode.
     VLLM_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
