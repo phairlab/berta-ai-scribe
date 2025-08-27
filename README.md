@@ -264,6 +264,7 @@ For local development, you'll need Google OAuth credentials:
 
 6. **Note your credentials**:
    - Copy the **Client ID** and **Client Secret**
+   - **Where to find them**: After clicking "Create", a popup will show both credentials. If you miss this popup, go to "APIs & Services" → "Credentials" → click on your OAuth client name → the Client ID and Client Secret will be displayed on the details page
    - You'll need these for your environment files
 
 > [!IMPORTANT]
@@ -314,7 +315,10 @@ All local setups use **SQLite database**, **local file storage**, and **Google O
 
 ### Common Environment Variables
 
-First, create the base environment file (`web-api/.env`) with these common settings:
+**Create the environment file**:
+1. Navigate to the `web-api` directory
+2. Create a new file called `.env` (note the dot at the beginning)
+3. Copy and paste the following settings into your new `.env` file:
 
 ```env
 # Core Settings
@@ -323,6 +327,8 @@ COOKIE_SECURE=false
 LOGGING_LEVEL=DEBUG
 
 # JWT Configuration
+# ACCESS_TOKEN_SECRET: A random string used to sign JWT tokens for security
+# Generate one with: openssl rand -base64 32
 ACCESS_TOKEN_SECRET=your_secure_random_string_here
 ACCESS_TOKEN_EXPIRE_MINUTES=1440
 
@@ -352,11 +358,18 @@ Then, add the AI service-specific variables based on your chosen option below:
 **Setup Steps**:
 
 1. **Get OpenAI API Key**:
-   - Go to [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
-   - Create new secret key
-   - Copy and save it securely
+   - **Sign up/Login**: Go to [platform.openai.com](https://platform.openai.com) and create an account or log in
+   - **Navigate to API Keys**: Go to [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
+   - **Create new key**: Click "Create new secret key"
+   - **Name your key**: Give it a descriptive name like "Jenkins Scribe Local"
+   - **Set permissions**: Choose "All" or ensure it has access to the models you need
+   - **Copy the key**: After creation, copy the API key immediately (it starts with `sk-...`)
+   - **Save securely**: Store it in a safe place - you won't be able to see it again
+   - **Add billing**: Make sure you have billing set up at [platform.openai.com/settings/organization/billing](https://platform.openai.com/settings/organization/billing)
 
-2. **Append these lines to your `web-api/.env` file** (below the common settings):
+2. **Add OpenAI settings to your `.env` file**:
+   - Open the `web-api/.env` file you created earlier
+   - Append these lines at the bottom (below the common settings):
    ```env
    # AI Services (OpenAI)
    TRANSCRIPTION_SERVICE=OpenAI Whisper
@@ -364,7 +377,7 @@ Then, add the AI service-specific variables based on your chosen option below:
    DEFAULT_NOTE_GENERATION_MODEL=gpt-4o
    LABEL_MODEL=gpt-4o
 
-   # OpenAI API Key
+   # OpenAI API Key (replace with your actual API key from step 1)
    OPENAI_API_KEY=your_openai_api_key_here
    ```
 
@@ -652,7 +665,10 @@ After completing your chosen AI service setup above:
 
 ## Frontend Setup
 
-1. **Create frontend environment file** (`ai-scribe-app/.env`):
+1. **Create frontend environment file**:
+   - Navigate to the `ai-scribe-app` directory
+   - Create a new file called `.env` (note the dot at the beginning)
+   - Copy and paste the following settings into your new `.env` file:
    ```env
    # Backend API URL
    NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
@@ -723,30 +739,10 @@ After completing your chosen AI service setup above:
 
 1. **Create AWS Account**: If you don't have one, sign up at [aws.amazon.com](https://aws.amazon.com)
 
-2. **Install AWS CLI**:
-   ```bash
-   # macOS
-   brew install awscli
-   
-   # Linux
-   curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-   unzip awscliv2.zip
-   sudo ./aws/install
-   
-   # Windows - Download from AWS website
-   ```
+2. **Log into AWS Console**: After creating your account, log into the [AWS Management Console](https://console.aws.amazon.com)
 
-3. **Configure AWS CLI**:
-   ```bash
-   aws configure
-   # Enter your Access Key ID
-   # Enter your Secret Access Key
-   # Default region: us-west-2 (recommended)
-   # Default output format: json
-   ```
-
-4. **Enable Bedrock Model Access**:
-   - Go to AWS Bedrock Console
+3. **Enable Bedrock Model Access**:
+   - **Go to AWS Bedrock Console**: In the AWS search bar at the top, type "Bedrock" and click on "Amazon Bedrock"
    - Navigate to "Model access" in the left sidebar
    - Request access to:
      - **Meta Llama 3.3 70B Instruct** (`us.meta.llama3-3-70b-instruct-v1:0`)
@@ -776,7 +772,15 @@ After completing your chosen AI service setup above:
    # Note: You'll need to update your domain's nameservers to point to Route53
    ```
 
-2. **Note your Hosted Zone ID**:
+2. **Find your Hosted Zone ID**:
+   
+   **Method 1 (AWS Console - Recommended)**:
+   - Go to [Route53 Console](https://us-east-1.console.aws.amazon.com/route53/v2/home#Dashboard)
+   - Click "Hosted zones" in the left sidebar
+   - Find your domain in the list
+   - Copy the **Hosted zone ID** (looks like `Z1D633PJN98FT9`) - you'll need this for deployment
+   
+   **Method 2 (AWS CLI)**:
    ```bash
    aws route53 list-hosted-zones --query "HostedZones[?Name=='yourdomain.com.'].Id" --output text
    ```
@@ -854,14 +858,21 @@ If you already have a VPC set up like in your screenshots:
 
 ### Step 4: Deploy the Application
 
-Use the one-click deployment link:
-   
-**One-click Deployment**
-| Service | Button |
-|---------|--------|
-| AWS     | [![AWS CloudFormation Launch Stack SVG Button](https://cdn.rawgit.com/buildkite/cloudformation-launch-stack-button-svg/master/launch-stack.svg)](https://us-west-2.console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/quickcreate?stackName=os-jenkins-ai-scribe&templateURL=https://cf-templates-14rwubwevbsfc-us-west-2.s3.us-west-2.amazonaws.com/2025-06-25T005018.211Zo9q-template.yaml)
+Now you'll deploy the Jenkins Scribe application using AWS CloudFormation:
 
-**Custom Deployment**: If you need to modify the CloudFormation template (e.g., change instance sizes, add custom configurations), you can use the `template.yaml` file included in this repository. Download the template, make your modifications, and deploy it manually through the AWS CloudFormation console or AWS CLI instead of using the one-click deployment above.
+**Option A: One-click Deployment (Recommended)**
+
+1. **Click the deployment button**:
+   
+   | Service | Button |
+   |---------|--------|
+   | AWS     | [![AWS CloudFormation Launch Stack SVG Button](https://cdn.rawgit.com/buildkite/cloudformation-launch-stack-button-svg/master/launch-stack.svg)](https://us-west-2.console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/quickcreate?stackName=os-jenkins-ai-scribe&templateURL=https://cf-templates-14rwubwevbsfc-us-west-2.s3.us-west-2.amazonaws.com/2025-06-25T005018.211Zo9q-template.yaml)
+
+2. **You'll be taken to the AWS CloudFormation console** where you'll see a form to fill out
+
+**Option B: Custom Deployment**
+
+If you need to modify the CloudFormation template (e.g., change instance sizes, add custom configurations), you can use the `template.yaml` file included in this repository. Download the template, make your modifications, and deploy it manually through the AWS CloudFormation console or AWS CLI instead of using the one-click deployment above.
 
 > [!IMPORTANT]
 > If you modify the `template.yaml` file and deploy it manually, you cannot use the one-click deployment button. You must deploy your custom template through the AWS CloudFormation console or CLI.
@@ -876,11 +887,27 @@ Use the one-click deployment link:
    | **PublicSubnets** | Public subnet IDs (comma-separated) | `subnet-12345,subnet-67890` |
    | **PrivateSubnets** | Private subnet IDs (comma-separated) | `subnet-abcde,subnet-fghij` |
    | **DomainName** | Your domain name | `yourdomain.com` |
-   | **AuthDomainPrefix** | Cognito auth subdomain | `auth-jenkins` |
+   | **AuthDomainPrefix** |  Prefix part of the domain name | `yourdomain` |
    | **AccessTokenSecret** | JWT signing secret | Generate with `openssl rand -base64 32` |
    | **DBName** | Database name | `os_jenkins` |
    | **DBUser** | Database username | `jenkins_admin` |
    | **DBPassword** | Database password | Generate secure password |
+
+3. **Deploy the stack**:
+   - After filling in all parameters, scroll down
+   - Check the box "I acknowledge that AWS CloudFormation might create IAM resources"
+   - Click "Create stack"
+   - The deployment will take 15-20 minutes
+
+4. **Monitor the deployment**:
+   - You'll see the CloudFormation stack creation in progress
+   - Watch the "Events" tab to see resources being created
+   - Wait for the stack status to show "CREATE_COMPLETE"
+   - If deployment fails, check the "Events" tab for error details
+
+5. **Get your application URLs**:
+   - Once deployment is complete, go to the "Outputs" tab
+   - Note down the **FrontendURL** - this is where you'll access the application
 
 ### Step 5: Post-Deployment Configuration
 
