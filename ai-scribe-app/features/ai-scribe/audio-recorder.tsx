@@ -57,7 +57,22 @@ export const AudioRecorder = ({
         if (audioChunks.length >= 1) {
           const mimeType = audioChunks[0].type;
           const audio = new Blob(audioChunks, { type: mimeType });
-          const file = new File([audio], "recording", { type: mimeType });
+          
+          // Determine file extension based on MIME type
+          let extension = '.webm'; // default
+          if (mimeType.includes('mp4')) {
+            extension = '.mp4';
+          } else if (mimeType.includes('wav')) {
+            extension = '.wav';
+          } else if (mimeType.includes('mp3')) {
+            extension = '.mp3';
+          } else if (mimeType.includes('ogg')) {
+            extension = '.ogg';
+          } else if (mimeType.includes('webm')) {
+            extension = '.webm';
+          }
+          
+          const file = new File([audio], `recording${extension}`, { type: mimeType });
 
           setAudioChunks([]);
           onAudioFinalized?.(file);
