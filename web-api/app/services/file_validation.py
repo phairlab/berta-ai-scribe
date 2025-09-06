@@ -25,6 +25,7 @@ class FileValidator:
         'audio/wav': ['.wav'],
         'audio/x-wav': ['.wav'],
         'audio/webm': ['.webm'],
+        'video/webm': ['.webm'],  # Browsers often report WebM audio as video/webm
         'audio/ogg': ['.ogg'],
     }
     
