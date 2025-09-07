@@ -302,6 +302,24 @@ Before configuring specific AI services, set up the Python backend environment:
 
    uv pip install -r requirements.txt
    ```
+5. **For WhisperX with GPU Support (Optional)**:
+   If you plan to use WhisperX with an NVIDIA GPU (Option 2 or 3), upgrade PyTorch to CUDA version for faster transcription:
+   ```bash
+   # Only if you have NVIDIA GPU and want faster WhisperX transcription
+   uv pip install torch==2.5.0 torchaudio==2.5.0 --index-url https://download.pytorch.org/whl/cu121 --reinstall --no-deps
+   
+   # Install cuDNN libraries (Ubuntu/Debian)
+   wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb
+   sudo dpkg -i cuda-keyring_1.1-1_all.deb
+   sudo apt-get update
+   sudo apt-get install -y libcudnn8=8.9.7.29-1+cuda12.2
+   
+   # Set environment variable
+   export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
+
+Then set `WHISPERX_DEVICE=cuda` in your `.env` file when configuring WhisperX.
+
+**Note**: Skip this step if you're using OpenAI (Option 1), Apple Silicon with Parakeet MLX, or don't have an NVIDIA GPU.
 
 > [!NOTE]
 > Keep this terminal open with the virtual environment activated for the remaining setup steps.
