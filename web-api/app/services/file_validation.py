@@ -27,6 +27,7 @@ class FileValidator:
         'audio/webm': ['.webm'],
         'video/webm': ['.webm'],  # Browsers often report WebM audio as video/webm
         'audio/ogg': ['.ogg'],
+        'application/octet-stream': ['.mp3', '.webm', '.wav', '.m4a', '.mp4', '.ogg'],  # Mobile browsers fallback
     }
     
     ALLOWED_IMAGE_TYPES = {
@@ -66,6 +67,23 @@ class FileValidator:
                     file.seek(0)  # Reset
                     
                     mime = magic.from_buffer(file_content, mime=True)
+                    
+                    # Handle mobile browser quirks where audio files are detected as application/octet-stream
+                    # If magic detects application/octet-stream but we have a valid audio extension,
+                    # trust the extension (this is common with mobile browser recordings)
+                    if mime == "application/octet-stream" and file_ext in valid_extensions:
+                        # Additional validation: check for common audio file signatures
+                        file.seek(0)
+                        file_header = file.read(12)
+                        file.seek(0)
+                        
+                        # Check for common audio file signatures
+                        if FileValidator._is_likely_audio_file(file_header, file_ext):
+                            return True, "Valid audio file (mobile browser recording)"
+                        else:
+                            return False, f"File content doesn't match expected audio format for {file_ext}"
+                    
+                    # Standard MIME type validation
                     if mime not in FileValidator.ALLOWED_AUDIO_TYPES:
                         return False, f"Invalid file type detected: {mime}"
                 except Exception as e:
@@ -76,6 +94,29 @@ class FileValidator:
             
         except Exception as e:
             return False, f"Error validating file: {str(e)}"
+    
+    @staticmethod
+    def _is_likely_audio_file(file_header: bytes, file_ext: str) -> bool:
+        """Check if file header suggests it's an audio file based on common signatures"""
+        # Common audio file signatures
+        if file_ext in ['.mp3']:
+            # MP3 files often start with ID3 tags or frame sync
+            return file_header.startswith(b'ID3') or file_header.startswith(b'\xff\xfb') or file_header.startswith(b'\xff\xf3') or file_header.startswith(b'\xff\xf2')
+        elif file_ext in ['.webm']:
+            # WebM files start with EBML signature
+            return file_header.startswith(b'\x1a\x45\xdf\xa3')
+        elif file_ext in ['.wav']:
+            # WAV files start with RIFF signature
+            return file_header.startswith(b'RIFF') and b'WAVE' in file_header[:12]
+        elif file_ext in ['.mp4', '.m4a']:
+            # MP4/M4A files have ftyp box
+            return b'ftyp' in file_header[:12]
+        elif file_ext in ['.ogg']:
+            # OGG files start with OggS
+            return file_header.startswith(b'OggS')
+        else:
+            # For unknown formats, be permissive if we get this far
+            return True
     
     @staticmethod
     def validate_filename(filename: str) -> Tuple[bool, str]:
