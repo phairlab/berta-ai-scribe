@@ -60,6 +60,8 @@ export const AudioRecorder = ({
           
           // Determine file extension based on MIME type
           let extension = '.webm'; // default
+          let finalMimeType = mimeType;
+          
           if (mimeType.includes('mp4')) {
             extension = '.mp4';
           } else if (mimeType.includes('wav')) {
@@ -70,9 +72,13 @@ export const AudioRecorder = ({
             extension = '.ogg';
           } else if (mimeType.includes('webm')) {
             extension = '.webm';
+          } else if (mimeType === '' || mimeType === 'application/octet-stream') {
+            // Fallback for mobile browsers that don't set proper MIME types
+            extension = '.webm';
+            finalMimeType = 'audio/webm';
           }
           
-          const file = new File([audio], `recording${extension}`, { type: mimeType });
+          const file = new File([audio], `recording${extension}`, { type: finalMimeType });
 
           setAudioChunks([]);
           onAudioFinalized?.(file);
@@ -114,9 +120,24 @@ export const AudioRecorder = ({
       return;
     }
 
-    mediaRecorder.current = new MediaRecorder(stream, {
+    // Try to use optimal audio format, with fallbacks for mobile browsers
+    let options: MediaRecorderOptions = {
       audioBitsPerSecond: 96000,
-    });
+    };
+
+    // Prefer WebM with Opus for better compression and compatibility
+    if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+      options.mimeType = 'audio/webm;codecs=opus';
+    } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+      options.mimeType = 'audio/webm';
+    } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+      options.mimeType = 'audio/mp4';
+    } else if (MediaRecorder.isTypeSupported('audio/wav')) {
+      options.mimeType = 'audio/wav';
+    }
+    // If no explicit MIME type is supported, let the browser choose (may result in application/octet-stream)
+
+    mediaRecorder.current = new MediaRecorder(stream, options);
 
     mediaRecorder.current.ondataavailable = (ev) => {
       if (typeof ev.data !== "undefined" && ev.data.size !== 0) {
