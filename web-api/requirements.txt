@@ -28,10 +28,10 @@ httpx>=0.27.0
 matplotlib>=3.5.0
 psutil>=5.9.0
 python-magic>=0.4.27
-ffmpeg-python>=0.2.0  # Python wrapper for ffmpeg
-onnxruntime>=1.14.0   # WhisperX dependency
-torch>=2.5.0,<3.0.0   # CPU version by default
-torchaudio>=2.5.0,<3.0.0
+# ffmpeg-python>=0.2.0  # Python wrapper for ffmpeg
+# onnxruntime>=1.14.0   # WhisperX dependency
+# torch>=2.5.0,<3.0.0   # CPU version by default
+# torchaudio>=2.5.0,<3.0.0
 
 # Uncomment these only on Apple Silicon Macs (M1/M2/M3)
 # mlx>=0.0.7  # For Apple Silicon development
