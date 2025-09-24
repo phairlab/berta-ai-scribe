@@ -51,7 +51,8 @@ from app.security import WebAPISession, decode_token
 from app.utility.timing import ExecutionTimer
 from app.config.storage import USE_S3_STORAGE
 from app.services.s3_storage import s3_storage
-from app.middleware.rate_limiter import rate_limit_middleware
+# Rate limiting disabled - import removed
+# from app.middleware.rate_limiter import rate_limit_middleware
 from app.middleware.security_headers import security_headers_middleware
 
 configure_logging()
@@ -89,11 +90,13 @@ async def add_security_headers(request: Request, call_next):
     return await security_headers_middleware(request, call_next)
 print("Security headers middleware configured")
 
-if settings.ENVIRONMENT == "production":
-    @app.middleware("http")
-    async def add_rate_limiting(request: Request, call_next):
-        return await rate_limit_middleware(request, call_next)
-    print("Rate limiting middleware configured for production")
+# Rate limiting disabled - let AWS services handle their own limits
+# if settings.ENVIRONMENT == "production":
+#     @app.middleware("http")
+#     async def add_rate_limiting(request: Request, call_next):
+#         return await rate_limit_middleware(request, call_next)
+#     print("Rate limiting middleware configured for production")
+print("Rate limiting disabled - AWS services will handle their own quotas")
 
 # CORS middleware must be last to run first and add headers to all responses
 frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:4000")
