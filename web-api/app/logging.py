@@ -117,9 +117,9 @@ class WebAPILogger:
 
 async def get_user_agent(
     user_agent: Annotated[str | None, Header()] = None,
-    jenkins_user_agent: Annotated[str | None, Header()] = None,
+    berta_user_agent: Annotated[str | None, Header()] = None,
 ) -> str:
-    return jenkins_user_agent or user_agent or ""
+    return berta_user_agent or user_agent or ""
 
 
 useUserAgent = Annotated[str, Depends(get_user_agent)]
