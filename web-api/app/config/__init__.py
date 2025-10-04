@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 class Settings(BaseSettings):
     ENVIRONMENT: Literal["production", "development"] = "production"
-    APP_NAME: str = ' "OS Jenkins" Scribe'
+    APP_NAME: str = ' "Berta" Scribe'
     APP_VERSION: str = "0.6.0"
 
     DEFAULT_AUDIO_FORMAT: str = "mp3"
@@ -50,7 +50,7 @@ class Settings(BaseSettings):
     AWS_ACCESS_KEY_ID: str | None = None
     AWS_SECRET_ACCESS_KEY: str | None = None
     AWS_REGION: str = "us-west-2"
-    S3_BUCKET_NAME: str = "jenkins-os"
+    S3_BUCKET_NAME: str = "berta"
     AWS_SECRET_NAME: str | None = None
 
     USE_GOOGLE_AUTH: bool = False

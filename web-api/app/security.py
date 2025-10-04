@@ -79,9 +79,9 @@ useUserSession = Annotated[WebAPISession, Depends(authenticate_session)]
 
 
 async def authenticate_session_cookie(
-    jenkins_session: Annotated[str, Cookie()]
+    berta_session: Annotated[str, Cookie()]
 ) -> WebAPISession:
-    session = decode_token(jenkins_session)
+    session = decode_token(berta_session)
 
     return session
 
