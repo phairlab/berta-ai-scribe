@@ -54,7 +54,7 @@ export const TermsOfUse = () => {
           <ScrollShadow>
             <div className="flex flex-col gap-3 text-small text-zinc-500 me-2 max-w-[90%] sm:max-w-[600px]">
               <p className="text-red-500 font-semibold">
-                <strong>Important</strong> - Jenkins Scribe Terms of Use (Updated
+                <strong>Important</strong> - Berta Scribe Terms of Use (Updated
                 December 10, 2024)
               </p>
               <p>

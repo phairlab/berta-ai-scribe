@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 
 const PROCESSOR_MODULE = "worklets/volume-level-processor.js";
-const WORKLET_NAME = "jenkins-volume-level";
+const WORKLET_NAME = "berta-volume-level";
 
 type AudioLevelProps = {
   stream: MediaStream | null;

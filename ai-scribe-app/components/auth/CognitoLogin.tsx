@@ -127,7 +127,7 @@ export function CognitoLogin() {
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
       <div className="p-8 bg-white rounded-lg shadow-md w-full max-w-md">
-        <h1 className="text-2xl font-bold mb-6 text-center">Jenkins Scribe</h1>
+        <h1 className="text-2xl font-bold mb-6 text-center">Berta Scribe</h1>
         
         {error && (
           <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">

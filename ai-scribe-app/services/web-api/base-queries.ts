@@ -70,7 +70,7 @@ async function executeHttpAction<T>(
     if (parameters?.accessToken) {
       requestHeaders = {
         ...requestHeaders,
-        [headerNames.JenkinsAuthorization]: `Bearer ${parameters.accessToken}`,
+        [headerNames.BertaAuthorization]: `Bearer ${parameters.accessToken}`,
       };
     }
 
@@ -199,7 +199,7 @@ export async function downloadFile(
   if (accessToken) {
     requestHeaders = {
       ...requestHeaders,
-      [headerNames.JenkinsAuthorization]: `Bearer ${accessToken}`,
+      [headerNames.BertaAuthorization]: `Bearer ${accessToken}`,
     };
   }
 

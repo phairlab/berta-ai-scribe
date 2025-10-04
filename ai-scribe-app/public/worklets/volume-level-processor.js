@@ -48,4 +48,4 @@ class VolumeLevelProcessor extends AudioWorkletProcessor {
   }
 }
 
-registerProcessor("jenkins-volume-level", VolumeLevelProcessor);
+registerProcessor("berta-volume-level", VolumeLevelProcessor);
