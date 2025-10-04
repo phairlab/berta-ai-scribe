@@ -1,6 +1,6 @@
-# OS Jenkins AI Scribe v0.9.0-beta
+# Berta AI Scribe v0.9.0-beta
 
-OS Jenkins AI Scribe is an advanced medical documentation assistant designed to help healthcare providers efficiently create clinical notes from audio recordings of patient encounters. The system uses state-of-the-art AI transcription services and language models to transform medical conversations into well-structured clinical documentation.
+Berta AI Scribe is an advanced medical documentation assistant designed to help healthcare providers efficiently create clinical notes from audio recordings of patient encounters. The system uses state-of-the-art AI transcription services and language models to transform medical conversations into well-structured clinical documentation.
 
 ## Table of Contents
 - [Overview](#overview)
@@ -39,7 +39,7 @@ OS Jenkins AI Scribe is an advanced medical documentation assistant designed to 
 
 ## Overview
 
-OS Jenkins AI Scribe aims to reduce the documentation burden on healthcare providers by:
+Berta AI Scribe aims to reduce the documentation burden on healthcare providers by:
 - Automatically transcribing patient encounters
 - Generating structured clinical notes based on transcriptions
 - Supporting various note templates for different clinical scenarios
@@ -75,7 +75,7 @@ The project consists of two main components:
 
 The system follows a modern web application architecture with several layers:
 
-![Jenkins_Arch](https://github.com/user-attachments/assets/ecb3cf72-24e9-478a-99ec-75e8bb82f426)
+![Berta_Arch](https://github.com/user-attachments/assets/ecb3cf72-24e9-478a-99ec-75e8bb82f426)
 
 - **Web Browser**: The client interface accessed by users
 - **Next.js Frontend**: Server-side rendered React application
@@ -90,7 +90,7 @@ The system follows a modern web application architecture with several layers:
 
 ### Transcription Services
 
-OS Jenkins Scribe supports four transcription services:
+Berta Scribe supports four transcription services:
 
 1. **Parakeet MLX** (Default): Local, fast transcription using Apple's MLX framework
 2. **OpenAI Whisper**: State-of-the-art speech recognition via OpenAI API
@@ -120,7 +120,7 @@ The system will automatically use the best available model based on your configu
 
 ## Storage Configuration
 
-OS Jenkins Scribe supports two storage options:
+Berta Scribe supports two storage options:
 
 1. **Local Storage** (Development):
    - Files stored in `.data/recordings`
@@ -235,7 +235,7 @@ For local development, you'll need Google OAuth credentials:
 
 2. **Create a new project** (or select existing one):
    - Click "Select a project" → "New Project"
-   - Enter project name (e.g., "Jenkins Scribe Local")
+   - Enter project name (e.g., "Berta Scribe Local")
    - Click "Create"
 
 3. **Navigate to "APIs & Services" → "Credentials"**
@@ -244,7 +244,7 @@ For local development, you'll need Google OAuth credentials:
    - Click "OAuth consent screen"
    - Select "External" user type (for testing)
    - Fill in required fields:
-     - App name: "Jenkins Scribe"
+     - App name: "Berta Scribe"
      - User support email: Your email
      - Developer contact information: Your email
    - Click "Save and Continue"
@@ -255,7 +255,7 @@ For local development, you'll need Google OAuth credentials:
 5. **Create OAuth credentials**:
    - Click "Create Credentials" → "OAuth client ID"
    - Choose "Web application"
-   - Name: "Jenkins Scribe Local"
+   - Name: "Berta Scribe Local"
    - **Authorized JavaScript origins**:
      - `http://localhost:4000`
    - **Authorized redirect URIs**:
@@ -379,7 +379,7 @@ Then, add the AI service-specific variables based on your chosen option below:
    - **Sign up/Login**: Go to [platform.openai.com](https://platform.openai.com) and create an account or log in
    - **Navigate to API Keys**: Go to [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
    - **Create new key**: Click "Create new secret key"
-   - **Name your key**: Give it a descriptive name like "Jenkins Scribe Local"
+   - **Name your key**: Give it a descriptive name like "Berta Scribe Local"
    - **Set permissions**: Choose "All" or ensure it has access to the models you need
    - **Copy the key**: After creation, copy the API key immediately (it starts with `sk-...`)
    - **Save securely**: Store it in a safe place - you won't be able to see it again
@@ -785,7 +785,7 @@ After completing your chosen AI service setup above:
    aws route53 create-hosted-zone \
      --name yourdomain.com \
      --caller-reference $(date +%s) \
-     --hosted-zone-config Comment="Jenkins Scribe hosted zone"
+     --hosted-zone-config Comment="Berta Scribe hosted zone"
    
    # Note: You'll need to update your domain's nameservers to point to Route53
    ```
@@ -830,7 +830,7 @@ If you already have a VPC set up like in your screenshots:
    - **Resources to create**: Select `VPC and more` (not "VPC only")
    - **Name tag auto-generation**: Check the box
 
-   - **Auto-generate**: `jenkins` (or your preferred name)
+   - **Auto-generate**: `berta` (or your preferred name)
 
    **Network Configuration:**
    - **IPv4 CIDR block**: `10.0.0.0/16`
@@ -876,7 +876,7 @@ If you already have a VPC set up like in your screenshots:
 
 ### Step 4: Deploy the Application
 
-Now you'll deploy the Jenkins Scribe application using AWS CloudFormation:
+Now you'll deploy Berta Scribe application using AWS CloudFormation:
 
 **Option A: One-click Deployment (Recommended)**
 
@@ -884,7 +884,7 @@ Now you'll deploy the Jenkins Scribe application using AWS CloudFormation:
    
    | Service | Button |
    |---------|--------|
-   | AWS     | [![AWS CloudFormation Launch Stack SVG Button](https://cdn.rawgit.com/buildkite/cloudformation-launch-stack-button-svg/master/launch-stack.svg)](https://us-west-2.console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/quickcreate?stackName=os-jenkins-ai-scribe&templateURL=https://cf-templates-14rwubwevbsfc-us-west-2.s3.us-west-2.amazonaws.com/2025-06-25T005018.211Zo9q-template.yaml)
+   | AWS     | [![AWS CloudFormation Launch Stack SVG Button](https://cdn.rawgit.com/buildkite/cloudformation-launch-stack-button-svg/master/launch-stack.svg)](https://us-west-2.console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/quickcreate?stackName=berta-ai-scribe&templateURL=https://cf-templates-14rwubwevbsfc-us-west-2.s3.us-west-2.amazonaws.com/2025-06-25T005018.211Zo9q-template.yaml)
 
 2. **You'll be taken to the AWS CloudFormation console** where you'll see a form to fill out
 
@@ -907,8 +907,8 @@ If you need to modify the CloudFormation template (e.g., change instance sizes, 
    | **DomainName** | Your domain name | `yourdomain.com` |
    | **AuthDomainPrefix** |  Prefix part of the domain name | `yourdomain` |
    | **AccessTokenSecret** | JWT signing secret | Generate with `openssl rand -base64 32` |
-   | **DBName** | Database name | `os_jenkins` |
-   | **DBUser** | Database username | `jenkins_admin` |
+   | **DBName** | Database name | `berta` |
+   | **DBUser** | Database username | `berta_admin` |
    | **DBPassword** | Database password | Generate secure password |
 
 3. **Deploy the stack**:
@@ -935,15 +935,15 @@ If you need to modify the CloudFormation template (e.g., change instance sizes, 
 - Test audio recording and note generation
 
 **Docker Images**: The CloudFormation template uses pre-built Docker images hosted on AWS Public ECR:
-- **Frontend**: `public.ecr.aws/s9f8j1d3/jenkins-os-frontend:latest`
-- **Backend**: `public.ecr.aws/s9f8j1d3/jenkins-os-backend:latest`
+- **Frontend**: `public.ecr.aws/s9f8j1d3/berta-frontend:latest`
+- **Backend**: `public.ecr.aws/s9f8j1d3/berta-backend:latest`
 
 These images are automatically pulled during deployment and contain the latest stable versions of the application components.
 
 **Updates**: When new releases are available, we update the images at the same URLs. To get the latest version, simply restart your ECS services:
 ```bash
-aws ecs update-service --cluster jenkins-os-cluster-production --service jenkins-os-frontend-production --force-new-deployment
-aws ecs update-service --cluster jenkins-os-cluster-production --service jenkins-os-backend-production --force-new-deployment
+aws ecs update-service --cluster berta-cluster-production --service berta-frontend-production --force-new-deployment
+aws ecs update-service --cluster berta-cluster-production --service berta-backend-production --force-new-deployment
 ```
 
 ## Available Services Reference
@@ -967,7 +967,7 @@ This will show:
 
 ## Security
 
-OS Jenkins Scribe implements robust security measures:
+Berta Scribe implements robust security measures:
 
 - Secure authentication through Cognito or Google OAuth
 - HTTPS for all external communication

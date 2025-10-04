@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'CloudFormation template for Jenkins application infrastructure'
+Description: 'CloudFormation template for Berta application infrastructure'
 
 Parameters:
   Environment:
@@ -62,10 +62,10 @@ Parameters:
     Description: Aurora master password
 
 Resources:
-  JenkinsS3Bucket:
+  BertaS3Bucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub jenkins-os-${AWS::AccountId}
+      BucketName: !Sub berta-os-${AWS::AccountId}
       VersioningConfiguration:
         Status: Enabled
       CorsConfiguration:
@@ -99,8 +99,8 @@ Resources:
                   - s3:ListBucket
                   - s3:GetObject
                 Resource:
-                  - !Sub arn:aws:s3:::${JenkinsS3Bucket}
-                  - !Sub arn:aws:s3:::${JenkinsS3Bucket}/*
+                  - !Sub arn:aws:s3:::${BertaS3Bucket}
+                  - !Sub arn:aws:s3:::${BertaS3Bucket}/*
                   - arn:aws:s3:::os-jenkins-copy
                   - arn:aws:s3:::os-jenkins-copy/*
 
@@ -109,7 +109,7 @@ Resources:
     Type: AWS::Lambda::Function
     Properties:
       FunctionName: !Sub "${AWS::StackName}-UploadFiles-${Environment}"
-      Description: "Copies prompts and sample-recordings folders from public S3 bucket to Jenkins S3 bucket"
+      Description: "Copies prompts and sample-recordings folders from public S3 bucket to Berta S3 bucket"
       Handler: index.handler
       Role: !GetAtt UploadFilesLambdaRole.Arn
       Runtime: python3.9
@@ -117,7 +117,7 @@ Resources:
       MemorySize: 256
       Environment:
         Variables:
-          BUCKET_NAME: !Ref JenkinsS3Bucket
+          BUCKET_NAME: !Ref BertaS3Bucket
           SOURCE_BUCKET: "os-jenkins-copy"
       Code:
         ZipFile: |
@@ -209,17 +209,17 @@ Resources:
   # Custom resource to trigger the Lambda function
   UploadFilesCustomResource:
     Type: Custom::UploadFiles
-    DependsOn: JenkinsS3Bucket
+    DependsOn: BertaS3Bucket
     Properties:
       ServiceToken: !GetAtt UploadFilesLambda.Arn
       # Include a version parameter to force updates when redeployed
       Version: "1.0"
 
   # Update S3 bucket policy to allow access
-  JenkinsS3BucketPolicy:
+  BertaS3BucketPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
-      Bucket: !Ref JenkinsS3Bucket
+      Bucket: !Ref BertaS3Bucket
       PolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -233,8 +233,8 @@ Resources:
               - s3:DeleteObject
               - s3:ListBucket
             Resource:
-              - !Sub arn:aws:s3:::${JenkinsS3Bucket}
-              - !Sub arn:aws:s3:::${JenkinsS3Bucket}/*
+              - !Sub arn:aws:s3:::${BertaS3Bucket}
+              - !Sub arn:aws:s3:::${BertaS3Bucket}/*
           - Sid: AllowLambdaAccess
             Effect: Allow
             Principal:
@@ -244,8 +244,8 @@ Resources:
               - s3:ListBucket
               - s3:GetObject
             Resource:
-              - !Sub arn:aws:s3:::${JenkinsS3Bucket}
-              - !Sub arn:aws:s3:::${JenkinsS3Bucket}/*
+              - !Sub arn:aws:s3:::${BertaS3Bucket}
+              - !Sub arn:aws:s3:::${BertaS3Bucket}/*
 
   # Aurora RDS Cluster - Updated for Serverless v2
   AuroraDBSubnetGroup:
@@ -263,7 +263,7 @@ Resources:
         - IpProtocol: tcp
           FromPort: 5432
           ToPort: 5432
-          SourceSecurityGroupId: !Ref JenkinsSecurityGroup
+          SourceSecurityGroupId: !Ref BertaSecurityGroup
       SecurityGroupEgress:
         - IpProtocol: '-1'
           FromPort: -1
@@ -333,19 +333,19 @@ Resources:
   FrontendECRRepository:
     Type: AWS::ECR::Repository
     Properties:
-      RepositoryName: !Join ['-', ['jenkins-os-frontend', !Ref Environment]]
+      RepositoryName: !Join ['-', ['berta-frontend', !Ref Environment]]
       ImageTagMutability: MUTABLE
 
   BackendECRRepository:
     Type: AWS::ECR::Repository
     Properties:
-      RepositoryName: !Join ['-', ['jenkins-os-backend', !Ref Environment]]
+      RepositoryName: !Join ['-', ['berta-backend', !Ref Environment]]
       ImageTagMutability: MUTABLE
 
   CognitoUserPool:
     Type: AWS::Cognito::UserPool
     Properties:
-      UserPoolName: !Join ['-', ['JenkinsOS', !Ref Environment]]
+      UserPoolName: !Join ['-', ['Berta', !Ref Environment]]
       AdminCreateUserConfig:
         AllowAdminCreateUserOnly: false
       AutoVerifiedAttributes:
@@ -372,7 +372,7 @@ Resources:
     Type: AWS::Cognito::UserPoolClient
     Properties:
       UserPoolId: !Ref CognitoUserPool
-      ClientName: !Join ['-', ['jenkins-os-client', !Ref Environment]]
+      ClientName: !Join ['-', ['berta-client', !Ref Environment]]
       GenerateSecret: false
       # Auth flows for user authentication
       ExplicitAuthFlows:
@@ -414,7 +414,7 @@ Resources:
   ECSCluster:
     Type: AWS::ECS::Cluster
     Properties:
-      ClusterName: !Join ['-', ['jenkins-os-cluster', !Ref Environment]]
+      ClusterName: !Join ['-', ['berta-cluster', !Ref Environment]]
       CapacityProviders:
         - FARGATE
 
@@ -460,7 +460,7 @@ Resources:
   FrontendTaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      Family: !Join ['-', ['jenkins-os-frontend', !Ref Environment]]
+      Family: !Join ['-', ['berta-frontend', !Ref Environment]]
       Cpu: '512'
       Memory: '1024'
       NetworkMode: awsvpc
@@ -469,12 +469,12 @@ Resources:
       ExecutionRoleArn: !Ref ECSExecutionRole
       TaskRoleArn: !Ref ECSTaskRole
       ContainerDefinitions:
-        - Name: jenkins-os-frontend
-          Image: public.ecr.aws/s9f8j1d3/jenkins-os-frontend:latest
+        - Name: berta-os-frontend
+          Image: public.ecr.aws/s9f8j1d3/berta-frontend:latest
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: /ecs/jenkins-os-frontend
+              awslogs-group: /ecs/berta-frontend
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: ecs
               awslogs-create-group: 'true'
@@ -502,7 +502,7 @@ Resources:
   BackendTaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      Family: !Join ['-', ['jenkins-os-backend', !Ref Environment]]
+      Family: !Join ['-', ['berta-backend', !Ref Environment]]
       Cpu: '1024'
       Memory: '2048'
       NetworkMode: awsvpc
@@ -511,12 +511,12 @@ Resources:
       ExecutionRoleArn: !Ref ECSExecutionRole
       TaskRoleArn: !Ref ECSTaskRole
       ContainerDefinitions:
-        - Name: jenkins-os-backend
-          Image: public.ecr.aws/s9f8j1d3/jenkins-os-backend:latest
+        - Name: berta-os-backend
+          Image: public.ecr.aws/s9f8j1d3/berta-backend:latest
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: /ecs/jenkins-os-backend
+              awslogs-group: /ecs/berta-backend
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: ecs
               awslogs-create-group: 'true'
@@ -533,7 +533,7 @@ Resources:
             - Name: AWS_REGION
               Value: !Ref AWS::Region
             - Name: AWS_BUCKET_NAME
-              Value: !Ref JenkinsS3Bucket
+              Value: !Ref BertaS3Bucket
             - Name: COGNITO_USER_POOL_ID
               Value: !Ref CognitoUserPool
             - Name: COGNITO_APP_CLIENT_ID
@@ -557,7 +557,7 @@ Resources:
             - Name: LABEL_MODEL
               Value: !Ref DefaultModel
             - Name: S3_BUCKET_NAME
-              Value: !Ref JenkinsS3Bucket
+              Value: !Ref BertaS3Bucket
             - Name: AURORA_WRITER_ENDPOINT
               Value: !GetAtt AuroraCluster.Endpoint.Address
             - Name: DB_NAME
@@ -585,7 +585,7 @@ Resources:
       - FrontendHTTPSListener
       - UploadFilesCustomResource
     Properties:
-      ServiceName: !Join ['-', ['jenkins-os-frontend', !Ref Environment]]
+      ServiceName: !Join ['-', ['berta-frontend', !Ref Environment]]
       Cluster: !Ref ECSCluster
       TaskDefinition: !Ref FrontendTaskDefinition
       DesiredCount: 1
@@ -595,10 +595,10 @@ Resources:
         AwsvpcConfiguration:
           AssignPublicIp: ENABLED
           SecurityGroups:
-            - !Ref JenkinsSecurityGroup
+            - !Ref BertaSecurityGroup
           Subnets: !Ref PrivateSubnets
       LoadBalancers:
-        - ContainerName: jenkins-os-frontend
+        - ContainerName: berta-os-frontend
           ContainerPort: 4000
           TargetGroupArn: !Ref FrontendTargetGroup
 
@@ -609,7 +609,7 @@ Resources:
       - UploadFilesCustomResource
       - AuroraInstance
     Properties:
-      ServiceName: !Join ['-', ['jenkins-os-backend', !Ref Environment]]
+      ServiceName: !Join ['-', ['berta-backend', !Ref Environment]]
       Cluster: !Ref ECSCluster
       TaskDefinition: !Ref BackendTaskDefinition
       DesiredCount: 1
@@ -619,10 +619,10 @@ Resources:
         AwsvpcConfiguration:
           AssignPublicIp: DISABLED
           SecurityGroups:
-            - !Ref JenkinsSecurityGroup
+            - !Ref BertaSecurityGroup
           Subnets: !Ref PrivateSubnets
       LoadBalancers:
-        - ContainerName: jenkins-os-backend
+        - ContainerName: berta-os-backend
           ContainerPort: 8000
           TargetGroupArn: !Ref BackendTargetGroup
 
@@ -646,11 +646,11 @@ Resources:
           ToPort: -1
           CidrIp: 0.0.0.0/0
 
-  JenkinsSecurityGroup:
+  BertaSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Security group for Jenkins application
-      GroupName: !Sub jenkins-sg-${Environment}-${AWS::StackName}
+      GroupDescription: Security group for Berta application
+      GroupName: !Sub berta-sg-${Environment}-${AWS::StackName}
       VpcId: !Ref VpcId
       SecurityGroupIngress:
         - IpProtocol: tcp
@@ -744,7 +744,7 @@ Resources:
   FrontendALB:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
-      Name: !Join ['-', ['jenkins-os-frontend', !Ref Environment]]
+      Name: !Join ['-', ['berta-frontend', !Ref Environment]]
       Scheme: internet-facing
       LoadBalancerAttributes:
         - Key: idle_timeout.timeout_seconds
@@ -756,7 +756,7 @@ Resources:
   BackendALB:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
-      Name: !Join ['-', ['jenkins-os-backend', !Ref Environment]]
+      Name: !Join ['-', ['berta-backend', !Ref Environment]]
       Scheme: internet-facing
       LoadBalancerAttributes:
         - Key: idle_timeout.timeout_seconds
@@ -818,7 +818,7 @@ Resources:
 Outputs:
   S3BucketName:
     Description: Name of the S3 bucket for application files
-    Value: !Ref JenkinsS3Bucket
+    Value: !Ref BertaS3Bucket
     Export:
       Name: !Sub "${AWS::StackName}-S3BucketName"
       
