@@ -185,7 +185,7 @@ async def authenticate_google_user(
         )
         
         response.set_cookie(
-            key="jenkins_session",
+            key="berta_session",
             value=api_token,
             httponly=True,
             samesite="strict" if settings.ENVIRONMENT == "production" else "lax",
@@ -210,7 +210,7 @@ async def authenticate_google_user(
 @router.post("/logout")
 async def logout(response: Response):
     response.delete_cookie(
-        key="jenkins_session",
+        key="berta_session",
         httponly=True,
         samesite="lax",
         secure=settings.COOKIE_SECURE,

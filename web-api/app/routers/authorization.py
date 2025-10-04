@@ -83,7 +83,7 @@ async def authenticate_user(
     )
 
     response.set_cookie(
-        key="jenkins_session",
+        key="berta_session",
         value=token,
         httponly=True,
         samesite="strict" if settings.ENVIRONMENT == "production" else "lax",
@@ -102,7 +102,7 @@ async def authenticate_user(
 @router.post("/check-session")
 async def check_session(
     response: Response,
-    jenkins_session: Annotated[str | None, Cookie()] = None,
+    berta_session: Annotated[str | None, Cookie()] = None,
     database: useDatabase = None,
 ) -> sch.Token:
     if settings.ENVIRONMENT == "development" and not settings.USE_COGNITO and not settings.USE_GOOGLE_AUTH:
@@ -123,7 +123,7 @@ async def check_session(
         )
         api_token = create_access_token(user_session)
         response.set_cookie(
-            key="jenkins_session",
+            key="berta_session",
             value=api_token,
             httponly=True,
             samesite="lax",  # Keep lax for dev
@@ -134,11 +134,11 @@ async def check_session(
         )
         return sch.Token(accessToken=api_token, tokenType="Development")
 
-    if not jenkins_session:
+    if not berta_session:
         raise HTTPException(status_code=401, detail="No session found")
 
     try:
-        session = decode_token(jenkins_session)
+        session = decode_token(berta_session)
         new_session = sch.WebAPISession(
             username=session.username,
             sessionId=str(uuid.uuid4()),
@@ -146,7 +146,7 @@ async def check_session(
         )
         api_token = create_access_token(new_session)
         response.set_cookie(
-            key="jenkins_session",
+            key="berta_session",
             value=api_token,
             httponly=True,
             samesite="strict" if settings.ENVIRONMENT == "production" else "lax",
@@ -172,7 +172,7 @@ async def logout_user(response: Response, session: useUserSession):
     response.headers["Access-Control-Allow-Credentials"] = "true"
     
     response.delete_cookie(
-        key="jenkins_session",
+        key="berta_session",
         path="/",
         secure=settings.COOKIE_SECURE,
         httponly=True,

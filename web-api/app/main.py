@@ -300,8 +300,8 @@ async def request_logging_middleware(request: Request, call_next):
     requested_at = datetime.now(timezone.utc).astimezone()
 
     headers = dict(request.scope["headers"])
-    if b"jenkins-authorization" in headers:
-        headers[b"authorization"] = headers[b"jenkins-authorization"]
+    if b"berta-authorization" in headers:
+        headers[b"authorization"] = headers[b"berta-authorization"]
         request.scope["headers"] = [(k, v) for k, v in headers.items()]
 
     if b"x-request-id" not in headers:
