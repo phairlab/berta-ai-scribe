@@ -100,7 +100,7 @@ export function GoogleLogin() {
       <div className="min-h-screen flex flex-col justify-center items-center bg-gradient-to-b from-blue-50 to-white dark:from-slate-900 dark:to-slate-800">
         <div className="animate-spin rounded-full h-12 w-12 border-4 border-t-transparent border-blue-600" />
         <h2 className="mt-4 font-medium text-xl text-blue-700 dark:text-blue-400">
-          OS Jenkins Scribe
+          Berta Scribe
         </h2>
       </div>
     );
@@ -112,7 +112,7 @@ export function GoogleLogin() {
         <div className="bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-800 dark:to-blue-900 p-6">
           <div className="flex items-center justify-center space-x-2">
             <Stethoscope className="h-8 w-8 text-white" />
-            <h1 className="text-2xl font-bold text-white">Jenkins Scribe</h1>
+            <h1 className="text-2xl font-bold text-white">Berta Scribe</h1>
           </div>
         </div>
         <div className="p-6">

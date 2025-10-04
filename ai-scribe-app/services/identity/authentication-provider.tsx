@@ -59,7 +59,7 @@ export const AuthenticationProvider = ({
     if (authentication.state === "Unauthenticated" && !window.location.pathname.startsWith('/login')) {
       
       if (isCognitoEnabled || isGoogleAuthEnabled) {
-        const hasSessionCookie = document.cookie.includes('jenkins_session=');
+        const hasSessionCookie = document.cookie.includes('berta_session=');
         
         if (!hasSessionCookie) {
           window.location.href = '/login';
