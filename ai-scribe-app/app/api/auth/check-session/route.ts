@@ -4,7 +4,7 @@ import { cookies } from 'next/headers';
 export async function POST() {
   try {
     const cookieStore = await cookies();
-    const sessionCookie = cookieStore.get('jenkins_session');
+    const sessionCookie = cookieStore.get('berta_session');
 
     if (!sessionCookie) {
       return new NextResponse(
@@ -18,7 +18,7 @@ export async function POST() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Cookie': `jenkins_session=${sessionCookie.value}`
+        'Cookie': `berta_session=${sessionCookie.value}`
       },
       credentials: 'include'
     });

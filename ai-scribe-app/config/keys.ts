@@ -1,10 +1,10 @@
 export const headerNames = {
   UserAgent: "user-agent",
-  JenkinsUserAgent: "jenkins-user-agent",
-  JenkinsAuthorization: "jenkins-authorization",
+  BertaUserAgent: "berta-user-agent",
+  BertaAuthorization: "berta-authorization",
 };
 
 export const sessionKeys = {
-  TermsAgreed: "jenkins-terms-agreed",
-  AccessToken: "jenkins-access-token",
+  TermsAgreed: "berta-terms-agreed",
+  AccessToken: "berta-access-token",
 };
