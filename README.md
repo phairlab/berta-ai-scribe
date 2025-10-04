@@ -884,7 +884,7 @@ Now you'll deploy Berta Scribe application using AWS CloudFormation:
    
    | Service | Button |
    |---------|--------|
-   | AWS     | [![AWS CloudFormation Launch Stack SVG Button](https://cdn.rawgit.com/buildkite/cloudformation-launch-stack-button-svg/master/launch-stack.svg)](https://us-west-2.console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/quickcreate?stackName=berta-ai-scribe&templateURL=https://cf-templates-14rwubwevbsfc-us-west-2.s3.us-west-2.amazonaws.com/2025-06-25T005018.211Zo9q-template.yaml)
+   | AWS     | [![AWS CloudFormation Launch Stack SVG Button](https://cdn.rawgit.com/buildkite/cloudformation-launch-stack-button-svg/master/launch-stack.svg)](https://us-west-2.console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/quickcreate?stackName=berta-ai-scribe&templateURL=https://cf-templates-14rwubwevbsfc-us-west-2.s3.us-west-2.amazonaws.com/2025-10-04T054745.001Zamj-template.yaml)
 
 2. **You'll be taken to the AWS CloudFormation console** where you'll see a form to fill out
 
