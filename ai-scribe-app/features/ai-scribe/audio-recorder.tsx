@@ -146,7 +146,7 @@ export const AudioRecorder = ({
     };
 
     stopwatch.start();
-    mediaRecorder.current.start();
+    mediaRecorder.current.start(5000);
   }
 
   function endRecording() {
