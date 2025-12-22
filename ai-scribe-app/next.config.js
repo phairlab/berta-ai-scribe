@@ -5,10 +5,11 @@ let nextConfig = {
   assetPrefix: process.env.NODE_ENV === 'production' ? undefined : '',
   experimental: {
     proxyTimeout: 300 * 1000,
-    swcPlugins: [
-      ["@swc-jotai/debug-label", {}],
-      ["@swc-jotai/react-refresh", {}],
-    ],
+    // Temporarily disabled - incompatible with Next.js 15.5.x
+    // swcPlugins: [
+    //   ["@swc-jotai/debug-label", {}],
+    //   ["@swc-jotai/react-refresh", {}],
+    // ],
   },
   // Ensure environment variables are properly exposed
   env: {
