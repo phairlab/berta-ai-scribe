@@ -807,14 +807,26 @@ After completing your chosen AI service setup above:
 
 #### Option A: Use Existing VPC (If You Have One)
 
-If you already have a VPC set up like in your screenshots:
+If you already have a VPC set up:
 
 1. **Note Your VPC Details**:
-   - **VPC ID**: `vpc-01e9a055781f7820` (your actual ID)
+   - **VPC ID**: Copy your VPC ID from the VPC console
    - **Public Subnets**: Copy the subnet IDs from your public subnets
    - **Private Subnets**: Copy the subnet IDs from your private subnets
 
-2. **Skip to Step 4** and use these values in the deployment form
+2. **Verify your subnets** (run this command to check):
+   ```bash
+   aws ec2 describe-subnets --filters "Name=vpc-id,Values=<YOUR_VPC_ID>" --region us-west-2 \
+     --query 'Subnets[*].{ID:SubnetId,AZ:AvailabilityZone,CIDR:CidrBlock,Public:MapPublicIpOnLaunch}' --output table
+   ```
+
+3. **Verify you have a NAT Gateway**:
+   ```bash
+   aws ec2 describe-nat-gateways --filter "Name=vpc-id,Values=<YOUR_VPC_ID>" --region us-west-2 \
+     --query 'NatGateways[*].{ID:NatGatewayId,State:State,SubnetId:SubnetId}' --output table
+   ```
+
+4. **Skip to Step 3b** to add security hardening, then proceed to Step 4
 
 #### Option B: Create New VPC (Recommended for New Users)
 
@@ -826,31 +838,20 @@ If you already have a VPC set up like in your screenshots:
 
 2. **VPC Settings - Choose "VPC and more"**:
 
-   **Basic Settings:**
-   - **Resources to create**: Select `VPC and more` (not "VPC only")
-   - **Name tag auto-generation**: Check the box
-
-   - **Auto-generate**: `berta` (or your preferred name)
-
-   **Network Configuration:**
-   - **IPv4 CIDR block**: `10.0.0.0/16`
-   - **IPv6 CIDR block**: Select `No IPv6 CIDR block`
-   - **Tenancy**: `Default`
-
-   **Availability Zones & Subnets:**
-   - **Number of Availability Zones (AZs)**: `2` (recommended)
-   - **Number of public subnets**: `2`
-   - **Number of private subnets**: `2`
-
-   **NAT Gateway Configuration:**
-   - **NAT gateways**: `In 1 AZ` (saves costs vs "1 per AZ")
-
-   **VPC Endpoints:**
-   - **VPC endpoints**: `S3 Gateway` (helps reduce data transfer costs)
-
-   **DNS Options:**
-   - **Enable DNS hostnames**: (checked)
-   - **Enable DNS resolution**: (checked)
+   | Setting | Value |
+   |---------|-------|
+   | Resources to create | `VPC and more` |
+   | Name tag auto-generation | `berta` |
+   | IPv4 CIDR block | `10.0.0.0/16` |
+   | IPv6 CIDR block | `No IPv6 CIDR block` |
+   | Tenancy | `Default` |
+   | Number of AZs | `2` |
+   | Number of public subnets | `2` |
+   | Number of private subnets | `2` |
+   | NAT gateways | `In 1 AZ` |
+   | VPC endpoints | `S3 Gateway` |
+   | DNS hostnames | Enabled |
+   | DNS resolution | Enabled |
 
 3. **Review the Preview** - You should see:
    - 4 subnets (2 public, 2 private)
@@ -861,18 +862,58 @@ If you already have a VPC set up like in your screenshots:
 
 5. **Note Your Resource IDs** (you'll need these for deployment):
 
-   After VPC creation, go to your VPC dashboard and collect these values:
+   | Resource | Where to Find |
+   |----------|---------------|
+   | VPC ID | VPC Details tab |
+   | Public Subnets | Subnets with "public" in name (typically `10.0.0.0/20`, `10.0.16.0/20`) |
+   | Private Subnets | Subnets with "private" in name (typically `10.0.128.0/20`, `10.0.144.0/20`) |
 
-   **From VPC Details Tab:**
-   - **VPC ID**: `vpc-01e9a055781f7820` (copy your actual VPC ID)
+#### Step 3b: Security Hardening (Recommended)
 
-   **From Subnets Section:**
-   - **Public Subnet IDs**: Look for subnets with "public" in the name
-     - Example: `subnet-xxxxx, subnet-yyyyy`
-   - **Private Subnet IDs**: Look for subnets with "private" in the name  
-     - Example: `subnet-aaaaa, subnet-bbbbb`
+After creating your VPC, add these security measures:
 
-   **Write these down - you'll need them in Step 4!**
+##### Enable VPC Flow Logs (for monitoring)
+
+VPC Flow Logs help you monitor network traffic and detect suspicious activity:
+
+```bash
+# Create CloudWatch log group
+aws logs create-log-group --log-group-name /vpc/berta-flow-logs --region us-west-2
+
+# Create IAM role for flow logs
+echo '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"Service":"vpc-flow-logs.amazonaws.com"},"Action":"sts:AssumeRole"}]}' > /tmp/trust-policy.json
+
+aws iam create-role --role-name VPCFlowLogsRole --assume-role-policy-document file:///tmp/trust-policy.json
+
+echo '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":["logs:CreateLogStream","logs:PutLogEvents","logs:DescribeLogGroups","logs:DescribeLogStreams"],"Resource":"*"}]}' > /tmp/flow-logs-policy.json
+
+aws iam put-role-policy --role-name VPCFlowLogsRole --policy-name FlowLogsPolicy --policy-document file:///tmp/flow-logs-policy.json
+
+# Enable flow logs on your VPC (replace <YOUR_VPC_ID> and <YOUR_ACCOUNT_ID>)
+aws ec2 create-flow-logs --resource-type VPC --resource-ids <YOUR_VPC_ID> --traffic-type ALL \
+  --log-destination-type cloud-watch-logs --log-group-name /vpc/berta-flow-logs \
+  --deliver-logs-permission-arn arn:aws:iam::<YOUR_ACCOUNT_ID>:role/VPCFlowLogsRole --region us-west-2
+```
+
+##### Add Network ACL Rules (defense in depth)
+
+Add DENY rules to block common malicious ports on your **private subnet** Network ACL:
+
+1. Go to **VPC Console** → **Network ACLs**
+2. Select the NACL associated with your **private subnets**
+3. Edit **Outbound Rules** - Add these DENY rules (lower rule numbers = higher priority):
+
+   | Rule # | Type | Port | Destination | Action |
+   |--------|------|------|-------------|--------|
+   | 50 | TCP | 23 | 0.0.0.0/0 | DENY |
+   | 51 | TCP | 445 | 0.0.0.0/0 | DENY |
+   | 52 | TCP | 2323 | 0.0.0.0/0 | DENY |
+   | 53 | TCP | 3389 | 0.0.0.0/0 | DENY |
+   | 54 | TCP | 3306 | 0.0.0.0/0 | DENY |
+   | 100 | ALL | ALL | 0.0.0.0/0 | ALLOW |
+
+> [!NOTE]
+> These rules block common ports used by malware for scanning (Telnet, SMB, RDP, MySQL). The CloudFormation template already includes restrictive security group rules, but Network ACLs provide an additional layer of protection.
 
 ### Step 4: Deploy the Application
 
@@ -884,7 +925,7 @@ Now you'll deploy Berta Scribe application using AWS CloudFormation:
    
    | Service | Button |
    |---------|--------|
-   | AWS     | [![AWS CloudFormation Launch Stack SVG Button](https://cdn.rawgit.com/buildkite/cloudformation-launch-stack-button-svg/master/launch-stack.svg)](https://us-west-2.console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/quickcreate?stackName=berta-ai-scribe&templateURL=https://cf-templates-14rwubwevbsfc-us-west-2.s3.us-west-2.amazonaws.com/2025-10-04T054745.001Zamj-template.yaml)
+   | AWS     | [![AWS CloudFormation Launch Stack SVG Button](https://cdn.rawgit.com/buildkite/cloudformation-launch-stack-button-svg/master/launch-stack.svg)](https://us-west-2.console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/quickcreate?stackName=berta-ai-scribe&templateURL=https://cf-templates-14rwubwevbsfc-us-west-2.s3.us-west-2.amazonaws.com/2026-01-07T190220.008Zweh-template.yaml)
 
 2. **You'll be taken to the AWS CloudFormation console** where you'll see a form to fill out
 
