@@ -68,11 +68,19 @@ Resources:
       BucketName: !Sub berta-os-${AWS::AccountId}
       VersioningConfiguration:
         Status: Enabled
+      # Block public access
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
       CorsConfiguration:
         CorsRules:
           - AllowedHeaders: ['*']
             AllowedMethods: [GET, PUT, POST, DELETE]
-            AllowedOrigins: ['*']
+            AllowedOrigins:
+              - !Sub 'https://${DomainName}'
+              - !Sub 'https://api.${DomainName}'
             MaxAge: 3000
 
   # IAM Role for the Lambda function
@@ -112,7 +120,7 @@ Resources:
       Description: "Copies prompts and sample-recordings folders from public S3 bucket to Berta S3 bucket"
       Handler: index.handler
       Role: !GetAtt UploadFilesLambdaRole.Arn
-      Runtime: python3.9
+      Runtime: python3.12
       Timeout: 300
       MemorySize: 256
       Environment:
@@ -259,16 +267,19 @@ Resources:
     Properties:
       GroupDescription: Security group for Aurora cluster
       VpcId: !Ref VpcId
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 5432
-          ToPort: 5432
-          SourceSecurityGroupId: !Ref BertaSecurityGroup
-      SecurityGroupEgress:
-        - IpProtocol: '-1'
-          FromPort: -1
-          ToPort: -1
-          CidrIp: 0.0.0.0/0
+      # Aurora only needs to respond to incoming connections, no egress needed
+      SecurityGroupEgress: []
+
+  # Separate ingress rule to avoid circular dependency
+  AuroraFromBertaIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref AuroraSecurityGroup
+      IpProtocol: tcp
+      FromPort: 5432
+      ToPort: 5432
+      SourceSecurityGroupId: !Ref BertaSecurityGroup
+      Description: PostgreSQL from ECS tasks
 
   AuroraCluster:
     Type: AWS::RDS::DBCluster
@@ -334,13 +345,17 @@ Resources:
     Type: AWS::ECR::Repository
     Properties:
       RepositoryName: !Join ['-', ['berta-frontend', !Ref Environment]]
-      ImageTagMutability: MUTABLE
+      ImageTagMutability: IMMUTABLE
+      ImageScanningConfiguration:
+        ScanOnPush: true
 
   BackendECRRepository:
     Type: AWS::ECR::Repository
     Properties:
       RepositoryName: !Join ['-', ['berta-backend', !Ref Environment]]
-      ImageTagMutability: MUTABLE
+      ImageTagMutability: IMMUTABLE
+      ImageScanningConfiguration:
+        ScanOnPush: true
 
   CognitoUserPool:
     Type: AWS::Cognito::UserPool
@@ -429,10 +444,32 @@ Resources:
               Service: ecs-tasks.amazonaws.com
             Action: sts:AssumeRole
       ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/AmazonS3FullAccess
-        - arn:aws:iam::aws:policy/AmazonTranscribeFullAccess
         - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
       Policies:
+        - PolicyName: S3BucketAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:DeleteObject
+                  - s3:ListBucket
+                Resource:
+                  - !Sub arn:aws:s3:::${BertaS3Bucket}
+                  - !Sub arn:aws:s3:::${BertaS3Bucket}/*
+        - PolicyName: TranscribeAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - transcribe:StartTranscriptionJob
+                  - transcribe:GetTranscriptionJob
+                  - transcribe:ListTranscriptionJobs
+                  - transcribe:DeleteTranscriptionJob
+                Resource: "*"
         - PolicyName: BedrockAccess
           PolicyDocument:
             Version: '2012-10-17'
@@ -551,7 +588,7 @@ Resources:
             - Name: COOKIE_SECURE
               Value: "true"
             - Name: LOGGING_LEVEL
-              Value: DEBUG
+              Value: INFO
             - Name: DEFAULT_NOTE_GENERATION_MODEL
               Value: !Ref DefaultModel
             - Name: LABEL_MODEL
@@ -593,7 +630,7 @@ Resources:
       LaunchType: FARGATE
       NetworkConfiguration:
         AwsvpcConfiguration:
-          AssignPublicIp: ENABLED
+          AssignPublicIp: DISABLED
           SecurityGroups:
             - !Ref BertaSecurityGroup
           Subnets: !Ref PrivateSubnets
@@ -640,11 +677,6 @@ Resources:
           FromPort: 443
           ToPort: 443
           CidrIp: 0.0.0.0/0
-      SecurityGroupEgress:
-        - IpProtocol: -1
-          FromPort: -1
-          ToPort: -1
-          CidrIp: 0.0.0.0/0
 
   BertaSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -652,28 +684,77 @@ Resources:
       GroupDescription: Security group for Berta application
       GroupName: !Sub berta-sg-${Environment}-${AWS::StackName}
       VpcId: !Ref VpcId
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
-          SourceSecurityGroupId: !Ref ALBSecurityGroup
-        - IpProtocol: tcp
-          FromPort: 4000
-          ToPort: 4000
-          SourceSecurityGroupId: !Ref ALBSecurityGroup
-        - IpProtocol: tcp
-          FromPort: 8000
-          ToPort: 8000
-          SourceSecurityGroupId: !Ref ALBSecurityGroup
+      # Restrictive egress - only allow necessary outbound traffic
+      SecurityGroupEgress:
+        # HTTPS for AWS APIs (S3, Bedrock, Transcribe, ECR, Cognito, CloudWatch)
         - IpProtocol: tcp
           FromPort: 443
           ToPort: 443
           CidrIp: 0.0.0.0/0
-      SecurityGroupEgress:
-        - IpProtocol: '-1'
-          FromPort: -1
-          ToPort: -1
+          Description: HTTPS for AWS services
+        # DNS resolution
+        - IpProtocol: udp
+          FromPort: 53
+          ToPort: 53
           CidrIp: 0.0.0.0/0
+          Description: DNS resolution
+        - IpProtocol: tcp
+          FromPort: 53
+          ToPort: 53
+          CidrIp: 0.0.0.0/0
+          Description: DNS resolution TCP
+
+  # Separate egress rule for Aurora to avoid circular dependency
+  BertaToAuroraEgress:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId: !Ref BertaSecurityGroup
+      IpProtocol: tcp
+      FromPort: 5432
+      ToPort: 5432
+      DestinationSecurityGroupId: !Ref AuroraSecurityGroup
+      Description: PostgreSQL to Aurora
+
+  # Separate rules to avoid circular dependency between ALB and Berta security groups
+  ALBToFrontendEgress:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId: !Ref ALBSecurityGroup
+      IpProtocol: tcp
+      FromPort: 4000
+      ToPort: 4000
+      DestinationSecurityGroupId: !Ref BertaSecurityGroup
+      Description: ALB to Frontend container
+
+  ALBToBackendEgress:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId: !Ref ALBSecurityGroup
+      IpProtocol: tcp
+      FromPort: 8000
+      ToPort: 8000
+      DestinationSecurityGroupId: !Ref BertaSecurityGroup
+      Description: ALB to Backend container
+
+  BertaFromALBFrontendIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref BertaSecurityGroup
+      IpProtocol: tcp
+      FromPort: 4000
+      ToPort: 4000
+      SourceSecurityGroupId: !Ref ALBSecurityGroup
+      Description: Frontend from ALB
+
+  BertaFromALBBackendIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref BertaSecurityGroup
+      IpProtocol: tcp
+      FromPort: 8000
+      ToPort: 8000
+      SourceSecurityGroupId: !Ref ALBSecurityGroup
+      Description: Backend from ALB
 
   FrontendTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
