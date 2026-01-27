@@ -102,13 +102,14 @@ The transcription service is configurable via the `TRANSCRIPTION_SERVICE` enviro
 
 ### Language Model Services
 
-The application supports five language model providers:
+The application supports six language model providers:
 
 1. **Ollama** (Default): Local open-source models (any models available in `ollama list`)
 2. **OpenAI**: GPT-4o via OpenAI API
 3. **AWS Bedrock**: Meta Llama 3.3 70B, Llama 3.1 405B/70B, Claude 3.7 Sonnet
 4. **VLLM**: Self-hosted inference server for large models
 5. **LM Studio**: Local inference with user-friendly GUI and model management
+6. **LlamaCpp**: High-performance llama.cpp server optimized for NVIDIA GPUs (recommended for DGX Spark)
 
 The system will automatically use the best available model based on your configuration. For the local deployment we will be using gpt-4o via OpenAI API and for the AWS deployment we will be using Llama3.3 70b.
 
@@ -748,6 +749,60 @@ Then, add the AI service-specific variables based on your chosen option below:
 > source .venv/bin/activate
 > uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 > ```
+
+#### Alternative: Using LlamaCpp (Faster Inference)
+
+For better performance on DGX Spark, you can use llama.cpp instead of Ollama. llama.cpp is ~35% faster and supports Blackwell-native optimizations.
+
+1. **Build llama.cpp with CUDA 13 and Blackwell support**:
+   ```bash
+   cd ~
+   git clone https://github.com/ggerganov/llama.cpp.git
+   cd llama.cpp
+   mkdir build-gpu && cd build-gpu
+   cmake .. -DCMAKE_BUILD_TYPE=Release -DGGML_CUDA=ON -DGGML_CUDA_F16=ON -DCMAKE_CUDA_ARCHITECTURES=121
+   make -j$(nproc)
+   ```
+
+2. **Download a GGUF model** (example: Llama 3.3 70B Q4):
+   ```bash
+   mkdir -p ~/models
+   cd ~/models
+   # Download from Hugging Face (one-time, runs 100% locally after)
+   wget https://huggingface.co/bartowski/Llama-3.3-70B-Instruct-GGUF/resolve/main/Llama-3.3-70B-Instruct-Q4_K_M.gguf
+   ```
+
+3. **Start llama-server**:
+   ```bash
+   cd ~/llama.cpp/build-gpu
+   LD_LIBRARY_PATH=./bin:$LD_LIBRARY_PATH ./bin/llama-server \
+     -m ~/models/Llama-3.3-70B-Instruct-Q4_K_M.gguf \
+     -ngl 99 -c 4096 --host 0.0.0.0 --port 8080
+   ```
+
+4. **Configure environment** - Use these settings in your `web-api/.env` file:
+   ```env
+   # AI Services (WhisperX GPU + LlamaCpp)
+   TRANSCRIPTION_SERVICE=WhisperX
+   WHISPERX_DEVICE=cuda
+   GENERATIVE_AI_SERVICE=LlamaCpp
+   LLAMA_CPP_SERVER_URL=http://localhost:8080
+
+   # Model name must match the loaded GGUF file
+   DEFAULT_NOTE_GENERATION_MODEL=Llama-3.3-70B-Instruct-Q4_K_M.gguf
+   LABEL_MODEL=Llama-3.3-70B-Instruct-Q4_K_M.gguf
+   ```
+
+5. **Start the backend** (in a separate terminal):
+   ```bash
+   cd web-api
+   source .venv/bin/activate
+   LD_LIBRARY_PATH=~/ctranslate2_install/lib:$LD_LIBRARY_PATH TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD=1 \
+       uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+   ```
+
+> [!TIP]
+> **Startup Order**: Start llama-server first (wait ~60 seconds for model to load), then start the backend.
 
 > [!WARNING]
 > **Known Warnings** (can be safely ignored):

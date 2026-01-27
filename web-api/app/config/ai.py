@@ -18,6 +18,7 @@ from app.config import (
     is_aws_bedrock_supported,
     is_vllm_supported,
     is_lm_studio_supported,
+    is_llama_cpp_supported,
     settings,
 )
 from app.services.adapters import GenerativeAIService, TranscriptionService
@@ -29,6 +30,7 @@ from app.services.aws_bedrock import BedrockGenerativeAIService
 from app.services.ollama import OllamaGenerativeAIService
 # Import VLLMService lazily inside the VLLM branch to avoid importing vllm at startup
 from app.services.lm_studio import LMStudioGenerativeAIService
+from app.services.llama_cpp import LlamaCppGenerativeAIService
 import os
 import logging
 
@@ -95,6 +97,11 @@ match settings.GENERATIVE_AI_SERVICE:
         if is_lm_studio_supported:
             generative_ai_services.append(
                 LMStudioGenerativeAIService(service_url=settings.LM_STUDIO_SERVER_URL)
+            )
+    case "LlamaCpp":
+        if is_llama_cpp_supported:
+            generative_ai_services.append(
+                LlamaCppGenerativeAIService(api_url=settings.LLAMA_CPP_SERVER_URL)
             )
     case _:
         raise ValueError(
