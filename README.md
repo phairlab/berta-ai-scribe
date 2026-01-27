@@ -19,6 +19,7 @@ Berta AI Scribe is an advanced medical documentation assistant designed to help 
   - [Option 2: Basic Local Setup (Offline)](#option-2-basic-local-setup-offline)
   - [Option 3: Local GPU Setup (VLLM)](#option-3-local-gpu-setup-vllm)
   - [Option 4: LM Studio Setup](#option-4-lm-studio-setup)
+  - [Option 5: NVIDIA DGX Spark / GB10 Setup](#option-5-nvidia-dgx-spark--gb10-setup-arm64--cuda-13)
   - [Start the Backend](#start-the-backend)
   - [Frontend Setup](#frontend-setup)
   - [Verification](#verification)
@@ -636,6 +637,122 @@ Then, add the AI service-specific variables based on your chosen option below:
 
 > [!IMPORTANT]
 > Make sure LM Studio server is running and a model is loaded before starting the backend. The model name in your environment file should match the loaded model in LM Studio.
+
+### Option 5: NVIDIA DGX Spark / GB10 Setup (ARM64 + CUDA 13)
+
+**Best for**: NVIDIA DGX Spark workstations with GB10 chip (Project DIGITS)
+**Uses**: WhisperX GPU transcription + Ollama with MedGemma or other medical LLMs
+
+> [!IMPORTANT]
+> The NVIDIA GB10 uses ARM64 architecture with CUDA 13.0, which requires building some dependencies from source due to limited pre-built wheel availability.
+
+**Requirements**:
+- NVIDIA DGX Spark with GB10 chip
+- Ubuntu 24.04 LTS (typical DGX Spark OS)
+- CUDA 13.0 toolkit (pre-installed on DGX Spark)
+- Google OAuth credentials
+
+**Setup Steps**:
+
+1. **Install system dependencies**:
+   ```bash
+   sudo apt update
+   sudo apt install -y ffmpeg libboost-all-dev libmad0-dev libid3tag0-dev \
+       libsndfile1-dev libgd-dev cmake git build-essential
+   ```
+
+2. **Build audiowaveform from source** (no ARM64 binaries available):
+   ```bash
+   cd /tmp
+   git clone https://github.com/bbc/audiowaveform.git
+   cd audiowaveform
+   mkdir build && cd build
+   cmake .. -DENABLE_TESTS=OFF
+   make -j$(nproc)
+   sudo make install
+   ```
+
+3. **Set up Python environment**:
+   ```bash
+   cd web-api
+   uv venv --python 3.11
+   source .venv/bin/activate
+   uv pip install -r requirements.txt
+   ```
+
+4. **Install PyTorch with CUDA 13 support**:
+   ```bash
+   uv pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu130
+   ```
+
+5. **Build CTranslate2 from source with CUDA 13** (no pre-built ARM64 CUDA wheels):
+   ```bash
+   # Install pybind11
+   uv pip install pybind11
+
+   # Clone and build CTranslate2
+   cd /tmp
+   git clone --recursive https://github.com/OpenNMT/CTranslate2.git
+   cd CTranslate2
+   mkdir build && cd build
+   cmake .. -DWITH_CUDA=ON -DWITH_CUDNN=OFF -DWITH_MKL=OFF -DWITH_OPENBLAS=OFF \
+       -DCMAKE_BUILD_TYPE=Release -DOPENMP_RUNTIME=NONE
+   make -j$(nproc)
+   cmake --install . --prefix /tmp/ctranslate2_install
+
+   # Install Python bindings
+   cd /tmp/CTranslate2/python
+   CTranslate2_ROOT=/tmp/ctranslate2_install \
+   CMAKE_PREFIX_PATH=/tmp/ctranslate2_install \
+   CPLUS_INCLUDE_PATH=/tmp/ctranslate2_install/include \
+   LIBRARY_PATH=/tmp/ctranslate2_install/lib \
+   uv pip install . --no-build-isolation
+   ```
+
+6. **Install and configure Ollama**:
+   ```bash
+   curl -fsSL https://ollama.ai/install.sh | sh
+   ollama serve &
+
+   # Pull a medical LLM (example: MedGemma)
+   ollama pull MedAIBase/MedGemma1.5:4b
+   ```
+
+7. **Configure environment** - Append to your `web-api/.env` file:
+   ```env
+   # AI Services (WhisperX GPU + Ollama)
+   TRANSCRIPTION_SERVICE=WhisperX
+   WHISPERX_DEVICE=cuda
+   GENERATIVE_AI_SERVICE=Ollama
+
+   # Model names must include the tag (e.g., :4b)
+   DEFAULT_NOTE_GENERATION_MODEL=MedAIBase/MedGemma1.5:4b
+   LABEL_MODEL=MedAIBase/MedGemma1.5:4b
+   ```
+
+8. **Start the backend** (requires environment variables):
+   ```bash
+   cd web-api
+   source .venv/bin/activate
+   LD_LIBRARY_PATH=/tmp/ctranslate2_install/lib TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD=1 \
+       uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+   ```
+
+> [!TIP]
+> Create a startup script `start-backend.sh` for convenience:
+> ```bash
+> #!/bin/bash
+> export LD_LIBRARY_PATH=/tmp/ctranslate2_install/lib:$LD_LIBRARY_PATH
+> export TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD=1
+> cd ~/projects/berta-ai-scribe/web-api
+> source .venv/bin/activate
+> uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+> ```
+
+> [!WARNING]
+> **Known Warnings** (can be safely ignored):
+> - PyTorch may warn about CUDA capability 12.1 vs supported 12.0 - this generally works fine
+> - pyannote.audio version mismatch warnings - models still function correctly
 
 ## Start the Backend
 
