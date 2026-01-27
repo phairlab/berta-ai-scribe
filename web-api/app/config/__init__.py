@@ -55,7 +55,7 @@ class Settings(BaseSettings):
     TRANSCRIPTION_SERVICE: Literal["OpenAI Whisper", "WhisperX", "AWS Transcribe", "Parakeet MLX"] = (
         "Parakeet MLX"
     )
-    GENERATIVE_AI_SERVICE: Literal["Ollama", "OpenAI", "AWS Bedrock", "VLLM", "LM Studio"] = "Ollama"
+    GENERATIVE_AI_SERVICE: Literal["Ollama", "OpenAI", "AWS Bedrock", "VLLM", "LM Studio", "LlamaCpp"] = "Ollama"
     LOCAL_WHISPER_SERVICE_URL: str | None = None
 
     # WhisperX Configuration
@@ -98,6 +98,9 @@ class Settings(BaseSettings):
     # LM Studio defaults to http://localhost:1234
     LM_STUDIO_SERVER_URL: str | None = "http://localhost:1234"
 
+    # LlamaCpp server (llama-server) defaults to http://localhost:8080
+    LLAMA_CPP_SERVER_URL: str | None = "http://localhost:8080"
+
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True)
 
 
@@ -127,6 +130,8 @@ is_vllm_supported: bool = (
 
 is_lm_studio_supported: bool = settings.LM_STUDIO_SERVER_URL is not None
 
+is_llama_cpp_supported: bool = settings.LLAMA_CPP_SERVER_URL is not None
+
 def get_available_services() -> dict:
     """Get a dictionary of all available services and their options."""
     return {
@@ -143,7 +148,7 @@ def get_available_services() -> dict:
         },
         "GENERATIVE_AI_SERVICE": {
             "description": "Service for generating text completions",
-            "options": ["Ollama", "OpenAI", "AWS Bedrock", "VLLM", "LM Studio"],
+            "options": ["Ollama", "OpenAI", "AWS Bedrock", "VLLM", "LM Studio", "LlamaCpp"],
             "default": "Ollama",
             "models": {
                 "Ollama": ["llama3.1:8b", "llama3.1:70b", "llama3.2:8b", "llama3.2:70b"],
@@ -157,7 +162,8 @@ def get_available_services() -> dict:
                     "anthropic.claude-3-haiku-20240307-v1:0"
                 ],
                 "VLLM": ["dynamic"],  # Models are loaded dynamically from VLLM server
-                "LM Studio": ["dynamic"]  # Models are loaded dynamically from LM Studio server
+                "LM Studio": ["dynamic"],  # Models are loaded dynamically from LM Studio server
+                "LlamaCpp": ["dynamic"]  # Models are loaded dynamically from llama-server
             }
         }
     }
