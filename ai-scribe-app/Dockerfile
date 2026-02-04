@@ -13,6 +13,14 @@ COPY . .
 # Remove ALL environment files to prevent hardcoding
 #RUN rm -f .env .env.local .env.development .env.production
 
+# Build args for Next.js (baked in at build time)
+ARG NEXT_PUBLIC_USE_GOOGLE_AUTH=false
+ARG NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
+
+# Set as env vars for the build
+ENV NEXT_PUBLIC_USE_GOOGLE_AUTH=$NEXT_PUBLIC_USE_GOOGLE_AUTH
+ENV NEXT_PUBLIC_BACKEND_URL=$NEXT_PUBLIC_BACKEND_URL
+
 # Build application
 RUN npm run build
 
