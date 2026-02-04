@@ -12,6 +12,8 @@ Berta AI Scribe is an advanced medical documentation assistant designed to help 
 - [Storage Configuration](#storage-configuration)
 - [Database Configuration](#database-configuration)
 - [Local Development Setup](#local-development-setup)
+  - [Quick Start with Docker Compose](#quick-start-with-docker-compose)
+  - [Manual Setup](#manual-setup)
   - [Prerequisites](#prerequisites)
   - [Backend Environment Setup](#backend-environment-setup)
   - [Local Development Options](#local-development-options)
@@ -148,14 +150,74 @@ The application supports three database options:
 
 # Local Development Setup
 
+> [!IMPORTANT]
+> **Before you begin**: Local development requires **Google OAuth credentials** for authentication. You'll need to set up a Google Cloud project and create OAuth credentials before the application will work. See the [Setting up Google OAuth](#setting-up-google-oauth) section below.
+
+## Quick Start with Docker Compose
+
+The fastest way to get started is using Docker Compose. This handles all dependencies (Python, Node.js, FFmpeg, audiowaveform) automatically.
+
+**Prerequisites:**
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running
+- Google OAuth credentials (see [Setting up Google OAuth](#setting-up-google-oauth))
+- OpenAI API key (for the default setup) or Ollama installed on your host machine
+
+**Steps:**
+
+1. **Set up Google OAuth** first (see [instructions below](#setting-up-google-oauth))
+
+2. **Create environment file**:
+   ```bash
+   cp .env.example .env
+   ```
+
+3. **Edit `.env`** with your credentials:
+   ```env
+   ACCESS_TOKEN_SECRET=your_generated_secret    # Run: openssl rand -base64 32
+   GOOGLE_CLIENT_ID=your_google_client_id
+   GOOGLE_CLIENT_SECRET=your_google_client_secret
+   OPENAI_API_KEY=your_openai_api_key           # If using OpenAI (default)
+   ```
+
+4. **Start the application**:
+   ```bash
+   docker compose up
+   ```
+
+   > [!NOTE]
+   > First build takes 5-10 minutes (downloading ML dependencies and compiling audiowaveform). Subsequent starts are fast since Docker caches the build layers.
+
+5. **Access the app** at http://localhost:4000
+
+**Stopping the application:**
+```bash
+docker compose down
+```
+
+> [!NOTE]
+> **Apple Silicon users**: The containers run `linux/amd64` via Rosetta emulation to match AWS production. This works correctly but may be slightly slower than native builds. Ensure "Use Rosetta for x86/amd64 emulation" is enabled in Docker Desktop → Settings → General.
+
+---
+
+## Manual Setup
+
+If you prefer not to use Docker, or need more control over the setup, follow the manual installation instructions below.
+
 ## Prerequisites
 
 - **Python 3.11+** (managed with uv)
 - **uv** (modern Python package and project manager)
-- **Node.js 18+** and npm
+- **Node.js 18+** and npm (download from [nodejs.org](https://nodejs.org/) or use a version manager like nvm)
 - **FFmpeg** (for audio processing)
 - **audiowaveform v1.10+** (for audio visualization)
-- **Google OAuth credentials** (for local authentication)
+- **Google OAuth credentials** (required - see setup guide below)
+
+**macOS users**: Most dependencies can be installed via [Homebrew](https://brew.sh/). If you don't have Homebrew installed:
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+**Intel Mac users**: Note that the default transcription service (Parakeet MLX) only works on Apple Silicon (M1/M2/M3/M4). Intel Mac users should use **OpenAI Whisper** (Option 1) or **WhisperX** (Option 2 with WhisperX configuration). See the setup options below for specific instructions.
 
 ### Installing uv (Python Package Manager)
 
@@ -786,7 +848,7 @@ For better performance on DGX Spark, you can use llama.cpp instead of Ollama. ll
    TRANSCRIPTION_SERVICE=WhisperX
    WHISPERX_DEVICE=cuda
    GENERATIVE_AI_SERVICE=LlamaCpp
-   LLAMA_CPP_SERVER_URL=http://localhost:8080
+   # LLAMA_CPP_SERVER_URL=http://localhost:8080  # Optional, defaults to localhost:8080
 
    # Model name must match the loaded GGUF file
    DEFAULT_NOTE_GENERATION_MODEL=Llama-3.3-70B-Instruct-Q4_K_M.gguf
@@ -808,6 +870,91 @@ For better performance on DGX Spark, you can use llama.cpp instead of Ollama. ll
 > **Known Warnings** (can be safely ignored):
 > - PyTorch may warn about CUDA capability 12.1 vs supported 12.0 - this generally works fine
 > - pyannote.audio version mismatch warnings - models still function correctly
+
+#### Alternative: Using vLLM Docker (NVIDIA Optimized - Best for Scaling)
+
+For production deployments and better scaling, use NVIDIA's optimized vLLM Docker container. vLLM offers continuous batching, PagedAttention for efficient memory use, and tensor parallelism for multi-GPU setups.
+
+> [!IMPORTANT]
+> **GPU Sharing**: Docker containers take exclusive GPU access. Start the backend (WhisperX) BEFORE launching the vLLM Docker container to allow both to coexist on unified memory.
+
+1. **Pull the NVIDIA-optimized vLLM container**:
+   ```bash
+   docker pull nvcr.io/nvidia/vllm:26.01-py3
+   ```
+
+2. **Choose your model** based on available memory:
+
+   | Model | Memory Required | Command |
+   |-------|-----------------|---------|
+   | Llama 3.1 8B (recommended for GPU sharing) | ~16GB | See below |
+   | Llama 3.3 70B NVFP4 (Blackwell-optimized 4-bit) | ~40GB | See below |
+
+3. **Start vLLM Docker** (choose one):
+
+   **For Llama 3.1 8B** (leaves ~50GB for WhisperX):
+   ```bash
+   docker run --gpus all -p 8080:8080 \
+     -e HUGGING_FACE_HUB_TOKEN=your_hf_token \
+     nvcr.io/nvidia/vllm:26.01-py3 \
+     --model meta-llama/Llama-3.1-8B-Instruct \
+     --tensor-parallel-size 1 \
+     --gpu-memory-utilization 0.65 \
+     --port 8080
+   ```
+
+   **For Llama 3.3 70B with NVFP4** (Blackwell 4-bit quantization, ~3.3x memory reduction):
+   ```bash
+   docker run --gpus all -p 8080:8080 \
+     -e HUGGING_FACE_HUB_TOKEN=your_hf_token \
+     nvcr.io/nvidia/vllm:26.01-py3 \
+     --model neuralmagic/Meta-Llama-3.3-70B-Instruct-nvfp4 \
+     --tensor-parallel-size 1 \
+     --gpu-memory-utilization 0.65 \
+     --port 8080
+   ```
+
+4. **Configure environment** - Use these settings in your `web-api/.env` file:
+   ```env
+   # AI Services (WhisperX GPU + vLLM Docker)
+   TRANSCRIPTION_SERVICE=WhisperX
+   WHISPERX_DEVICE=cuda
+   GENERATIVE_AI_SERVICE=VLLM
+
+   # vLLM Configuration
+   VLLM_SERVER_NAME=localhost
+   VLLM_SERVER_PORT=8080
+
+   # Model name must match exactly what vLLM loads
+   VLLM_MODEL_NAME=meta-llama/Llama-3.1-8B-Instruct
+   DEFAULT_NOTE_GENERATION_MODEL=meta-llama/Llama-3.1-8B-Instruct
+   LABEL_MODEL=meta-llama/Llama-3.1-8B-Instruct
+   ```
+
+5. **Startup order** (critical for GPU sharing):
+   ```bash
+   # Terminal 1: Start backend FIRST (initializes WhisperX on GPU)
+   cd web-api && source .venv/bin/activate
+   LD_LIBRARY_PATH=~/ctranslate2_install/lib TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD=1 \
+       uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+   # Terminal 2: Start vLLM Docker AFTER backend is running
+   docker run --gpus all -p 8080:8080 ...
+   ```
+
+> [!TIP]
+> **Scaling vLLM**:
+> - **Multi-GPU**: Use `--tensor-parallel-size 2` (or higher) to split model across GPUs
+> - **Multiple instances**: Run several vLLM containers behind a load balancer
+> - **Continuous batching**: vLLM automatically batches concurrent requests for 2-4x throughput
+> - **Check models**: `curl http://localhost:8080/v1/models` to verify loaded model name
+
+> [!NOTE]
+> **Switching models**: If you previously used a different model, delete the `.data` folder to reset the database:
+> ```bash
+> rm -rf .data/
+> ```
+> The database will be recreated with the correct model names from your `.env` file on next startup.```
 
 ## Start the Backend
 
@@ -919,6 +1066,26 @@ After completing your chosen AI service setup above:
 - Verify Google OAuth redirect URIs match exactly
 - Check that both frontend and backend have the same Google Client ID
 - Ensure the frontend is running on the port specified in OAuth settings (default: 4000)
+
+**Google OAuth Errors**:
+- **"redirect_uri_mismatch"**: The redirect URI in your OAuth credentials doesn't match your app. Verify `http://localhost:4000/login` is in your authorized redirect URIs
+- **"access_denied"**: You may need to add your email as a test user in the Google Cloud Console (OAuth consent screen → Test users)
+- **"invalid_client"**: Double-check your Client ID and Client Secret are correctly copied to both `.env` files
+
+**Port Conflicts**:
+- **Backend port 8000 in use**: Check for other processes with `lsof -i :8000` (macOS/Linux) or `netstat -ano | findstr :8000` (Windows). Kill the process or use a different port with `--port 8001`
+- **Frontend port 4000 in use**: Check with `lsof -i :4000`. If you change the port, remember to update your Google OAuth redirect URIs accordingly
+- **Ollama port 11434 in use**: Another Ollama instance may be running. Check with `ps aux | grep ollama`
+
+**Service Startup Order**:
+- Services must start in the correct order: AI service (Ollama/LM Studio) → Backend → Frontend
+- If the backend starts before Ollama, it may fail to connect. Restart the backend after Ollama is running
+- LM Studio users: Ensure a model is loaded AND the server is started before launching the backend
+
+**Transcription Issues (Intel Mac / Windows / Linux)**:
+- Parakeet MLX only works on Apple Silicon. If you see MLX-related errors on Intel/AMD systems, switch to WhisperX or OpenAI Whisper
+- WhisperX first run downloads models (~1-2GB) which may take time
+- For WhisperX GPU errors, ensure CUDA is properly installed with `nvidia-smi`
 
 ## AWS Deployment
 
@@ -1158,6 +1325,10 @@ These images are automatically pulled during deployment and contain the latest s
 aws ecs update-service --cluster berta-cluster-production --service berta-frontend-production --force-new-deployment
 aws ecs update-service --cluster berta-cluster-production --service berta-backend-production --force-new-deployment
 ```
+
+## Platform Support
+
+Berta Scribe currently supports **AWS** for cloud production deployments. Support for Azure, GCP, and Databricks is under consideration based on community interest. If you need support for a specific platform, please open an issue on GitHub.
 
 ## Available Services Reference
 
