@@ -1,0 +1,81 @@
+# Berta AI Scribe - Local Development Setup
+# Usage: docker compose up
+# First build may take 5-10 minutes (audiowaveform compilation)
+
+services:
+  backend:
+    build:
+      context: ./web-api
+      dockerfile: Dockerfile
+    container_name: berta-backend
+    ports:
+      - "8000:8000"
+    environment:
+      # Core Settings
+      - ENVIRONMENT=development
+      - COOKIE_SECURE=false
+      - LOGGING_LEVEL=DEBUG
+      # JWT Configuration (generate with: openssl rand -base64 32)
+      - ACCESS_TOKEN_SECRET=${ACCESS_TOKEN_SECRET:?Please set ACCESS_TOKEN_SECRET in .env}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=1440
+      # Database (SQLite for local dev)
+      - USE_AURORA=false
+      # Authentication
+      - USE_COGNITO=false
+      - USE_GOOGLE_AUTH=true
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:?Please set GOOGLE_CLIENT_ID in .env}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:?Please set GOOGLE_CLIENT_SECRET in .env}
+      - GOOGLE_REDIRECT_URI=http://localhost:4000/login
+      # AI Services (defaults to OpenAI - easiest setup)
+      - TRANSCRIPTION_SERVICE=${TRANSCRIPTION_SERVICE:-OpenAI Whisper}
+      - GENERATIVE_AI_SERVICE=${GENERATIVE_AI_SERVICE:-OpenAI}
+      - DEFAULT_NOTE_GENERATION_MODEL=${DEFAULT_NOTE_GENERATION_MODEL:-gpt-4o}
+      - LABEL_MODEL=${LABEL_MODEL:-gpt-4o}
+      # OpenAI API Key (required if using OpenAI)
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      # Ollama (optional - if using local models, Ollama runs on host machine)
+      - OLLAMA_HOST=${OLLAMA_HOST:-http://host.docker.internal:11434}
+      # WhisperX device (cpu or cuda)
+      - WHISPERX_DEVICE=${WHISPERX_DEVICE:-cpu}
+    volumes:
+      # Persist database and recordings between container restarts
+      - ./.docker-data:/app/.data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/healthcheck"]
+      interval: 30s
+      timeout: 30s
+      start_period: 120s  # Allow time for first startup
+      retries: 3
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./ai-scribe-app
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_USE_GOOGLE_AUTH=true
+        # Server-side (middleware/API routes) needs host.docker.internal to reach backend
+        - NEXT_PUBLIC_BACKEND_URL=http://host.docker.internal:8000
+    container_name: berta-frontend
+    ports:
+      - "4000:4000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      - NODE_ENV=production
+      # Runtime config for browser - uses localhost since backend port is exposed
+      - NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
+      - NEXT_PUBLIC_USE_COGNITO=false
+      - NEXT_PUBLIC_USE_GOOGLE_AUTH=true
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_REDIRECT_URI=http://localhost:4000/login
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:4000/"]
+      interval: 30s
+      timeout: 30s
+      start_period: 30s
+      retries: 3
+    restart: unless-stopped
