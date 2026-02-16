@@ -1,0 +1,57 @@
+cff-version: 1.2.0
+title: "Berta: An Open Source Framework for AI Clinical Documentation"
+message: "If you use this software, please cite it as below."
+type: software
+version: 0.9.0-beta
+license: Apache-2.0
+repository-code: "https://github.com/phairlab/berta-ai-scribe"
+contact:
+  - email: "jmitche2@ualberta.ca"
+    family-names: Mitchell
+    given-names: J Ross
+  - email: "svaid@ualberta.ca"
+    family-names: Vaid
+    given-names: Samridhi
+abstract: >-
+  Berta AI Scribe is a medical documentation assistant that
+  transcribes patient encounters and generates structured
+  clinical notes using speech-to-text and large language models.
+authors:
+  - family-names: Vaid
+    given-names: Samridhi
+    orcid: "https://orcid.org/0009-0001-2742-6808"
+    affiliation: "Department of Medicine, University of Alberta, Edmonton, Alberta, Canada"
+  - family-names: Weldon
+    given-names: Mike
+    affiliation: "Department of Emergency Medicine, University of Alberta; Alberta Health Services, Edmonton, Alberta, Canada"
+  - family-names: Dunn
+    given-names: Jesse
+    affiliation: "Alberta Health Services, Edmonton, Alberta, Canada"
+  - family-names: Lonergan
+    given-names: Kevin
+    affiliation: "Alberta Health Services, Edmonton, Alberta, Canada"
+  - family-names: Li
+    given-names: Henry
+    affiliation: "Department of Emergency Medicine, University of Alberta; Alberta Health Services, Edmonton, Alberta, Canada"
+  - family-names: Franc
+    given-names: Jeffrey
+    affiliation: "Department of Emergency Medicine, University of Alberta; Alberta Health Services, Edmonton, Alberta, Canada"
+  - family-names: Abdala
+    given-names: Mohamed
+    affiliation: "Department of Medicine, University of Alberta; Department of Computer Science, University of Alberta; Alberta Machine Intelligence Institute, Edmonton, Alberta, Canada"
+  - family-names: Baumgart
+    given-names: Daniel C.
+    affiliation: "Department of Medicine, University of Alberta, Edmonton, Alberta, Canada"
+  - family-names: Hayward
+    given-names: Jake
+    affiliation: "Department of Emergency Medicine, University of Alberta; Alberta Health Services, Edmonton, Alberta, Canada"
+  - family-names: Mitchell
+    given-names: J Ross
+    affiliation: "Department of Medicine, University of Alberta; Department of Computer Science, University of Alberta; Alberta Machine Intelligence Institute, Edmonton, Alberta, Canada"
+keywords:
+  - medical-documentation
+  - clinical-notes
+  - speech-to-text
+  - large-language-models
+  - healthcare
+  - AI-scribe
