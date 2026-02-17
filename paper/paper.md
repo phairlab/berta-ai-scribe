@@ -11,22 +11,28 @@ tags:
 authors:
   - name: Samridhi Vaid
     orcid: 0009-0001-2742-6808
+    corresponding: true
     affiliation: 1
-  - name: Mike Weldon
+  - name: Michael Weldon
     affiliation: "2, 3"
   - name: Jesse Dunn
     affiliation: 3
   - name: Kevin Lonergan
     affiliation: 3
   - name: Henry Li
+    orcid: 0000-0002-1594-347X
     affiliation: "2, 3"
   - name: Jeffrey Franc
+    orcid: 0000-0002-2421-3479
     affiliation: "2, 3"
   - name: Mohamed Abdala
+    orcid: 0000-0002-2776-6036
     affiliation: "1, 4, 5"
   - name: Daniel C. Baumgart
+    orcid: 0000-0003-2146-507X
     affiliation: 1
   - name: Jake Hayward
+    orcid: 0000-0003-4919-8946
     affiliation: "2, 3"
   - name: J Ross Mitchell
     orcid: 0000-0002-2340-4708
@@ -55,7 +61,7 @@ Berta is an open-source, modular platform for building and evaluating AI-enabled
 
 # Statement of need
 
-Emergency physicians in developed countries typically spend more than 40% of their time on documentation and less than 30% on direct patient care [@hill2013clicks]. This administrative burden is a major contributor to physician burnout [@shanafelt2016relationship], reduced career satisfaction [@melnick2021analysis], and workforce attrition. The financial impact is substantial, with burnout-related physician turnover costing an estimated US$4.6 billion annually in the United States [@han2019burnout], while emergency medicine reports burnout rates of up to 86% among physicians in developed countries [@lim2023emergency]. The consequences extend throughout healthcare systems: Canada experienced more than 1,200 temporary emergency department closures in 2023 alone, disproportionately affecting rural and underserved communities [@ctv2023three].
+Emergency physicians in developed countries typically spend more than 40% of their time on documentation and less than 30% on direct patient care [@hill2013clicks]. This administrative burden is a major contributor to physician burnout [@shanafelt2016relationship], reduced career satisfaction [@melnick2021analysis], and workforce attrition. The financial impact is substantial, with burnout-related physician turnover costing an estimated US$4.6 billion annually in the United States [@han2019burnout]. Reflecting the urgency of this problem, a recent review ranked AI-powered clinical documentation tools among the five technologies most likely to improve healthcare efficiency [@cda_amc_2025].
 
 Electronic transcription solutions (scribes) can reduce documentation time by up to 35% [@hess2015scribe] and increase patient throughput by 10--20% [@walker2019impact]. However, current commercial AI scribe solutions often operate as expensive proprietary "black-box" systems with limited transparency [@kim2025transparency], costing several hundred dollars per physician per month [@heidi_blog_cost; @scribeberry_cost] and restricting organizational control over data governance and system customization [@england2025guidance]. Healthcare organizations, particularly those in resource-constrained environments, lack accessible tools to evaluate, customize, and deploy AI documentation systems according to their specific clinical workflows and regulatory requirements [@wong2025bridging].
 
@@ -71,7 +77,7 @@ Berta is not intended to compete with commercial AI scribe products. Rather, it 
 
 Berta comprises a Next.js frontend and a FastAPI [@ramirez_fastapi] backend that exposes RESTful APIs for application logic, data processing, and system integration (\autoref{fig:architecture}). In routine use, clinicians create a session in the web application and record or upload audio from a patient encounter. The system transcribes speech with an ASR model and then uses an LLM to generate a structured draft clinical note from the transcript using configurable note templates (e.g., full visit note, narrative, handover summary); users can also create and save custom templates. Clinicians review and edit the generated note before transferring it to their electronic health record.
 
-The platform adopts a modular adapter pattern across its ASR and LLM components. Supported ASR backends include WhisperX [@bain2023whisperx], OpenAI Whisper [@radford2023robust], NVIDIA Parakeet via MLX [@parakeet_mlx_impl; @mlx2023; @parakeet_tdt_0_6b_v2_nvidia], and Amazon Transcribe [@aws_transcribe_site]; supported LLM backends include local engines (Ollama [@ollama_github], vLLM [@kwon2023efficient], LM Studio [@lm_studio_site]) and commercial endpoints (OpenAI API [@openai_api_platform], Amazon Bedrock [@aws_bedrock_site]). This modular design allows organizations to interchange backends without modifying application code. Clinicians can customize note templates and prompts to match their charting preferences, and all data can be retained on-premises or within a chosen cloud environment, giving organizations full control over data sovereignty.
+The platform adopts a modular adapter pattern across its ASR and LLM components. Supported ASR backends include WhisperX [@bain2023whisperx], OpenAI Whisper [@radford2023robust], NVIDIA Parakeet via MLX [@parakeet_mlx_impl; @mlx2023; @parakeet_tdt_0_6b_v2_nvidia], and Amazon Transcribe [@aws_transcribe_site]; supported LLM backends include local engines (Ollama [@ollama_github], vLLM [@kwon2023efficient], LM Studio [@lm_studio_site], llama.cpp [@llama_cpp_github]) and commercial endpoints (OpenAI API [@openai_api_platform], Amazon Bedrock [@aws_bedrock_site]). This modular design allows organizations to interchange backends without modifying application code. Clinicians can customize note templates and prompts to match their charting preferences, and all data can be retained on-premises or within a chosen cloud environment, giving organizations full control over data sovereignty.
 
 # Research impact statement
 
