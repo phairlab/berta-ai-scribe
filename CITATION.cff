@@ -1,5 +1,5 @@
 cff-version: 1.2.0
-title: "Berta: An Open Source Framework for AI Clinical Documentation"
+title: "Berta: An open-source, modular tool for AI-enabled clinical documentation"
 message: "If you use this software, please cite it as below."
 type: software
 version: 0.9.0-beta
@@ -47,6 +47,7 @@ authors:
     affiliation: "Department of Emergency Medicine, University of Alberta; Alberta Health Services, Edmonton, Alberta, Canada"
   - family-names: Mitchell
     given-names: J Ross
+    orcid: "https://orcid.org/0000-0002-2340-4708"
     affiliation: "Department of Medicine, University of Alberta; Department of Computer Science, University of Alberta; Alberta Machine Intelligence Institute, Edmonton, Alberta, Canada"
 keywords:
   - medical-documentation

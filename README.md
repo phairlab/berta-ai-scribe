@@ -1,4 +1,4 @@
-# Berta AI Scribe v0.9.0-beta
+# Berta AI Scribe
 
 Berta AI Scribe is an advanced medical documentation assistant designed to help healthcare providers efficiently create clinical notes from audio recordings of patient encounters. The system uses state-of-the-art AI transcription services and language models to transform medical conversations into well-structured clinical documentation.
 
