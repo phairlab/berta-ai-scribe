@@ -1363,14 +1363,16 @@ Berta Scribe implements robust security measures:
 
 ## Contributors
 
-* [Mike Weldon MD MSc](https://github.com/majweldon)
-* [Ross Mitchell PhD](https://sites.google.com/view/j-ross-mitchell/)
-* [Jesse Dunn](https://github.com/dataxuf)
 * [Samridhi Vaid MSc](https://github.com/SamridhiVaid)
-* [Jake Hayward MD MPH](https://www.linkedin.com/in/jake-hayward-b37846128/?originalSubdomain=ca)
+* [Michael Weldon MD MSc](https://github.com/majweldon)
+* [Jesse Dunn](https://github.com/dataxuf)
 * [Kevin Lonergan](https://github.com/lonergan123)
 * [Henry Li](https://github.com/lih34525)
 * [Jeffrey Franc](https://apps.ualberta.ca/directory/person/jfranc)
+* Mohamed Abdala
+* Daniel C. Baumgart
+* [Jake Hayward MD MPH](https://www.linkedin.com/in/jake-hayward-b37846128/?originalSubdomain=ca)
+* [Ross Mitchell PhD](https://sites.google.com/view/j-ross-mitchell/)
 
 ## License
 

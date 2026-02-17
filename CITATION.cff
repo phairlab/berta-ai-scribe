@@ -2,7 +2,7 @@ cff-version: 1.2.0
 title: "Berta: An open-source, modular tool for AI-enabled clinical documentation"
 message: "If you use this software, please cite it as below."
 type: software
-version: 0.9.0-beta
+version: 1.0.0
 license: Apache-2.0
 repository-code: "https://github.com/phairlab/berta-ai-scribe"
 contact:
@@ -22,7 +22,7 @@ authors:
     orcid: "https://orcid.org/0009-0001-2742-6808"
     affiliation: "Department of Medicine, University of Alberta, Edmonton, Alberta, Canada"
   - family-names: Weldon
-    given-names: Mike
+    given-names: Michael
     affiliation: "Department of Emergency Medicine, University of Alberta; Alberta Health Services, Edmonton, Alberta, Canada"
   - family-names: Dunn
     given-names: Jesse
@@ -32,18 +32,23 @@ authors:
     affiliation: "Alberta Health Services, Edmonton, Alberta, Canada"
   - family-names: Li
     given-names: Henry
+    orcid: "https://orcid.org/0000-0002-1594-347X"
     affiliation: "Department of Emergency Medicine, University of Alberta; Alberta Health Services, Edmonton, Alberta, Canada"
   - family-names: Franc
     given-names: Jeffrey
+    orcid: "https://orcid.org/0000-0002-2421-3479"
     affiliation: "Department of Emergency Medicine, University of Alberta; Alberta Health Services, Edmonton, Alberta, Canada"
   - family-names: Abdala
     given-names: Mohamed
+    orcid: "https://orcid.org/0000-0002-2776-6036"
     affiliation: "Department of Medicine, University of Alberta; Department of Computer Science, University of Alberta; Alberta Machine Intelligence Institute, Edmonton, Alberta, Canada"
   - family-names: Baumgart
     given-names: Daniel C.
+    orcid: "https://orcid.org/0000-0003-2146-507X"
     affiliation: "Department of Medicine, University of Alberta, Edmonton, Alberta, Canada"
   - family-names: Hayward
     given-names: Jake
+    orcid: "https://orcid.org/0000-0003-4919-8946"
     affiliation: "Department of Emergency Medicine, University of Alberta; Alberta Health Services, Edmonton, Alberta, Canada"
   - family-names: Mitchell
     given-names: J Ross
