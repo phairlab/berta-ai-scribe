@@ -16,3 +16,7 @@ models/parakeet/
 .docker-data/
 *.swp
 .DS_Store
+
+# JOSS paper build artifacts
+paper/jats/
+paper/paper.pdf
