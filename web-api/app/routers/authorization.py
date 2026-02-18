@@ -95,7 +95,7 @@ async def authenticate_user(
 
     return sch.Token(
         accessToken=token,
-        tokenType="Development" if settings.ENVIRONMENT == "development" and not settings.USE_COGNITO and not settings.USE_GOOGLE_AUTH else "Cognito" if settings.USE_COGNITO else "Google" if settings.USE_GOOGLE_AUTH else "Snowflake Context"
+        tokenType="Development" if settings.ENVIRONMENT == "development" and not settings.USE_COGNITO and not settings.USE_GOOGLE_AUTH else "Cognito" if settings.USE_COGNITO else "Google" if settings.USE_GOOGLE_AUTH else "Bearer"
     )
 
 
@@ -157,7 +157,7 @@ async def check_session(
         )
         return sch.Token(
             accessToken=api_token,
-            tokenType="Cognito" if settings.USE_COGNITO else "Google" if settings.USE_GOOGLE_AUTH else "Snowflake Context"
+            tokenType="Cognito" if settings.USE_COGNITO else "Google" if settings.USE_GOOGLE_AUTH else "Bearer"
         )
     except Exception as e:
         log.error(f"Session check failed: {str(e)}")

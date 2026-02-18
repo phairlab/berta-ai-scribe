@@ -65,9 +65,6 @@ def decode_token(token: str, verify_expiry: bool = True) -> WebAPISession:
         raise Unauthorized("Could not validate credentials")
 
 
-# Snowflake authentication removed - using Google OAuth and AWS Cognito instead
-
-
 async def authenticate_session(credentials: useCredentials) -> WebAPISession:
     token = credentials.credentials
     session = decode_token(token)

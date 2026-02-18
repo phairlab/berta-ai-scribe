@@ -20,15 +20,7 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  const requestHeaders = new Headers(request.headers);
-  if (process.env.SNOWFLAKE_CONTEXT_USER) {
-    requestHeaders.set(
-      "sf-context-current-user",
-      process.env.SNOWFLAKE_CONTEXT_USER,
-    );
-  }
-
-  return NextResponse.next({ request: { headers: requestHeaders } });
+  return NextResponse.next();
 }
 
 export const config = {

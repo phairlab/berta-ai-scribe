@@ -85,7 +85,7 @@ let nextConfig = {
 
 // Configure development-only settings.
 if (process.env.NODE_ENV === "development") {
-  // These CSP settings match those imposed by Snowflake, to be used during local development.
+  // CSP settings for local development.
   // Doesn't include the injected values for external integrations (which should not be happening through the client in any case).
   const developmentCSPSettings = `
   default-src 'self' 'unsafe-inline' 'unsafe-eval' blob: data:;
@@ -103,7 +103,7 @@ if (process.env.NODE_ENV === "development") {
             source: "/(.*)",
             headers: [
               {
-                // Simulate Snowflake CSP restrictions.
+                // Apply CSP restrictions for development.
                 key: "Content-Security-Policy",
                 value: developmentCSPSettings.replace(/\n/g, ""),
               },
