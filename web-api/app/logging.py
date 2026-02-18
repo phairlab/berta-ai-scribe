@@ -44,16 +44,16 @@ def configure_logging():
     logging.getLogger("sqlalchemy.engine").setLevel(sqlalchemy_level)
     logging.getLogger("sqlalchemy.pool").setLevel(sqlalchemy_level)
 
-    snowflake_level = (
+    aws_level = (
         LOGGING_LEVEL + 1 if LOGGING_LEVEL <= logging.INFO else LOGGING_LEVEL
     )
-    
+
     for logger_name in [
         "botocore",
         "boto3",
     ]:
         logger = logging.getLogger(logger_name)
-        logger.setLevel(snowflake_level)
+        logger.setLevel(aws_level)
 
 
 class RequestMetrics(BaseModel):

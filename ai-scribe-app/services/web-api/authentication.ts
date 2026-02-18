@@ -9,7 +9,7 @@ export async function authenticate(): Promise<WebApiToken> {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ token: "snowflake_token" }),
+      body: JSON.stringify({ token: "dev_token" }),
       credentials: 'include',
     });
     
