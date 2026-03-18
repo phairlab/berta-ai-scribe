@@ -3,6 +3,7 @@ let nextConfig = {
   output: 'standalone',
   // Add this to ensure proper asset prefixing
   assetPrefix: process.env.NODE_ENV === 'production' ? undefined : '',
+  turbopack: {},
   experimental: {
     proxyTimeout: 300 * 1000,
     // Temporarily disabled - incompatible with Next.js 15.5.x
