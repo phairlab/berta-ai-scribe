@@ -1,0 +1,107 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Edge DevTools",
+            "type": "msedge",
+            "request": "launch",
+            "url": "http://localhost:4000",
+            "webRoot": "${workspaceFolder}/ai-scribe-app",
+            "presentation": {
+                "hidden": true
+            },
+        },
+        {
+            "name": "Firefox DevTools",
+            "type": "firefox",
+            "request": "launch",
+            "reAttach": false,
+            "clearConsoleOnReload": true,
+            "url": "http://localhost:4000",
+            "webRoot": "${workspaceFolder}/ai-scribe-app",
+            "presentation": {
+                "hidden": true
+            },
+        },
+        {
+            "name": "Chrome DevTools",
+            "type": "chrome",
+            "request": "launch",
+            "url": "http://localhost:4000",
+            "webRoot": "${workspaceFolder}/ai-scribe-app",
+            "presentation": {
+                "hidden": true
+            },
+        },
+        {
+            "name": "Node: AI Scribe",
+            "cwd": "${workspaceFolder}/ai-scribe-app",
+            "type": "node",
+            "request": "launch",
+            "runtimeArgs": [
+                "run-script",
+                "dev"
+            ],
+            "runtimeExecutable": "npm",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "presentation": {
+                "hidden": true
+            }
+        },
+        {
+            "name": "Web API",
+            "cwd": "${workspaceFolder}/web-api",
+            "type": "debugpy",
+            "request": "launch",
+            "redirectOutput": true,
+            "module": "uvicorn",
+            "args": [
+                "app.main:app",
+                "--reload",
+                "--port",
+                "8000"
+            ],
+            "autoReload": {
+                "enable": true
+            },
+            "presentation": {
+                "hidden": false,
+                "order": 4
+            },
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Launch - Edge",
+            "configurations": ["Web API", "Node: AI Scribe", "Edge DevTools"],
+            "stopAll": true,
+            "presentation": {
+                "hidden": false,
+                "order": 1
+            }
+        },
+        {
+            "name": "Launch - Firefox",
+            "configurations": ["Web API", "Node: AI Scribe", "Firefox DevTools"],
+            "stopAll": true,
+            "presentation": {
+                "hidden": false,
+                "order": 2
+            }
+        },
+        {
+            "name": "Launch - Chrome",
+            "configurations": ["Web API", "Node: AI Scribe", "Chrome DevTools"],
+            "stopAll": true,
+            "presentation": {
+                "hidden": false,
+                "order": 3
+            }
+        }
+    ]
+}

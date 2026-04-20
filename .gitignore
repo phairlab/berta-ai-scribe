@@ -1,0 +1,15 @@
+# Dev pooled pycache folder, based on PYTHONPYCACHEPREFIX environment variable.
+.dev-pycache/
+
+# Virtual environment
+.venv/
+
+# Environment
+.env
+
+# RSA Keys
+*.p8
+*.pub
+
+parakeet-tdt-0.6b-v2
+models/parakeet/
